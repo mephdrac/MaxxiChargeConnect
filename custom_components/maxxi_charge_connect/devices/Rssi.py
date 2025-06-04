@@ -13,6 +13,7 @@ class Rssi(SensorEntity):
         self._attr_unique_id = f"{entry.entry_id}_rssi"
         self._attr_icon = "mdi:wifi"
         self._attr_native_value = None
+        self._attr_device_class = "signal_strength"
         self._attr_native_unit_of_measurement = SIGNAL_STRENGTH_DECIBELS_MILLIWATT
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
 

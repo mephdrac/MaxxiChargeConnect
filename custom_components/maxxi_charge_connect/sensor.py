@@ -9,6 +9,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN
 from .devices.DeviceId import DeviceId
+from .devices.Rssi import Rssi
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -18,8 +19,9 @@ async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ):
     sensor = DeviceId(entry)
+    rssiSensor = Rssi(entry)
     hello_sensor = HelloWorldSensor(entry)
-    async_add_entities([sensor, hello_sensor])
+    async_add_entities([sensor, rssiSensor, hello_sensor])
 
 
 class HelloWorldSensor(SensorEntity):

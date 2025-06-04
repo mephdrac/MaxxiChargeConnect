@@ -23,15 +23,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[f"{DOMAIN}_webhook_registered"] = True
 
     # # ✅ beide Plattformen gleichzeitig laden
-    await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "switch"])
+    await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
     duration = time.perf_counter() - start
     _LOGGER.info("Setup of Maxxi took%.3f seconds", duration)
     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    unload_ok = await hass.config_entries.async_unload_platforms(
-        entry, ["sensor", "switch"]
-    )
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, ["sensor"])
     hass.data[DOMAIN].pop(entry.entry_id, None)
     return unload_ok

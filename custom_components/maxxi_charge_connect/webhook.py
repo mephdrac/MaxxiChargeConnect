@@ -20,14 +20,14 @@ async def async_register_webhook(hass: HomeAssistant):
 
     signal_sensor = f"{DOMAIN}_{hass.data[CONF_WEBHOOK_ID]}_update_sensor"
 
-    _LOGGER.warning(
+    _LOGGER.info(
         "Register webhook '%s' with ID: %s", WEBHOOK_NAME, hass.data[CONF_WEBHOOK_ID]
     )
 
     async def handle_webhook(hass, webhook_id, request):
         try:
             data = await request.json()
-            _LOGGER.warning("Empfangene Webhook-Daten: %s", data)
+            # _LOGGER.warning("Empfangene Webhook-Daten: %s", data)
             async_dispatcher_send(hass, signal_sensor, data)
         except Exception as e:
             _LOGGER.error("Error on receiving webhook-data: %s", e)
@@ -42,7 +42,7 @@ async def async_register_webhook(hass: HomeAssistant):
         handle_webhook,
     )
 
-    _LOGGER.warning("Webhook '%s' registered successful", WEBHOOK_NAME)
+    _LOGGER.info("Webhook '%s' registered successful", WEBHOOK_NAME)
 
 
 async def async_unregister_webhook(hass: HomeAssistant):

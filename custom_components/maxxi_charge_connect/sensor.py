@@ -16,6 +16,7 @@ from .devices.BatteryPower import BatteryPower
 from .devices.BatterySoc import BatterySoc
 from .devices.BatterySoE import BatterySoE
 from .devices.PowerMeter import PowerMeter
+from .devices.FirmwareVersion import FirmwareVersion
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -32,7 +33,8 @@ async def async_setup_entry(
     batterySoc = BatterySoc(entry)
     batterySoE = BatterySoE(entry)
     powerMeter = PowerMeter(entry)
-    hello_sensor = HelloWorldSensor(entry)
+    firmwareVersion = FirmwareVersion(entry)
+
     async_add_entities(
         [
             sensor,
@@ -43,30 +45,6 @@ async def async_setup_entry(
             batterySoc,
             batterySoE,
             powerMeter,
-            hello_sensor,
+            firmwareVersion,
         ]
     )
-
-
-class HelloWorldSensor(SensorEntity):
-    def __init__(self, entry: ConfigEntry):
-        self._attr_name = entry.data.get("name", "Hello Sensor")
-        self._attr_unique_id = f"{entry.entry_id}_sensor"
-        self._entry = entry
-        self._state = "Bereit"
-
-    @property
-    def state(self):
-        return self._state
-
-    async def async_update(self):
-        self._state = "Aktualisiert"
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self._entry.entry_id)},
-            "name": "MaxxiChargeConnect",
-            "manufacturer": "Maxxi GmbH",
-            "model": "Maxxicharge",
-        }

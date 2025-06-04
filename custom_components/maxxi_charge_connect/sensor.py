@@ -13,7 +13,7 @@ from .devices.Rssi import Rssi
 from .devices.CcuPower import CcuPower
 from .devices.PvPower import PvPower
 from .devices.BatteryPower import BatteryPower
-
+from .devices.BatterySoc import BatterySoc
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -27,8 +27,19 @@ async def async_setup_entry(
     ccuPowerSensor = CcuPower(entry)
     pvPowerSensor = PvPower(entry)
     batteryPowerSensor = BatteryPower(entry)
+    batterySoc = BatterySoc(entry)
     hello_sensor = HelloWorldSensor(entry)
-    async_add_entities([sensor, rssiSensor, ccuPowerSensor, pvPowerSensor, batteryPowerSensor, hello_sensor])
+    async_add_entities(
+        [
+            sensor,
+            rssiSensor,
+            ccuPowerSensor,
+            pvPowerSensor,
+            batteryPowerSensor,
+            batterySoc,
+            hello_sensor,
+        ]
+    )
 
 
 class HelloWorldSensor(SensorEntity):

@@ -47,8 +47,7 @@ class CcuPower(SensorEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
-            "name": "MaxxiChargeConnect (Community Integration)",
+            "name": "MaxxiChargeConnect",
             "manufacturer": "mephdrac",
-            "model": "Shows Information of MaxxiCharge",
-            "entry_type": "service",
+            "model": "CCU - Maxxicharge",            
         }

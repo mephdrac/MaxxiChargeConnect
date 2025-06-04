@@ -8,6 +8,7 @@ from homeassistant.const import EntityCategory
 
 class DeviceId(TextEntity):
     def __init__(self, entry: ConfigEntry):
+        self._unsub_dispatcher = None
         self._entry = entry
         self._attr_name = "Device ID"
         self._attr_unique_id = f"{entry.entry_id}_deviceid"
@@ -25,6 +26,7 @@ class DeviceId(TextEntity):
     async def async_will_remove_from_hass(self):
         if self._unsub_dispatcher:
             self._unsub_dispatcher()
+            self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
         self._attr_native_value = data.get("deviceId")

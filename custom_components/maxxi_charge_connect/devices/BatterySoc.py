@@ -16,6 +16,7 @@ from homeassistant.components.sensor import (
 
 class BatterySoc(SensorEntity):
     def __init__(self, entry: ConfigEntry):
+        self._unsub_dispatcher = None
         self._entry = entry
         self._attr_name = "Battery SOC"
         self._attr_unique_id = f"{entry.entry_id}_battery_soc"
@@ -34,6 +35,7 @@ class BatterySoc(SensorEntity):
     async def async_will_remove_from_hass(self):
         if self._unsub_dispatcher:
             self._unsub_dispatcher()
+            self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
         self._attr_native_value = data.get("SOC", 0)

@@ -16,6 +16,7 @@ from homeassistant.components.sensor import (
 
 class CcuPower(SensorEntity):
     def __init__(self, entry: ConfigEntry):
+        self._unsub_dispatcher = None
         self._entry = entry
         self._attr_name = "CCU Power"
         self._attr_unique_id = f"{entry.entry_id}_ccu_power"
@@ -36,6 +37,7 @@ class CcuPower(SensorEntity):
     async def async_will_remove_from_hass(self):
         if self._unsub_dispatcher:
             self._unsub_dispatcher()
+            self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
         self._attr_native_value = data.get("Pccu")

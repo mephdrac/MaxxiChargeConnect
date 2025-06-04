@@ -3,6 +3,7 @@
   "name": "MaxxiChargeConnect (Community Integration)",
   "version": "0.1.0",
   "documentation": "https://github.com/mephdrac/MaxxiChargeConnect",
+  "issue_tracker": "https://github.com/mephdrac/MaxxiChargeConnect/issues",
   "requirements": [],
   "codeowners": ["@mephdrac"],
   "config_flow": true,

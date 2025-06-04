@@ -53,6 +53,8 @@ class BatterySoE(SensorEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
-            "name": "MaxxiChargeConnect",
-            "manufacturer": "Maxxi GmbH",
+            "name": "MaxxiChargeConnect (Community Integration)",
+            "manufacturer": "mephdrac",
+            "model": "Shows Information of MaxxiCharge",
+            "entry_type": "service",
         }

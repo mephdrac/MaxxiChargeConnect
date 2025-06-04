@@ -1,9 +1,10 @@
 {
   "domain": "maxxi_charge_connect",
-  "name": "MaxxiChargeConnect",
-  "version": "1.0.0",
+  "name": "MaxxiChargeConnect (Community Integration)",
+  "version": "0.1.0",
   "documentation": "https://github.com/mephdrac/MaxxiChargeConnect",
   "requirements": [],
   "codeowners": ["@mephdrac"],
-  "config_flow": true
+  "config_flow": true,
+  "license": "MIT"
 }

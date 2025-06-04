@@ -1,19 +1,30 @@
 from ..const import DOMAIN
-from homeassistant.components.text import TextEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.const import CONF_WEBHOOK_ID
 from homeassistant.const import EntityCategory
+from homeassistant.const import CONF_WEBHOOK_ID
+
+from homeassistant.const import UnitOfElectricCurrent, UnitOfEnergy, UnitOfPower
+
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
+)
 
 
-class DeviceId(TextEntity):
+class PowerMeter(SensorEntity):
     def __init__(self, entry: ConfigEntry):
         self._entry = entry
-        self._attr_name = "Device ID"
-        self._attr_unique_id = f"{entry.entry_id}_deviceid"
-        self._attr_icon = "mdi:identifier"
+        self._attr_name = "Power Meter"
+        self._attr_unique_id = f"{entry.entry_id}_power_meter"
+        self._attr_icon = "mdi:gauge"
         self._attr_native_value = None
-        self._attr_entity_category = EntityCategory.DIAGNOSTIC
+        self._attr_device_class = SensorDeviceClass.POWER
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_native_unit_of_measurement = UnitOfPower.WATT
+        # self._attr_entity_category = EntityCategory.
 
     async def async_added_to_hass(self):
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
@@ -27,7 +38,7 @@ class DeviceId(TextEntity):
             self._unsub_dispatcher()
 
     async def _handle_update(self, data):
-        self._attr_native_value = data.get("deviceId")
+        self._attr_native_value = data.get("Pr")
         self.async_write_ha_state()
 
     @property

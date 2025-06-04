@@ -14,6 +14,8 @@ from .devices.CcuPower import CcuPower
 from .devices.PvPower import PvPower
 from .devices.BatteryPower import BatteryPower
 from .devices.BatterySoc import BatterySoc
+from .devices.BatterySoE import BatterySoE
+from .devices.PowerMeter import PowerMeter
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -28,6 +30,8 @@ async def async_setup_entry(
     pvPowerSensor = PvPower(entry)
     batteryPowerSensor = BatteryPower(entry)
     batterySoc = BatterySoc(entry)
+    batterySoE = BatterySoE(entry)
+    powerMeter = PowerMeter(entry)
     hello_sensor = HelloWorldSensor(entry)
     async_add_entities(
         [
@@ -37,6 +41,8 @@ async def async_setup_entry(
             pvPowerSensor,
             batteryPowerSensor,
             batterySoc,
+            batterySoE,
+            powerMeter,
             hello_sensor,
         ]
     )

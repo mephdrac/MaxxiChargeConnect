@@ -21,7 +21,8 @@ class BatterySoE(SensorEntity):
         self._attr_unique_id = f"{entry.entry_id}_battery_soe"
         self._attr_icon = "mdi:file-document-outline"
         self._attr_native_value = None
-        self._attr_device_class = SensorDeviceClass.BATTERY
+        self._attr_device_class = None
+        # self._attr_device_class = SensorDeviceClass.BATTERY
         # self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
         # self._attr_entity_category = EntityCategory.

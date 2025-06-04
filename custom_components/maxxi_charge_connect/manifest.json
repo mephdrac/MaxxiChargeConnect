@@ -1,0 +1,9 @@
+{
+  "domain": "maxxi_charge_connect",
+  "name": "MaxxiChargeConnect",
+  "version": "1.0.0",
+  "documentation": "https://github.com/mephdrac/MaxxiChargeConnect",
+  "requirements": [],
+  "codeowners": ["@mephdrac"],
+  "config_flow": true
+}

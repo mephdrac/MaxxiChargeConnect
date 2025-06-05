@@ -1,3 +1,5 @@
+![MaxxiChargeConnect](images/logo.png)
+
 # MaxxiChargeConnect
 
 

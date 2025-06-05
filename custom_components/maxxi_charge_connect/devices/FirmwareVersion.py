@@ -10,7 +10,7 @@ class FirmwareVersion(TextEntity):
     def __init__(self, entry: ConfigEntry):
         self._unsub_dispatcher = None
         self._entry = entry
-        self._attr_name = "Firmaware Version"
+        self._attr_name = "Firmware Version"
         self._attr_unique_id = f"{entry.entry_id}_firmware_version"
         self._attr_icon = "mdi:information-outline"
         self._attr_native_value = None

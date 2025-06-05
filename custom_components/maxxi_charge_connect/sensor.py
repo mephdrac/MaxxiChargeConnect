@@ -1,12 +1,15 @@
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_WEBHOOK_ID
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .devices.BatteryPower import BatteryPower
+from .devices.BatterySensorManager import BatterySensorManager
 from .devices.BatterySoc import BatterySoc
 from .devices.BatterySoE import BatterySoE
 from .devices.BatteryTodayEnergyCharge import BatteryTodayEnergyCharge
 from .devices.BatteryTodayEnergyDischarge import BatteryTodayEnergyDischarge
+from .devices.CcuEnergyToday import CcuEnergyToday
 from .devices.CcuPower import CcuPower
 from .devices.DeviceId import DeviceId
 from .devices.FirmwareVersion import FirmwareVersion
@@ -15,10 +18,7 @@ from .devices.PvPower import PvPower
 from .devices.PvTodayEnergy import PvTodayEnergy
 from .devices.PvTotalEnergy import PvTotalEnergy
 from .devices.Rssi import Rssi
-
-from .devices.CcuEnergyToday import CcuEnergyToday
-from .devices.BatterySensorManager import BatterySensorManager
-from .devices.BatterySoE import BatterySoE
+from .devices.WebhookId import WebhookId
 
 SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
 
@@ -44,6 +44,7 @@ async def async_setup_entry(
     batteryTodayEnergyCharge = BatteryTodayEnergyCharge(entry)
     batteryTodayEnergyDischarge = BatteryTodayEnergyDischarge(entry)
     ccuEnergyToday = CcuEnergyToday(entry)
+    webhookId = WebhookId(entry)
 
     async_add_entities(
         [
@@ -61,5 +62,6 @@ async def async_setup_entry(
             batteryTodayEnergyDischarge,
             ccuEnergyToday,
             batterySoE,
+            webhookId,
         ]
     )

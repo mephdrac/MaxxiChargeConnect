@@ -12,7 +12,7 @@ class DeviceId(TextEntity):
         self._entry = entry
         self._attr_name = "Device ID"
         self._attr_unique_id = f"{entry.entry_id}_deviceid"
-        self._attr_icon = "mdi:webhook"
+        self._attr_icon = "mdi:identifier"
         self._attr_native_value = None
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
 

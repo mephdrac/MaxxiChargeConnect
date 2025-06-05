@@ -18,9 +18,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[CONF_WEBHOOK_ID] = entry.data[CONF_WEBHOOK_ID]
 
     # Registriere Webhook nur einmal global beim Start
-    if not hass.data.get(f"{DOMAIN}_webhook_registered"):
+    if not hass.data.get(f"{DOMAIN}_{entry.data[CONF_WEBHOOK_ID]}_webhook_registered"):
         await webhook.async_register_webhook(hass)
-        hass.data[f"{DOMAIN}_webhook_registered"] = True
+        hass.data[f"{DOMAIN}_{entry.data[CONF_WEBHOOK_ID]}_webhook_registered"] = True
 
     # # ✅ beide Plattformen gleichzeitig laden
     await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])

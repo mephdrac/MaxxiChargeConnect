@@ -51,7 +51,7 @@ class BatteryPower(SensorEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
-            "name": "MaxxiChargeConnect",
+            "name": self._entry.title,
             "manufacturer": "mephdrac",
             "model": "CCU - Maxxicharge",
         }

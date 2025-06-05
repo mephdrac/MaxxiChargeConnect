@@ -52,6 +52,6 @@ async def async_setup_entry(
             pvTodayEnergy,
             batteryTodayEnergyCharge,
             batteryTodayEnergyDischarge,
-            ccuEnergyToday
+            ccuEnergyToday,
         ]
     )

@@ -38,7 +38,7 @@ class PvTotalEnergy(RestoreSensor):
         self._unsub_dispatcher = async_dispatcher_connect(
             self.hass, signal_sensor, self._handle_update
         )
-        self.async_on_remove(self._unsub_dispatcher)
+        # self.async_on_remove(self._unsub_dispatcher)
 
     async def async_will_remove_from_hass(self):
         if self._unsub_dispatcher:
@@ -65,7 +65,7 @@ class PvTotalEnergy(RestoreSensor):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
-            "name": "MaxxiChargeConnect",
+            "name": self._entry.title,
             "manufacturer": "mephdrac",
             "model": "CCU - Maxxicharge",
         }

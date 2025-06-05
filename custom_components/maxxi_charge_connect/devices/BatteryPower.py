@@ -41,7 +41,7 @@ class BatteryPower(SensorEntity):
 
     async def _handle_update(self, data):
         ccu = float(data.get("Pccu", 0))
-        pv_power = float(data.get("PPV_power_total", 0))
+        pv_power = float(data.get("PV_power_total", 0))
         batterie_leistung = round(pv_power - ccu, 3)
 
         self._attr_native_value = batterie_leistung
@@ -53,5 +53,5 @@ class BatteryPower(SensorEntity):
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": "MaxxiChargeConnect",
             "manufacturer": "mephdrac",
-            "model": "CCU - Maxxicharge",            
+            "model": "CCU - Maxxicharge",
         }

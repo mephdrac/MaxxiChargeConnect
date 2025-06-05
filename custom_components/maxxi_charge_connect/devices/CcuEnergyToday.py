@@ -12,12 +12,12 @@ from homeassistant.helpers.event import async_track_time_change
 from ..const import DOMAIN
 
 
-class BatteryTodayEnergyDischarge(RestoreSensor):
+class CcuEnergyToday(RestoreSensor):
     def __init__(self, entry):
         self._entry = entry
-        self._attr_name = "Battery Discharge Today"
-        self._attr_unique_id = f"{entry.entry_id}_battery_energy_discharge_today"
-        self._attr_icon = "mdi:battery-minus-outline"
+        self._attr_name = "CCU Today"
+        self._attr_unique_id = f"{entry.entry_id}_CcuEnergyToday"
+        self._attr_icon = "mdi:counter"
         self._attr_device_class = SensorDeviceClass.ENERGY
         self._attr_state_class = SensorStateClass.TOTAL
         self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
@@ -57,8 +57,6 @@ class BatteryTodayEnergyDischarge(RestoreSensor):
     async def _handle_update(self, data):
         try:
             ccu = float(data.get("Pccu", 0))
-            pv_power = float(data.get("PV_power_total", 0))
-            batterie_leistung = round(pv_power - ccu, 3)
         except (TypeError, ValueError):
             return
 
@@ -66,8 +64,7 @@ class BatteryTodayEnergyDischarge(RestoreSensor):
         if self._last_update:
             delta = (now - self._last_update).total_seconds()
             if 0 < delta < 300:
-                if batterie_leistung <= 0:
-                    self._energy_kwh += (-1 * batterie_leistung * delta) / 3_600_000
+                self._energy_kwh += (ccu * delta) / 3_600_000
 
         self._last_update = now
         self._attr_native_value = round(self._energy_kwh, 3)

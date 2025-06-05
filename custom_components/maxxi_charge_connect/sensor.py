@@ -16,6 +16,8 @@ from .devices.PvTodayEnergy import PvTodayEnergy
 from .devices.PvTotalEnergy import PvTotalEnergy
 from .devices.Rssi import Rssi
 
+from .devices.CcuEnergyToday import CcuEnergyToday
+
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
@@ -33,6 +35,7 @@ async def async_setup_entry(
     pvTodayEnergy = PvTodayEnergy(entry)
     batteryTodayEnergyCharge = BatteryTodayEnergyCharge(entry)
     batteryTodayEnergyDischarge = BatteryTodayEnergyDischarge(entry)
+    ccuEnergyToday = CcuEnergyToday(entry)
 
     async_add_entities(
         [
@@ -49,5 +52,6 @@ async def async_setup_entry(
             pvTodayEnergy,
             batteryTodayEnergyCharge,
             batteryTodayEnergyDischarge,
+            ccuEnergyToday
         ]
     )

@@ -15,8 +15,8 @@ from ..const import DOMAIN
 class BatteryTodayEnergyCharge(RestoreSensor):
     def __init__(self, entry):
         self._entry = entry
-        self._attr_name = "Battery Charge"
-        self._attr_unique_id = f"{entry.entry_id}_battery_energy_charge"
+        self._attr_name = "Battery Charge Today"
+        self._attr_unique_id = f"{entry.entry_id}_battery_energy_charge_today"
         self._attr_icon = "mdi:battery-plus"
         self._attr_device_class = SensorDeviceClass.ENERGY
         self._attr_state_class = SensorStateClass.TOTAL

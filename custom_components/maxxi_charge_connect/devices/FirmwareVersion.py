@@ -28,8 +28,9 @@ class FirmwareVersion(TextEntity):
             self._unsub_dispatcher()
             self._unsub_dispatcher = None
 
-    async def _handle_update(self, data):
-        self._attr_native_value = data.get("firmwareVersion")
+    async def _handle_update(self, data):        
+        value = str(data.get("firmwareVersion", "unknown"))
+        self._attr_native_value = value
         self.async_write_ha_state()
 
     @property

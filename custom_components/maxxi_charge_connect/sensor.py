@@ -5,14 +5,16 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .devices.BatteryPower import BatteryPower
 from .devices.BatterySoc import BatterySoc
 from .devices.BatterySoE import BatterySoE
+from .devices.BatteryTodayEnergyCharge import BatteryTodayEnergyCharge
+from .devices.BatteryTodayEnergyDischarge import BatteryTodayEnergyDischarge
 from .devices.CcuPower import CcuPower
 from .devices.DeviceId import DeviceId
 from .devices.FirmwareVersion import FirmwareVersion
 from .devices.PowerMeter import PowerMeter
 from .devices.PvPower import PvPower
+from .devices.PvTodayEnergy import PvTodayEnergy
 from .devices.PvTotalEnergy import PvTotalEnergy
 from .devices.Rssi import Rssi
-from .devices.PvTodayEnergy import PvTodayEnergy
 
 
 async def async_setup_entry(
@@ -29,6 +31,8 @@ async def async_setup_entry(
     firmwareVersion = FirmwareVersion(entry)
     pvTotalEnergy = PvTotalEnergy(entry)
     pvTodayEnergy = PvTodayEnergy(entry)
+    batteryTodayEnergyCharge = BatteryTodayEnergyCharge(entry)
+    batteryTodayEnergyDischarge = BatteryTodayEnergyDischarge(entry)
 
     async_add_entities(
         [
@@ -43,5 +47,7 @@ async def async_setup_entry(
             firmwareVersion,
             pvTotalEnergy,
             pvTodayEnergy,
+            batteryTodayEnergyCharge,
+            batteryTodayEnergyDischarge,
         ]
     )

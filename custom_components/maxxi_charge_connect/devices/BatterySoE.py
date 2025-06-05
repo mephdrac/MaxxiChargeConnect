@@ -1,17 +1,9 @@
-from ..const import DOMAIN
+from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_WEBHOOK_ID, UnitOfEnergy
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.const import EntityCategory
-from homeassistant.const import CONF_WEBHOOK_ID
 
-from homeassistant.const import UnitOfElectricCurrent, UnitOfEnergy, UnitOfPower
-
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntity,
-    SensorEntityDescription,
-    SensorStateClass,
-)
+from ..const import DOMAIN
 
 
 class BatterySoE(SensorEntity):
@@ -23,10 +15,7 @@ class BatterySoE(SensorEntity):
         self._attr_icon = "mdi:file-document-outline"
         self._attr_native_value = None
         self._attr_device_class = None
-        # self._attr_device_class = SensorDeviceClass.BATTERY
-        # self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
-        # self._attr_entity_category = EntityCategory.
 
     async def async_added_to_hass(self):
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
@@ -47,9 +36,12 @@ class BatterySoE(SensorEntity):
             and isinstance(batteries_info, list)
             and len(batteries_info) > 0
         ):
-            battery_capacity = batteries_info[0].get("batteryCapacity")
+            batteries_info = data.get("batteriesInfo", [])
+            total_capacity = sum(
+                battery.get("batteryCapacity", 0) for battery in batteries_info
+            )
 
-        self._attr_native_value = battery_capacity
+        self._attr_native_value = total_capacity
         self.async_write_ha_state()
 
     @property
@@ -58,5 +50,5 @@ class BatterySoE(SensorEntity):
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,
             "manufacturer": "mephdrac",
-            "model": "CCU - Maxxicharge",            
+            "model": "CCU - Maxxicharge",
         }

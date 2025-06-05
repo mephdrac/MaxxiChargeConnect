@@ -1,36 +1,31 @@
 import logging
-
 from aiohttp import web
-
 from homeassistant.components.webhook import async_register, async_unregister
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
+from homeassistant.config_entries import ConfigEntry
 
 from .const import DOMAIN, WEBHOOK_NAME
 from homeassistant.const import CONF_WEBHOOK_ID
 
-
-# SIGNAL_UPDATE_SENSOR = f"{DOMAIN}_{WEBHOOK_ID}_update_sensor"
-
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_register_webhook(hass: HomeAssistant):
-    """Registriere Webhook im Home Assistant Core."""
+async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
+    """Webhook registrieren, spezifisch für diesen ConfigEntry."""
 
-    signal_sensor = f"{DOMAIN}_{hass.data[CONF_WEBHOOK_ID]}_update_sensor"
+    webhook_id = entry.data[CONF_WEBHOOK_ID]
+    signal_sensor = f"{DOMAIN}_{webhook_id}_update_sensor"
 
-    _LOGGER.info(
-        "Register webhook '%s' with ID: %s", WEBHOOK_NAME, hass.data[CONF_WEBHOOK_ID]
-    )
+    _LOGGER.info("Registering webhook '%s' with ID: %s", WEBHOOK_NAME, webhook_id)
 
     async def handle_webhook(hass, webhook_id, request):
         try:
             data = await request.json()
-            # _LOGGER.warning("Empfangene Webhook-Daten: %s", data)
+            _LOGGER.debug("Webhook [%s] received data: %s", webhook_id, data)
             async_dispatcher_send(hass, signal_sensor, data)
         except Exception as e:
-            _LOGGER.error("Error on receiving webhook-data: %s", e)
+            _LOGGER.error("Error processing webhook data: %s", e)
             return web.Response(status=400, text="Invalid request")
         return web.Response(status=200, text="OK")
 
@@ -38,13 +33,12 @@ async def async_register_webhook(hass: HomeAssistant):
         hass,
         DOMAIN,
         WEBHOOK_NAME,
-        hass.data[CONF_WEBHOOK_ID],
+        webhook_id,
         handle_webhook,
     )
 
-    _LOGGER.info("Webhook '%s' registered successful", WEBHOOK_NAME)
 
-
-async def async_unregister_webhook(hass: HomeAssistant):
-    """Webhook wieder entfernen."""
-    async_unregister(hass, hass.data[CONF_WEBHOOK_ID])
+async def async_unregister_webhook(hass: HomeAssistant, entry: ConfigEntry):
+    webhook_id = entry.data[CONF_WEBHOOK_ID]
+    _LOGGER.info("Unregistering webhook with ID: %s", webhook_id)
+    async_unregister(hass, webhook_id)

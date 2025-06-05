@@ -17,11 +17,19 @@ from .devices.PvTotalEnergy import PvTotalEnergy
 from .devices.Rssi import Rssi
 
 from .devices.CcuEnergyToday import CcuEnergyToday
+from .devices.BatterySensorManager import BatterySensorManager
+from .devices.BatterySoE import BatterySoE
+
+SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
 
 
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ):
+    manager = BatterySensorManager(hass, entry, async_add_entities)
+    SENSOR_MANAGER[entry.entry_id] = manager
+    await manager.setup()
+
     sensor = DeviceId(entry)
     rssiSensor = Rssi(entry)
     ccuPowerSensor = CcuPower(entry)
@@ -45,7 +53,6 @@ async def async_setup_entry(
             pvPowerSensor,
             batteryPowerSensor,
             batterySoc,
-            batterySoE,
             powerMeter,
             firmwareVersion,
             pvTotalEnergy,
@@ -53,5 +60,6 @@ async def async_setup_entry(
             batteryTodayEnergyCharge,
             batteryTodayEnergyDischarge,
             ccuEnergyToday,
+            batterySoE,
         ]
     )

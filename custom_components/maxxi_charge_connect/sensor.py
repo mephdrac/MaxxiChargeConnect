@@ -23,6 +23,7 @@ from .http_scan.MaximumPower import MaximumPower
 from .http_scan.MaxxiDataUpdateCoordinator import MaxxiDataUpdateCoordinator
 from .http_scan.NumberOfBatteries import NumberOfBatteries
 from .http_scan.OfflineOutputPower import OfflineOutputPower
+from .http_scan.OutputOffset import OutputOffset
 from .http_scan.PowerMeterIp import PowerMeterIp
 from .http_scan.PowerMeterType import PowerMeterType
 
@@ -60,6 +61,7 @@ async def async_setup_entry(
     maximumPower = MaximumPower(coordinator)
     offlineOutputPower = OfflineOutputPower(coordinator)
     numberOfBatteries = NumberOfBatteries(coordinator)
+    outputOffset = OutputOffset(coordinator)
 
     async_add_entities(
         [
@@ -83,5 +85,6 @@ async def async_setup_entry(
             maximumPower,
             offlineOutputPower,
             numberOfBatteries,
+            outputOffset,
         ]
     )

@@ -21,12 +21,25 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
             name="maxxi_charge_connect",
             update_interval=SCAN_INTERVAL,
         )
+
         self.entry = entry
         self._resource = entry.data["host"]
         if not self._resource.startswith(("http://", "https://")):
             self._resource = f"http://{self._resource}"
 
         _LOGGER.warning("HOST:" + self._resource)
+
+    def exract_data(self, soup: BeautifulSoup, label: str):
+        # Daten aus HTML extrahieren
+        label_tag = soup.find("b", string=label)
+
+        if label_tag and label_tag.parent:
+            full_text = label_tag.parent.get_text(strip=True)
+            result_label = full_text.replace(label, "").strip()
+        else:
+            raise UpdateFailed(f"Label '{label}' nicht gefunden")
+
+        return result_label
 
     async def _async_update_data(self):
         """API abfragen und Daten zurückgeben"""
@@ -42,64 +55,24 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                         html = await response.text()
                         soup = BeautifulSoup(html, "html.parser")
 
-                        # Erster Wert: PowerMeterIP
-                        label_ip = "Messgerät IP:"
-                        label_ip_tag = soup.find("b", string=label_ip)
-                        if label_ip_tag and label_ip_tag.parent:
-                            full_text_ip = label_ip_tag.parent.get_text(strip=True)
-                            power_meter_ip = full_text_ip.replace(label_ip, "").strip()
-                        else:
-                            raise UpdateFailed(f"Label '{label_ip}' nicht gefunden")
+                        power_meter_ip = self.exract_data(soup, "Messgerät IP:")
+                        power_meter_typ = self.exract_data(soup, "Messgerät Typ:")
+                        maximumPower = self.exract_data(soup, "Maximale Leistung:")
+                        offlineOutputPower = self.exract_data(
+                            soup, "Offline-Ausgangsleistung:"
+                        )
+                        numberOfBatteries = self.exract_data(
+                            soup, "Batterien im System:"
+                        )
+                        outputOffset = self.exract_data(soup, "Ausgabe korrigieren:")
 
-                        # Zweiter Wert: PowerMeterTyp (Beispiel-Label)
-                        label_typ = "Messgerät Typ:"
-                        label_typ_tag = soup.find("b", string=label_typ)
-                        if label_typ_tag and label_typ_tag.parent:
-                            full_text_typ = label_typ_tag.parent.get_text(strip=True)
-                            power_meter_typ = full_text_typ.replace(
-                                label_typ, ""
-                            ).strip()
-                        else:
-                            raise UpdateFailed(f"Label '{label_typ}' nicht gefunden")
-
-                        # MaximumPower
-                        label_typ = "Maximale Leistung:"
-                        label_typ_tag = soup.find("b", string=label_typ)
-                        if label_typ_tag and label_typ_tag.parent:
-                            full_text_typ = label_typ_tag.parent.get_text(strip=True)
-                            maximumPower = full_text_typ.replace(label_typ, "").strip()
-                        else:
-                            raise UpdateFailed(f"Label '{label_typ}' nicht gefunden")
-
-                        # OfflineOutputPower
-                        label_typ = "Offline-Ausgangsleistung:"
-                        label_typ_tag = soup.find("b", string=label_typ)
-                        if label_typ_tag and label_typ_tag.parent:
-                            full_text_typ = label_typ_tag.parent.get_text(strip=True)
-                            offlineOutputPower = full_text_typ.replace(
-                                label_typ, ""
-                            ).strip()
-                        else:
-                            raise UpdateFailed(f"Label '{label_typ}' nicht gefunden")
-
-                        # NumberOfBatteries
-                        label_typ = "Batterien im System:"
-                        label_typ_tag = soup.find("b", string=label_typ)
-                        if label_typ_tag and label_typ_tag.parent:
-                            full_text_typ = label_typ_tag.parent.get_text(strip=True)
-                            numberOfBatteries = full_text_typ.replace(
-                                label_typ, ""
-                            ).strip()
-                        else:
-                            raise UpdateFailed(f"Label '{label_typ}' nicht gefunden")
-
-                        # Beide Werte zurückgeben
                         return {
                             "PowerMeterIp": power_meter_ip,
                             "PowerMeterType": power_meter_typ,
                             "MaximumPower": maximumPower,
                             "OfflineOutputPower": offlineOutputPower,
                             "NumberOfBatteries": numberOfBatteries,
+                            "OutputOffset": outputOffset,
                         }
 
         except Exception as err:

@@ -6,19 +6,21 @@ from homeassistant.helpers.entity import DeviceInfo
 from ..const import DOMAIN
 
 
-class PowerMeterIp(TextEntity):
+class PowerMeterType(TextEntity):
     def __init__(self, coordinator):
         self.coordinator = coordinator
-        self._attr_name = "Power Meter IP"
-        self._attr_unique_id = f"{coordinator.entry.entry_id}_power_meter_ip"
-        self._attr_icon = "mdi:ip"
+        self._attr_name = "Power Meter Type"
+        self._attr_unique_id = f"{coordinator.entry.entry_id}_power_meter_type"
+        self._attr_icon = "mdi:chip"
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._attr_should_poll = False
 
     @property
     def native_value(self):
         return (
-            self.coordinator.data.get("PowerMeterIp") if self.coordinator.data else None
+            self.coordinator.data.get("PowerMeterType")
+            if self.coordinator.data
+            else None
         )
 
     async def async_added_to_hass(self):

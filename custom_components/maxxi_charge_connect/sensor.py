@@ -19,8 +19,12 @@ from .devices.PvTodayEnergy import PvTodayEnergy
 from .devices.PvTotalEnergy import PvTotalEnergy
 from .devices.Rssi import Rssi
 from .devices.WebhookId import WebhookId
-from .http_scan.PowerMeterIp import PowerMeterIp
+from .http_scan.MaximumPower import MaximumPower
 from .http_scan.MaxxiDataUpdateCoordinator import MaxxiDataUpdateCoordinator
+from .http_scan.NumberOfBatteries import NumberOfBatteries
+from .http_scan.OfflineOutputPower import OfflineOutputPower
+from .http_scan.PowerMeterIp import PowerMeterIp
+from .http_scan.PowerMeterType import PowerMeterType
 
 SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
 
@@ -50,7 +54,12 @@ async def async_setup_entry(
     webhookId = WebhookId(entry)
 
     coordinator = MaxxiDataUpdateCoordinator(hass, entry)
+
     powerMeterIp = PowerMeterIp(coordinator)
+    powerMeterType = PowerMeterType(coordinator)
+    maximumPower = MaximumPower(coordinator)
+    offlineOutputPower = OfflineOutputPower(coordinator)
+    numberOfBatteries = NumberOfBatteries(coordinator)
 
     async_add_entities(
         [
@@ -70,5 +79,9 @@ async def async_setup_entry(
             batterySoE,
             webhookId,
             powerMeterIp,
+            powerMeterType,
+            maximumPower,
+            offlineOutputPower,
+            numberOfBatteries,
         ]
     )

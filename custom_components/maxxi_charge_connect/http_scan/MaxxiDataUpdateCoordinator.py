@@ -41,12 +41,66 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                             )
                         html = await response.text()
                         soup = BeautifulSoup(html, "html.parser")
-                        label_text = "Messgerät IP:"
-                        label = soup.find("b", string=label_text)
-                        if label and label.parent:
-                            full_text = label.parent.get_text(strip=True)
-                            value = full_text.replace(label_text, "").strip()
-                            return {"local_ip": value}
-                        raise UpdateFailed(f"Label '{label_text}' nicht gefunden")
+
+                        # Erster Wert: PowerMeterIP
+                        label_ip = "Messgerät IP:"
+                        label_ip_tag = soup.find("b", string=label_ip)
+                        if label_ip_tag and label_ip_tag.parent:
+                            full_text_ip = label_ip_tag.parent.get_text(strip=True)
+                            power_meter_ip = full_text_ip.replace(label_ip, "").strip()
+                        else:
+                            raise UpdateFailed(f"Label '{label_ip}' nicht gefunden")
+
+                        # Zweiter Wert: PowerMeterTyp (Beispiel-Label)
+                        label_typ = "Messgerät Typ:"
+                        label_typ_tag = soup.find("b", string=label_typ)
+                        if label_typ_tag and label_typ_tag.parent:
+                            full_text_typ = label_typ_tag.parent.get_text(strip=True)
+                            power_meter_typ = full_text_typ.replace(
+                                label_typ, ""
+                            ).strip()
+                        else:
+                            raise UpdateFailed(f"Label '{label_typ}' nicht gefunden")
+
+                        # MaximumPower
+                        label_typ = "Maximale Leistung:"
+                        label_typ_tag = soup.find("b", string=label_typ)
+                        if label_typ_tag and label_typ_tag.parent:
+                            full_text_typ = label_typ_tag.parent.get_text(strip=True)
+                            maximumPower = full_text_typ.replace(label_typ, "").strip()
+                        else:
+                            raise UpdateFailed(f"Label '{label_typ}' nicht gefunden")
+
+                        # OfflineOutputPower
+                        label_typ = "Offline-Ausgangsleistung:"
+                        label_typ_tag = soup.find("b", string=label_typ)
+                        if label_typ_tag and label_typ_tag.parent:
+                            full_text_typ = label_typ_tag.parent.get_text(strip=True)
+                            offlineOutputPower = full_text_typ.replace(
+                                label_typ, ""
+                            ).strip()
+                        else:
+                            raise UpdateFailed(f"Label '{label_typ}' nicht gefunden")
+
+                        # NumberOfBatteries
+                        label_typ = "Batterien im System:"
+                        label_typ_tag = soup.find("b", string=label_typ)
+                        if label_typ_tag and label_typ_tag.parent:
+                            full_text_typ = label_typ_tag.parent.get_text(strip=True)
+                            numberOfBatteries = full_text_typ.replace(
+                                label_typ, ""
+                            ).strip()
+                        else:
+                            raise UpdateFailed(f"Label '{label_typ}' nicht gefunden")
+
+                        # Beide Werte zurückgeben
+                        return {
+                            "PowerMeterIp": power_meter_ip,
+                            "PowerMeterType": power_meter_typ,
+                            "MaximumPower": maximumPower,
+                            "OfflineOutputPower": offlineOutputPower,
+                            "NumberOfBatteries": numberOfBatteries,
+                        }
+
         except Exception as err:
             raise UpdateFailed(f"Fehler beim Abrufen oder Parsen: {err}")

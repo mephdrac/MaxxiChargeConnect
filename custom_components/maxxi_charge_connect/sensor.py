@@ -57,8 +57,27 @@ async def async_setup_entry(
     sensorList.append(("NumberOfBatteries", "Batterien im System:"))
     sensorList.append(("OutputOffset", "Ausgabe korrigieren:"))
     sensorList.append(("CcuSpeed", "CCU-Geschwindigkeit:"))
+    sensorList.append(("Microinverter", "Mikro-Wechselrichter-Typ:"))
+    sensorList.append(("ResponseTolerance", "Reaktionstoleranz:"))
+    sensorList.append(("MinimumBatteryDischarge", "Minimale Entladung der Batterie:"))
+    sensorList.append(("MaximumBatteryDischarge", "Maximale Akkuladung:"))
+    sensorList.append(("DC/DC-Algorithmus", "DC/DC-Algorithmus:"))
+    sensorList.append(("Cloudservice", "Cloudservice:"))
+    sensorList.append(("LocalServer", "Lokalen Server nutzen:"))
 
     coordinator = MaxxiDataUpdateCoordinator(hass, entry, sensorList)
+
+    localServer = HttpScanTextClass(
+        coordinator, "LocalServer", "Use Local Server", "mdi:server-off"
+    )
+
+    cloudservice = HttpScanTextClass(
+        coordinator, "Cloudservice", "Cloudservice", "mdi:cloud-outline"
+    )
+
+    dcDcAlgorithmus = HttpScanTextClass(
+        coordinator, "DC/DC-Algorithmus", "DC/DC algorithm", "mdi:source-branch"
+    )
 
     powerMeterIp = HttpScanTextClass(
         coordinator, "PowerMeterIp", "Power Meter IP", "mdi:ip"
@@ -79,6 +98,26 @@ async def async_setup_entry(
         coordinator, "OutputOffset", "Output Offset", "mdi:flash"
     )
     ccuSpeed = HttpScanTextClass(coordinator, "CcuSpeed", "CCU - Speed", "mdi:flash")
+    microinverter = HttpScanTextClass(
+        coordinator, "Microinverter", "Microinverter", "mdi:current-ac"
+    )
+    responseTolerance = HttpScanTextClass(
+        coordinator, "ResponseTolerance", "Response tolerance", "mdi:current-ac"
+    )
+
+    minimumBatteryDischarge = HttpScanTextClass(
+        coordinator,
+        "MinimumBatteryDischarge",
+        "Minimum Battery Discharge ",
+        "mdi:battery-low",
+    )
+
+    maximumBatteryDischarge = HttpScanTextClass(
+        coordinator,
+        "MaximumBatteryDischarge",
+        "Maximum Battery Charge ",
+        "mdi:battery-high",
+    )
 
     async_add_entities(
         [
@@ -104,5 +143,12 @@ async def async_setup_entry(
             numberOfBatteries,
             outputOffset,
             ccuSpeed,
+            microinverter,
+            responseTolerance,
+            minimumBatteryDischarge,
+            maximumBatteryDischarge,
+            dcDcAlgorithmus,
+            cloudservice,
+            localServer,
         ]
     )

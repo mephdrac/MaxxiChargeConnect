@@ -19,13 +19,8 @@ from .devices.PvTodayEnergy import PvTodayEnergy
 from .devices.PvTotalEnergy import PvTotalEnergy
 from .devices.Rssi import Rssi
 from .devices.WebhookId import WebhookId
-from .http_scan.MaximumPower import MaximumPower
 from .http_scan.MaxxiDataUpdateCoordinator import MaxxiDataUpdateCoordinator
-from .http_scan.NumberOfBatteries import NumberOfBatteries
-from .http_scan.OfflineOutputPower import OfflineOutputPower
-from .http_scan.OutputOffset import OutputOffset
-from .http_scan.PowerMeterIp import PowerMeterIp
-from .http_scan.PowerMeterType import PowerMeterType
+from .http_scan.HttpScanTextClass import HttpScanTextClass
 
 SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
 
@@ -54,14 +49,36 @@ async def async_setup_entry(
     ccuEnergyToday = CcuEnergyToday(entry)
     webhookId = WebhookId(entry)
 
-    coordinator = MaxxiDataUpdateCoordinator(hass, entry)
+    sensorList = []
+    sensorList.append(("PowerMeterIp", "Messgerät IP:"))
+    sensorList.append(("PowerMeterType", "Messgerät Typ:"))
+    sensorList.append(("MaximumPower", "Maximale Leistung:"))
+    sensorList.append(("OfflineOutputPower", "Offline-Ausgangsleistung:"))
+    sensorList.append(("NumberOfBatteries", "Batterien im System:"))
+    sensorList.append(("OutputOffset", "Ausgabe korrigieren:"))
+    sensorList.append(("CcuSpeed", "CCU-Geschwindigkeit:"))
 
-    powerMeterIp = PowerMeterIp(coordinator)
-    powerMeterType = PowerMeterType(coordinator)
-    maximumPower = MaximumPower(coordinator)
-    offlineOutputPower = OfflineOutputPower(coordinator)
-    numberOfBatteries = NumberOfBatteries(coordinator)
-    outputOffset = OutputOffset(coordinator)
+    coordinator = MaxxiDataUpdateCoordinator(hass, entry, sensorList)
+
+    powerMeterIp = HttpScanTextClass(
+        coordinator, "PowerMeterIp", "Power Meter IP", "mdi:ip"
+    )
+    powerMeterType = HttpScanTextClass(
+        coordinator, "PowerMeterType(", "Power Meter Type", "mdi:chip"
+    )
+    maximumPower = HttpScanTextClass(
+        coordinator, "MaximumPower", "Maximum Power", "mdi:flash"
+    )
+    offlineOutputPower = HttpScanTextClass(
+        coordinator, "OfflineOutputPower", "Offline Output Power", "mdi:flash"
+    )
+    numberOfBatteries = HttpScanTextClass(
+        coordinator, "NumberOfBatteries", "Number of Batteries", "mdi:layers"
+    )
+    outputOffset = HttpScanTextClass(
+        coordinator, "OutputOffset", "Output Offset", "mdi:flash"
+    )
+    ccuSpeed = HttpScanTextClass(coordinator, "CcuSpeed", "CCU - Speed", "mdi:flash")
 
     async_add_entities(
         [
@@ -86,5 +103,6 @@ async def async_setup_entry(
             offlineOutputPower,
             numberOfBatteries,
             outputOffset,
+            ccuSpeed,
         ]
     )

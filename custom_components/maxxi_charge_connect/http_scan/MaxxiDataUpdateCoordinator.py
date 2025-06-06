@@ -14,7 +14,7 @@ SCAN_INTERVAL = timedelta(seconds=30)  # z.B. alle 30 Sekunden aktualisieren
 
 
 class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
-    def __init__(self, hass, entry):
+    def __init__(self, hass, entry, sensorList):
         super().__init__(
             hass,
             _LOGGER,
@@ -22,6 +22,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=SCAN_INTERVAL,
         )
 
+        self._sensorList = sensorList
         self.entry = entry
         self._resource = entry.data["host"]
         if not self._resource.startswith(("http://", "https://")):
@@ -55,25 +56,38 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                         html = await response.text()
                         soup = BeautifulSoup(html, "html.parser")
 
-                        power_meter_ip = self.exract_data(soup, "Messgerät IP:")
-                        power_meter_typ = self.exract_data(soup, "Messgerät Typ:")
-                        maximumPower = self.exract_data(soup, "Maximale Leistung:")
-                        offlineOutputPower = self.exract_data(
-                            soup, "Offline-Ausgangsleistung:"
-                        )
-                        numberOfBatteries = self.exract_data(
-                            soup, "Batterien im System:"
-                        )
-                        outputOffset = self.exract_data(soup, "Ausgabe korrigieren:")
+                        data = {}
 
-                        return {
-                            "PowerMeterIp": power_meter_ip,
-                            "PowerMeterType": power_meter_typ,
-                            "MaximumPower": maximumPower,
-                            "OfflineOutputPower": offlineOutputPower,
-                            "NumberOfBatteries": numberOfBatteries,
-                            "OutputOffset": outputOffset,
-                        }
+                        for sensor in self._sensorList:
+                            key = sensor[0]  # z. B. "PowerMeterIp"
+                            label = sensor[1]  # z. B. "Messgerät IP:"
+                            value = self.exract_data(soup, label)
+                            data[key] = value
+
+                        return data
+
+                        # for element in self._sensorList:
+                        #     power_meter_ip = self.exract_data(soup, element[1])
+
+                        # power_meter_ip = self.exract_data(soup, "Messgerät IP:")
+                        # power_meter_typ = self.exract_data(soup, "Messgerät Typ:")
+                        # maximumPower = self.exract_data(soup, "Maximale Leistung:")
+                        # offlineOutputPower = self.exract_data(
+                        #     soup, "Offline-Ausgangsleistung:"
+                        # )
+                        # numberOfBatteries = self.exract_data(
+                        #     soup, "Batterien im System:"
+                        # )
+                        # outputOffset = self.exract_data(soup, "Ausgabe korrigieren:")
+
+                        # return {
+                        #     "PowerMeterIp": power_meter_ip,
+                        #     "PowerMeterType": power_meter_typ,
+                        #     "MaximumPower": maximumPower,
+                        #     "OfflineOutputPower": offlineOutputPower,
+                        #     "NumberOfBatteries": numberOfBatteries,
+                        #     "OutputOffset": outputOffset,
+                        # }
 
         except Exception as err:
             raise UpdateFailed(f"Fehler beim Abrufen oder Parsen: {err}")

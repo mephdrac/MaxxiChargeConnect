@@ -4,10 +4,10 @@
   "version": "0.3.7",
   "documentation": "https://github.com/mephdrac/MaxxiChargeConnect",
   "issue_tracker": "https://github.com/mephdrac/MaxxiChargeConnect/issues",
-  "requirements": [],
+  "requirements": ["beautifulsoup4==4.12.2"],
   "codeowners": ["@mephdrac"],
   "config_flow": true,
   "integration_type": "device",
   "iot_class": "local_push",
-  "license": "MIT"  
+  "license": "MIT"
 }

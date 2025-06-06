@@ -19,6 +19,8 @@ from .devices.PvTodayEnergy import PvTodayEnergy
 from .devices.PvTotalEnergy import PvTotalEnergy
 from .devices.Rssi import Rssi
 from .devices.WebhookId import WebhookId
+from .http_scan.PowerMeterIp import PowerMeterIp
+from .http_scan.MaxxiDataUpdateCoordinator import MaxxiDataUpdateCoordinator
 
 SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
 
@@ -26,8 +28,9 @@ SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
 async def async_setup_entry(
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ):
+    entry_id = entry.entry_id
     manager = BatterySensorManager(hass, entry, async_add_entities)
-    SENSOR_MANAGER[entry.entry_id] = manager
+    SENSOR_MANAGER[entry_id] = manager
     await manager.setup()
 
     sensor = DeviceId(entry)
@@ -46,6 +49,9 @@ async def async_setup_entry(
     ccuEnergyToday = CcuEnergyToday(entry)
     webhookId = WebhookId(entry)
 
+    coordinator = MaxxiDataUpdateCoordinator(hass, entry)
+    powerMeterIp = PowerMeterIp(coordinator)
+
     async_add_entities(
         [
             sensor,
@@ -63,5 +69,6 @@ async def async_setup_entry(
             ccuEnergyToday,
             batterySoE,
             webhookId,
+            powerMeterIp,
         ]
     )

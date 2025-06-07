@@ -1,6 +1,6 @@
 from datetime import timedelta
 
-from homeassistant.components.integration.sensor import IntegrationSensor
+from homeassistant.components.integration.sensor import IntegrationSensor, UnitOfTime
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfEnergy
 from homeassistant.helpers.event import async_track_time_change
@@ -18,9 +18,10 @@ class PvTodayEnergy(IntegrationSensor):
             integration_method="trapezoidal",
             round_digits=3,
             unit_prefix="k",
-            unit_time="h",
-            max_sub_interval=timedelta(seconds=300),
+            unit_time=UnitOfTime.HOURS,
+            max_sub_interval=timedelta(seconds=120),
         )
+        self._unsub_time_reset = None
         self._entry = entry
         self._attr_icon = "mdi:counter"
         self._attr_device_class = SensorDeviceClass.ENERGY
@@ -38,6 +39,7 @@ class PvTodayEnergy(IntegrationSensor):
             minute=0,
             second=0,
         )
+        self.async_on_remove(self._unsub_time_reset)
 
     async def _reset_energy_daily(self, now):
         self._last_reset = dt_util.utcnow()

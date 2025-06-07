@@ -42,8 +42,6 @@ async def async_setup_entry(
     powerMeter = PowerMeter(entry)
     firmwareVersion = FirmwareVersion(entry)
 
-    pvTotalEnergy = PvTotalEnergy(entry)
-
     batteryTodayEnergyCharge = BatteryTodayEnergyCharge(entry)
     batteryTodayEnergyDischarge = BatteryTodayEnergyDischarge(entry)
     ccuEnergyToday = CcuEnergyToday(entry)
@@ -60,7 +58,6 @@ async def async_setup_entry(
             batterySoc,
             powerMeter,
             firmwareVersion,
-            pvTotalEnergy,
             batteryTodayEnergyCharge,
             batteryTodayEnergyDischarge,
             ccuEnergyToday,
@@ -71,4 +68,5 @@ async def async_setup_entry(
     await asyncio.sleep(0)
 
     pvTodayEnergy = PvTodayEnergy(entry, pvPowerSensor.entity_id)
-    async_add_entities([pvTodayEnergy])
+    pvTotalEnergy = PvTotalEnergy(entry, pvPowerSensor.entity_id)
+    async_add_entities([pvTodayEnergy, pvTotalEnergy])

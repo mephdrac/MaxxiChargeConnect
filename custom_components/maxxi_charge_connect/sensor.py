@@ -20,6 +20,8 @@ from .devices.PvTotalEnergy import PvTotalEnergy
 from .devices.Rssi import Rssi
 from .devices.WebhookId import WebhookId
 
+import asyncio
+
 SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
 
 
@@ -39,11 +41,13 @@ async def async_setup_entry(
     batterySoE = BatterySoE(entry)
     powerMeter = PowerMeter(entry)
     firmwareVersion = FirmwareVersion(entry)
+
     pvTotalEnergy = PvTotalEnergy(entry)
-    pvTodayEnergy = PvTodayEnergy(entry)
+
     batteryTodayEnergyCharge = BatteryTodayEnergyCharge(entry)
     batteryTodayEnergyDischarge = BatteryTodayEnergyDischarge(entry)
     ccuEnergyToday = CcuEnergyToday(entry)
+
     webhookId = WebhookId(entry)
 
     async_add_entities(
@@ -57,7 +61,6 @@ async def async_setup_entry(
             powerMeter,
             firmwareVersion,
             pvTotalEnergy,
-            pvTodayEnergy,
             batteryTodayEnergyCharge,
             batteryTodayEnergyDischarge,
             ccuEnergyToday,
@@ -65,3 +68,7 @@ async def async_setup_entry(
             webhookId,
         ]
     )
+    await asyncio.sleep(0)
+
+    pvTodayEnergy = PvTodayEnergy(entry, pvPowerSensor.entity_id)
+    async_add_entities([pvTodayEnergy])

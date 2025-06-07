@@ -7,8 +7,8 @@ MaxxiChargeConnect ist eine benutzerdefinierte Home Assistant Integration, die d
 
 ## 📌 Hinweis
 
-Diese Integration wurde nicht von Maxxisun oder der Maxxi GmbH entwickelt oder unterstützt.
-Ich, @mephdrac, stehe in keinerlei Verbindung zur Maxxi GmbH. Die Verwendung der Begriffe MaxxiCharge und Maxxisun dient ausschließlich der Beschreibung der Kompatibilität.
+Diese Integration wurde nicht von Maxxisun bzw. der Maxxihandel GmbH, 04509 Wiedemar entwickelt oder unterstützt.
+Ich, @mephdrac, stehe in keinerlei Verbindung von Maxxisun bzw. der Maxxihandel GmbH. Die Verwendung der Begriffe MaxxiCharge und Maxxisun dient ausschließlich der Beschreibung der Kompatibilität.
 
 ## ✅ Funktionen
 Empfang von Daten über einen lokalen Webhook

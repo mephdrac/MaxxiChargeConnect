@@ -26,7 +26,15 @@ from .devices.Rssi import Rssi
 from .devices.WebhookId import WebhookId
 from .devices.BatteryPower import BatteryPower
 from .devices.PowerConsumption import PowerConsumption
-
+from .devices.GridExport import GridExport
+from .devices.GridImport import GridImport
+from .devices.PvSelfConsumption import PvSelfConsumption
+from .devices.GridExportEnergyToday import GridExportEnergyToday
+from .devices.GridExportEnergyTotal import GridExportEnergyTotal
+from .devices.GridImportEnergyToday import GridImportEnergyToday
+from .devices.GridImportEnergyTotal import GridImportEnergyTotal
+from .devices.PvSelfConsumptionEnergyToday import PvSelfConsumptionEnergyToday
+from .devices.PvSelfConsumptionEnergyTotal import PvSelfConsumptionEnergyTotal
 import asyncio
 
 SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
@@ -52,6 +60,9 @@ async def async_setup_entry(
     webhookId = WebhookId(entry)
     batteryPower = BatteryPower(entry)
     powerConsumption = PowerConsumption(entry)
+    gridExport = GridExport(entry)
+    gridImport = GridImport(entry)
+    pvSelfConsumption = PvSelfConsumption(entry)
 
     async_add_entities(
         [
@@ -67,7 +78,10 @@ async def async_setup_entry(
             firmwareVersion,
             batterySoE,
             webhookId,
-            powerConsumption
+            powerConsumption,
+            gridExport,
+            gridImport,
+            pvSelfConsumption,
         ]
     )
     await asyncio.sleep(0)
@@ -90,6 +104,19 @@ async def async_setup_entry(
         entry, batteryPowerDischarge.entity_id
     )
 
+    gridExportEnergyToday = GridExportEnergyToday(entry, gridExport.entity_id)
+    gridExportEnergyTotal = GridExportEnergyTotal(entry, gridExport.entity_id)
+
+    gridImportEnergyToday = GridImportEnergyToday(entry, gridExport.entity_id)
+    gridImportEnergyTotal = GridImportEnergyTotal(entry, gridExport.entity_id)
+
+    pvSelfConsumptionToday = PvSelfConsumptionEnergyToday(
+        entry, pvSelfConsumption.entity_id
+    )
+    pvSelfConsumptionTotal = PvSelfConsumptionEnergyTotal(
+        entry, pvSelfConsumption.entity_id
+    )
+
     async_add_entities(
         [
             pvTodayEnergy,
@@ -100,5 +127,11 @@ async def async_setup_entry(
             batteryTodayEnergyDischarge,
             batteryTotalEnergyCharge,
             batteryTotalEnergyDischarge,
+            gridExportEnergyToday,
+            gridExportEnergyTotal,
+            gridImportEnergyToday,
+            gridImportEnergyTotal,
+            pvSelfConsumptionToday,
+            pvSelfConsumptionTotal,
         ]
     )

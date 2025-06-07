@@ -17,6 +17,7 @@ from homeassistant.components.sensor import (
 class BatteryPowerCharge(SensorEntity):
     def __init__(self, entry: ConfigEntry):
         self._unsub_dispatcher = None
+        self._attr_suggested_display_precision = 2
         self._entry = entry
         self._attr_name = "Battery Power Charge"
         self._attr_unique_id = f"{entry.entry_id}_battery_power_charge"

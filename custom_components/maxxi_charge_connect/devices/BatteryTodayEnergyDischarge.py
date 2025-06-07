@@ -39,7 +39,9 @@ class BatteryTodayEnergyDischarge(IntegrationSensor):
             minute=0,
             second=0,
         )
-        self.async_on_remove(self._unsub_time_reset)
+
+        if self._unsub_time_reset is not None:
+            self.async_on_remove(self._unsub_time_reset)
 
     async def _reset_energy_daily(self, now):
         self._last_reset = dt_util.utcnow()

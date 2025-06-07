@@ -9,6 +9,8 @@ from homeassistant.util import dt as dt_util
 
 
 class PvTotalEnergy(IntegrationSensor):
+    _attr_entity_registry_enabled_default = False
+
     def __init__(self, entry, source_entity_id: str):
         super().__init__(
             source_entity=source_entity_id,

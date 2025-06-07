@@ -7,6 +7,8 @@ from homeassistant.const import CONF_WEBHOOK_ID
 
 
 class Rssi(SensorEntity):
+    _attr_entity_registry_enabled_default = False
+
     def __init__(self, entry: ConfigEntry):
         self._unsub_dispatcher = None
         self._entry = entry

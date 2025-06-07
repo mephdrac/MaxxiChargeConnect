@@ -2,16 +2,15 @@ from datetime import timedelta
 
 from custom_components.maxxi_charge_connect.const import DOMAIN
 
-from homeassistant.components.integration.sensor import (
-    IntegrationSensor,
-    UnitOfTime
-)
+from homeassistant.components.integration.sensor import IntegrationSensor, UnitOfTime
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfEnergy
 from homeassistant.util import dt as dt_util
 
 
 class CcuTotalEnergy(IntegrationSensor):
+    _attr_entity_registry_enabled_default = False
+
     def __init__(self, entry, source_entity_id: str):
         super().__init__(
             source_entity=source_entity_id,

@@ -8,14 +8,14 @@ from homeassistant.const import UnitOfEnergy
 from homeassistant.util import dt as dt_util
 
 
-class BatteryTotalEnergyCharge(IntegrationSensor):
+class PvSelfConsumptionEnergyTotal(IntegrationSensor):
     _attr_entity_registry_enabled_default = False
 
     def __init__(self, entry, source_entity_id: str):
         super().__init__(
             source_entity=source_entity_id,
-            name="Battery Charge Total",
-            unique_id=f"{entry.entry_id}_battery_energy_total_charge",
+            name="PV Self Cons. Total",
+            unique_id=f"{entry.entry_id}_pv_self_consumption_energy_total",
             integration_method="trapezoidal",
             round_digits=3,
             unit_prefix="k",

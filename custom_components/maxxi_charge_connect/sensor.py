@@ -25,6 +25,7 @@ from .devices.PvTotalEnergy import PvTotalEnergy
 from .devices.Rssi import Rssi
 from .devices.WebhookId import WebhookId
 from .devices.BatteryPower import BatteryPower
+from .devices.PowerConsumption import PowerConsumption
 
 import asyncio
 
@@ -50,6 +51,7 @@ async def async_setup_entry(
     firmwareVersion = FirmwareVersion(entry)
     webhookId = WebhookId(entry)
     batteryPower = BatteryPower(entry)
+    powerConsumption = PowerConsumption(entry)
 
     async_add_entities(
         [
@@ -65,6 +67,7 @@ async def async_setup_entry(
             firmwareVersion,
             batterySoE,
             webhookId,
+            powerConsumption
         ]
     )
     await asyncio.sleep(0)

@@ -17,6 +17,7 @@ from homeassistant.components.sensor import (
 class PowerMeter(SensorEntity):
     def __init__(self, entry: ConfigEntry):
         self._unsub_dispatcher = None
+        self._attr_suggested_display_precision = 2
         self._entry = entry
         self._attr_name = "Power Meter"
         self._attr_unique_id = f"{entry.entry_id}_power_meter"
@@ -49,5 +50,5 @@ class PowerMeter(SensorEntity):
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,
             "manufacturer": "mephdrac",
-            "model": "CCU - Maxxicharge",            
+            "model": "CCU - Maxxicharge",
         }

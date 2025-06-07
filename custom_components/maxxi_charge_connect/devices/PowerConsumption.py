@@ -14,17 +14,19 @@ from homeassistant.components.sensor import (
 )
 
 
-class PvPower(SensorEntity):
+class PowerConsumption(SensorEntity):
     def __init__(self, entry: ConfigEntry):
         self._unsub_dispatcher = None
         self._entry = entry
-        self._attr_name = "PV Power"
-        self._attr_unique_id = f"{entry.entry_id}_pv_power"
-        self._attr_icon = "mdi:solar-power-variant"
+        self._attr_suggested_display_precision = 2
+        self._attr_name = "House Consumption"
+        self._attr_unique_id = f"{entry.entry_id}_power_consumption"
+        self._attr_icon = "mdi:transmission-tower-import"
         self._attr_native_value = None
         self._attr_device_class = SensorDeviceClass.POWER
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = UnitOfPower.WATT
+        # self._attr_entity_category = EntityCategory.
 
     async def async_added_to_hass(self):
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
@@ -39,7 +41,10 @@ class PvPower(SensorEntity):
             self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
-        self._attr_native_value = data.get("PV_power_total")
+        # Verbrauch = Pccu + Pr
+        pccu = float(data.get("Pccu", 0))
+        pr = float(data.get("Pr", 0))
+        self._attr_native_value = round(pccu + max(-pr, 0), 2)
         self.async_write_ha_state()
 
     @property

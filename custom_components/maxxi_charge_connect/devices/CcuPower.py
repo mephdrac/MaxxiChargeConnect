@@ -17,6 +17,7 @@ from homeassistant.components.sensor import (
 class CcuPower(SensorEntity):
     def __init__(self, entry: ConfigEntry):
         self._unsub_dispatcher = None
+        self._attr_suggested_display_precision = 2
         self._entry = entry
         self._attr_name = "CCU Power"
         self._attr_unique_id = f"{entry.entry_id}_ccu_power"
@@ -25,7 +26,6 @@ class CcuPower(SensorEntity):
         self._attr_device_class = SensorDeviceClass.POWER
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = UnitOfPower.WATT
-        # self._attr_entity_category = EntityCategory.
 
     async def async_added_to_hass(self):
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
@@ -40,7 +40,7 @@ class CcuPower(SensorEntity):
             self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
-        self._attr_native_value = data.get("Pccu")
+        self._attr_native_value = float(data.get("Pccu", 0))
         self.async_write_ha_state()
 
     @property
@@ -49,5 +49,5 @@ class CcuPower(SensorEntity):
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,
             "manufacturer": "mephdrac",
-            "model": "CCU - Maxxicharge",            
+            "model": "CCU - Maxxicharge",
         }

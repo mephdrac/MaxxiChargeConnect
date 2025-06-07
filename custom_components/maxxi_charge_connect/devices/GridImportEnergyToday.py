@@ -2,19 +2,19 @@ from datetime import timedelta
 
 from homeassistant.components.integration.sensor import IntegrationSensor, UnitOfTime
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
-from homeassistant.const import CONF_WEBHOOK_ID, UnitOfEnergy
+from homeassistant.const import UnitOfEnergy
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.util import dt as dt_util
 
 from ..const import DOMAIN
 
 
-class PvTodayEnergy(IntegrationSensor):
+class GridImportEnergyToday(IntegrationSensor):
     def __init__(self, entry, source_entity_id: str):
         super().__init__(
             source_entity=source_entity_id,
-            name="PV Energy Today",
-            unique_id=f"{entry.entry_id}_pv_energy_today",
+            name="Grid Import Energy Today",
+            unique_id=f"{entry.entry_id}_grid_import_energy_today",
             integration_method="trapezoidal",
             round_digits=3,
             unit_prefix="k",
@@ -39,6 +39,7 @@ class PvTodayEnergy(IntegrationSensor):
             minute=0,
             second=0,
         )
+
         if self._unsub_time_reset is not None:
             self.async_on_remove(self._unsub_time_reset)
 

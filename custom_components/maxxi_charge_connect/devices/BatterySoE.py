@@ -7,7 +7,10 @@ from ..const import DOMAIN
 
 
 class BatterySoE(SensorEntity):
+    _attr_entity_registry_enabled_default = False
+
     def __init__(self, entry: ConfigEntry):
+        self._attr_suggested_display_precision = 2
         self._unsub_dispatcher = None
         self._entry = entry
         self._attr_name = "Battery State of Energy"

@@ -14,13 +14,16 @@ from homeassistant.components.sensor import (
 )
 
 
-class PvPower(SensorEntity):
+class PvSelfConsumption(SensorEntity):
+    _attr_entity_registry_enabled_default = False
+
     def __init__(self, entry: ConfigEntry):
         self._unsub_dispatcher = None
+        self._attr_suggested_display_precision = 2
         self._entry = entry
-        self._attr_name = "PV Power"
-        self._attr_unique_id = f"{entry.entry_id}_pv_power"
-        self._attr_icon = "mdi:solar-power-variant"
+        self._attr_name = "PV Self-Consumption"
+        self._attr_unique_id = f"{entry.entry_id}_pv_consumption"
+        self._attr_icon = "mdi:flash"
         self._attr_native_value = None
         self._attr_device_class = SensorDeviceClass.POWER
         self._attr_state_class = SensorStateClass.MEASUREMENT
@@ -39,7 +42,10 @@ class PvPower(SensorEntity):
             self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
-        self._attr_native_value = data.get("PV_power_total")
+        # PV-Eigenverbrauch
+        pv_power = float(data.get("PV_power_total", 0))
+        pr = float(data.get("Pr", 0))
+        self._attr_native_value = pv_power - max(-pr, 0)
         self.async_write_ha_state()
 
     @property

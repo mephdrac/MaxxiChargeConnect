@@ -9,12 +9,12 @@ from homeassistant.util import dt as dt_util
 from ..const import DOMAIN
 
 
-class PvTodayEnergy(IntegrationSensor):
+class GridExportEnergyToday(IntegrationSensor):
     def __init__(self, entry, source_entity_id: str):
         super().__init__(
             source_entity=source_entity_id,
-            name="PV Energy Today",
-            unique_id=f"{entry.entry_id}_pv_energy_today",
+            name="Grid Export Energy Today",
+            unique_id=f"{entry.entry_id}_grid_export_energy_today",
             integration_method="trapezoidal",
             round_digits=3,
             unit_prefix="k",
@@ -39,6 +39,7 @@ class PvTodayEnergy(IntegrationSensor):
             minute=0,
             second=0,
         )
+
         if self._unsub_time_reset is not None:
             self.async_on_remove(self._unsub_time_reset)
 

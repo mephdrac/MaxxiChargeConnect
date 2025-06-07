@@ -6,9 +6,12 @@ from ..const import DOMAIN
 
 
 class BatterySoESensor(SensorEntity):
+    _attr_entity_registry_enabled_default = False
+
     def __init__(self, entry: ConfigEntry, index: int):
         self._entry = entry
         self._index = index
+        self._attr_suggested_display_precision = 2
         self._attr_name = f"Battery {index + 1} SoE"
         self._attr_unique_id = f"{entry.entry_id}_battery_soe_{index}"
         self._attr_icon = "mdi:file-document-outline"

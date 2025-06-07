@@ -9,12 +9,14 @@ from homeassistant.util import dt as dt_util
 from ..const import DOMAIN
 
 
-class PvTodayEnergy(IntegrationSensor):
+class PvSelfConsumptionEnergyToday(IntegrationSensor):
+    _attr_entity_registry_enabled_default = False
+
     def __init__(self, entry, source_entity_id: str):
         super().__init__(
             source_entity=source_entity_id,
-            name="PV Energy Today",
-            unique_id=f"{entry.entry_id}_pv_energy_today",
+            name="PV Self Cons. Today",
+            unique_id=f"{entry.entry_id}_pv_self_consumption_energy_today",
             integration_method="trapezoidal",
             round_digits=3,
             unit_prefix="k",

@@ -57,5 +57,5 @@ class BatterySoc(SensorEntity):
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,
             "manufacturer": "mephdrac",
-            "model": "CCU - Maxxicharge",            
+            "model": "CCU - Maxxicharge",
         }

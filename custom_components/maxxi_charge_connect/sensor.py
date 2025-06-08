@@ -107,8 +107,8 @@ async def async_setup_entry(
     gridExportEnergyToday = GridExportEnergyToday(entry, gridExport.entity_id)
     gridExportEnergyTotal = GridExportEnergyTotal(entry, gridExport.entity_id)
 
-    gridImportEnergyToday = GridImportEnergyToday(entry, gridExport.entity_id)
-    gridImportEnergyTotal = GridImportEnergyTotal(entry, gridExport.entity_id)
+    gridImportEnergyToday = GridImportEnergyToday(entry, gridImport.entity_id)
+    gridImportEnergyTotal = GridImportEnergyTotal(entry, gridImport.entity_id)
 
     pvSelfConsumptionToday = PvSelfConsumptionEnergyToday(
         entry, pvSelfConsumption.entity_id

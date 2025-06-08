@@ -1,9 +1,7 @@
 from homeassistant.components.text import TextEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
-
-
-from ..const import DOMAIN
+from ..const import DOMAIN  # noqa: TID252
 
 
 class WebhookId(TextEntity):
@@ -15,7 +13,7 @@ class WebhookId(TextEntity):
         self._attr_unique_id = f"{entry.entry_id}_webhook_id"
         self._attr_icon = "mdi:webhook"
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
-    
+
     @property
     def device_info(self):
         return {

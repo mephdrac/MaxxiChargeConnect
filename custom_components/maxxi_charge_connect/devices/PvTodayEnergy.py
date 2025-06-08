@@ -2,11 +2,10 @@ from datetime import timedelta
 
 from homeassistant.components.integration.sensor import IntegrationSensor, UnitOfTime
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
-from homeassistant.const import CONF_WEBHOOK_ID, UnitOfEnergy
+from homeassistant.const import UnitOfEnergy
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.util import dt as dt_util
-
-from ..const import DOMAIN
+from ..const import DOMAIN  # noqa: TID252
 
 
 class PvTodayEnergy(IntegrationSensor):

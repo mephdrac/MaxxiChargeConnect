@@ -1,9 +1,9 @@
-from ..const import DOMAIN
 from homeassistant.components.text import TextEntity
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.const import CONF_WEBHOOK_ID
-from homeassistant.const import EntityCategory
+
+from ..const import DOMAIN  # noqa: TID252
 
 
 class FirmwareVersion(TextEntity):
@@ -28,7 +28,7 @@ class FirmwareVersion(TextEntity):
             self._unsub_dispatcher()
             self._unsub_dispatcher = None
 
-    async def _handle_update(self, data):        
+    async def _handle_update(self, data):
         value = str(data.get("firmwareVersion", "unknown"))
         self._attr_native_value = value
         self.async_write_ha_state()
@@ -39,5 +39,5 @@ class FirmwareVersion(TextEntity):
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,
             "manufacturer": "mephdrac",
-            "model": "CCU - Maxxicharge",            
+            "model": "CCU - Maxxicharge",
         }

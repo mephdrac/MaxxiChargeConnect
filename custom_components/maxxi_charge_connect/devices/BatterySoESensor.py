@@ -2,19 +2,22 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfEnergy
 
-from ..const import DOMAIN
+from ..const import DOMAIN  # noqa: TID252
 
 
 class BatterySoESensor(SensorEntity):
     _attr_entity_registry_enabled_default = False
+    _attr_translation_key = "BatterySoESensor"
+    _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry, index: int):
         self._entry = entry
         self._index = index
+        self._attr_translation_placeholders = {"index": str(index + 1)}
         self._attr_suggested_display_precision = 2
-        self._attr_name = f"Battery {index + 1} SoE"
+        # self._attr_name = f"Battery {index + 1} SoE"
         self._attr_unique_id = f"{entry.entry_id}_battery_soe_{index}"
-        self._attr_icon = "mdi:file-document-outline"
+        self._attr_icon = "mdi:home-battery"
         self._attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
         self._attr_native_value = None
 

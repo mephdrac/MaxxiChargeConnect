@@ -5,7 +5,6 @@ from custom_components.maxxi_charge_connect.const import DOMAIN
 from homeassistant.components.integration.sensor import IntegrationSensor, UnitOfTime
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfEnergy
-from homeassistant.util import dt as dt_util
 
 
 class BatteryTotalEnergyCharge(IntegrationSensor):

@@ -6,7 +6,7 @@ from homeassistant.const import UnitOfEnergy
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.util import dt as dt_util
 
-from ..const import DOMAIN
+from ..const import DOMAIN  # noqa: TID252
 
 
 class GridImportEnergyToday(IntegrationSensor):

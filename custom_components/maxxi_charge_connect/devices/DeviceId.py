@@ -1,16 +1,19 @@
-from ..const import DOMAIN
 from homeassistant.components.text import TextEntity
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.const import CONF_WEBHOOK_ID
-from homeassistant.const import EntityCategory
+
+from ..const import DOMAIN  # noqa: TID252
 
 
 class DeviceId(TextEntity):
+    _attr_translation_key = "device_id"
+    _attr_has_entity_name = True
+
     def __init__(self, entry: ConfigEntry):
         self._unsub_dispatcher = None
         self._entry = entry
-        self._attr_name = "Device ID"
+        # self._attr_name = "Device ID"
         self._attr_unique_id = f"{entry.entry_id}_deviceid"
         self._attr_icon = "mdi:identifier"
         self._attr_native_value = None

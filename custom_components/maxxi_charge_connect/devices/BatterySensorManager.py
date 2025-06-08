@@ -1,7 +1,7 @@
 from homeassistant.const import CONF_WEBHOOK_ID
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
-from ..const import DOMAIN
+from ..const import DOMAIN  # noqa: TID252
 from .BatterySoESensor import BatterySoESensor  # oder je nach Ordnerstruktur anpassen
 
 

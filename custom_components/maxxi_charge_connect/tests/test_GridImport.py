@@ -7,7 +7,7 @@ sys.path.append(str(Path(__file__).resolve().parents[3]))
 from unittest.mock import MagicMock, patch
 
 from custom_components.maxxi_charge_connect.const import DOMAIN
-from custom_components.maxxi_charge_connect.devices.PowerMeter import PowerMeter
+from custom_components.maxxi_charge_connect.devices.GridImport import GridImport
 import pytest
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
@@ -29,11 +29,11 @@ def mock_entry():
 
 
 @pytest.mark.asyncio
-async def test_PowerMeter_initialization(mock_entry):
-    sensor = PowerMeter(mock_entry)
+async def test_GridImport_initialization(mock_entry):
+    sensor = GridImport(mock_entry)
 
-    assert sensor._attr_unique_id == "test_entry_id_power_meter"
-    assert sensor._attr_icon == "mdi:gauge"
+    assert sensor._attr_unique_id == "test_entry_id_grid_import"
+    assert sensor._attr_icon == "mdi:transmission-tower-export"
     assert sensor._attr_native_value is None
     assert sensor._attr_device_class == SensorDeviceClass.POWER
     assert sensor._attr_state_class == SensorStateClass.MEASUREMENT
@@ -41,15 +41,15 @@ async def test_PowerMeter_initialization(mock_entry):
 
 
 @pytest.mark.asyncio
-async def test_PowerMeter_add_and_handle_update1():
-    """Test, wenn isPowerTotalOk is True."""
+async def test_GridImport_add_and_handle_update1():
+    """Test, wenn isPrOk(True)."""
 
     mock_entry = MagicMock()
     mock_entry.entry_id = "abc123"
     mock_entry.title = "My Device"
     mock_entry.data = {CONF_WEBHOOK_ID: "webhook456"}
 
-    sensor = PowerMeter(mock_entry)
+    sensor = GridImport(mock_entry)
     sensor.hass = MagicMock()
     sensor.async_on_remove = MagicMock()
 
@@ -60,10 +60,10 @@ async def test_PowerMeter_add_and_handle_update1():
 
     with (
         patch(
-            "custom_components.maxxi_charge_connect.devices.PowerMeter.async_dispatcher_connect"
+            "custom_components.maxxi_charge_connect.devices.GridImport.async_dispatcher_connect"
         ) as mock_connect,
         patch(
-            "custom_components.maxxi_charge_connect.devices.PowerMeter.isPrOk"
+            "custom_components.maxxi_charge_connect.devices.GridImport.isPrOk"
         ) as mock_isPrOk,
     ):
         mock_isPrOk.return_value = True
@@ -84,7 +84,7 @@ async def test_PowerMeter_add_and_handle_update1():
 
 
 @pytest.mark.asyncio
-async def test_PowerMeter_add_and_handle_update2():
+async def test_GridImport_add_and_handle_update2():
     """Test, wenn isPrOk(False)."""
 
     mock_entry = MagicMock()
@@ -92,7 +92,7 @@ async def test_PowerMeter_add_and_handle_update2():
     mock_entry.title = "My Device"
     mock_entry.data = {CONF_WEBHOOK_ID: "webhook456"}
 
-    sensor = PowerMeter(mock_entry)
+    sensor = GridImport(mock_entry)
     sensor.hass = MagicMock()
     sensor.async_on_remove = MagicMock()
 
@@ -103,10 +103,10 @@ async def test_PowerMeter_add_and_handle_update2():
 
     with (
         patch(
-            "custom_components.maxxi_charge_connect.devices.PowerMeter.async_dispatcher_connect"
+            "custom_components.maxxi_charge_connect.devices.GridImport.async_dispatcher_connect"
         ) as mock_connect,
         patch(
-            "custom_components.maxxi_charge_connect.devices.PowerMeter.isPrOk"
+            "custom_components.maxxi_charge_connect.devices.GridImport.isPrOk"
         ) as mock_isPrOk,
     ):
         mock_isPrOk.return_value = False
@@ -127,8 +127,8 @@ async def test_PowerMeter_add_and_handle_update2():
 
 
 @pytest.mark.asyncio
-async def test_PowerMeter_will_remove_from_hass(mock_entry):
-    sensor = PowerMeter(mock_entry)
+async def test_GridImport_will_remove_from_hass(mock_entry):
+    sensor = GridImport(mock_entry)
 
     disconnected = {"called": False}
 
@@ -143,7 +143,7 @@ async def test_PowerMeter_will_remove_from_hass(mock_entry):
 
 
 def test_device_info(mock_entry):
-    sensor = PowerMeter(mock_entry)
+    sensor = GridImport(mock_entry)
     info = sensor.device_info
     assert info["identifiers"] == {(DOMAIN, "test_entry_id")}
     assert info["name"] == "Maxxi Entry"

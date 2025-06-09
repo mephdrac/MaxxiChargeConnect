@@ -1,4 +1,5 @@
 from custom_components.maxxi_charge_connect.const import DOMAIN
+from custom_components.maxxi_charge_connect.tools import isPccuOk, isPrOk
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -8,9 +9,7 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from ..tools import isPccuOk
 
-from ..tools import isPrOk
 
 class PowerConsumption(SensorEntity):
     _attr_translation_key = "PowerConsumption"

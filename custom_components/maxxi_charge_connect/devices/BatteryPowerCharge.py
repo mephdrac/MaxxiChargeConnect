@@ -8,6 +8,7 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from ..tools import isPccuOk,isPowerTotalOk
 
 
 class BatteryPowerCharge(SensorEntity):
@@ -40,12 +41,17 @@ class BatteryPowerCharge(SensorEntity):
 
     async def _handle_update(self, data):
         ccu = float(data.get("Pccu", 0))
-        pv_power = float(data.get("PV_power_total", 0))
-        batterie_leistung = round(pv_power - ccu, 3)
 
-        if batterie_leistung >= 0:
-            self._attr_native_value = batterie_leistung
-            self.async_write_ha_state()
+        if isPccuOk(ccu):
+            pv_power = float(data.get("PV_power_total", 0))
+            batteries = data.get("batteriesInfo", [])
+
+            if isPowerTotalOk(pv_power, batteries):
+                batterie_leistung = round(pv_power - ccu, 3)
+
+                if batterie_leistung >= 0:
+                    self._attr_native_value = batterie_leistung
+                    self.async_write_ha_state()
 
     @property
     def device_info(self):

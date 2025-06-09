@@ -8,7 +8,9 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from ..tools import isPccuOk
 
+from ..tools import isPrOk
 
 class PowerConsumption(SensorEntity):
     _attr_translation_key = "PowerConsumption"
@@ -42,9 +44,12 @@ class PowerConsumption(SensorEntity):
     async def _handle_update(self, data):
         # Verbrauch = Pccu + Pr
         pccu = float(data.get("Pccu", 0))
-        pr = float(data.get("Pr", 0))
-        self._attr_native_value = round(pccu + max(-pr, 0), 2)
-        self.async_write_ha_state()
+
+        if isPccuOk(pccu):
+            pr = float(data.get("Pr", 0))
+            if isPrOk(pr):
+                self._attr_native_value = round(pccu + max(-pr, 0), 2)
+                self.async_write_ha_state()
 
     @property
     def device_info(self):

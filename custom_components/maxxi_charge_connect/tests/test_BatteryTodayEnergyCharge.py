@@ -1,8 +1,10 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from datetime import datetime, UTC
+from datetime import datetime, UTC, timedelta
 
-from ..devices.BatteryTodayEnergyCharge import BatteryTodayEnergyCharge
+from custom_components.maxxi_charge_connect.devices.BatteryTodayEnergyCharge import (
+    BatteryTodayEnergyCharge,
+)
 
 
 @pytest.mark.asyncio
@@ -21,17 +23,15 @@ async def test_BatteryTodayEnergyCharge_reset_energy_daily_logs_and_resets(caplo
     sensor.hass = hass
     sensor.entity_id = "sensor.test_pv_today_energy"
 
-    sensor._integration = MagicMock()
-    sensor._integration.reset = MagicMock()
+    sensor.async_write_ha_state = AsyncMock()  # Vor dem Aufruf mocken
 
-    sensor.async_write_ha_state = AsyncMock()  # <== HIER MOCKEN!
+    old_reset = sensor.last_reset
+    fake_now = datetime.now(UTC) + timedelta(days=1)
 
     caplog.set_level("INFO")
-    now = datetime.now(UTC)
+    await sensor._reset_energy_daily(fake_now)
 
-    await sensor._reset_energy_daily(now)
-
-    sensor._integration.reset.assert_called_once()
+    # ✅ Überprüfungen
     sensor.async_write_ha_state.assert_awaited_once()
-
+    assert sensor.last_reset > old_reset
     assert any("resetting daily energy" in rec.message for rec in caplog.records)

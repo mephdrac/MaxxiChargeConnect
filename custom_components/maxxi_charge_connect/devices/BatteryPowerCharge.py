@@ -1,3 +1,5 @@
+import logging
+
 from custom_components.maxxi_charge_connect.const import DOMAIN
 
 from homeassistant.components.sensor import (
@@ -8,7 +10,10 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from ..tools import isPccuOk,isPowerTotalOk
+
+from ..tools import isPccuOk, isPowerTotalOk
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class BatteryPowerCharge(SensorEntity):
@@ -51,7 +56,10 @@ class BatteryPowerCharge(SensorEntity):
 
                 if batterie_leistung >= 0:
                     self._attr_native_value = batterie_leistung
-                    self.async_write_ha_state()
+                else:
+                    self._attr_native_value = 0
+
+                self.async_write_ha_state()
 
     @property
     def device_info(self):

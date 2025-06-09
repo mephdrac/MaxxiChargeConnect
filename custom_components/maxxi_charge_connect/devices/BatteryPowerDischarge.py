@@ -10,6 +10,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from custom_components.maxxi_charge_connect.const import DOMAIN
 from ..tools import isPccuOk
 
+
 class BatteryPowerDischarge(SensorEntity):
     _attr_translation_key = "BatteryPowerDischarge"
     _attr_has_entity_name = True
@@ -47,7 +48,10 @@ class BatteryPowerDischarge(SensorEntity):
 
             if batterie_leistung <= 0:
                 self._attr_native_value = -1 * batterie_leistung
-                await self.async_write_ha_state()
+            else:
+                self._attr_native_value = 0
+
+            self.async_write_ha_state()
 
     @property
     def device_info(self):

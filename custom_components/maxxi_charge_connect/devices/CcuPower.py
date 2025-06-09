@@ -1,25 +1,24 @@
-from ..const import DOMAIN
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.const import EntityCategory
-from homeassistant.const import CONF_WEBHOOK_ID
-
-from homeassistant.const import UnitOfElectricCurrent, UnitOfEnergy, UnitOfPower
+from custom_components.maxxi_charge_connect.const import DOMAIN
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
-    SensorEntityDescription,
     SensorStateClass,
 )
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 
 class CcuPower(SensorEntity):
+    _attr_translation_key = "CcuPower"
+    _attr_has_entity_name = True
+
     def __init__(self, entry: ConfigEntry):
         self._unsub_dispatcher = None
         self._attr_suggested_display_precision = 2
         self._entry = entry
-        self._attr_name = "CCU Power"
+        # self._attr_name = "CCU Power"
         self._attr_unique_id = f"{entry.entry_id}_ccu_power"
         self._attr_icon = "mdi:power-plug-battery-outline"
         self._attr_native_value = None

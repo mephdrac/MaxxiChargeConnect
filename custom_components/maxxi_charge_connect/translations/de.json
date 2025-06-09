@@ -1,0 +1,54 @@
+{
+  "entity": {
+    "sensor": {
+      "battery_power": {
+        "name": "Batterie Leistung"
+      },
+      "rssi": {
+        "name": "WiFi Signalstärke"
+      },
+      "PvTotalEnergy":{
+        "name": "PV Gesamtenergie"
+      },
+      "device_id":{
+        "name": "Gerätenummer"
+      },
+      "PvPower":{
+        "name": "PV Leistung"
+      },
+      "BatterySoc":{
+        "name": "Batterie Ladestand"
+      },
+      "BatteryPowerCharge":{
+        "name": "Batterie Ladeleistung"
+      },
+      "BatteryPowerDischarge":{
+        "name": "Batterie Entladeleistung"
+      },
+      "CcuPower":{
+        "name": "CCU Leistung"
+      },
+      "GridExport":{
+        "name": "Netzeinspeisung"
+      },
+      "GridImport":{
+        "name": "Netzbezug"
+      },
+      "PowerConsumption":{
+        "name": "Hausverbrauch"
+      },
+      "PvSelfConsumption":{
+        "name": "PV Eigenverbrauch"
+      },
+      "PowerMeter":{
+        "name": "Stromzähler"
+      },
+      "BatterySoE":{
+        "name": "Batterie Kapazität"
+      },
+      "BatterySoESensor":{
+        "name": "Batterie ({index}) Kapazität"
+      }     
+    }
+  }
+}

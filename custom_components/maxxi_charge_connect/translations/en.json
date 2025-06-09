@@ -1,0 +1,54 @@
+{
+  "entity": {
+    "sensor": {
+      "battery_power": {
+        "name": "Battery Power"
+      },
+      "rssi": {
+        "name": "rssi"
+      },
+      "PvTotalEnergy":{
+        "name": "PV Energie Total"
+      },
+      "device_id":{
+        "name": "Device ID"
+      },
+      "PvPower":{
+        "name": "PV Power"
+      },
+      "BatterySoc":{
+        "name": "Battery SOC"
+      },
+      "BatteryPowerCharge":{
+        "name": "Battery Power Charge"
+      },
+      "BatteryPowerDischarge":{
+        "name": "Battery Power Discharge"
+      },
+      "CcuPower":{
+        "name": "CCU Power"
+      },
+      "GridExport":{
+        "name": "Grid Export Power"
+      },
+      "GridImport":{
+        "name": "Grid Import Power"
+      },
+      "PowerConsumption":{
+        "name": "House Consumption"
+      },
+      "PvSelfConsumption":{
+        "name": "PV Self Consumption"
+      },
+      "PowerMeter":{
+        "name": "Power meter"
+      },
+      "BatterySoE":{
+        "name": "Battery SoE"
+      },
+      "BatterySoESensor":{
+        "name": "Battery ({index}) SoE"
+      }    
+    }
+  }
+}

@@ -6,14 +6,17 @@ from homeassistant.components.integration.sensor import IntegrationSensor, UnitO
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfEnergy
 
+from .translationsForIntegrationSensors import get_localized_name
+
 
 class BatteryTotalEnergyDischarge(IntegrationSensor):
     _attr_entity_registry_enabled_default = False
 
-    def __init__(self, entry, source_entity_id: str):
+    def __init__(self, hass, entry, source_entity_id: str):
         super().__init__(
             source_entity=source_entity_id,
-            name="Battery Discharge Total",
+            # name="Battery Discharge Total",
+            name=get_localized_name(hass, self.__class__.__name__),
             unique_id=f"{entry.entry_id}_battery_energy_total_discharge",
             integration_method="trapezoidal",
             round_digits=3,

@@ -1,8 +1,8 @@
+from custom_components.maxxi_charge_connect.const import DOMAIN
+
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfEnergy
-
-from ..const import DOMAIN  # noqa: TID252
 
 
 class BatterySoESensor(SensorEntity):

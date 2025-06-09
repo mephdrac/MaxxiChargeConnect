@@ -8,12 +8,15 @@ from homeassistant.const import UnitOfEnergy
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.util import dt as dt_util
 
+from .translationsForIntegrationSensors import get_localized_name
+
 
 class BatteryTodayEnergyDischarge(IntegrationSensor):
-    def __init__(self, entry, source_entity_id: str):
+    def __init__(self, hass, entry, source_entity_id: str):
         super().__init__(
             source_entity=source_entity_id,
-            name="Battery Discharge Today",
+            # name="Battery Discharge Today",
+            name=get_localized_name(hass, self.__class__.__name__),
             unique_id=f"{entry.entry_id}_battery_energy_discharge_today",
             integration_method="trapezoidal",
             round_digits=3,

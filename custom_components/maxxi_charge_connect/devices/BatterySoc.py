@@ -1,3 +1,5 @@
+from custom_components.maxxi_charge_connect.const import DOMAIN
+
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -6,8 +8,6 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, PERCENTAGE
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-
-from ..const import DOMAIN  # noqa: TID252
 
 
 class BatterySoc(SensorEntity):

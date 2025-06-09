@@ -15,8 +15,8 @@ from .devices.BatteryTodayEnergyDischarge import BatteryTodayEnergyDischarge
 from .devices.BatteryTotalEnergyCharge import BatteryTotalEnergyCharge
 from .devices.BatteryTotalEnergyDischarge import BatteryTotalEnergyDischarge
 from .devices.CcuEnergyToday import CcuEnergyToday
+from .devices.CcuEnergyTotal import CcuEnergyTotal
 from .devices.CcuPower import CcuPower
-from .devices.CcuTotalEnergy import CcuTotalEnergy
 from .devices.DeviceId import DeviceId
 from .devices.FirmwareVersion import FirmwareVersion
 from .devices.GridExport import GridExport
@@ -85,35 +85,35 @@ async def async_setup_entry(
     )
     await asyncio.sleep(0)
 
-    pvTodayEnergy = PvTodayEnergy(entry, pvPowerSensor.entity_id)
-    pvTotalEnergy = PvTotalEnergy(entry, pvPowerSensor.entity_id)
-    ccuEnergyToday = CcuEnergyToday(entry, ccuPower.entity_id)
-    ccuEnergyTotal = CcuTotalEnergy(entry, ccuPower.entity_id)
+    pvTodayEnergy = PvTodayEnergy(hass, entry, pvPowerSensor.entity_id)
+    pvTotalEnergy = PvTotalEnergy(hass, entry, pvPowerSensor.entity_id)
+    ccuEnergyToday = CcuEnergyToday(hass, entry, ccuPower.entity_id)
+    ccuEnergyTotal = CcuEnergyTotal(hass, entry, ccuPower.entity_id)
     batteryTodayEnergyCharge = BatteryTodayEnergyCharge(
-        entry, batteryPowerCharge.entity_id
+        hass, entry, batteryPowerCharge.entity_id
     )
     batteryTodayEnergyDischarge = BatteryTodayEnergyDischarge(
-        entry, batteryPowerDischarge.entity_id
+        hass, entry, batteryPowerDischarge.entity_id
     )
 
     batteryTotalEnergyCharge = BatteryTotalEnergyCharge(
-        entry, batteryPowerCharge.entity_id
+        hass, entry, batteryPowerCharge.entity_id
     )
     batteryTotalEnergyDischarge = BatteryTotalEnergyDischarge(
-        entry, batteryPowerDischarge.entity_id
+        hass, entry, batteryPowerDischarge.entity_id
     )
 
-    gridExportEnergyToday = GridExportEnergyToday(entry, gridExport.entity_id)
-    gridExportEnergyTotal = GridExportEnergyTotal(entry, gridExport.entity_id)
+    gridExportEnergyToday = GridExportEnergyToday(hass, entry, gridExport.entity_id)
+    gridExportEnergyTotal = GridExportEnergyTotal(hass, entry, gridExport.entity_id)
 
-    gridImportEnergyToday = GridImportEnergyToday(entry, gridImport.entity_id)
-    gridImportEnergyTotal = GridImportEnergyTotal(entry, gridImport.entity_id)
+    gridImportEnergyToday = GridImportEnergyToday(hass, entry, gridImport.entity_id)
+    gridImportEnergyTotal = GridImportEnergyTotal(hass, entry, gridImport.entity_id)
 
     pvSelfConsumptionToday = PvSelfConsumptionEnergyToday(
-        entry, pvSelfConsumption.entity_id
+        hass, entry, pvSelfConsumption.entity_id
     )
     pvSelfConsumptionTotal = PvSelfConsumptionEnergyTotal(
-        entry, pvSelfConsumption.entity_id
+        hass, entry, pvSelfConsumption.entity_id
     )
 
     async_add_entities(

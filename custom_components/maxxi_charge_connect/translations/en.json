@@ -48,7 +48,7 @@
       },
       "BatterySoESensor":{
         "name": "Battery ({index}) SoE"
-      }
+      }    
     }
   }
 }

@@ -1,6 +1,7 @@
 from datetime import timedelta
+import logging
 
-from custom_components.maxxi_charge_connect.const import DOMAIN
+from ..const import DOMAIN
 
 from homeassistant.components.integration.sensor import IntegrationSensor, UnitOfTime
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
@@ -9,6 +10,8 @@ from homeassistant.helpers.event import async_track_time_change
 from homeassistant.util import dt as dt_util
 
 from .translationsForIntegrationSensors import get_localized_name
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class PvSelfConsumptionEnergyToday(IntegrationSensor):
@@ -32,25 +35,38 @@ class PvSelfConsumptionEnergyToday(IntegrationSensor):
         self._attr_device_class = SensorDeviceClass.ENERGY
         self._attr_state_class = SensorStateClass.TOTAL
         self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
-        self._last_reset = dt_util.utcnow()
+        local_midnight = dt_util.start_of_local_day()
+        self._last_reset = dt_util.as_utc(local_midnight)
 
     async def async_added_to_hass(self):
         await super().async_added_to_hass()
 
-        async_track_time_change(
+        # Registriere täglichen Reset um 0:00 Uhr lokale Zeit
+        self._unsub_time_reset = async_track_time_change(
             self.hass,
             self._reset_energy_daily,
             hour=0,
             minute=0,
             second=0,
         )
+
         if self._unsub_time_reset is not None:
             self.async_on_remove(self._unsub_time_reset)
 
     async def _reset_energy_daily(self, now):
-        self._last_reset = dt_util.utcnow()
-        self._integration.reset()
-        self.async_write_ha_state()
+        _LOGGER.warning("resetting daily energy at %s", now)
+
+        # Setze Reset-Zeitpunkt auf aktuelle Mitternacht lokal (als UTC)
+        local_midnight = dt_util.start_of_local_day()
+        self._last_reset = dt_util.as_utc(local_midnight)
+
+        try:
+            self._integration.reset()
+            _LOGGER.warning("internal integration reset")
+        except Exception as e:
+            _LOGGER.error("reset failed – %s", e)
+
+        await self.async_write_ha_state()
 
     @property
     def last_reset(self):

@@ -35,6 +35,7 @@ class PvSelfConsumptionEnergyToday(IntegrationSensor):
         self._attr_device_class = SensorDeviceClass.ENERGY
         self._attr_state_class = SensorStateClass.TOTAL
         self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+        # Setze initialen Reset-Zeitpunkt auf heutige Mitternacht lokal
         local_midnight = dt_util.start_of_local_day()
         self._last_reset = dt_util.as_utc(local_midnight)
 
@@ -54,17 +55,11 @@ class PvSelfConsumptionEnergyToday(IntegrationSensor):
             self.async_on_remove(self._unsub_time_reset)
 
     async def _reset_energy_daily(self, now):
-        _LOGGER.warning("resetting daily energy at %s", now)
+        _LOGGER.info("Resetting daily energy at %s", now)
 
         # Setze Reset-Zeitpunkt auf aktuelle Mitternacht lokal (als UTC)
         local_midnight = dt_util.start_of_local_day()
         self._last_reset = dt_util.as_utc(local_midnight)
-
-        try:
-            self._integration.reset()
-            _LOGGER.warning("internal integration reset")
-        except Exception as e:
-            _LOGGER.error("reset failed – %s", e)
 
         await self.async_write_ha_state()
 

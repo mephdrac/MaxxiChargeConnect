@@ -1,5 +1,3 @@
-from custom_components.maxxi_charge_connect.const import DOMAIN
-
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
@@ -8,6 +6,8 @@ from homeassistant.const import (
     EntityCategory,
 )
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+
+from ..const import DOMAIN
 
 
 class Rssi(SensorEntity):
@@ -29,9 +29,10 @@ class Rssi(SensorEntity):
     async def async_added_to_hass(self):
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
 
-        self.async_on_remove(
-            async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
+        self._unsub_dispatcher = async_dispatcher_connect(
+            self.hass, signal_sensor, self._handle_update
         )
+        self.async_on_remove(self._unsub_dispatcher)
 
     async def async_will_remove_from_hass(self):
         if self._unsub_dispatcher:

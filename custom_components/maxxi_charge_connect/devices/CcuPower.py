@@ -1,3 +1,4 @@
+import logging
 from custom_components.maxxi_charge_connect.const import DOMAIN
 
 from homeassistant.components.sensor import (
@@ -8,6 +9,8 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class CcuPower(SensorEntity):
@@ -39,8 +42,14 @@ class CcuPower(SensorEntity):
             self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
-        self._attr_native_value = float(data.get("Pccu", 0))
-        self.async_write_ha_state()
+        # Auf Plausibilität prüfen
+        pccu = float(data.get("Pccu", 0))
+
+        if pccu >= 0 and pccu <= (2300 * 1.5):
+            self._attr_native_value = float(data.get("Pccu", 0))
+            self.async_write_ha_state()
+        else:
+            _LOGGER.error("Pccu-Wert ist nicht plausibel und wird verworfen")
 
     @property
     def device_info(self):

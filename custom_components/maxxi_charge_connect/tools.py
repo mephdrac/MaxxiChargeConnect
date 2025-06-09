@@ -27,10 +27,12 @@ def isPowerTotalOk(power_total: float, batterien):
     ok = False
     anzahlBatterien = len(batterien)
 
-    if (anzahlBatterien > 1 and anzahlBatterien < 17) and (
+    if (anzahlBatterien > 0 and anzahlBatterien < 17) and (
         power_total >= 0 and power_total <= (60 * 138 * anzahlBatterien)
     ):
         ok = True
     else:
-        _LOGGER.error("Power_total Wert ist nicht plausibel und wird verworfen")
+        _LOGGER.error(
+            f"Power_total Wert ({power_total}) ist nicht plausibel und wird verworfen"
+        )
     return ok

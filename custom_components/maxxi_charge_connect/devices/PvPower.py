@@ -8,8 +8,8 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from maxxi_charge_connect.tools import isPowerTotalOk
 
-from ..tools import isPowerTotalOk
 
 class PvPower(SensorEntity):
     _attr_translation_key = "PvPower"
@@ -39,7 +39,6 @@ class PvPower(SensorEntity):
             self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
-
         pv_power = float(data.get("PV_power_total", 0))
         batteries = data.get("batteriesInfo", [])
 

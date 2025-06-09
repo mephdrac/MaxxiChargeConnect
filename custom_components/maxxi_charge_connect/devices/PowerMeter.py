@@ -9,6 +9,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
+from ..tools import isPrOk
 
 class PowerMeter(SensorEntity):
     _attr_translation_key = "PowerMeter"
@@ -39,8 +40,11 @@ class PowerMeter(SensorEntity):
             self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
-        self._attr_native_value = data.get("Pr")
-        self.async_write_ha_state()
+        pr = data.get("Pr")
+
+        if isPrOk(pr):
+            self._attr_native_value = pr
+            self.async_write_ha_state()
 
     @property
     def device_info(self):

@@ -9,6 +9,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
+from ..tools import isPrOk
 
 class PvSelfConsumption(SensorEntity):
     _attr_entity_registry_enabled_default = False
@@ -43,8 +44,10 @@ class PvSelfConsumption(SensorEntity):
         # PV-Eigenverbrauch
         pv_power = float(data.get("PV_power_total", 0))
         pr = float(data.get("Pr", 0))
-        self._attr_native_value = pv_power - max(-pr, 0)
-        self.async_write_ha_state()
+        
+        if isPrOk(pr):
+            self._attr_native_value = pv_power - max(-pr, 0)
+            self.async_write_ha_state()
 
     @property
     def device_info(self):

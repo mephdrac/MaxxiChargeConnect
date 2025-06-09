@@ -9,6 +9,7 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from ..tools import isPccuOk
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -45,11 +46,9 @@ class CcuPower(SensorEntity):
         # Auf Plausibilität prüfen
         pccu = float(data.get("Pccu", 0))
 
-        if pccu >= 0 and pccu <= (2300 * 1.5):
+        if isPccuOk(pccu):
             self._attr_native_value = float(data.get("Pccu", 0))
             self.async_write_ha_state()
-        else:
-            _LOGGER.error("Pccu-Wert ist nicht plausibel und wird verworfen")
 
     @property
     def device_info(self):

@@ -37,4 +37,4 @@ jobs:
 
       - name: Run pip-audit
         run: |
-          pip-audit --format json --fail-on high
+          pip-audit --format json

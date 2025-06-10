@@ -1,4 +1,7 @@
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import (
+    SensorEntity,
+    SensorStateClass,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_WEBHOOK_ID,
@@ -23,6 +26,7 @@ class Rssi(SensorEntity):
         self._attr_icon = "mdi:wifi"
         self._attr_native_value = None
         self._attr_device_class = "signal_strength"
+        self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = SIGNAL_STRENGTH_DECIBELS_MILLIWATT
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
 

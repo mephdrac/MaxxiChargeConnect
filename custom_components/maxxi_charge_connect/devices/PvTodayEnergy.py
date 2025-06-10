@@ -61,14 +61,8 @@ class PvTodayEnergy(IntegrationSensor):
         # Setze Reset-Zeitpunkt auf aktuelle Mitternacht lokal (als UTC)
         local_midnight = dt_util.start_of_local_day()
         self._last_reset = dt_util.as_utc(local_midnight)
-
-        try:
-            self._integration.reset()
-            _LOGGER.warning("PvTodayEnergy: internal integration reset")
-        except Exception as e:
-            _LOGGER.error("PvTodayEnergy: reset failed – %s", e)
-
-        await self.async_write_ha_state()
+        
+        self.async_write_ha_state()
 
     @property
     def last_reset(self):

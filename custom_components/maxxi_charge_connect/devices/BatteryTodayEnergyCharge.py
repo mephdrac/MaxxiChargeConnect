@@ -54,13 +54,13 @@ class BatteryTodayEnergyCharge(IntegrationSensor):
             self.async_on_remove(self._unsub_time_reset)
 
     async def _reset_energy_daily(self, now):
-        _LOGGER.info("Resetting daily energy at %s", now)
+        _LOGGER.warning("Resetting daily energy at %s", now)
 
         # Setze Reset-Zeitpunkt auf aktuelle Mitternacht lokal (als UTC)
         local_midnight = dt_util.start_of_local_day()
         self._last_reset = dt_util.as_utc(local_midnight)
 
-        await self.async_write_ha_state()
+        self.async_write_ha_state()
 
     @property
     def last_reset(self):

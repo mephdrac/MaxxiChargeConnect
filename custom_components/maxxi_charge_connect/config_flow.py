@@ -1,31 +1,57 @@
 import voluptuous as vol
+import uuid
+
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_WEBHOOK_ID, CONF_HOST
+from homeassistant.const import CONF_WEBHOOK_ID, CONF_IP_ADDRESS, CONF_NAME
 
 from .const import DOMAIN
+
+from homeassistant.helpers.selector import BooleanSelector
 
 
 class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 2
 
+    _name = None
+    _webhook_id = None
+
     async def async_step_user(self, user_input=None):
         if user_input is not None:
-            webhook_id = user_input[CONF_WEBHOOK_ID]
-            hosts = user_input[CONF_HOST]
+            self._name = user_input[CONF_NAME]
+            self._webhook_id = user_input[CONF_WEBHOOK_ID]
+            restrict = user_input["restrict_host"]
+
+            if restrict:
+                return await self.async_step_host()
+
             return self.async_create_entry(
-                title=f"MaxxiCharge-{webhook_id}",
-                data={CONF_WEBHOOK_ID: webhook_id, CONF_HOST: hosts},
+                title=self._name,
+                data={CONF_WEBHOOK_ID: self._webhook_id, CONF_NAME: self._name},
             )
 
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(
                 {
+                    vol.Required(CONF_NAME): Strin,
                     vol.Required(CONF_WEBHOOK_ID): str,
-                    vol.Required(CONF_HOST): str,  # ← hier kommt die IP / Hostname rein
+                    vol.Optional("restrict_host", default=False): BooleanSelector(),
                 }
             ),
+        )
+
+    async def async_step_host(self, user_input=None):
+        if user_input is not None:
+            hosts = user_input[CONF_IP_ADDRESS]
+            return self.async_create_entry(
+                title=self._name,
+                data={CONF_WEBHOOK_ID: self._webhook_id, CONF_IP_ADDRESS: hosts},
+            )
+
+        return self.async_show_form(
+            step_id="host",
+            data_schema=vol.Schema({vol.Required(CONF_IP_ADDRESS): str}),
         )
 
     @staticmethod
@@ -38,7 +64,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             new_data = {**config_entry.data}
 
             # Setze z. B. einen Default-Wert oder lasse den Nutzer migrieren
-            # new_data[CONF_HOST] = "maxxi.local"  # <- Dummy oder Migration notwendig
+            # new_data[CONF_NAME] = config_entry.data.get(CONF_NAME, config_entry.title)
 
             config_entry.version = 2
             hass.config_entries.async_update_entry(config_entry, data=new_data)
@@ -60,9 +86,12 @@ class MaxxiChargeOptionsFlowHandler(config_entries.OptionsFlow):
             data_schema=vol.Schema(
                 {
                     vol.Required(
-                        CONF_HOST,
+                        CONF_NAME,
                         default=self.config_entry.options.get(
-                            CONF_HOST, self.config_entry.data.get(CONF_HOST, "")
+                            CONF_NAME,
+                            self.config_entry.data.get(
+                                CONF_NAME, self.config_entry.title
+                            ),
                         ),
                     ): str,
                     vol.Required(

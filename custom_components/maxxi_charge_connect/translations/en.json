@@ -1,4 +1,22 @@
 {
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "restrict_host": "Manually specify IP address",
+          "webhook_id": "Webhook ID",
+          "name": "Name"
+        },
+        "title": "Connect MaxxiCharge"
+      },
+      "host": {
+        "data": {
+          "ip_address": "IP address"
+        },
+        "title": "Configure host"
+      }
+    }
+  },
   "entity": {
     "sensor": {
       "battery_power": {

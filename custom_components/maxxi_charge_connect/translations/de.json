@@ -1,4 +1,23 @@
 {
+  "config": {
+    "step": {
+      "user": {
+        "title": "MaxxiCharge verbinden",
+        "description": "Richte deine MaxxiCharge-Verbindung ein.",
+        "data": {
+          "restrict_host": "IP-Adresse manuell angeben",
+          "webhook_id": "Webhook-ID",
+          "name": "Name"
+        }
+      },
+      "host": {
+        "title": "Host konfigurieren",
+        "data": {
+          "ip_address": "IP-Adresse"
+        }
+      }
+    }
+  },
   "entity": {
     "sensor": {
       "battery_power": {

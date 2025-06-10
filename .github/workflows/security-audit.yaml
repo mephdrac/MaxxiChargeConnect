@@ -5,7 +5,13 @@ on:
     - cron: '0 8 * * 1'  # Jeden Montag um 08:00 UTC
   workflow_dispatch:      # Manuell auslösbar
   pull_request:
-    branches: [ main, dev ]
+    branches: 
+      - main
+      - dev 
+  push:
+    branches:
+      - main
+      - dev
 
 jobs:
   pip-audit:

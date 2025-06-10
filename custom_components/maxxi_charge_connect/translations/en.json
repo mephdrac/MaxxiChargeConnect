@@ -2,18 +2,15 @@
   "config": {
     "step": {
       "user": {
+        "title": "Connect MaxxiCharge",
+        "description": "Configure your MaxxiCharge connection.",
         "data": {
           "restrict_host": "Manually specify IP address",
+          "only_accept_one_ip": "Limit webhook access",
           "webhook_id": "Webhook ID",
-          "name": "Name"
-        },
-        "title": "Connect MaxxiCharge"
-      },
-      "host": {
-        "data": {
-          "ip_address": "IP address"
-        },
-        "title": "Configure host"
+          "name": "Device name",
+          "ip_address": "IP-Adress"
+        }
       }
     }
   },
@@ -66,7 +63,7 @@
       },
       "BatterySoESensor":{
         "name": "Battery ({index}) SoE"
-      }    
+      }
     }
   }
 }

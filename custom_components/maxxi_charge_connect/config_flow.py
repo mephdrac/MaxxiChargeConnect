@@ -1,13 +1,12 @@
 import voluptuous as vol
-import uuid
-
 
 from homeassistant import config_entries
-from homeassistant.const import CONF_WEBHOOK_ID, CONF_IP_ADDRESS, CONF_NAME
+from homeassistant.const import CONF_IP_ADDRESS, CONF_NAME, CONF_WEBHOOK_ID
+from homeassistant.helpers.selector import BooleanSelector, TextSelector
 
 from .const import DOMAIN
 
-from homeassistant.helpers.selector import BooleanSelector
+ONLY_ONE_IP = "only_accept_one_ip"
 
 
 class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -15,44 +14,53 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     _name = None
     _webhook_id = None
+    _host_ip = None
+    _only_ip = False
 
     async def async_step_user(self, user_input=None):
         if user_input is not None:
             self._name = user_input[CONF_NAME]
             self._webhook_id = user_input[CONF_WEBHOOK_ID]
-            restrict = user_input["restrict_host"]
+            self._host_ip = user_input[CONF_IP_ADDRESS]
+            self._only_ip = user_input[ONLY_ONE_IP]
 
-            if restrict:
-                return await self.async_step_host()
+            # if self._only_ip:
+            #     return await self.async_step_host()
 
             return self.async_create_entry(
                 title=self._name,
-                data={CONF_WEBHOOK_ID: self._webhook_id, CONF_NAME: self._name},
+                data={
+                    CONF_WEBHOOK_ID: self._webhook_id,
+                    CONF_NAME: self._name,
+                    CONF_IP_ADDRESS: self._host_ip,
+                    ONLY_ONE_IP: self._only_ip,
+                },
             )
 
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_NAME): Strin,
+                    vol.Required(CONF_NAME): str,
                     vol.Required(CONF_WEBHOOK_ID): str,
-                    vol.Optional("restrict_host", default=False): BooleanSelector(),
+                    vol.Optional(CONF_IP_ADDRESS): str,
+                    vol.Optional(ONLY_ONE_IP, default=False): BooleanSelector(),
                 }
             ),
         )
 
-    async def async_step_host(self, user_input=None):
-        if user_input is not None:
-            hosts = user_input[CONF_IP_ADDRESS]
-            return self.async_create_entry(
-                title=self._name,
-                data={CONF_WEBHOOK_ID: self._webhook_id, CONF_IP_ADDRESS: hosts},
-            )
+    # async def async_step_host(self, user_input=None):
+    #     if user_input is not None:
+    #         hosts = user_input[CONF_IP_ADDRESS]
+    #         return self.async_create_entry(
+    #             title=self._name,
+    #             data={CONF_WEBHOOK_ID: self._webhook_id, CONF_IP_ADDRESS: hosts},
+    #         )
 
-        return self.async_show_form(
-            step_id="host",
-            data_schema=vol.Schema({vol.Required(CONF_IP_ADDRESS): str}),
-        )
+    #     return self.async_show_form(
+    #         step_id="host",
+    #         data_schema=vol.Schema({vol.Required(CONF_IP_ADDRESS): str}),
+    #     )
 
     @staticmethod
     def async_get_options_flow(config_entry):
@@ -74,7 +82,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class MaxxiChargeOptionsFlowHandler(config_entries.OptionsFlow):
-    def __init__(self, config_entry):
+    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
         self.config_entry = config_entry
 
     async def async_step_init(self, user_input=None):
@@ -83,24 +91,34 @@ class MaxxiChargeOptionsFlowHandler(config_entries.OptionsFlow):
 
         return self.async_show_form(
             step_id="init",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
+            data_schema={
+                vol.Required(
+                    CONF_NAME,
+                    default=self.config_entry.options.get(
                         CONF_NAME,
-                        default=self.config_entry.options.get(
-                            CONF_NAME,
-                            self.config_entry.data.get(
-                                CONF_NAME, self.config_entry.title
-                            ),
-                        ),
-                    ): str,
-                    vol.Required(
+                        self.config_entry.data.get(CONF_NAME, self.config_entry.title),
+                    ),
+                ): str,
+                vol.Required(
+                    CONF_WEBHOOK_ID,
+                    default=self.config_entry.options.get(
                         CONF_WEBHOOK_ID,
-                        default=self.config_entry.options.get(
-                            CONF_WEBHOOK_ID,
-                            self.config_entry.data.get(CONF_WEBHOOK_ID, ""),
-                        ),
-                    ): str,
-                }
-            ),
+                        self.config_entry.data.get(CONF_WEBHOOK_ID, ""),
+                    ),
+                ): str,
+                vol.Optional(
+                    CONF_IP_ADDRESS,
+                    default=self.config_entry.options.get(
+                        CONF_IP_ADDRESS,
+                        self.config_entry.data.get(CONF_IP_ADDRESS, ""),
+                    ),
+                ): str,
+                vol.Optional(
+                    ONLY_ONE_IP,
+                    default=self.config_entry.options.get(
+                        ONLY_ONE_IP,
+                        self.config_entry.data.get(ONLY_ONE_IP, "False"),
+                    ),
+                ): BooleanSelector(),
+            },
         )

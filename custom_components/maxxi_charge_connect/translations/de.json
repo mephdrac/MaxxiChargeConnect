@@ -6,16 +6,30 @@
         "description": "Richte deine MaxxiCharge-Verbindung ein.",
         "data": {
           "restrict_host": "IP-Adresse manuell angeben",
+          "only_accept_one_ip": "Webhook-Zugriff einschränken",
           "webhook_id": "Webhook-ID",
-          "name": "Name"
+          "name": "Name des Gerätes",
+          "ip_address": "IP-Adresse der MaxxiCharge"
         }
       },
-      "host": {
-        "title": "Host konfigurieren",
+      "init": {
+        "title": "MaxxiCharge verbinden",
+        "description": "Richte deine MaxxiCharge-Verbindung ein.",
         "data": {
-          "ip_address": "IP-Adresse"
+          "restrict_host": "IP-Adresse manuell angeben",
+          "only_accept_one_ip": "Webhook-Zugriff einschränken",
+          "webhook_id": "Webhook-ID",
+          "name": "Name des Gerätes",
+          "ip_address": "IP-Adresse der MaxxiCharge"
         }
       }
+    },
+    "field": {
+      "restrict_host": "IP-Adresse manuell angeben",
+      "only_accept_one_ip": "Webhook-Zugriff einschränken",
+      "webhook_id": "Webhook-ID",
+      "name": "Name des Gerätes",
+      "ip_address": "IP-Adresse der MaxxiCharge"
     }
   },
   "entity": {
@@ -67,7 +81,7 @@
       },
       "BatterySoESensor":{
         "name": "Batterie ({index}) Kapazität"
-      }     
+      }
     }
   }
 }

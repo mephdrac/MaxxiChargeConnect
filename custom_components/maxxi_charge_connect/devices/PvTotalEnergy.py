@@ -10,7 +10,7 @@ from .translationsForIntegrationSensors import get_localized_name
 
 
 class PvTotalEnergy(IntegrationSensor):
-    # _attr_entity_registry_enabled_default = False
+    # _attr_entity_registry_enabled_default = True
     # _attr_translation_key = "PvTotalEnergy"
     # _attr_has_entity_name = True
 

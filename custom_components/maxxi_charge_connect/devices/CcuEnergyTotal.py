@@ -10,7 +10,7 @@ from .translationsForIntegrationSensors import get_localized_name
 
 
 class CcuEnergyTotal(IntegrationSensor):
-    _attr_entity_registry_enabled_default = False
+    _attr_entity_registry_enabled_default = True
 
     def __init__(self, hass, entry, source_entity_id: str):
         super().__init__(

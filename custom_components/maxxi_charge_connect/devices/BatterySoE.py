@@ -7,7 +7,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 
 class BatterySoE(SensorEntity):
-    _attr_entity_registry_enabled_default = False
+    _attr_entity_registry_enabled_default = True
     _attr_translation_key = "BatterySoE"
     _attr_has_entity_name = True
 

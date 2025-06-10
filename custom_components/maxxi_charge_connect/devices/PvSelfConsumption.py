@@ -12,7 +12,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from ..tools import isPrOk,isPowerTotalOk
 
 class PvSelfConsumption(SensorEntity):
-    _attr_entity_registry_enabled_default = False
+    _attr_entity_registry_enabled_default = True
     _attr_translation_key = "PvSelfConsumption"
     _attr_has_entity_name = True
 

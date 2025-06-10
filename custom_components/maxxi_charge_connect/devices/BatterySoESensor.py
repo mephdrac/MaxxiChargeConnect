@@ -6,7 +6,7 @@ from homeassistant.const import UnitOfEnergy
 
 
 class BatterySoESensor(SensorEntity):
-    _attr_entity_registry_enabled_default = False
+    _attr_entity_registry_enabled_default = True
     _attr_translation_key = "BatterySoESensor"
     _attr_has_entity_name = True
 

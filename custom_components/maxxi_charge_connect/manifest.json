@@ -4,7 +4,7 @@
   "version": "0.4.7",
   "documentation": "https://github.com/mephdrac/MaxxiChargeConnect",
   "issue_tracker": "https://github.com/mephdrac/MaxxiChargeConnect/issues",
-  "requirements": [],
+  "requirements": ["aiohttp>=3.12.9","pyyaml>=5.4","voluptuous>=0.13.1"],
   "codeowners": ["@mephdrac"],
   "config_flow": true,
   "integration_type": "device",

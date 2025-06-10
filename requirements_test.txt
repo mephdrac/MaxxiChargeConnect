@@ -1,3 +1,10 @@
 pytest
 pytest-asyncio
-homeassistant
+pytest-mock
+pytest-cov
+homeassistant>=2025.3.0
+
+# Sicherheitsfixes erzwingen:
+cryptography>=44.0.1
+jinja2>=3.1.5
+requests>=2.32.3

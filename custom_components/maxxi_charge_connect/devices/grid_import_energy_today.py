@@ -1,20 +1,45 @@
+"""Sensor zur Messung der heute importierten Energie aus dem Stromnetz für Home Assistant.
+
+Dieses Modul definiert die Entität `GridImportEnergyToday`, die auf Basis
+eines Leistungssensors kontinuierlich die importierte Energie integriert und
+täglich um Mitternacht zurücksetzt.
+"""
+
 from datetime import timedelta
 import logging
 
 from homeassistant.components.integration.sensor import IntegrationSensor, UnitOfTime
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfEnergy
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.util import dt as dt_util
 
-from ..const import DOMAIN
-from .translationsForIntegrationSensors import get_localized_name
+from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+from .translations_for_integration_sensors import get_localized_name
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class GridImportEnergyToday(IntegrationSensor):
-    def __init__(self, hass, entry, source_entity_id: str):
+    """Sensor-Entität zur Erfassung der importierten Energie (heute).
+
+    Verwendet die IntegrationSensor-Funktionalität von Home Assistant,
+    um kontinuierlich Energie (kWh) basierend auf einem Quell-Leistungssensor
+    über den Tag hinweg zu integrieren. Die Energie wird täglich um 0:00 Uhr
+    lokale Zeit zurückgesetzt.
+    """
+
+    def __init__(self, hass: HomeAssistant, entry, source_entity_id: str) -> None:
+        """Initialisiert den Sensor für importierte Tagesenergie.
+
+        Args:
+            hass (HomeAssistant): Die zentrale Home Assistant Instanz.
+            entry (ConfigEntry): Die Konfigurationsinstanz für diese Integration.
+            source_entity_id (str): Die Entity-ID des Quellsensors (z. B. Netzimportleistung).
+
+        """
+
         super().__init__(
             source_entity=source_entity_id,
             # name="Grid Import Energy Today",
@@ -56,6 +81,13 @@ class GridImportEnergyToday(IntegrationSensor):
             self.async_on_remove(self._unsub_time_reset)
 
     async def _reset_energy_daily(self, now):
+        """Setzt den Energiezähler für den neuen Tag zurück.
+
+        Args:
+            now (datetime): Der aktuelle Zeitpunkt, vom Scheduler übergeben.
+
+        """
+
         _LOGGER.info("Resetting daily energy at %s", now)
 
         # Setze Reset-Zeitpunkt auf aktuelle Mitternacht lokal (als UTC)
@@ -64,7 +96,7 @@ class GridImportEnergyToday(IntegrationSensor):
 
         self.async_write_ha_state()
 
-        @property
+    @property
     def last_reset(self):
         """Gibt den letzten Zeitpunkt zurück, zu dem die Tagesenergie zurückgesetzt wurde.
 
@@ -73,7 +105,6 @@ class GridImportEnergyToday(IntegrationSensor):
 
         """
         return self._last_reset
-
 
     @property
     def device_info(self):

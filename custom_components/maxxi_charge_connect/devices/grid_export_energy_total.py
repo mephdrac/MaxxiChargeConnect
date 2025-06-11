@@ -1,23 +1,43 @@
-from datetime import timedelta
+"""IntegrationSensor zur Erfassung der insgesamt exportierten Energie ins Netz.
 
-from custom_components.maxxi_charge_connect.const import DOMAIN
+Diese Entität berechnet auf Basis eines Quell-Sensors (z. B. Momentanleistung)
+die exportierte Energie ins Stromnetz über die Zeit. Sie verwendet dafür die
+trapezförmige Integrationsmethode und speichert das Ergebnis als kumulativen Zähler.
+
+Die Einheit der Messung ist Kilowattstunden (kWh).
+"""
+
+from datetime import timedelta
 
 from homeassistant.components.integration.sensor import IntegrationSensor, UnitOfTime
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfEnergy
+from homeassistant.core import HomeAssistant
 
-from .translationsForIntegrationSensors import get_localized_name
+from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+from .translations_for_integration_sensors import get_localized_name
 
 
-class GridImportEnergyTotal(IntegrationSensor):
+class GridExportEnergyTotal(IntegrationSensor):
+    """Sensor zur Berechnung der gesamten Netzeinspeisung (kWh)."""
+
     _attr_entity_registry_enabled_default = True
 
-    def __init__(self, hass, entry, source_entity_id: str):
+    def __init__(self, hass: HomeAssistant, entry, source_entity_id: str) -> None:
+        """Initialisiert die Entität für Netzeinspeisung gesamt.
+
+        Args:
+            hass (HomeAssistant): Die Home Assistant-Instanz.
+            entry (ConfigEntry): Die Konfiguration der Integration.
+            source_entity_id (str): Die Entity ID des Leistungssensors, der integriert werden soll.
+
+        """
+
         super().__init__(
             source_entity=source_entity_id,
-            # name="Grid Import Energy Total",
+            # name="Grid Export Energy Total",
             name=get_localized_name(hass, self.__class__.__name__),
-            unique_id=f"{entry.entry_id}_grid_import_energy_total",
+            unique_id=f"{entry.entry_id}_grid_export_energy_total",
             integration_method="trapezoidal",
             round_digits=3,
             unit_prefix="k",
@@ -29,6 +49,7 @@ class GridImportEnergyTotal(IntegrationSensor):
         self._attr_device_class = SensorDeviceClass.ENERGY
         self._attr_state_class = SensorStateClass.TOTAL_INCREASING
         self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+        self._entity_registry_enabled_default = False
 
     @property
     def device_info(self):

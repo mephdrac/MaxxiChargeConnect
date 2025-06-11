@@ -1,23 +1,38 @@
-from datetime import timedelta
+"""Sensor zur täglichen Integration des PV-Eigenverbrauchs in kWh.
 
-from custom_components.maxxi_charge_connect.const import DOMAIN
+Dieser Sensor summiert die PV-Eigenverbrauchsleistung insgesamt.
+"""
+
+from datetime import timedelta
 
 from homeassistant.components.integration.sensor import IntegrationSensor, UnitOfTime
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfEnergy
+from homeassistant.core import HomeAssistant
 
-from .translationsForIntegrationSensors import get_localized_name
+from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+from .translations_for_integration_sensors import get_localized_name
 
 
-class GridExportEnergyTotal(IntegrationSensor):
+class PvSelfConsumptionEnergyTotal(IntegrationSensor):
+    """Sensor zur Integration der PV-Eigenverbrauchsleistung (kWh gesamt)."""
+
     _attr_entity_registry_enabled_default = True
 
-    def __init__(self, hass, entry, source_entity_id: str):
+    def __init__(self, hass: HomeAssistant, entry, source_entity_id: str) -> None:
+        """Initialisiert den täglichen PV-Energieverbrauchssensor.
+
+        Args:
+            hass (HomeAssistant): Die Home Assistant-Instanz.
+            entry (ConfigEntry): Die Konfigurationsinstanz der Integration.
+            source_entity_id (str): Die Entity-ID der Quell-Leistungs-Sensorentität.
+
+        """
         super().__init__(
             source_entity=source_entity_id,
-            # name="Grid Export Energy Total",
+            # name="PV Self Cons. Total",
             name=get_localized_name(hass, self.__class__.__name__),
-            unique_id=f"{entry.entry_id}_grid_export_energy_total",
+            unique_id=f"{entry.entry_id}_pv_self_consumption_energy_total",
             integration_method="trapezoidal",
             round_digits=3,
             unit_prefix="k",
@@ -29,7 +44,6 @@ class GridExportEnergyTotal(IntegrationSensor):
         self._attr_device_class = SensorDeviceClass.ENERGY
         self._attr_state_class = SensorStateClass.TOTAL_INCREASING
         self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
-        self._entity_registry_enabled_default = False
 
     @property
     def device_info(self):

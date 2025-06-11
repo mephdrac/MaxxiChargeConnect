@@ -1,5 +1,8 @@
-from custom_components.maxxi_charge_connect.const import DOMAIN
-from custom_components.maxxi_charge_connect.tools import isPccuOk, isPrOk
+"""Sensor zur Berechnung des aktuellen Hausstromverbrauchs (PowerConsumption).
+
+Dieser Sensor summiert die Leistung von Batterie (Pccu) und Netz (Pr), um den
+aktuellen Gesamtstromverbrauch des Hauses zu bestimmen.
+"""
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -10,12 +13,27 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
+from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+from ..tools import isPccuOk, isPrOk  # noqa: TID252
+
 
 class PowerConsumption(SensorEntity):
+    """Sensor-Entität zur Erfassung des aktuellen Hausverbrauchs in Watt.
+
+    Der Sensor summiert positive Batterie-Entladung (Pccu) und Netzimport (Pr),
+    um den gesamten aktuellen Stromverbrauch zu berechnen.
+    """
+
     _attr_translation_key = "PowerConsumption"
     _attr_has_entity_name = True
 
-    def __init__(self, entry: ConfigEntry):
+    def __init__(self, entry: ConfigEntry) -> None:
+        """Initialisiert den Verbrauchssensor basierend auf Konfigurationsdaten.
+
+        Args:
+            entry (ConfigEntry): Die Konfigurationsinstanz für diese Integration.
+
+        """
         self._unsub_dispatcher = None
         self._entry = entry
         self._attr_suggested_display_precision = 2
@@ -29,19 +47,41 @@ class PowerConsumption(SensorEntity):
         # self._attr_entity_category = EntityCategory.
 
     async def async_added_to_hass(self):
+        """Wird aufgerufen, wenn die Entität zu Home Assistant hinzugefügt wird.
+
+        Verbindet sich mit dem Dispatcher-Signal zur Aktualisierung des Sensors,
+        basierend auf den eingehenden Webhook-Daten.
+        """
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
+
+        self._unsub_dispatcher = async_dispatcher_connect(
+            self.hass, signal_sensor, self._handle_update
+        )
 
         self.async_on_remove(
             async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
         )
 
     async def async_will_remove_from_hass(self):
-        if self._unsub_dispatcher:
+        """Wird aufgerufen, bevor die Entität aus Home Assistant entfernt wird.
+
+        Trennt das Dispatcher-Signal, um Speicherlecks zu vermeiden.
+        """
+        if self._unsub_dispatcher is not None:
             self._unsub_dispatcher()
             self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
-        # Verbrauch = Pccu + Pr
+        """Verarbeitet eingehende Leistungsdaten und aktualisiert den Sensorwert.
+
+        Die Verbrauchsberechnung lautet: Verbrauch = Pccu + max(-Pr, 0)
+
+        Args:
+            data (dict): Ein Dictionary mit Leistungswerten von Webhook-Daten.
+                         Erwartet Schlüssel `Pccu` und `Pr`.
+
+        """
+
         pccu = float(data.get("Pccu", 0))
 
         if isPccuOk(pccu):

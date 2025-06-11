@@ -17,7 +17,7 @@ from homeassistant.const import UnitOfEnergy
 from homeassistant.core import HomeAssistant
 
 from ..const import DEVICE_INFO, DOMAIN
-from .translationsForIntegrationSensors import get_localized_name
+from .translations_for_integration_sensors import get_localized_name
 
 
 class CcuEnergyTotal(IntegrationSensor):

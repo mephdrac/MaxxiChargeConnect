@@ -1,23 +1,39 @@
+"""Sensor zur täglichen Integration des PV-Eigenverbrauchs in kWh.
+
+Dieser Sensor summiert die PV-Eigenverbrauchsleistung über den Tag
+und setzt den Wert täglich um Mitternacht lokal zurück.
+"""
+
 from datetime import timedelta
 import logging
-
-from ..const import DOMAIN
 
 from homeassistant.components.integration.sensor import IntegrationSensor, UnitOfTime
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfEnergy
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.util import dt as dt_util
 
-from .translationsForIntegrationSensors import get_localized_name
+from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+from .translations_for_integration_sensors import get_localized_name
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class PvSelfConsumptionEnergyToday(IntegrationSensor):
+    """Sensor zur Integration der PV-Eigenverbrauchsleistung (kWh heute)."""
+
     _attr_entity_registry_enabled_default = False
 
-    def __init__(self, hass, entry, source_entity_id: str):
+    def __init__(self, hass: HomeAssistant, entry, source_entity_id: str) -> None:
+        """Initialisiert den täglichen PV-Energieverbrauchssensor.
+
+        Args:
+            hass (HomeAssistant): Die Home Assistant-Instanz.
+            entry (ConfigEntry): Die Konfigurationsinstanz der Integration.
+            source_entity_id (str): Die Entity-ID der Quell-Leistungs-Sensorentität.
+
+        """
         super().__init__(
             source_entity=source_entity_id,
             # name="PV Self Cons. Today",
@@ -67,7 +83,7 @@ class PvSelfConsumptionEnergyToday(IntegrationSensor):
 
         self.async_write_ha_state()
 
-        @property
+    @property
     def last_reset(self):
         """Gibt den letzten Zeitpunkt zurück, zu dem die Tagesenergie zurückgesetzt wurde.
 
@@ -76,7 +92,6 @@ class PvSelfConsumptionEnergyToday(IntegrationSensor):
 
         """
         return self._last_reset
-
 
     @property
     def device_info(self):

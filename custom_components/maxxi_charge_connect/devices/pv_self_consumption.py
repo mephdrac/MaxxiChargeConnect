@@ -1,4 +1,8 @@
-from custom_components.maxxi_charge_connect.const import DOMAIN
+"""Sensor zur Anzeige des aktuellen PV-Eigenverbrauchs.
+
+Dieser Sensor zeigt die aktuell selbst genutzte Photovoltaik-Leistung an,
+basierend auf der Differenz zwischen erzeugter PV-Leistung und Rückeinspeisung.
+"""
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -9,15 +13,24 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
-from ..tools import isPrOk, isPowerTotalOk
+from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+from ..tools import isPowerTotalOk, isPrOk  # noqa: TID252
 
 
 class PvSelfConsumption(SensorEntity):
+    """Sensor-Entität zur Anzeige des PV-Eigenverbrauchs (PV Self-Consumption)."""
+
     _attr_entity_registry_enabled_default = True
     _attr_translation_key = "PvSelfConsumption"
     _attr_has_entity_name = True
 
-    def __init__(self, entry: ConfigEntry):
+    def __init__(self, entry: ConfigEntry) -> None:
+        """Initialisiert den PV-Eigenverbrauchs-Sensor.
+
+        Args:
+            entry (ConfigEntry): Die Konfiguration der Integration.
+
+        """
         self._unsub_dispatcher = None
         self._attr_suggested_display_precision = 2
         self._entry = entry
@@ -30,19 +43,38 @@ class PvSelfConsumption(SensorEntity):
         self._attr_native_unit_of_measurement = UnitOfPower.WATT
 
     async def async_added_to_hass(self):
+        """Registriert den Sensor beim Hinzufügen zu Home Assistant.
+
+        Verbindet den Sensor mit dem Dispatcher zur Verarbeitung eingehender Webhook-Daten.
+        """
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
+
+        self._unsub_dispatcher = async_dispatcher_connect(
+            self.hass, signal_sensor, self._handle_update
+        )
 
         self.async_on_remove(
             async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
         )
 
     async def async_will_remove_from_hass(self):
-        if self._unsub_dispatcher:
+        """Trennt die Signalverbindung beim Entfernen aus Home Assistant."""
+
+        if self._unsub_dispatcher is not None:
             self._unsub_dispatcher()
             self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
-        # PV-Eigenverbrauch
+        """Verarbeitet neue Leistungsdaten zur Berechnung des PV-Eigenverbrauchs.
+
+        Die Berechnung erfolgt nach der Formel:
+        `PV_power_total - max(-Pr, 0)`, wobei Pr der Rückspeisewert ist.
+
+        Args:
+            data (dict): Die vom Webhook gesendeten Sensordaten.
+
+        """
+
         pv_power = float(data.get("PV_power_total", 0))
         batteries = data.get("batteriesInfo", [])
 

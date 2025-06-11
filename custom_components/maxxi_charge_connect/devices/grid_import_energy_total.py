@@ -1,25 +1,46 @@
-from datetime import timedelta
+"""Sensor zur Gesamtmessung der importierten Energie aus dem Stromnetz.
 
-from custom_components.maxxi_charge_connect.const import DOMAIN
+Dieses Modul stellt die Entität `GridImportEnergyTotal` zur Verfügung, die
+mithilfe eines Leistungssensors (z. B. Netzbezug) kontinuierlich die
+importierte Energie in kWh summiert. Die Werte steigen dauerhaft an
+(TOTAL_INCREASING).
+"""
+
+from datetime import timedelta
 
 from homeassistant.components.integration.sensor import IntegrationSensor, UnitOfTime
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfEnergy
+from homeassistant.core import HomeAssistant
 
-from .translationsForIntegrationSensors import get_localized_name
+from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+from .translations_for_integration_sensors import get_localized_name
 
 
-class PvTotalEnergy(IntegrationSensor):
-    # _attr_entity_registry_enabled_default = True
-    # _attr_translation_key = "PvTotalEnergy"
-    # _attr_has_entity_name = True
+class GridImportEnergyTotal(IntegrationSensor):
+    """Sensor-Entität zur Messung der insgesamt importierten Energie.
 
-    def __init__(self, hass, entry, source_entity_id: str):
+    Verwendet die IntegrationSensor-Funktionalität von Home Assistant, um
+    kontinuierlich Energie (kWh) auf Basis eines Quell-Leistungssensors zu
+    integrieren. Die gemessene Energie steigt monoton an (TOTAL_INCREASING).
+    """
+
+    _attr_entity_registry_enabled_default = True
+
+    def __init__(self, hass: HomeAssistant, entry, source_entity_id: str) -> None:
+        """Initialisiert den Sensor zur Erfassung der Gesamtenergie aus dem Netz.
+
+        Args:
+            hass (HomeAssistant): Die zentrale Home Assistant Instanz.
+            entry (ConfigEntry): Die Konfigurationsinstanz für diese Integration.
+            source_entity_id (str): Die Entity-ID des Quellsensors (z. B. Netzimportleistung).
+
+        """
         super().__init__(
             source_entity=source_entity_id,
-            # name="PV Energy Total",
+            # name="Grid Import Energy Total",
             name=get_localized_name(hass, self.__class__.__name__),
-            unique_id=f"{entry.entry_id}_pv_energy_total",
+            unique_id=f"{entry.entry_id}_grid_import_energy_total",
             integration_method="trapezoidal",
             round_digits=3,
             unit_prefix="k",

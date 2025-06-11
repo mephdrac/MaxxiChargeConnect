@@ -18,7 +18,7 @@ from homeassistant.const import UnitOfEnergy
 from homeassistant.core import HomeAssistant
 
 from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
-from .translationsForIntegrationSensors import get_localized_name
+from .translations_for_integration_sensors import get_localized_name
 
 
 class BatteryTotalEnergyCharge(IntegrationSensor):

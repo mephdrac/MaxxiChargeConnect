@@ -17,7 +17,7 @@ from homeassistant.helpers.event import async_track_time_change
 from homeassistant.util import dt as dt_util
 
 from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
-from .translationsForIntegrationSensors import get_localized_name
+from .translations_for_integration_sensors import get_localized_name
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -1,20 +1,46 @@
+"""Grid Export Energy Sensor für Home Assistant.
+
+Dieses Modul enthält die Klasse `GridExportEnergyToday`, einen spezialisierten
+IntegrationSensor, der die heute exportierte Energie ins Stromnetz misst.
+
+Die Energie wird täglich um Mitternacht (lokale Zeit) zurückgesetzt.
+"""
+
 from datetime import timedelta
 import logging
 
 from homeassistant.components.integration.sensor import IntegrationSensor, UnitOfTime
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfEnergy
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.util import dt as dt_util
 
-from ..const import DOMAIN
-from .translationsForIntegrationSensors import get_localized_name
+from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+from .translations_for_integration_sensors import get_localized_name
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class GridExportEnergyToday(IntegrationSensor):
-    def __init__(self, hass, entry, source_entity_id: str):
+    """Sensor für die täglich exportierte Energie ins Stromnetz.
+
+    Nutzt die IntegrationSensor-Basisfunktionalität von Home Assistant,
+    um kontinuierlich Energie über Zeit zu integrieren (Wh), die von einem
+    Quellsensor stammt (z. B. Leistungssensor).
+
+    Die Energie wird täglich um Mitternacht zurückgesetzt.
+    """
+
+    def __init__(self, hass: HomeAssistant, entry, source_entity_id: str) -> None:
+        """Initialisiert den Sensor für die exportierte Energie.
+
+        Args:
+            hass (HomeAssistant): Die zentrale Home Assistant Instanz.
+            entry (ConfigEntry): Die Konfigurationsinstanz für diese Integration.
+            source_entity_id (str): Die Entity-ID des Quellsensors (z. B. Leistung).
+
+        """
         super().__init__(
             source_entity=source_entity_id,
             # name="Grid Export Energy Today",
@@ -56,6 +82,10 @@ class GridExportEnergyToday(IntegrationSensor):
             self.async_on_remove(self._unsub_time_reset)
 
     async def _reset_energy_daily(self, now):
+        """Wird aufgerufen, wenn die Entität zu Home Assistant hinzugefügt wird.
+
+        Registriert einen täglichen Reset der Energiewerte um 0:00 Uhr lokale Zeit.
+        """
         _LOGGER.info("Resetting daily energy at %s", now)
 
         # Setze Reset-Zeitpunkt auf aktuelle Mitternacht lokal (als UTC)

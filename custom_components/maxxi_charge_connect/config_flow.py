@@ -1,3 +1,21 @@
+"""Konfigurations-Flow für die MaxxiChargeConnect Integration.
+
+Dieses Modul implementiert den Konfigurations-Flow für die Home Assistant Integration
+"MaxxiChargeConnect". Es ermöglicht die Einrichtung und Neukonfiguration eines
+ConfigEntry, inklusive:
+
+- Abfrage von Name, Webhook-ID, IP-Adresse und IP-Whitelist-Option im Setup-Dialog.
+- Unterstützung eines Reconfigure-Flows zur Änderung bestehender Einträge.
+- Migration von Version 1 zu Version 2 der Konfigurationseinträge.
+
+Der Flow validiert keine Eingaben, sondern speichert sie zur weiteren Nutzung
+in der Integration.
+
+Typischerweise wird dieser Flow vom Home Assistant Framework automatisch
+aufgerufen, wenn der Nutzer die Integration hinzufügt oder neu konfiguriert.
+
+"""
+
 import logging
 from typing import Any
 
@@ -13,6 +31,17 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+    """Konfigurations-Flow für die MaxxiChargeConnect Integration.
+
+    Unterstützt den Standard-Setup-Flow sowie einen Reconfigure-Flow,
+    um bestehende Einträge zu ändern.
+
+    Attributes:
+        VERSION (int): Versionsnummer der Config-Flow-Datenstruktur.
+        reconfigure_supported (bool): Ob der Reconfigure-Flow aktiviert ist.
+
+    """
+
     VERSION = 2
     reconfigure_supported = True  # <- Aktiviert den Reconfigure-Flow
 
@@ -22,6 +51,16 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     _only_ip = False
 
     async def async_step_user(self, user_input=None):
+        """Erster Schritt des Setup-Flows, der die Nutzereingaben abfragt.
+
+        Args:
+            user_input (dict | None): Vom Benutzer eingegebene Konfigurationsdaten.
+
+        Returns:
+            FlowResult: Nächster Schritt oder Abschluss des Flows mit neuem Eintrag.
+
+        """
+
         if user_input is not None:
             self._name = user_input[CONF_NAME]
             self._webhook_id = user_input[CONF_WEBHOOK_ID]
@@ -51,6 +90,16 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None):
+        """Flow-Schritt für die Neukonfiguration eines bestehenden Eintrags.
+
+        Args:
+            user_input (dict | None): Neue Konfigurationsdaten vom Benutzer.
+
+        Returns:
+            FlowResult: Nächster Schritt oder Abschluss des Reconfigure-Flows.
+
+        """
+
         entry = self._get_reconfigure_entry()
 
         if user_input is not None:
@@ -89,10 +138,23 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ),
         )
 
-    async def async_migrate_entry(hass, config_entry):
-        if config_entry.version == 1:
-            new_data = {**config_entry.data}
-            config_entry.version = 2
-            hass.config_entries.async_update_entry(config_entry, data=new_data)
+    async def async_migrate_entry(self):
+        """Migration eines Config-Eintrags von Version 1 auf Version 2.
+
+        Args:
+            hass (HomeAssistant): Home Assistant Instanz.
+            config_entry (ConfigEntry): Zu migrierender Konfigurationseintrag.
+
+        Returns:
+            bool: True, falls Migration durchgeführt wurde, sonst False.
+
+        """
+
+        if self.config_entry.version == 1:
+            new_data = {**self.config_entry.data}
+            self.config_entry.version = 2
+            self.hass.config_entries.async_update_entry(
+                self.config_entry, data=new_data
+            )
             return True
         return False

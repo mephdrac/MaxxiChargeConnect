@@ -1,13 +1,15 @@
+"""Testklasse."""
+
 import logging
-import sys
 from pathlib import Path
+import sys
 
 sys.path.append(str(Path(__file__).resolve().parents[3]))
 
 from unittest.mock import MagicMock, patch
 
 from custom_components.maxxi_charge_connect.const import DOMAIN
-from custom_components.maxxi_charge_connect.devices.FirmwareVersion import (
+from custom_components.maxxi_charge_connect.devices.firmware_version import (
     FirmwareVersion,
 )
 import pytest
@@ -22,6 +24,7 @@ WEBHOOK_ID = "abc123"
 
 @pytest.fixture
 def mock_entry():
+    """Mock."""
     entry = MagicMock()
     entry.entry_id = "test_entry_id"
     entry.title = "Maxxi Entry"
@@ -31,12 +34,13 @@ def mock_entry():
 
 @pytest.mark.asyncio
 async def test_FirmwareVersion_initialization(mock_entry):
+    """Testfall."""
     sensor = FirmwareVersion(mock_entry)
 
-    assert sensor._attr_unique_id == "test_entry_id_firmware_version"
-    assert sensor._attr_icon == "mdi:information-outline"
-    assert sensor._attr_native_value is None
-    assert sensor._attr_entity_category == EntityCategory.DIAGNOSTIC
+    assert sensor._attr_unique_id == "test_entry_id_firmware_version"  # noqa: SLF001
+    assert sensor._attr_icon == "mdi:information-outline"  # noqa: SLF001
+    assert sensor._attr_native_value is None  # noqa: SLF001
+    assert sensor._attr_entity_category == EntityCategory.DIAGNOSTIC  # noqa: SLF001
 
 
 @pytest.mark.asyncio
@@ -69,16 +73,17 @@ async def test_FirmwareVersion_add_and_handle_update():
         await sensor.async_added_to_hass()
 
         signal = f"{DOMAIN}_webhook456_update_sensor"
-        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)
+        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)  # noqa: SLF001
         sensor.async_on_remove.assert_called_once_with(fake_unsub)
 
         firmwareversion = "MyVersion"
-        await sensor._handle_update({"firmwareVersion": firmwareversion})
+        await sensor._handle_update({"firmwareVersion": firmwareversion})  # noqa: SLF001
         assert sensor.native_value == firmwareversion
 
 
 @pytest.mark.asyncio
 async def test_FirmwareVersion_will_remove_from_hass(mock_entry):
+    """Testfall."""
     sensor = FirmwareVersion(mock_entry)
 
     disconnected = {"called": False}
@@ -86,14 +91,15 @@ async def test_FirmwareVersion_will_remove_from_hass(mock_entry):
     def unsub():
         disconnected["called"] = True
 
-    sensor._unsub_dispatcher = unsub
+    sensor._unsub_dispatcher = unsub  # noqa: SLF001
     await sensor.async_will_remove_from_hass()
 
     assert disconnected["called"]
-    assert sensor._unsub_dispatcher is None
+    assert sensor._unsub_dispatcher is None  # noqa: SLF001
 
 
 def test_device_info(mock_entry):
+    """Testfall."""
     sensor = FirmwareVersion(mock_entry)
     info = sensor.device_info
     assert info["identifiers"] == {(DOMAIN, "test_entry_id")}

@@ -1,13 +1,15 @@
+"""Testklasse."""
+
 import logging
-import sys
 from pathlib import Path
+import sys
 
 sys.path.append(str(Path(__file__).resolve().parents[3]))
 
 from unittest.mock import MagicMock, patch
 
 from custom_components.maxxi_charge_connect.const import DOMAIN
-from custom_components.maxxi_charge_connect.devices.DeviceId import DeviceId
+from custom_components.maxxi_charge_connect.devices.device_id import DeviceId
 import pytest
 
 from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
@@ -20,6 +22,7 @@ WEBHOOK_ID = "abc123"
 
 @pytest.fixture
 def mock_entry():
+    """Mock."""
     entry = MagicMock()
     entry.entry_id = "test_entry_id"
     entry.title = "Maxxi Entry"
@@ -29,16 +32,18 @@ def mock_entry():
 
 @pytest.mark.asyncio
 async def test_DeviceId_initialization(mock_entry):
+    """Testfall."""
     sensor = DeviceId(mock_entry)
 
-    assert sensor._attr_unique_id == "test_entry_id_deviceid"
-    assert sensor._attr_icon == "mdi:identifier"
-    assert sensor._attr_native_value is None
-    assert sensor._attr_entity_category == EntityCategory.DIAGNOSTIC
+    assert sensor._attr_unique_id == "test_entry_id_deviceid"  # noqa: SLF001
+    assert sensor._attr_icon == "mdi:identifier"  # noqa: SLF001
+    assert sensor._attr_native_value is None  # noqa: SLF001
+    assert sensor._attr_entity_category == EntityCategory.DIAGNOSTIC  # noqa: SLF001
 
 
 @pytest.mark.asyncio
 async def test_DeviceId_add_and_handle_update():
+    """Testfall."""
     mock_entry = MagicMock()
     mock_entry.entry_id = "abc123"
     mock_entry.title = "My Device"
@@ -65,16 +70,17 @@ async def test_DeviceId_add_and_handle_update():
         await sensor.async_added_to_hass()
 
         signal = f"{DOMAIN}_webhook456_update_sensor"
-        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)
+        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)  # noqa: SLF001
         sensor.async_on_remove.assert_called_once_with(fake_unsub)
 
         deviceId = "MyVersion"
-        await sensor._handle_update({"deviceId": deviceId})
+        await sensor._handle_update({"deviceId": deviceId})  # noqa: SLF001
         assert sensor.native_value == deviceId
 
 
 @pytest.mark.asyncio
 async def test_DeviceId_will_remove_from_hass(mock_entry):
+    """Testfall."""
     sensor = DeviceId(mock_entry)
 
     disconnected = {"called": False}
@@ -82,14 +88,15 @@ async def test_DeviceId_will_remove_from_hass(mock_entry):
     def unsub():
         disconnected["called"] = True
 
-    sensor._unsub_dispatcher = unsub
+    sensor._unsub_dispatcher = unsub  # noqa: SLF001
     await sensor.async_will_remove_from_hass()
 
     assert disconnected["called"]
-    assert sensor._unsub_dispatcher is None
+    assert sensor._unsub_dispatcher is None  # noqa: SLF001
 
 
 def test_device_info(mock_entry):
+    """Testfall."""
     sensor = DeviceId(mock_entry)
     info = sensor.device_info
     assert info["identifiers"] == {(DOMAIN, "test_entry_id")}

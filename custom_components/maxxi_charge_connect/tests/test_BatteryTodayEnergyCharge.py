@@ -1,19 +1,27 @@
-import sys
+"""Tesklasse.
+
+fksadlf
+"""
+
 from pathlib import Path
+import sys
+
+from custom_components.maxxi_charge_connect.devices.battery_today_energy_charge import (
+    BatteryTodayEnergyCharge,
+)
 
 sys.path.append(str(Path(__file__).resolve().parents[3]))
 
-import pytest
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
-from datetime import datetime, timedelta, UTC
 
-from custom_components.maxxi_charge_connect.devices.BatteryTodayEnergyCharge import (
-    BatteryTodayEnergyCharge,
-)
+import pytest
 
 
 @pytest.mark.asyncio
 async def test_reset_energy_daily_resets_last_reset_and_writes_state(caplog):
+    """Testfunktion."""
+
     # 🧪 Setup
     hass = MagicMock()
     hass.async_add_job = AsyncMock()
@@ -28,7 +36,7 @@ async def test_reset_energy_daily_resets_last_reset_and_writes_state(caplog):
 
     # 🎯 Simuliere "alten" Reset-Zeitpunkt
     yesterday = datetime.now(UTC) - timedelta(days=1)
-    sensor._last_reset = yesterday
+    sensor._last_reset = yesterday  # noqa: SLF001
     old_reset = sensor.last_reset
 
     # 🕛 Simuliere Reset-Zeitpunkt
@@ -36,7 +44,7 @@ async def test_reset_energy_daily_resets_last_reset_and_writes_state(caplog):
     caplog.set_level("INFO")
 
     # 🔁 Reset aufrufen
-    await sensor._reset_energy_daily(fake_now)
+    await sensor._reset_energy_daily(fake_now)  # noqa: SLF001
 
     # ✅ Überprüfungen
     assert sensor.last_reset > old_reset, "last_reset wurde nicht aktualisiert"

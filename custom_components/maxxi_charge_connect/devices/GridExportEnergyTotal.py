@@ -33,9 +33,20 @@ class GridExportEnergyTotal(IntegrationSensor):
 
     @property
     def device_info(self):
+        """Liefert die Geräteinformationen für diese Sensor-Entity.
+
+        Returns:
+            dict: Ein Dictionary mit Informationen zur Identifikation
+                  des Geräts in Home Assistant, einschließlich:
+                  - identifiers: Eindeutige Identifikatoren (Domain und Entry ID)
+                  - name: Anzeigename des Geräts
+                  - manufacturer: Herstellername
+                  - model: Modellbezeichnung
+
+        """
+
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,
-            "manufacturer": "mephdrac",
-            "model": "CCU - Maxxicharge",
+            **DEVICE_INFO,
         }

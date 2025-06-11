@@ -5,13 +5,11 @@ Webhook-Daten neue Sensoren für den State of Energy (SoE) von Batteriespeichern
 erzeugt und registriert. Sensoren werden nur einmalig beim ersten Datenempfang
 initialisiert und anschließend bei jedem Update aktualisiert.
 """
-
-from custom_components.maxxi_charge_connect.const import DOMAIN
-
 from homeassistant.const import CONF_WEBHOOK_ID
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
+from ..const import DOMAIN
 from .BatterySoESensor import BatterySoESensor
 
 
@@ -35,7 +33,7 @@ class BatterySensorManager:
         self.hass = hass
         self.entry = entry
         self.async_add_entities = async_add_entities
-        self.sensors = []
+        self.sensors: list = []
         self._registered = False
 
     async def setup(self):

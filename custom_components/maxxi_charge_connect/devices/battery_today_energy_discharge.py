@@ -1,20 +1,49 @@
+"""Sensor für die heutige Batterieentladung (BatteryTodayEnergyDischarge).
+
+Dieser Sensor integriert die aus der Batterie entladene Energie über den Tag hinweg.
+Er setzt sich täglich um Mitternacht zurück, um nur die tagesaktuelle Entladung zu zeigen.
+
+Verwendet die IntegrationSensor-Basis aus Home Assistant.
+"""
+
 from datetime import timedelta
 import logging
 
 from homeassistant.components.integration.sensor import IntegrationSensor, UnitOfTime
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfEnergy
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.util import dt as dt_util
 
-from ..const import DOMAIN
+from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
 from .translationsForIntegrationSensors import get_localized_name
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class BatteryTodayEnergyDischarge(IntegrationSensor):
-    def __init__(self, hass, entry, source_entity_id: str):
+    """Sensorentität zur Anzeige der täglichen Batterieentladung in kWh.
+
+    Diese Entität berechnet die entladene Energie über den Tag (Integration) und setzt
+    sich täglich um Mitternacht zurück. Sie nutzt die Datenquelle `source_entity_id`.
+
+    Attributes:
+        _unsub_time_reset (Callable | None): Callback zum Abmelden des Zeit-Triggers.
+        _entry (ConfigEntry): Konfigurations-Eintrag der Integration.
+        _last_reset (datetime): Zeitpunkt des letzten Resets (Mitternacht lokal).
+
+    """
+
+    def __init__(self, hass: HomeAssistant, entry, source_entity_id: str) -> None:
+        """Initialisiert die Sensorentität.
+
+        Args:
+            hass (HomeAssistant): Die Home Assistant-Instanz.
+            entry (ConfigEntry): Konfigurationseintrag der Integration.
+            source_entity_id (str): Entity-ID der Quelle, aus der Energie integriert wird.
+
+        """
         super().__init__(
             source_entity=source_entity_id,
             # name="Battery Discharge Today",
@@ -38,6 +67,10 @@ class BatteryTodayEnergyDischarge(IntegrationSensor):
         self._last_reset = dt_util.as_utc(local_midnight)
 
     async def async_added_to_hass(self):
+        """Wird aufgerufen, wenn die Entität zu Home Assistant hinzugefügt wird.
+
+        Registriert einen täglichen Reset der Energiewerte um 0:00 Uhr lokale Zeit.
+        """
         await super().async_added_to_hass()
 
         # Registriere täglichen Reset um 0:00 Uhr lokale Zeit
@@ -53,6 +86,12 @@ class BatteryTodayEnergyDischarge(IntegrationSensor):
             self.async_on_remove(self._unsub_time_reset)
 
     async def _reset_energy_daily(self, now):
+        """Setzt die Tagesenergie auf null und aktualisiert den letzten Reset-Zeitpunkt.
+
+        Args:
+            now (datetime): Der aktuelle Zeitpunkt des Resets (lokale Mitternacht).
+
+        """
         _LOGGER.info("Resetting daily energy at %s", now)
 
         # Setze Reset-Zeitpunkt auf aktuelle Mitternacht lokal (als UTC)
@@ -63,13 +102,30 @@ class BatteryTodayEnergyDischarge(IntegrationSensor):
 
     @property
     def last_reset(self):
+        """Gibt den letzten Zeitpunkt zurück, zu dem die Tagesenergie zurückgesetzt wurde.
+
+        Returns:
+            datetime: Zeitpunkt des letzten Resets in UTC.
+
+        """
         return self._last_reset
 
     @property
     def device_info(self):
+        """Liefert die Geräteinformationen für diese Sensor-Entity.
+
+        Returns:
+            dict: Ein Dictionary mit Informationen zur Identifikation
+                  des Geräts in Home Assistant, einschließlich:
+                  - identifiers: Eindeutige Identifikatoren (Domain und Entry ID)
+                  - name: Anzeigename des Geräts
+                  - manufacturer: Herstellername
+                  - model: Modellbezeichnung
+
+        """
+
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,
-            "manufacturer": "mephdrac",
-            "model": "CCU - Maxxicharge",
+            **DEVICE_INFO,
         }

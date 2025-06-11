@@ -40,6 +40,10 @@ class PvSelfConsumptionEnergyToday(IntegrationSensor):
         self._last_reset = dt_util.as_utc(local_midnight)
 
     async def async_added_to_hass(self):
+        """Wird aufgerufen, wenn die Entität zu Home Assistant hinzugefügt wird.
+
+        Registriert einen täglichen Reset der Energiewerte um 0:00 Uhr lokale Zeit.
+        """
         await super().async_added_to_hass()
 
         # Registriere täglichen Reset um 0:00 Uhr lokale Zeit
@@ -63,15 +67,33 @@ class PvSelfConsumptionEnergyToday(IntegrationSensor):
 
         self.async_write_ha_state()
 
-    @property
+        @property
     def last_reset(self):
+        """Gibt den letzten Zeitpunkt zurück, zu dem die Tagesenergie zurückgesetzt wurde.
+
+        Returns:
+            datetime: Zeitpunkt des letzten Resets in UTC.
+
+        """
         return self._last_reset
+
 
     @property
     def device_info(self):
+        """Liefert die Geräteinformationen für diese Sensor-Entity.
+
+        Returns:
+            dict: Ein Dictionary mit Informationen zur Identifikation
+                  des Geräts in Home Assistant, einschließlich:
+                  - identifiers: Eindeutige Identifikatoren (Domain und Entry ID)
+                  - name: Anzeigename des Geräts
+                  - manufacturer: Herstellername
+                  - model: Modellbezeichnung
+
+        """
+
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,
-            "manufacturer": "mephdrac",
-            "model": "CCU - Maxxicharge",
+            **DEVICE_INFO,
         }

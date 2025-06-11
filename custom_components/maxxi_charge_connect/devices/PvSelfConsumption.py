@@ -9,7 +9,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
-from ..tools import isPrOk,isPowerTotalOk
+from ..tools import isPrOk, isPowerTotalOk
+
 
 class PvSelfConsumption(SensorEntity):
     _attr_entity_registry_enabled_default = True
@@ -47,16 +48,27 @@ class PvSelfConsumption(SensorEntity):
 
         if isPowerTotalOk(pv_power, batteries):
             pr = float(data.get("Pr", 0))
-            
+
             if isPrOk(pr):
                 self._attr_native_value = pv_power - max(-pr, 0)
                 self.async_write_ha_state()
 
     @property
     def device_info(self):
+        """Liefert die Geräteinformationen für diese Sensor-Entity.
+
+        Returns:
+            dict: Ein Dictionary mit Informationen zur Identifikation
+                  des Geräts in Home Assistant, einschließlich:
+                  - identifiers: Eindeutige Identifikatoren (Domain und Entry ID)
+                  - name: Anzeigename des Geräts
+                  - manufacturer: Herstellername
+                  - model: Modellbezeichnung
+
+        """
+
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,
-            "manufacturer": "mephdrac",
-            "model": "CCU - Maxxicharge",
+            **DEVICE_INFO,
         }

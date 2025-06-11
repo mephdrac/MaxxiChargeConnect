@@ -1,21 +1,48 @@
+"""Modul für die BatteryTodayEnergyCharge-Entität der maxxi_charge_connect Integration.
+
+Dieses Modul definiert eine IntegrationSensor-Entität, die den heutigen Lade-Energieverbrauch
+der Batterie misst. Die Werte werden per Trapezregel integriert und täglich um Mitternacht
+zurückgesetzt.
+"""
+
 from datetime import timedelta
 import logging
-
-from ..const import DOMAIN
 
 from homeassistant.components.integration.sensor import IntegrationSensor, UnitOfTime
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfEnergy
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.util import dt as dt_util
 
+from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
 from .translationsForIntegrationSensors import get_localized_name
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class BatteryTodayEnergyCharge(IntegrationSensor):
-    def __init__(self, hass, entry, source_entity_id: str):
+    """Sensor zur Messung der aufgeladenen Energie der Batterie für den aktuellen Tag.
+
+    Verwendet eine Integration (Trapezregel) zur Berechnung der heutigen Gesamtenergie
+    und setzt sich täglich um Mitternacht zurück.
+
+    Attribute:
+        _entry (ConfigEntry): Der Konfigurationseintrag der Integration.
+        _unsub_time_reset (Callable | None): Funktion zum Abmelden des Mitternachtsresets.
+        _last_reset (datetime): Der letzte Zeitpunkt des Tagesresets (UTC).
+
+    """
+
+    def __init__(self, hass: HomeAssistant, entry, source_entity_id: str) -> None:
+        """Initialisiert den BatteryTodayEnergyCharge-Sensor.
+
+        Args:
+            hass (HomeAssistant): Die Home Assistant-Instanz.
+            entry (ConfigEntry): Der Konfigurationseintrag der Integration.
+            source_entity_id (str): Die Entität, aus der die Ladeleistung bezogen wird.
+
+        """
         super().__init__(
             source_entity=source_entity_id,
             # name="Battery Charge Today",
@@ -39,6 +66,10 @@ class BatteryTodayEnergyCharge(IntegrationSensor):
         self._last_reset = dt_util.as_utc(local_midnight)
 
     async def async_added_to_hass(self):
+        """Wird aufgerufen, wenn die Entität zu Home Assistant hinzugefügt wird.
+
+        Registriert einen täglichen Reset der Energiewerte um 0:00 Uhr lokale Zeit.
+        """
         await super().async_added_to_hass()
 
         # Registriere täglichen Reset um 0:00 Uhr lokale Zeit
@@ -54,6 +85,12 @@ class BatteryTodayEnergyCharge(IntegrationSensor):
             self.async_on_remove(self._unsub_time_reset)
 
     async def _reset_energy_daily(self, now):
+        """Setzt den Energiewert jeden Tag um Mitternacht zurück.
+
+        Args:
+            now (datetime): Aktuelle Uhrzeit (automatisch durch den Scheduler übergeben).
+
+        """
         _LOGGER.info("Resetting daily energy at %s", now)
 
         # Setze Reset-Zeitpunkt auf aktuelle Mitternacht lokal (als UTC)
@@ -64,13 +101,30 @@ class BatteryTodayEnergyCharge(IntegrationSensor):
 
     @property
     def last_reset(self):
+        """Gibt den letzten Zeitpunkt zurück, zu dem die Tagesenergie zurückgesetzt wurde.
+
+        Returns:
+            datetime: Zeitpunkt des letzten Resets in UTC.
+
+        """
         return self._last_reset
 
     @property
     def device_info(self):
+        """Liefert die Geräteinformationen für diese Sensor-Entity.
+
+        Returns:
+            dict: Ein Dictionary mit Informationen zur Identifikation
+                  des Geräts in Home Assistant, einschließlich:
+                  - identifiers: Eindeutige Identifikatoren (Domain und Entry ID)
+                  - name: Anzeigename des Geräts
+                  - manufacturer: Herstellername
+                  - model: Modellbezeichnung
+
+        """
+
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,
-            "manufacturer": "mephdrac",
-            "model": "CCU - Maxxicharge",
+            **DEVICE_INFO,
         }

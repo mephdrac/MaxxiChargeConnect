@@ -7,8 +7,6 @@ und nutzt standardisierte Sensor-Attribute wie Leistungseinheit, Geräteklasse u
 Zustandsklasse.
 """
 
-from custom_components.maxxi_charge_connect.const import DOMAIN
-
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -18,7 +16,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
-from ..const import DEVICE_INFO  # noqa: TID252
+from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
 from ..tools import isPccuOk  # noqa: TID252
 
 
@@ -71,6 +69,10 @@ class BatteryPowerDischarge(SensorEntity):
 
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
 
+        self._unsub_dispatcher = async_dispatcher_connect(
+            self.hass, signal_sensor, self._handle_update
+        )
+
         self.async_on_remove(
             async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
         )
@@ -81,7 +83,7 @@ class BatteryPowerDischarge(SensorEntity):
         Dies verhindert Speicherlecks und doppelte Registrierungen bei Neustart oder Neuladen.
         """
 
-        if self._unsub_dispatcher:
+        if self._unsub_dispatcher is not None:
             self._unsub_dispatcher()
             self._unsub_dispatcher = None
 

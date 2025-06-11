@@ -1,4 +1,14 @@
-# Lokalisierte Namen
+"""Lokalisierte Namen für Energie-Sensoren in einer Home Assistant-Integration.
+
+Dieses Modul stellt ein Mapping bereit, um technische Klassennamen in lokalisierte
+Anzeigenamen zu übersetzen – basierend auf der in Home Assistant eingestellten Sprache.
+
+Funktionen:
+    get_localized_name(hass, key): Gibt den lokalisierten Anzeigenamen für einen Sensor zurück.
+"""
+
+from homeassistant.core import HomeAssistant
+
 LOCALIZED_NAMES = {
     "de": {
         "BatteryTotalEnergyCharge": "Batterie Laden gesamt",
@@ -35,6 +45,20 @@ LOCALIZED_NAMES = {
 }
 
 
-def get_localized_name(hass, key: str) -> str:
+def get_localized_name(hass: HomeAssistant, key: str) -> str:
+    """Gibt den lokalisierten Namen für einen Sensor anhand der HA-Sprache zurück.
+
+    Wenn keine Übersetzung verfügbar ist, wird der Schlüssel selbst zurückgegeben.
+
+    Args:
+        hass (HomeAssistant): Die Home Assistant-Instanz zur Bestimmung der Sprache.
+        key (str): Der interne Name bzw. Klassename des Sensors.
+
+    Returns:
+        str: Der lokalisierte Anzeigename (z. B. „PV Produktion heute“),
+             oder der Originalschlüssel, falls keine Übersetzung vorhanden ist.
+
+    """
+
     lang = getattr(hass.config, "language", "en") or "en"
     return LOCALIZED_NAMES.get(lang, {}).get(key, key)

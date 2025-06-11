@@ -1,11 +1,12 @@
-"""Sensorentität für den Batterieladestrom (Battery Power Charge) der MaxxiChargeConnect-Integration.
+"""Sensorentität für den Batterieladestrom (Battery Power Charge).
 
 Diese Entität berechnet die aktuell in die Batterie eingespeiste Leistung auf Basis
 der vom Webhook übermittelten Daten zu PV-Leistung und CCU-Verbrauch.
 
 Funktionen:
     - Registriert sich bei einem Dispatcher-Signal, das bei neuen Webhook-Daten ausgelöst wird.
-    - Führt eine Validierung durch (z. B. ob die Werte gültig sind) und berechnet die Batterieladeleistung.
+    - Führt eine Validierung durch (z.B. ob die Werte gültig sind) und berechnet die
+      Batterieladeleistung.
     - Stellt die Sensoreigenschaften wie Einheit, Icon, Gerätetyp und Genauigkeit bereit.
 
 Attribute:
@@ -76,10 +77,15 @@ class BatteryPowerCharge(SensorEntity):
     async def async_added_to_hass(self):
         """Wird aufgerufen, wenn die Entität zu Home Assistant hinzugefügt wurde.
 
-        Registriert die Entität bei einem Dispatcher-Signal, um auf Webhook-Datenaktualisierungen zu reagieren.
+        Registriert die Entität bei einem Dispatcher-Signal, um auf
+        Webhook-Datenaktualisierungen zu reagieren.
         """
 
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
+
+        self._unsub_dispatcher = async_dispatcher_connect(
+            self.hass, signal_sensor, self._handle_update
+        )
 
         self.async_on_remove(
             async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
@@ -90,7 +96,7 @@ class BatteryPowerCharge(SensorEntity):
 
         Hebt die Registrierung beim Dispatcher-Signal auf, um Speicherlecks zu vermeiden.
         """
-        if self._unsub_dispatcher:
+        if self._unsub_dispatcher is not None:
             self._unsub_dispatcher()
             self._unsub_dispatcher = None
 
@@ -98,10 +104,11 @@ class BatteryPowerCharge(SensorEntity):
         """Verarbeitet eingehende Sensordaten und aktualisiert den Zustand der Entität.
 
         Args:
-            data (dict): Die vom Webhook empfangenen Rohdaten (z. B. 'Pccu', 'PV_power_total', 'batteriesInfo').
+            data (dict): Die vom Webhook empfangenen Rohdaten
+            (z.B. 'Pccu', 'PV_power_total', 'batteriesInfo').
 
-        Berechnet die Ladeleistung der Batterie als Differenz zwischen PV-Leistung und Verbrauch (Pccu).
-        Negative Werte (Entladung) werden auf 0 gesetzt.
+        Berechnet die Ladeleistung der Batterie als Differenz zwischen
+        PV-Leistung und Verbrauch (Pccu). Negative Werte (Entladung) werden auf 0 gesetzt.
 
         """
 

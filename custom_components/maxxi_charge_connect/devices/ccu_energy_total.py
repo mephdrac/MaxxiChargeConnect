@@ -1,23 +1,53 @@
-from datetime import timedelta
+"""Sensor zur Gesamtenergieintegration der CCU.
 
-from custom_components.maxxi_charge_connect.const import DOMAIN
+Dieses Modul definiert eine benutzerdefinierte IntegrationSensor-Entität für Home Assistant,
+die die gesamte Energie berechnet, die über einen Zeitraum verbraucht oder erzeugt wurde.
+Die Integration erfolgt über eine trapezförmige Methode mit automatischer Einheitenskalierung.
+
+Classes:
+    CcuEnergyTotal: Sensorentität für die kumulierte Energieintegration der CCU.
+
+"""
+
+from datetime import timedelta
 
 from homeassistant.components.integration.sensor import IntegrationSensor, UnitOfTime
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfEnergy
+from homeassistant.core import HomeAssistant
 
+from ..const import DEVICE_INFO, DOMAIN
 from .translationsForIntegrationSensors import get_localized_name
 
 
-class GridImportEnergyTotal(IntegrationSensor):
+class CcuEnergyTotal(IntegrationSensor):
+    """Sensor für die kumulierte Energieintegration (z. B. einer CCU).
+
+    Diese Entität summiert die Energie über die Zeit durch Integration
+    der Leistungsmessung. Sie eignet sich zur Anzeige des Gesamtverbrauchs
+    oder der Gesamteinspeisung.
+
+    Attributes:
+        _entry (ConfigEntry): Der Konfigurationseintrag dieser Entität.
+
+    """
+
     _attr_entity_registry_enabled_default = True
 
-    def __init__(self, hass, entry, source_entity_id: str):
+    def __init__(self, hass: HomeAssistant, entry, source_entity_id: str) -> None:
+        """Initialisiert die Sensorentität für die Gesamtenergieintegration.
+
+        Args:
+            hass (HomeAssistant): Die Home Assistant-Instanz.
+            entry (ConfigEntry): Der Konfigurationseintrag dieser Integration.
+            source_entity_id (str): Die Entity-ID der Quelle, die die Leistung liefert.
+
+        """
         super().__init__(
             source_entity=source_entity_id,
-            # name="Grid Import Energy Total",
+            # name="CCU Energy Total",
             name=get_localized_name(hass, self.__class__.__name__),
-            unique_id=f"{entry.entry_id}_grid_import_energy_total",
+            unique_id=f"{entry.entry_id}_ccu_energy_total",
             integration_method="trapezoidal",
             round_digits=3,
             unit_prefix="k",

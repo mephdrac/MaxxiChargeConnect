@@ -115,7 +115,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_update_reload_and_abort(
                 entry,
                 data_updates=new_data,
-                title=user_input[CONF_NAME],
+                # title=user_input[CONF_NAME],
             )
 
         current_data = entry.data

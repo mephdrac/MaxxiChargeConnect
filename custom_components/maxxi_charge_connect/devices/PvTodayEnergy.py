@@ -68,7 +68,7 @@ class PvTodayEnergy(IntegrationSensor):
         except Exception as e:
             _LOGGER.error("PvTodayEnergy: reset failed – %s", e)
 
-        await self.async_write_ha_state()
+        self.async_write_ha_state()
 
     @property
     def last_reset(self):

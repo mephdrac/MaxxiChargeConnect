@@ -51,7 +51,7 @@ class BatteryPower(SensorEntity):
                 batterie_leistung = round(pv_power - ccu, 3)
 
                 self._attr_native_value = batterie_leistung
-                await self.async_write_ha_state()
+                self.async_write_ha_state()
 
     @property
     def device_info(self):

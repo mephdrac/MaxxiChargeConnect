@@ -60,7 +60,7 @@ class BatteryTodayEnergyCharge(IntegrationSensor):
         local_midnight = dt_util.start_of_local_day()
         self._last_reset = dt_util.as_utc(local_midnight)
 
-        await self.async_write_ha_state()
+        self.async_write_ha_state()
 
     @property
     def last_reset(self):

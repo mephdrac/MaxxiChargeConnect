@@ -2,11 +2,9 @@ import voluptuous as vol
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_IP_ADDRESS, CONF_NAME, CONF_WEBHOOK_ID
-from homeassistant.helpers.selector import BooleanSelector, TextSelector
+from homeassistant.helpers.selector import BooleanSelector
 
-from .const import DOMAIN
-
-ONLY_ONE_IP = "only_accept_one_ip"
+from .const import DOMAIN, ONLY_ONE_IP
 
 
 class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):

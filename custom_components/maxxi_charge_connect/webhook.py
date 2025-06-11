@@ -1,3 +1,13 @@
+"""Funktionen zum Registrieren und Abmelden von Webhooks.
+
+Dieses Modul bietet Funktionen zum Registrieren und Abmelden von Webhooks
+für den MaxxiChargeConnect-Integrationseintrag in Home Assistant.
+
+Die Webhooks empfangen JSON-Daten, validieren optional die IP-Adresse des Anrufers
+und senden empfangene Daten über den Dispatcher an registrierte Sensoren weiter.
+"""
+
+import json
 import logging
 
 from aiohttp import web
@@ -14,14 +24,28 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
-    """Webhook registrieren, spezifisch für diesen ConfigEntry."""
+    """Registriert einen Webhook für den angegebenen ConfigEntry.
+
+    Der Webhook empfängt JSON-Daten und validiert optional die IP-Adresse
+    des aufrufenden Geräts, falls in den Optionen konfiguriert.
+
+    Die empfangenen Daten werden über den Dispatcher an verbundene Sensoren weitergeleitet.
+
+    Args:
+        hass (HomeAssistant): Die Home Assistant Instanz.
+        entry (ConfigEntry): Die Konfigurationseintrag, für den der Webhook registriert wird.
+
+    Returns:
+        None
+
+    """
 
     webhook_id = entry.data[CONF_WEBHOOK_ID]
     signal_sensor = f"{DOMAIN}_{webhook_id}_update_sensor"
 
     _LOGGER.info("Registering webhook '%s'", WEBHOOK_NAME)
 
-    async def handle_webhook(hass, webhook_id, request):
+    async def handle_webhook(webhook_id, request):
         try:
             allowed_ip = entry.options.get(
                 CONF_IP_ADDRESS, entry.data.get(CONF_IP_ADDRESS)
@@ -48,9 +72,10 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
             data = await request.json()
             _LOGGER.debug("Webhook [%s] received data: %s", webhook_id, data)
             async_dispatcher_send(hass, signal_sensor, data)
-        except Exception as e:
-            _LOGGER.error("Error processing webhook data: %s", e)
-            return web.Response(status=400, text="Invalid request")
+        except json.JSONDecodeError as e:
+            _LOGGER.error("Ungültige JSON-Daten empfangen: %s", e)
+            return web.Response(status=400, text="Invalid JSON")
+
         return web.Response(status=200, text="OK")
 
     async_register(
@@ -63,6 +88,16 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
 
 
 async def async_unregister_webhook(hass: HomeAssistant, entry: ConfigEntry):
+    """Meldet den Webhook für den angegebenen ConfigEntry ab.
+
+    Args:
+        hass (HomeAssistant): Die Home Assistant Instanz.
+        entry (ConfigEntry): Die Konfigurationseintrag, für den der Webhook abgemeldet wird.
+
+    Returns:
+        None
+
+    """
     webhook_id = entry.data[CONF_WEBHOOK_ID]
     _LOGGER.info("Unregistering webhook with ID: %s", webhook_id)
     async_unregister(hass, webhook_id)

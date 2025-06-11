@@ -1,7 +1,5 @@
 import asyncio
-from homeassistant.helpers import entity_platform
 
-from .const import DOMAIN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -37,7 +35,6 @@ from .devices.PvTodayEnergy import PvTodayEnergy
 from .devices.PvTotalEnergy import PvTotalEnergy
 from .devices.Rssi import Rssi
 from .devices.WebhookId import WebhookId
-
 
 SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
 

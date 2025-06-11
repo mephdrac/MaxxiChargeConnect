@@ -1,3 +1,6 @@
+import logging
+from typing import Any
+
 import voluptuous as vol
 
 from homeassistant import config_entries
@@ -6,9 +9,12 @@ from homeassistant.helpers.selector import BooleanSelector
 
 from .const import DOMAIN, ONLY_ONE_IP
 
+_LOGGER = logging.getLogger(__name__)
+
 
 class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 2
+    reconfigure_supported = True  # <- Aktiviert den Reconfigure-Flow
 
     _name = None
     _webhook_id = None
@@ -21,9 +27,6 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._webhook_id = user_input[CONF_WEBHOOK_ID]
             self._host_ip = user_input[CONF_IP_ADDRESS]
             self._only_ip = user_input[ONLY_ONE_IP]
-
-            # if self._only_ip:
-            #     return await self.async_step_host()
 
             return self.async_create_entry(
                 title=self._name,
@@ -47,79 +50,49 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             ),
         )
 
-    # async def async_step_host(self, user_input=None):
-    #     if user_input is not None:
-    #         hosts = user_input[CONF_IP_ADDRESS]
-    #         return self.async_create_entry(
-    #             title=self._name,
-    #             data={CONF_WEBHOOK_ID: self._webhook_id, CONF_IP_ADDRESS: hosts},
-    #         )
+    async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None):
+        entry = self._get_reconfigure_entry()
 
-    #     return self.async_show_form(
-    #         step_id="host",
-    #         data_schema=vol.Schema({vol.Required(CONF_IP_ADDRESS): str}),
-    #     )
-
-    @staticmethod
-    def async_get_options_flow(config_entry):
-        return MaxxiChargeOptionsFlowHandler(config_entry)
-
-    async def async_migrate_entry(hass, config_entry):
-        if config_entry.version == 1:
-            new_data = {**config_entry.data}
-
-            # Setze z. B. einen Default-Wert oder lasse den Nutzer migrieren
-            # new_data[CONF_NAME] = config_entry.data.get(CONF_NAME, config_entry.title)
-
-            config_entry.version = 2
-            hass.config_entries.async_update_entry(config_entry, data=new_data)
-            return True
-
-        return False
-
-
-class MaxxiChargeOptionsFlowHandler(config_entries.OptionsFlow):
-    def __init__(self, config_entry):
-        self.config_entry = config_entry
-
-    async def async_step_init(self, user_input=None):
         if user_input is not None:
-            return self.async_create_entry(title="zutzu", data=user_input)
+            new_data = {
+                # CONF_NAME: user_input[CONF_NAME],
+                CONF_WEBHOOK_ID: user_input[CONF_WEBHOOK_ID],
+                CONF_IP_ADDRESS: user_input.get(CONF_IP_ADDRESS, ""),
+                ONLY_ONE_IP: user_input.get(ONLY_ONE_IP, False),
+            }
+
+            self._abort_if_unique_id_mismatch()
+
+            return self.async_update_reload_and_abort(
+                entry,
+                data_updates=new_data,
+                title=user_input[CONF_NAME],
+            )
+
+        current_data = entry.data
 
         return self.async_show_form(
-            step_id="init",
+            step_id="reconfigure",
             data_schema=vol.Schema(
                 {
+                    # vol.Required(CONF_NAME, default=current_data.get(CONF_NAME, "")): str,
                     vol.Required(
-                        CONF_NAME,
-                        default=self.config_entry.options.get(
-                            CONF_NAME,
-                            self.config_entry.data.get(
-                                CONF_NAME, self.config_entry.title
-                            ),
-                        ),
-                    ): str,
-                    vol.Required(
-                        CONF_WEBHOOK_ID,
-                        default=self.config_entry.options.get(
-                            CONF_WEBHOOK_ID,
-                            self.config_entry.data.get(CONF_WEBHOOK_ID, ""),
-                        ),
+                        CONF_WEBHOOK_ID, default=current_data.get(CONF_WEBHOOK_ID, "")
                     ): str,
                     vol.Optional(
-                        CONF_IP_ADDRESS,
-                        default=self.config_entry.options.get(
-                            CONF_IP_ADDRESS,
-                            self.config_entry.data.get(CONF_IP_ADDRESS, ""),
-                        ),
+                        CONF_IP_ADDRESS, default=current_data.get(CONF_IP_ADDRESS, "")
                     ): str,
                     vol.Optional(
-                        ONLY_ONE_IP,
-                        default=self.config_entry.options.get(
-                            ONLY_ONE_IP,
-                            self.config_entry.data.get(ONLY_ONE_IP, "False"),
-                        ),
+                        ONLY_ONE_IP, default=current_data.get(ONLY_ONE_IP, False)
                     ): BooleanSelector(),
                 }
             ),
         )
+
+    async def async_migrate_entry(hass, config_entry):
+        if config_entry.version == 1:
+            new_data = {**config_entry.data}
+            config_entry.version = 2
+            hass.config_entries.async_update_entry(config_entry, data=new_data)
+            return True
+        return False

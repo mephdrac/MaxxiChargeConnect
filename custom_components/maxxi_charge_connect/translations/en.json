@@ -4,12 +4,20 @@
       "user": {
         "title": "Connect MaxxiCharge",
         "description": "Configure your MaxxiCharge connection.",
-        "data": {
-          "restrict_host": "Manually specify IP address",
+        "data": {          
           "only_accept_one_ip": "Limit webhook access",
           "webhook_id": "Webhook ID",
           "name": "Device name",
           "ip_address": "IP-Adress"
+        }
+      },
+      "reconfigure": {
+      "title": "Reconfigure MaxxiCharge",
+      "description": "Change options.",
+      "data": {        
+        "only_accept_one_ip": "Limit webhook access",
+        "webhook_id": "Webhook ID",        
+        "ip_address": "IP-Adress"
         }
       }
     }

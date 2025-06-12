@@ -1,10 +1,22 @@
-"""Tesklasse.
+"""Testmodul für die Klasse `BatteryTodayEnergyCharge`.
 
-fksadlf
+Dieses Modul enthält Unit-Tests zur Validierung des täglichen Energie-Resets
+der `BatteryTodayEnergyCharge`-Entität innerhalb der Home Assistant-Integration
+`maxxi_charge_connect`.
+
+Testfall:
+- Prüft, ob `last_reset` korrekt aktualisiert wird und der Zustand geschrieben wird,
+  wenn der tägliche Reset durchgeführt wird.
+
+Verwendete Bibliotheken:
+- datetime, unittest.mock, pytest
 """
 
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock
 import sys
+import pytest
 
 from custom_components.maxxi_charge_connect.devices.battery_today_energy_charge import (
     BatteryTodayEnergyCharge,
@@ -12,15 +24,23 @@ from custom_components.maxxi_charge_connect.devices.battery_today_energy_charge 
 
 sys.path.append(str(Path(__file__).resolve().parents[3]))
 
-from datetime import UTC, datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock
-
-import pytest
-
 
 @pytest.mark.asyncio
 async def test_reset_energy_daily_resets_last_reset_and_writes_state(caplog):
-    """Testfunktion."""
+    """Teste den täglichen Energie-Reset der BatteryTodayEnergyCharge-Entität.
+
+    Dieser Test prüft:
+    - Ob `last_reset` auf Mitternacht gesetzt wird, wenn ein neuer Tag beginnt.
+    - Ob `async_write_ha_state()` korrekt aufgerufen wird.
+    - Ob ein entsprechender Log-Eintrag erzeugt wird.
+
+    Args:
+        caplog (pytest.LogCaptureFixture): Pytest-Log-Fixture zur Analyse von Logausgaben.
+
+    Raises:
+        AssertionError: Falls `last_reset` nicht aktualisiert wurde,
+
+    """
 
     # 🧪 Setup
     hass = MagicMock()
@@ -36,7 +56,7 @@ async def test_reset_energy_daily_resets_last_reset_and_writes_state(caplog):
 
     # 🎯 Simuliere "alten" Reset-Zeitpunkt
     yesterday = datetime.now(UTC) - timedelta(days=1)
-    sensor._last_reset = yesterday  # noqa: SLF001
+    sensor._last_reset = yesterday  # pylint: disable=protected-access
     old_reset = sensor.last_reset
 
     # 🕛 Simuliere Reset-Zeitpunkt
@@ -44,7 +64,7 @@ async def test_reset_energy_daily_resets_last_reset_and_writes_state(caplog):
     caplog.set_level("INFO")
 
     # 🔁 Reset aufrufen
-    await sensor._reset_energy_daily(fake_now)  # noqa: SLF001
+    await sensor._reset_energy_daily(fake_now)  # pylint: disable=protected-access
 
     # ✅ Überprüfungen
     assert sensor.last_reset > old_reset, "last_reset wurde nicht aktualisiert"

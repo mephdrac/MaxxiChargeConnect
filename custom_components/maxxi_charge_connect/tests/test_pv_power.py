@@ -89,7 +89,7 @@ async def test_pv_power_add_and_handle_update1():
             "custom_components.maxxi_charge_connect.devices.pv_power.async_dispatcher_connect"
         ) as mock_connect,
         patch(
-            "custom_components.maxxi_charge_connect.devices.pv_power.isPowerTotalOk"
+            "custom_components.maxxi_charge_connect.devices.pv_power.is_power_total_ok"
         ) as mock_is_power_total_ok,
     ):
         mock_is_power_total_ok.return_value = True
@@ -136,7 +136,7 @@ async def test_pv_power_add_and_handle_update2():
             "custom_components.maxxi_charge_connect.devices.pv_power.async_dispatcher_connect"
         ) as mock_connect,
         patch(
-            "custom_components.maxxi_charge_connect.devices.pv_power.isPowerTotalOk"
+            "custom_components.maxxi_charge_connect.devices.pv_power.is_power_total_ok"
         ) as mock_is_power_total_ok,
     ):
         mock_is_power_total_ok.return_value = False

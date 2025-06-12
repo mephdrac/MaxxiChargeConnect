@@ -95,10 +95,10 @@ async def test_power_consumption_add_and_handle_update1():
             "async_dispatcher_connect"
         ) as mock_connect,
         patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption.isPccuOk"
+            "custom_components.maxxi_charge_connect.devices.power_consumption.is_pccu_ok"
         ) as mock_is_pccu_ok,
         patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption.isPrOk"
+            "custom_components.maxxi_charge_connect.devices.power_consumption.is_pr_ok"
         ) as mock_is_pr_ok,
     ):
         mock_is_pccu_ok.return_value = True
@@ -150,10 +150,10 @@ async def test_power_consumption_add_and_handle_update2():
             "async_dispatcher_connect"
         ) as mock_connect,
         patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption.isPccuOk"
+            "custom_components.maxxi_charge_connect.devices.power_consumption.is_pccu_ok"
         ) as mock_is_pccu_ok,
         patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption.isPrOk"
+            "custom_components.maxxi_charge_connect.devices.power_consumption.is_pr_ok"
         ) as mock_is_pr_ok,
     ):
         mock_is_pccu_ok.return_value = False
@@ -205,10 +205,10 @@ async def test_power_consumption_add_and_handle_update3():
             "async_dispatcher_connect"
         ) as mock_connect,
         patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption.isPccuOk"
+            "custom_components.maxxi_charge_connect.devices.power_consumption.is_pccu_ok"
         ) as mock_is_pccu_ok,
         patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption.isPrOk"
+            "custom_components.maxxi_charge_connect.devices.power_consumption.is_pr_ok"
         ) as mock_is_pr_ok,
     ):
         mock_is_pccu_ok.return_value = True
@@ -261,10 +261,10 @@ async def test_power_consumption_add_and_handle_update4():
             "async_dispatcher_connect"
         ) as mock_connect,
         patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption.isPccuOk"
+            "custom_components.maxxi_charge_connect.devices.power_consumption.is_pccu_ok"
         ) as mock_is_pccu_ok,
         patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption.isPrOk"
+            "custom_components.maxxi_charge_connect.devices.power_consumption.is_pr_ok"
         ) as mock_is_pr_ok,
     ):
         mock_is_pccu_ok.return_value = False

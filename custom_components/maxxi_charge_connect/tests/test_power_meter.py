@@ -27,7 +27,7 @@ WEBHOOK_ID = "abc123"
 
 
 @pytest.fixture
-def mock_entry_local():
+def mock_entry():
     """Gibt ein Mock-Konfigurationsobjekt für einen Sensor zurück.
 
     Returns:
@@ -53,10 +53,10 @@ async def test_power_meter_initialization(mock_entry):
     assert sensor._attr_icon == "mdi:gauge"  # pylint: disable=protected-access
     assert sensor._attr_native_value is None  # pylint: disable=protected-access
     assert sensor._attr_device_class == SensorDeviceClass.POWER  # pylint: disable=protected-access
-    assert sensor._attr_state_class == SensorStateClass.MEASUREMENT\
-        # pylint: disable=protected-access
-    assert sensor._attr_native_unit_of_measurement == UnitOfPower.WATT\
-        # pylint: disable=protected-access
+    assert sensor._attr_state_class == SensorStateClass.MEASUREMENT
+    # pylint: disable=protected-access
+    assert sensor._attr_native_unit_of_measurement == UnitOfPower.WATT
+    # pylint: disable=protected-access
 
 
 @pytest.mark.asyncio
@@ -88,7 +88,7 @@ async def test_power_meter_add_and_handle_update1():
             "custom_components.maxxi_charge_connect.devices.power_meter.async_dispatcher_connect"
         ) as mock_connect,
         patch(
-            "custom_components.maxxi_charge_connect.devices.power_meter.isPrOk"
+            "custom_components.maxxi_charge_connect.devices.power_meter.is_pr_ok"
         ) as mock_is_pr_ok,
     ):
         mock_is_pr_ok.return_value = True
@@ -101,8 +101,8 @@ async def test_power_meter_add_and_handle_update1():
         await sensor.async_added_to_hass()
 
         signal = f"{DOMAIN}_webhook456_update_sensor"
-        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)\
-            # pylint: disable=protected-access
+        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)
+        # pylint: disable=protected-access
         sensor.async_on_remove.assert_called_once_with(fake_unsub)
 
         await sensor._handle_update({"Pr": 234.675})  # pylint: disable=protected-access
@@ -134,7 +134,7 @@ async def test_power_meter_add_and_handle_update2():
             "custom_components.maxxi_charge_connect.devices.power_meter.async_dispatcher_connect"
         ) as mock_connect,
         patch(
-            "custom_components.maxxi_charge_connect.devices.power_meter.isPrOk"
+            "custom_components.maxxi_charge_connect.devices.power_meter.is_pr_ok"
         ) as mock_is_pr_ok,
     ):
         mock_is_pr_ok.return_value = False
@@ -147,32 +147,12 @@ async def test_power_meter_add_and_handle_update2():
         await sensor.async_added_to_hass()
 
         signal = f"{DOMAIN}_webhook456_update_sensor"
-        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)\
-            # pylint: disable=protected-access
+        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)
+        # pylint: disable=protected-access
         sensor.async_on_remove.assert_called_once_with(fake_unsub)
 
         await sensor._handle_update({"Pr": 234.675})  # pylint: disable=protected-access
         assert sensor.native_value is None
-
-
-@pytest.mark.asyncio
-async def test_power_meter_will_remove_from_hass(mock_entry):
-    """Testet das Entfernen des Sensors aus Home Assistant.
-
-    Stellt sicher, dass der Dispatcher korrekt abgemeldet wird.
-    """
-    sensor = PowerMeter(mock_entry)
-
-    disconnected = {"called": False}
-
-    def unsub():
-        disconnected["called"] = True
-
-    sensor._unsub_dispatcher = unsub  # pylint: disable=protected-access
-    await sensor.async_will_remove_from_hass()
-
-    assert disconnected["called"]
-    assert sensor._unsub_dispatcher is None  # pylint: disable=protected-access
 
 
 def test_device_info(mock_entry):

@@ -91,7 +91,7 @@ async def test_grid_import_add_and_handle_update1():
             "custom_components.maxxi_charge_connect.devices.grid_import.async_dispatcher_connect"
         ) as mock_connect,
         patch(
-            "custom_components.maxxi_charge_connect.devices.grid_import.isPrOk"
+            "custom_components.maxxi_charge_connect.devices.grid_import.is_pr_ok"
         ) as mock_is_pr_ok,
     ):
         mock_is_pr_ok.return_value = True
@@ -141,7 +141,7 @@ async def test_grid_import_add_and_handle_update2():
             "custom_components.maxxi_charge_connect.devices.grid_import.async_dispatcher_connect"
         ) as mock_connect,
         patch(
-            "custom_components.maxxi_charge_connect.devices.grid_import.isPrOk"
+            "custom_components.maxxi_charge_connect.devices.grid_import.is_pr_ok"
         ) as mock_is_pr_ok,
     ):
         mock_is_pr_ok.return_value = False

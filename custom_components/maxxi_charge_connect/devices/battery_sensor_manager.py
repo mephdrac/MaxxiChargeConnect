@@ -5,12 +5,16 @@ Webhook-Daten neue Sensoren für den State of Energy (SoE) von Batteriespeichern
 erzeugt und registriert. Sensoren werden nur einmalig beim ersten Datenempfang
 initialisiert und anschließend bei jedem Update aktualisiert.
 """
+
+import logging
 from homeassistant.const import CONF_WEBHOOK_ID
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from ..const import DOMAIN
 from .battery_soe_sensor import BatterySoESensor
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class BatterySensorManager:  # pylint: disable=too-few-public-methods
@@ -33,7 +37,7 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
         self.hass = hass
         self.entry = entry
         self.async_add_entities = async_add_entities
-        self.sensors: list = []
+        self.sensors: dict[str, BatterySoESensor] = {}
         self._registered = False
 
     async def setup(self):
@@ -52,10 +56,16 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
     async def _handle_update(self, data):
         batteries = data.get("batteriesInfo", [])
         if not self.sensors and batteries:
+            new_sensors = []
             for i in range(len(batteries)):
-                sensor = BatterySoESensor(self.entry, i)
-                self.sensors.append(sensor)
-            self.async_add_entities(self.sensors)
+                unique_key = f"{self.entry.entry_id}_battery_soe_{i}"
+
+                if unique_key not in self.sensors:
+                    sensor = BatterySoESensor(self.entry, i)
+                    self.sensors[unique_key] = sensor
+                    new_sensors.append(sensor)
+            if new_sensors:
+                self.async_add_entities(new_sensors)
 
         # Update alle Sensoren
         for listener in self.hass.data[DOMAIN][self.entry.entry_id]["listeners"]:

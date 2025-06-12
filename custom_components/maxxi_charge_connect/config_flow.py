@@ -109,6 +109,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         entry = self._get_reconfigure_entry()
 
         if user_input is not None:
+            old_webhook_id = entry.data.get(CONF_WEBHOOK_ID)
             new_data = {
                 # CONF_NAME: user_input[CONF_NAME],
                 CONF_WEBHOOK_ID: user_input[CONF_WEBHOOK_ID],
@@ -117,6 +118,11 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             }
 
             self._abort_if_unique_id_mismatch()
+            from .webhook import async_unregister_webhook
+
+            await async_unregister_webhook(
+                self.hass, entry, old_webhook_id=old_webhook_id
+            )
 
             return self.async_update_reload_and_abort(
                 entry,
@@ -161,7 +167,9 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         #     entry.data.get(CONF_IP_ADDRESS) == self._host_ip
         # )
 
-    async def async_migrate_entry(self, config_entry: config_entries.ConfigEntry) -> bool:
+    async def async_migrate_entry(
+        self, config_entry: config_entries.ConfigEntry
+    ) -> bool:
         """Migration eines Config-Eintrags von Version 1 auf Version 2.
 
         Args:
@@ -176,8 +184,6 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if config_entry.version == 1:
             new_data = {**config_entry.data}
             config_entry.version = 2
-            self.hass.config_entries.async_update_entry(
-                config_entry, data=new_data
-            )
+            self.hass.config_entries.async_update_entry(config_entry, data=new_data)
             return True
         return False

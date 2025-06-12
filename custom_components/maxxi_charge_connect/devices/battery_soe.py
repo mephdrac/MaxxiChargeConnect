@@ -57,26 +57,18 @@ class BatterySoE(SensorEntity):
         self._attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
 
     async def async_added_to_hass(self):
-        """Registriert den Sensor für Updates über das Dispatcher-Signal
-        bei Hinzufügen zur Home Assistant Instanz."""
+        """Register.
+
+        Registriert den Sensor für Updates über das Dispatcher-Signal
+        bei Hinzufügen zur Home Assistant Instanz.
+        """
 
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
 
-        self._unsub_dispatcher = async_dispatcher_connect(
+        remove_callback = async_dispatcher_connect(
             self.hass, signal_sensor, self._handle_update
         )
-
-        self.async_on_remove(
-            async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
-        )
-
-    async def async_will_remove_from_hass(self):
-        """Hebt die Registrierung des Sensors vom Dispatcher-Signal auf,
-        wenn die Entity entfernt wird."""
-
-        if self._unsub_dispatcher is not None:
-            self._unsub_dispatcher()
-            self._unsub_dispatcher = None
+        self.async_on_remove(remove_callback)
 
     async def _handle_update(self, data):
         """Aktualisiert den State of Energy anhand der empfangenen Sensordaten.

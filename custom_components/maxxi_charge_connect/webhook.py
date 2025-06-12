@@ -86,17 +86,11 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
     )
 
 
-async def async_unregister_webhook(hass: HomeAssistant, entry: ConfigEntry):
-    """Meldet den Webhook für den angegebenen ConfigEntry ab.
-
-    Args:
-        hass (HomeAssistant): Die Home Assistant Instanz.
-        entry (ConfigEntry): Die Konfigurationseintrag, für den der Webhook abgemeldet wird.
-
-    Returns:
-        None
-
-    """
-    webhook_id = entry.data[CONF_WEBHOOK_ID]
+async def async_unregister_webhook(
+    hass: HomeAssistant, entry: ConfigEntry, old_webhook_id: str | None = None
+):
+    """Meldet den Webhook für den angegebenen ConfigEntry ab."""
+    webhook_id = old_webhook_id or entry.data[CONF_WEBHOOK_ID]
     _LOGGER.info("Unregistering webhook with ID: %s", webhook_id)
+
     async_unregister(hass, webhook_id)

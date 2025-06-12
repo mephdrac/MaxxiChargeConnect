@@ -21,9 +21,11 @@ from typing import Any
 
 import voluptuous as vol
 
+
 from homeassistant import config_entries
 from homeassistant.const import CONF_IP_ADDRESS, CONF_NAME, CONF_WEBHOOK_ID
 from homeassistant.helpers.selector import BooleanSelector
+from .webhook import async_unregister_webhook
 
 from .const import DOMAIN, ONLY_ONE_IP
 
@@ -118,7 +120,6 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             }
 
             self._abort_if_unique_id_mismatch()
-            from .webhook import async_unregister_webhook
 
             await async_unregister_webhook(
                 self.hass, entry, old_webhook_id=old_webhook_id

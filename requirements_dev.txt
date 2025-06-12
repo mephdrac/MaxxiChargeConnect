@@ -1,0 +1,5 @@
+pylint
+pylint-per-file-ignores
+
+voluptuous
+homeassistant>=2025.1.0

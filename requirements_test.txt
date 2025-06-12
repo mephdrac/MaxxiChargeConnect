@@ -2,7 +2,8 @@ pytest
 pytest-asyncio
 pytest-mock
 pytest-cov
-homeassistant>=2025.3.0
+pylint-per-file-ignores
+homeassistant>=2025.1.0
 
 # Sicherheitsfixes erzwingen:
 cryptography>=44.0.1

@@ -1,4 +1,27 @@
 {
+  "config": {
+    "step": {
+      "user": {
+        "title": "MaxxiCharge verbinden",
+        "description": "Richte deine MaxxiCharge-Verbindung ein.",
+        "data": {          
+          "only_accept_one_ip": "Webhook-Zugriff einschränken",
+          "webhook_id": "Webhook-ID",
+          "name": "Name des Gerätes",
+          "ip_address": "IP-Adresse der MaxxiCharge"
+        }
+      },
+      "reconfigure": {
+        "title": "MaxxiCharge neu konfigurieren",
+        "description": "Rekonfguriere deine MaxxiCharge-Verbindung.",
+        "data": {
+          "only_accept_one_ip": "Webhook-Zugriff einschränken",
+          "webhook_id": "Webhook-ID",          
+          "ip_address": "IP-Adresse der MaxxiCharge"
+        }
+      }
+    }    
+  },
   "entity": {
     "sensor": {
       "battery_power": {
@@ -48,7 +71,7 @@
       },
       "BatterySoESensor":{
         "name": "Batterie ({index}) Kapazität"
-      }     
+      }
     }
   }
 }

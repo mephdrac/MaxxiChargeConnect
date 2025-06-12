@@ -1,19 +1,37 @@
+"""Testmodul für GridImportEnergyToday.
+
+Dieses Modul testet das tägliche Zurücksetzen der Energiezählung
+des GridImportEnergyToday-Sensors.
+"""
+
+from unittest.mock import AsyncMock, MagicMock
+from datetime import datetime, timedelta, UTC
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[3]))
-
 import pytest
-from unittest.mock import AsyncMock, MagicMock
-from datetime import datetime, timedelta, UTC
 
-from custom_components.maxxi_charge_connect.devices.GridImportEnergyToday import (
+from custom_components.maxxi_charge_connect.devices.grid_import_energy_today import (
     GridImportEnergyToday,
 )
+
+sys.path.append(str(Path(__file__).resolve().parents[3]))
 
 
 @pytest.mark.asyncio
 async def test_reset_energy_daily_resets_last_reset_and_writes_state(caplog):
+    """Testet das tägliche Zurücksetzen des Energiewerts.
+
+    Simuliert einen vergangenen Reset-Zeitpunkt und prüft,
+    ob beim Aufruf von `_reset_energy_daily`:
+    - der Reset-Zeitpunkt aktualisiert wird,
+    - der neue Zustand gespeichert wird,
+    - ein entsprechender Logeintrag erzeugt wird.
+
+    Args:
+        caplog: Pytest-Log-Capture-Fixture, um Lognachrichten zu überprüfen.
+
+    """
     # 🧪 Setup
     hass = MagicMock()
     hass.async_add_job = AsyncMock()
@@ -28,7 +46,7 @@ async def test_reset_energy_daily_resets_last_reset_and_writes_state(caplog):
 
     # 🎯 Simuliere "alten" Reset-Zeitpunkt
     yesterday = datetime.now(UTC) - timedelta(days=1)
-    sensor._last_reset = yesterday
+    sensor._last_reset = yesterday  # pylint: disable=protected-access
     old_reset = sensor.last_reset
 
     # 🕛 Simuliere Reset-Zeitpunkt
@@ -36,7 +54,7 @@ async def test_reset_energy_daily_resets_last_reset_and_writes_state(caplog):
     caplog.set_level("INFO")
 
     # 🔁 Reset aufrufen
-    await sensor._reset_energy_daily(fake_now)
+    await sensor._reset_energy_daily(fake_now)  # pylint: disable=protected-access
 
     # ✅ Überprüfungen
     assert sensor.last_reset > old_reset, "last_reset wurde nicht aktualisiert"

@@ -1,19 +1,38 @@
+"""Tests für den täglichen Reset des PvSelfConsumptionEnergyToday-Sensors.
+
+Dieses Modul testet die `_reset_energy_daily`-Methode, die täglich um Mitternacht
+den internen `last_reset`-Zeitstempel aktualisiert und den Sensorzustand neu schreibt.
+"""
+
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[3]))
-
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime, timedelta, UTC
+import pytest
 
-from custom_components.maxxi_charge_connect.devices.PvSelfConsumptionEnergyToday import (
-    PvSelfConsumptionEnergyToday,
+from custom_components.maxxi_charge_connect.devices.pv_self_consumption_energy_today import (
+    PvSelfConsumptionEnergyToday
 )
+
+sys.path.append(str(Path(__file__).resolve().parents[3]))
 
 
 @pytest.mark.asyncio
 async def test_reset_energy_daily_resets_last_reset_and_writes_state(caplog):
+    """Testet, ob `_reset_energy_daily` den Reset-Zeitpunkt aktualisiert und den Zustand schreibt.
+
+    Dieser Test simuliert einen alten `last_reset`-Wert, ruft dann `_reset_energy_daily`
+    mit einem neuen Tageswechsel-Zeitpunkt auf, und überprüft:
+
+    - ob `last_reset` aktualisiert wurde,
+    - ob `async_write_ha_state` aufgerufen wurde,
+    - ob eine entsprechende Logmeldung geschrieben wurde.
+
+    Args:
+        caplog (LogCaptureFixture): Pytest-Funktion zur Überwachung von Logausgaben.
+
+    """
     # 🧪 Setup
     hass = MagicMock()
     hass.async_add_job = AsyncMock()
@@ -28,7 +47,7 @@ async def test_reset_energy_daily_resets_last_reset_and_writes_state(caplog):
 
     # 🎯 Simuliere "alten" Reset-Zeitpunkt
     yesterday = datetime.now(UTC) - timedelta(days=1)
-    sensor._last_reset = yesterday
+    sensor._last_reset = yesterday  # pylint: disable=protected-access
     old_reset = sensor.last_reset
 
     # 🕛 Simuliere Reset-Zeitpunkt
@@ -36,7 +55,7 @@ async def test_reset_energy_daily_resets_last_reset_and_writes_state(caplog):
     caplog.set_level("INFO")
 
     # 🔁 Reset aufrufen
-    await sensor._reset_energy_daily(fake_now)
+    await sensor._reset_energy_daily(fake_now)  # pylint: disable=protected-access
 
     # ✅ Überprüfungen
     assert sensor.last_reset > old_reset, "last_reset wurde nicht aktualisiert"

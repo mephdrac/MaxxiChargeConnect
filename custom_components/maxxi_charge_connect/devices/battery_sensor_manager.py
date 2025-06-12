@@ -10,7 +10,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from ..const import DOMAIN
-from .BatterySoESensor import BatterySoESensor
+from .battery_soe_sensor import BatterySoESensor
 
 
 class BatterySensorManager:

@@ -1,3 +1,10 @@
-[DESIGN]
-max-instance-attributes=15
+[MAIN]
+ignore=custom_components/maxxi_charge_connect/tests
+ignore-paths=custom_components/maxxi_charge_connect/tests
 
+[MESSAGES CONTROL]
+disable=duplicate-code
+
+[DESIGN]
+# Maximum number of attributes for a class (see R0902).
+max-attributes=15

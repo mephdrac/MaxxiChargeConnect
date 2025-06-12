@@ -86,13 +86,12 @@ class BatterySoc(SensorEntity):
 
         try:
             level = max(0, min(100, int(self._attr_native_value)))  # Clamping 0–100
-            level = round(level / 10) * 10  # z. B. 57 → 60            
-            
+            level = round(level / 10) * 10  # z. B. 57 → 60
+
         except (TypeError, ValueError):
             result = "mdi:battery-unknown"
         else:
             result = f"mdi:battery-{level}"
-                    
         return result
 
     @property

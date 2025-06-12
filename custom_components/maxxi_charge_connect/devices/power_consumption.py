@@ -14,7 +14,7 @@ from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
-from ..tools import isPccuOk, isPrOk  # noqa: TID252
+from ..tools import is_pccu_ok, is_pr_ok  # noqa: TID252
 
 
 class PowerConsumption(SensorEntity):
@@ -70,9 +70,9 @@ class PowerConsumption(SensorEntity):
 
         pccu = float(data.get("Pccu", 0))
 
-        if isPccuOk(pccu):
+        if is_pccu_ok(pccu):
             pr = float(data.get("Pr", 0))
-            if isPrOk(pr):
+            if is_pr_ok(pr):
                 self._attr_native_value = round(pccu + max(-pr, 0), 2)
                 self.async_write_ha_state()
 

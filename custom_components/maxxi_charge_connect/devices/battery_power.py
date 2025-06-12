@@ -30,7 +30,7 @@ from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
-from ..tools import isPccuOk, isPowerTotalOk  # noqa: TID252
+from ..tools import is_pccu_ok, is_power_total_ok  # noqa: TID252
 
 
 class BatteryPower(SensorEntity):
@@ -59,8 +59,6 @@ class BatteryPower(SensorEntity):
             Einheit, Gerätetyp und vorgeschlagene Genauigkeit für die Anzeige.
 
         """
-
-        self._unsub_dispatcher = None
         self._attr_suggested_display_precision = 2
         self._entry = entry
         # self._attr_name = "Battery Power"
@@ -82,23 +80,9 @@ class BatteryPower(SensorEntity):
 
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
 
-        self._unsub_dispatcher = async_dispatcher_connect(
-            self.hass, signal_sensor, self._handle_update
-        )
         self.async_on_remove(
             async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
         )
-
-    async def async_will_remove_from_hass(self):
-        """Hebt die Registrierung des Dispatchersignals auf.
-
-        Diese Methode wird automatisch aufgerufen, wenn die Entity aus
-        Home Assistant entfernt wird, um Ressourcen freizugeben.
-        """
-
-        if self._unsub_dispatcher is not None:
-            self._unsub_dispatcher()
-            self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
         """Verarbeitet empfangene Webhook-Daten und aktualisiert den Sensorwert.
@@ -113,11 +97,11 @@ class BatteryPower(SensorEntity):
 
         ccu = float(data.get("Pccu", 0))
 
-        if isPccuOk(ccu):
+        if is_pccu_ok(ccu):
             pv_power = float(data.get("PV_power_total", 0))
             batteries = data.get("batteriesInfo", [])
 
-            if isPowerTotalOk(pv_power, batteries):
+            if is_power_total_ok(pv_power, batteries):
                 batterie_leistung = round(pv_power - ccu, 3)
 
                 self._attr_native_value = batterie_leistung

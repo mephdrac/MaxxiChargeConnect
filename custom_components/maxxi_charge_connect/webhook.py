@@ -48,11 +48,11 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
     async def handle_webhook(webhook_id, request):
         try:
             allowed_ip = entry.data.get(CONF_IP_ADDRESS, "")
-            onlyOneIp = entry.data.get(ONLY_ONE_IP, False)
+            only_one_ip = entry.data.get(ONLY_ONE_IP, False)
 
-            _LOGGER.debug("Hier: OnlyOneIp (%s)", onlyOneIp)
+            _LOGGER.debug("Hier: OnlyOneIp (%s)", only_one_ip)
 
-            if onlyOneIp:
+            if only_one_ip:
                 # IP des aufrufenden Geräts ermitteln
                 peername = request.transport.get_extra_info("peername")
 

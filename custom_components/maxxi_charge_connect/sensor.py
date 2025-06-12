@@ -1,7 +1,10 @@
-"""Dieses Modul initialisiert und registriert die Sensor-Entitäten für die MaxxiChargeConnect-Integration in Home Assistant.
+"""Dieses Modul initialisiert und registriert die Sensor-Entitäten für die
+MaxxiChargeConnect-Integration in Home Assistant.
 
-Es verwaltet die Sensoren über den BatterySensorManager pro ConfigEntry und fügt alle relevanten Sensoren
-beim Setup hinzu. Sensoren umfassen unter anderem Geräte-ID, Batteriestatus, PV-Leistung, Netzbezug/-einspeisung
+Es verwaltet die Sensoren über den BatterySensorManager pro ConfigEntry
+und fügt alle relevanten Sensoren
+beim Setup hinzu. Sensoren umfassen unter anderem Geräte-ID, Batteriestatus,
+PV-Leistung, Netzbezug/-einspeisung
 und zugehörige Energie-Statistiken.
 
 Module-Level Variable:
@@ -50,19 +53,21 @@ from .devices.webhook_id import WebhookId
 SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
 
 
-async def async_setup_entry(
+async def async_setup_entry(  # pylint: disable=too-many-locals
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ):
     """Setzt die Sensoren für einen ConfigEntry asynchron auf.
 
     Erstellt eine BatterySensorManager-Instanz, die die Verwaltung der Batteriesensoren übernimmt.
-    Fügt eine Vielzahl von Sensor-Objekten hinzu, die verschiedene Datenpunkte der Hardware abbilden,
-    darunter Batterieladung, Entladung, SOC, SoE, PV-Leistung, Netzverbrauch und mehr.
+    Fügt eine Vielzahl von Sensor-Objekten hinzu, die verschiedene Datenpunkte der 
+    Hardware abbilden, darunter Batterieladung, Entladung, SOC, SoE, PV-Leistung, Netzverbrauch
+    und mehr.
 
     Args:
         hass (HomeAssistant): Die Home Assistant Instanz.
         entry (ConfigEntry): Die Konfigurationseintrag, für den die Sensoren erstellt werden.
-        async_add_entities (AddEntitiesCallback): Callback-Funktion zum Hinzufügen von Entities in HA.
+        async_add_entities (AddEntitiesCallback): Callback-Funktion zum Hinzufügen von 
+          Entities in HA.
 
     Returns:
         None
@@ -74,90 +79,90 @@ async def async_setup_entry(
     await manager.setup()
 
     sensor = DeviceId(entry)
-    rssiSensor = Rssi(entry)
-    ccuPower = CcuPower(entry)
-    pvPowerSensor = PvPower(entry)
-    batteryPowerCharge = BatteryPowerCharge(entry)
-    batteryPowerDischarge = BatteryPowerDischarge(entry)
-    batterySoc = BatterySoc(entry)
-    batterySoE = BatterySoE(entry)
-    powerMeter = PowerMeter(entry)
-    firmwareVersion = FirmwareVersion(entry)
-    webhookId = WebhookId(entry)
-    batteryPower = BatteryPower(entry)
-    powerConsumption = PowerConsumption(entry)
-    gridExport = GridExport(entry)
-    gridImport = GridImport(entry)
-    pvSelfConsumption = PvSelfConsumption(entry)
+    rssi_sensor = Rssi(entry)
+    ccu_power = CcuPower(entry)
+    pv_power_sensor = PvPower(entry)
+    battery_power_charge = BatteryPowerCharge(entry)
+    battery_power_discharge = BatteryPowerDischarge(entry)
+    battery_soc = BatterySoc(entry)
+    battery_soe = BatterySoE(entry)
+    power_meter = PowerMeter(entry)
+    firmware_version = FirmwareVersion(entry)
+    webhook_id = WebhookId(entry)
+    battery_power = BatteryPower(entry)
+    power_consumption = PowerConsumption(entry)
+    grid_export = GridExport(entry)
+    grid_import = GridImport(entry)
+    pv_self_consumption = PvSelfConsumption(entry)
 
     async_add_entities(
         [
             sensor,
-            rssiSensor,
-            ccuPower,
-            pvPowerSensor,
-            batteryPowerCharge,
-            batteryPowerDischarge,
-            batterySoc,
-            batteryPower,
-            powerMeter,
-            firmwareVersion,
-            batterySoE,
-            webhookId,
-            powerConsumption,
-            gridExport,
-            gridImport,
-            pvSelfConsumption,
+            rssi_sensor,
+            ccu_power,
+            pv_power_sensor,
+            battery_power_charge,
+            battery_power_discharge,
+            battery_soc,
+            battery_power,
+            power_meter,
+            firmware_version,
+            battery_soe,
+            webhook_id,
+            power_consumption,
+            grid_export,
+            grid_import,
+            pv_self_consumption,
         ]
     )
     await asyncio.sleep(0)
 
-    pvTodayEnergy = PvTodayEnergy(hass, entry, pvPowerSensor.entity_id)
-    pvTotalEnergy = PvTotalEnergy(hass, entry, pvPowerSensor.entity_id)
-    ccuEnergyToday = CcuEnergyToday(hass, entry, ccuPower.entity_id)
-    ccuEnergyTotal = CcuEnergyTotal(hass, entry, ccuPower.entity_id)
-    batteryTodayEnergyCharge = BatteryTodayEnergyCharge(
-        hass, entry, batteryPowerCharge.entity_id
+    pv_today_energy = PvTodayEnergy(hass, entry, pv_power_sensor.entity_id)
+    pv_total_energy = PvTotalEnergy(hass, entry, pv_power_sensor.entity_id)
+    ccu_energy_today = CcuEnergyToday(hass, entry, ccu_power.entity_id)
+    ccu_energy_total = CcuEnergyTotal(hass, entry, ccu_power.entity_id)
+    battery_today_energy_charge = BatteryTodayEnergyCharge(
+        hass, entry, battery_power_charge.entity_id
     )
-    batteryTodayEnergyDischarge = BatteryTodayEnergyDischarge(
-        hass, entry, batteryPowerDischarge.entity_id
-    )
-
-    batteryTotalEnergyCharge = BatteryTotalEnergyCharge(
-        hass, entry, batteryPowerCharge.entity_id
-    )
-    batteryTotalEnergyDischarge = BatteryTotalEnergyDischarge(
-        hass, entry, batteryPowerDischarge.entity_id
+    battery_today_energy_discharge = BatteryTodayEnergyDischarge(
+        hass, entry, battery_power_discharge.entity_id
     )
 
-    gridExportEnergyToday = GridExportEnergyToday(hass, entry, gridExport.entity_id)
-    gridExportEnergyTotal = GridExportEnergyTotal(hass, entry, gridExport.entity_id)
-
-    gridImportEnergyToday = GridImportEnergyToday(hass, entry, gridImport.entity_id)
-    gridImportEnergyTotal = GridImportEnergyTotal(hass, entry, gridImport.entity_id)
-
-    pvSelfConsumptionToday = PvSelfConsumptionEnergyToday(
-        hass, entry, pvSelfConsumption.entity_id
+    battery_total_energy_charge = BatteryTotalEnergyCharge(
+        hass, entry, battery_power_charge.entity_id
     )
-    pvSelfConsumptionTotal = PvSelfConsumptionEnergyTotal(
-        hass, entry, pvSelfConsumption.entity_id
+    battery_total_energy_discharge = BatteryTotalEnergyDischarge(
+        hass, entry, battery_power_discharge.entity_id
+    )
+
+    grid_export_energy_today = GridExportEnergyToday(hass, entry, grid_export.entity_id)
+    grid_export_energy_total = GridExportEnergyTotal(hass, entry, grid_export.entity_id)
+
+    grid_import_energy_today = GridImportEnergyToday(hass, entry, grid_import.entity_id)
+    grid_import_energy_total = GridImportEnergyTotal(hass, entry, grid_import.entity_id)
+
+    pv_self_consumption_today = PvSelfConsumptionEnergyToday(
+        hass, entry, pv_self_consumption.entity_id
+    )
+    pv_self_consumption_total = PvSelfConsumptionEnergyTotal(
+        hass, entry, pv_self_consumption.entity_id
     )
 
     async_add_entities(
         [
-            pvTodayEnergy,
-            pvTotalEnergy,
-            ccuEnergyToday,
-            ccuEnergyTotal,
-            batteryTodayEnergyCharge,
-            batteryTodayEnergyDischarge,
-            batteryTotalEnergyCharge,
-            batteryTotalEnergyDischarge,
-            gridExportEnergyToday,
-            gridExportEnergyTotal,
-            gridImportEnergyToday,
-            gridImportEnergyTotal,
-            pvSelfConsumptionToday,
-            pvSelfConsumptionTotal,
+            pv_today_energy,
+            pv_total_energy,
+            ccu_energy_today,
+            ccu_energy_total,
+            battery_today_energy_charge,
+            battery_today_energy_discharge,
+            battery_total_energy_charge,
+            battery_total_energy_discharge,
+            grid_export_energy_today,
+            grid_export_energy_total,
+            grid_import_energy_today,
+            grid_import_energy_total,
+            pv_self_consumption_today,
+            pv_self_consumption_total,
         ]
     )

@@ -1,4 +1,5 @@
-"""Dieses Modul stellt verschiedene Hilfsfunktionen bereit, die in mehreren Klassen oder Modulen verwendet werden können.
+"""Dieses Modul stellt verschiedene Hilfsfunktionen bereit, die in mehreren Klassen 
+oder Modulen verwendet werden können.
 
 Die Funktionen dienen hauptsächlich zur Validierung und Plausibilitätsprüfung von Messwerten
 (beispielsweise Leistungswerte von Batteriespeichern) sowie zur Unterstützung allgemeiner
@@ -17,7 +18,7 @@ import logging
 _LOGGER = logging.getLogger(__name__)
 
 
-def isPccuOk(pccu: float):
+def is_pccu_ok(pccu: float):
     """Prüft, ob der PCCU-Wert im plausiblen Bereich liegt.
 
     Args:
@@ -30,17 +31,18 @@ def isPccuOk(pccu: float):
     """
 
     ok = False
-    if pccu >= 0 and pccu <= (2300 * 1.5):
+    if 0 <= pccu <= (2300 * 1.5):
         ok = True
     else:
         _LOGGER.error("Pccu-Wert ist nicht plausibel und wird verworfen")
     return ok
 
 
-def isPrOk(pr: float):
+def is_pr_ok(pr: float):
     """Prüft, ob der Pr-Wert im plausiblen Bereich liegt.
 
-    Annahme: Die maximale Hausanschlussleistung beträgt 63 A (ungewöhnlich, aber möglich in Deutschland),
+    Annahme: Die maximale Hausanschlussleistung beträgt 63 A
+    (ungewöhnlich, aber möglich in Deutschland),
     was etwa ±43.600 W entspricht.
 
     Args:
@@ -54,14 +56,14 @@ def isPrOk(pr: float):
 
     ok = False
 
-    if pr >= -43600 and pr <= 43600:
+    if -43600 <= pr <= 43600:
         ok = True
     else:
         _LOGGER.error("Pr-Wert ist nicht plausibel und wird verworfen")
     return ok
 
 
-def isPowerTotalOk(power_total: float, batterien: list) -> bool:
+def is_power_total_ok(power_total: float, batterien: list) -> bool:
     """Prüft, ob der Gesamtleistungswert (power_total) im plausiblen Bereich liegt.
 
     Die maximale Gesamtleistung hängt von der Anzahl der Batteriespeicher ab.
@@ -79,14 +81,12 @@ def isPowerTotalOk(power_total: float, batterien: list) -> bool:
     """
 
     ok = False
-    anzahlBatterien = len(batterien)
+    anzahl_batterien = len(batterien)
 
-    if (anzahlBatterien > 0 and anzahlBatterien < 17) and (
-        power_total >= 0 and power_total <= (60 * 138 * anzahlBatterien)
+    if (0 < anzahl_batterien <= 16) and (
+        0 <= power_total <= (60 * 138 * anzahl_batterien)
     ):
         ok = True
     else:
-        _LOGGER.error(
-            f"Power_total Wert ({power_total}) ist nicht plausibel und wird verworfen"  # noqa: G004
-        )
+        _LOGGER.error("Power_total Wert ist nicht plausibel und wird verworfen")
     return ok

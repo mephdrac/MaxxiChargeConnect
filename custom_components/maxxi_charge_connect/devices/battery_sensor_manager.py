@@ -13,7 +13,7 @@ from ..const import DOMAIN
 from .battery_soe_sensor import BatterySoESensor
 
 
-class BatterySensorManager:
+class BatterySensorManager:  # pylint: disable=too-few-public-methods
     """Manager zur dynamischen Erstellung und Verwaltung von BatterySoESensor-Entitäten.
 
     Erzeugt bei Empfang der ersten Daten automatisch eine Entität pro Batteriespeicher.

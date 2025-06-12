@@ -17,7 +17,7 @@ from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
-from ..tools import isPccuOk  # noqa: TID252
+from ..tools import is_pccu_ok  # noqa: TID252
 
 
 class BatteryPowerDischarge(SensorEntity):
@@ -84,7 +84,7 @@ class BatteryPowerDischarge(SensorEntity):
 
         ccu = float(data.get("Pccu", 0))
 
-        if isPccuOk(ccu):
+        if is_pccu_ok(ccu):
             pv_power = float(data.get("PV_power_total", 0))
             batterie_leistung = round(pv_power - ccu, 3)
 

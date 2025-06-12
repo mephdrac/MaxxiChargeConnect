@@ -15,7 +15,7 @@ from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
-from ..tools import isPrOk  # noqa: TID252
+from ..tools import is_pr_ok  # noqa: TID252
 
 
 class GridImport(SensorEntity):
@@ -66,7 +66,7 @@ class GridImport(SensorEntity):
 
         """
         pr = float(data.get("Pr", 0))
-        if isPrOk(pr):
+        if is_pr_ok(pr):
             self._attr_native_value = max(pr, 0)
             self.async_write_ha_state()
 

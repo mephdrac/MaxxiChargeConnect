@@ -30,6 +30,7 @@ from .const import DOMAIN, ONLY_ONE_IP
 _LOGGER = logging.getLogger(__name__)
 
 
+# pylint: disable=W0237
 class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Konfigurations-Flow für die MaxxiChargeConnect Integration.
 
@@ -142,9 +143,9 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 }
             ),
         )
-    
+
     def is_matching(self, other: config_entries.ConfigFlow) -> bool:
-        """Vergleicht, ob dieser Flow einem bestehenden Flow entspricht."""      
+        """Vergleicht, ob dieser Flow einem bestehenden Flow entspricht."""
         if not isinstance(other, MaxxiChargeConnectConfigFlow):
             return False
         return self.webhook_id == other.webhook_id

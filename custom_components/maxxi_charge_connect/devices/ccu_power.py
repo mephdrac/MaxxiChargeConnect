@@ -19,7 +19,7 @@ from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
-from ..tools import isPccuOk  # noqa: TID252
+from ..tools import is_pccu_ok  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,7 +41,6 @@ class CcuPower(SensorEntity):
             entry (ConfigEntry): Die Konfigurationseintrag-Instanz für diese Integration.
 
         """
-        self._unsub_dispatcher = None
         self._attr_suggested_display_precision = 2
         self._entry = entry
         # self._attr_name = "CCU Power"
@@ -61,22 +60,9 @@ class CcuPower(SensorEntity):
 
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
 
-        self._unsub_dispatcher = async_dispatcher_connect(
-            self.hass, signal_sensor, self._handle_update
-        )
-
         self.async_on_remove(
             async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
         )
-
-    async def async_will_remove_from_hass(self):
-        """Wird beim Entfernen aus Home Assistant aufgerufen.
-
-        Trennt die Verbindung zum Dispatcher-Signal.
-        """
-        if self._unsub_dispatcher is not None:
-            self._unsub_dispatcher()
-            self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
         """Verarbeitet neue Webhook-Daten und aktualisiert den Sensorzustand.
@@ -90,7 +76,7 @@ class CcuPower(SensorEntity):
 
         pccu = float(data.get("Pccu", 0))
 
-        if isPccuOk(pccu):
+        if is_pccu_ok(pccu):
             self._attr_native_value = float(data.get("Pccu", 0))
             self.async_write_ha_state()
 

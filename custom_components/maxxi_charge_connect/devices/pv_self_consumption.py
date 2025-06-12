@@ -14,7 +14,7 @@ from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
-from ..tools import isPowerTotalOk, isPrOk  # noqa: TID252
+from ..tools import is_power_total_ok, is_pr_ok  # noqa: TID252
 
 
 class PvSelfConsumption(SensorEntity):
@@ -31,7 +31,6 @@ class PvSelfConsumption(SensorEntity):
             entry (ConfigEntry): Die Konfiguration der Integration.
 
         """
-        self._unsub_dispatcher = None
         self._attr_suggested_display_precision = 2
         self._entry = entry
         # self._attr_name = "PV Self-Consumption"
@@ -49,20 +48,9 @@ class PvSelfConsumption(SensorEntity):
         """
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
 
-        self._unsub_dispatcher = async_dispatcher_connect(
-            self.hass, signal_sensor, self._handle_update
-        )
-
         self.async_on_remove(
             async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
         )
-
-    async def async_will_remove_from_hass(self):
-        """Trennt die Signalverbindung beim Entfernen aus Home Assistant."""
-
-        if self._unsub_dispatcher is not None:
-            self._unsub_dispatcher()
-            self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
         """Verarbeitet neue Leistungsdaten zur Berechnung des PV-Eigenverbrauchs.
@@ -78,10 +66,10 @@ class PvSelfConsumption(SensorEntity):
         pv_power = float(data.get("PV_power_total", 0))
         batteries = data.get("batteriesInfo", [])
 
-        if isPowerTotalOk(pv_power, batteries):
+        if is_power_total_ok(pv_power, batteries):
             pr = float(data.get("Pr", 0))
 
-            if isPrOk(pr):
+            if is_pr_ok(pr):
                 self._attr_native_value = pv_power - max(-pr, 0)
                 self.async_write_ha_state()
 

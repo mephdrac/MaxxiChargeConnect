@@ -12,11 +12,6 @@ Testfall:
 Verwendete Bibliotheken:
 - datetime, unittest.mock, pytest
 """
-
-import sys
-from pathlib import Path
-
-sys.path.append(str(Path(__file__).resolve().parents[3]))
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
 from homeassistant.util import dt as dt_util

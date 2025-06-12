@@ -15,7 +15,7 @@ from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
-from ..tools import isPrOk  # noqa: TID252
+from ..tools import is_pr_ok  # noqa: TID252
 
 
 class PowerMeter(SensorEntity):
@@ -31,7 +31,6 @@ class PowerMeter(SensorEntity):
             entry (ConfigEntry): Die Konfigurationsinstanz, die vom Benutzer gesetzt wurde.
 
         """
-        self._unsub_dispatcher = None
         self._attr_suggested_display_precision = 2
         self._entry = entry
         #    self._attr_name = "Power Meter"
@@ -49,23 +48,9 @@ class PowerMeter(SensorEntity):
         """
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
 
-        self._unsub_dispatcher = async_dispatcher_connect(
-            self.hass, signal_sensor, self._handle_update
-        )
-
         self.async_on_remove(
             async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
         )
-
-    async def async_will_remove_from_hass(self):
-        """Wird aufgerufen, bevor die Entität aus Home Assistant entfernt wird.
-
-        Trennt die Verbindung zum Dispatcher, um Ressourcen freizugeben.
-        """
-
-        if self._unsub_dispatcher is not None:
-            self._unsub_dispatcher()
-            self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
         """Behandelt eingehende Leistungsdaten und aktualisiert den Sensorwert.
@@ -77,7 +62,7 @@ class PowerMeter(SensorEntity):
         """
         pr = data.get("Pr")
 
-        if isPrOk(pr):
+        if is_pr_ok(pr):
             self._attr_native_value = pr
             self.async_write_ha_state()
 

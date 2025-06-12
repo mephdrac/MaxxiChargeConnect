@@ -14,7 +14,7 @@ from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
-from ..tools import isPowerTotalOk  # noqa: TID252
+from ..tools import is_power_total_ok  # noqa: TID252
 
 
 class PvPower(SensorEntity):
@@ -61,7 +61,7 @@ class PvPower(SensorEntity):
         pv_power = float(data.get("PV_power_total", 0))
         batteries = data.get("batteriesInfo", [])
 
-        if isPowerTotalOk(pv_power, batteries):
+        if is_power_total_ok(pv_power, batteries):
             self._attr_native_value = pv_power
             self.async_write_ha_state()
 

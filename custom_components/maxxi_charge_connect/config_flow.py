@@ -46,9 +46,14 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     reconfigure_supported = True  # <- Aktiviert den Reconfigure-Flow
 
     _name = None
-    _webhook_id = None
+    _webhook_id: str = ""
     _host_ip = None
     _only_ip = False
+
+    @property
+    def webhook_id(self) -> str:
+        """Öffentlicher Zugriff auf _webhook_id."""
+        return self._webhook_id
 
     async def async_step_user(self, user_input=None):
         """Erster Schritt des Setup-Flows, der die Nutzereingaben abfragt.
@@ -137,24 +142,41 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 }
             ),
         )
+    
+    def is_matching(self, other: config_entries.ConfigFlow) -> bool:
+        """Vergleicht, ob dieser Flow einem bestehenden Flow entspricht."""      
+        if not isinstance(other, MaxxiChargeConnectConfigFlow):
+            return False
+        return self.webhook_id == other.webhook_id
 
-    async def async_migrate_entry(self):
+        # """Vergleicht, ob der aktuelle Flow zu einem bestehenden ConfigEntry passt."""
+        # # Versuche anhand der Webhook-ID zu matchen
+        # if self._webhook_id:
+        #     return entry.data.get(CONF_WEBHOOK_ID) == self._webhook_id
+
+        # # Alternativ: Vergleich anhand mehrerer Felder
+        # return (
+        #     entry.data.get(CONF_NAME) == self._name and
+        #     entry.data.get(CONF_IP_ADDRESS) == self._host_ip
+        # )
+
+    async def async_migrate_entry(self, config_entry: config_entries.ConfigEntry) -> bool:
         """Migration eines Config-Eintrags von Version 1 auf Version 2.
 
         Args:
             hass (HomeAssistant): Home Assistant Instanz.
-            config_entry (ConfigEntry): Zu migrierender Konfigurationseintrag.
+            config_entry (ConfigEntry): Zu migrierender Konfiguration^seintrag.
 
         Returns:
             bool: True, falls Migration durchgeführt wurde, sonst False.
 
         """
 
-        if self.config_entry.version == 1:
-            new_data = {**self.config_entry.data}
-            self.config_entry.version = 2
+        if config_entry.version == 1:
+            new_data = {**config_entry.data}
+            config_entry.version = 2
             self.hass.config_entries.async_update_entry(
-                self.config_entry, data=new_data
+                config_entry, data=new_data
             )
             return True
         return False

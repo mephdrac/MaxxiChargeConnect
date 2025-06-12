@@ -82,14 +82,18 @@ class BatterySoc(SensorEntity):
     @property
     def icon(self):
         """Return dynamic battery icon based on SOC percentage."""
+        result = "mdi:battery-unknown"
 
         try:
             level = max(0, min(100, int(self._attr_native_value)))  # Clamping 0–100
-            level = round(level / 10) * 10  # z. B. 57 → 60
+            level = round(level / 10) * 10  # z. B. 57 → 60            
+            
         except (TypeError, ValueError):
-            return "mdi:battery-unknown"
+            result = "mdi:battery-unknown"
         else:
-            return f"mdi:battery-{level}"
+            result = f"mdi:battery-{level}"
+                    
+        return result
 
     @property
     def device_info(self):

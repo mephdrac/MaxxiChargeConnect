@@ -58,8 +58,6 @@ class GridExport(SensorEntity):
             entry (ConfigEntry): Konfigurationseintrag der Integration.
 
         """
-
-        self._unsub_dispatcher = None
         self._attr_suggested_display_precision = 2
         self._entry = entry
         # self._attr_name = "Grid Export Power"
@@ -79,22 +77,9 @@ class GridExport(SensorEntity):
 
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
 
-        self._unsub_dispatcher = async_dispatcher_connect(
-            self.hass, signal_sensor, self._handle_update
-        )
-
         self.async_on_remove(
             async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
         )
-
-    async def async_will_remove_from_hass(self):
-        """Wird aufgerufen, wenn die Entität aus Home Assistant entfernt wird.
-
-        Entfernt registrierte Dispatcher-Listener.
-        """
-        if self._unsub_dispatcher is not None:
-            self._unsub_dispatcher()
-            self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
         """Verarbeitet eingehende Sensordaten vom Dispatcher.

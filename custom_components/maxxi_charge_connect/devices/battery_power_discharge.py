@@ -48,8 +48,6 @@ class BatteryPowerDischarge(SensorEntity):
         Setzt die Geräteattribute wie Icon, Einheit, Gerätetyp und eindeutige ID.
 
         """
-
-        self._unsub_dispatcher = None
         self._attr_suggested_display_precision = 2
         self._entry = entry
         #    self._attr_name = "Battery Power Discharge"
@@ -69,23 +67,9 @@ class BatteryPowerDischarge(SensorEntity):
 
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
 
-        self._unsub_dispatcher = async_dispatcher_connect(
-            self.hass, signal_sensor, self._handle_update
-        )
-
         self.async_on_remove(
             async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
         )
-
-    async def async_will_remove_from_hass(self):
-        """Trennt den Dispatcher beim Entfernen der Entität.
-
-        Dies verhindert Speicherlecks und doppelte Registrierungen bei Neustart oder Neuladen.
-        """
-
-        if self._unsub_dispatcher is not None:
-            self._unsub_dispatcher()
-            self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
         """Verarbeitet neue Leistungsdaten und aktualisiert den Sensorwert.

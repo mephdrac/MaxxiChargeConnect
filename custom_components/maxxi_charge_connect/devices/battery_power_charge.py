@@ -63,7 +63,6 @@ class BatteryPowerCharge(SensorEntity):
                   - model: Modellbezeichnung
 
         """
-        self._unsub_dispatcher = None
         self._attr_suggested_display_precision = 2
         self._entry = entry
         # self._attr_name = "Battery Power Charge"
@@ -83,22 +82,9 @@ class BatteryPowerCharge(SensorEntity):
 
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
 
-        self._unsub_dispatcher = async_dispatcher_connect(
-            self.hass, signal_sensor, self._handle_update
-        )
-
         self.async_on_remove(
             async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
         )
-
-    async def async_will_remove_from_hass(self):
-        """Wird aufgerufen, bevor die Entität aus Home Assistant entfernt wird.
-
-        Hebt die Registrierung beim Dispatcher-Signal auf, um Speicherlecks zu vermeiden.
-        """
-        if self._unsub_dispatcher is not None:
-            self._unsub_dispatcher()
-            self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
         """Verarbeitet eingehende Sensordaten und aktualisiert den Zustand der Entität.

@@ -8,6 +8,9 @@ sowie das Entfernen des GridImport-Sensors in Home Assistant.
 import logging
 import sys
 from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parents[3]))
+
 from unittest.mock import MagicMock, patch
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
@@ -19,8 +22,6 @@ from custom_components.maxxi_charge_connect.const import DOMAIN
 from custom_components.maxxi_charge_connect.devices.grid_import import GridImport
 
 
-sys.path.append(str(Path(__file__).resolve().parents[3]))
-
 _LOGGER = logging.getLogger(__name__)
 
 # Dummy-Konstanten
@@ -28,7 +29,7 @@ WEBHOOK_ID = "abc123"
 
 
 @pytest.fixture
-def mock_entry_local():
+def mock_entry():
     """Fixture zur Erstellung eines Mock-Config-Eintrags.
 
     Liefert ein MagicMock-Objekt mit den Attributen entry_id, title und data,
@@ -54,10 +55,10 @@ async def test_grid_import_initialization(mock_entry):
     assert sensor._attr_icon == "mdi:transmission-tower-export"  # pylint: disable=protected-access
     assert sensor._attr_native_value is None  # pylint: disable=protected-access
     assert sensor._attr_device_class == SensorDeviceClass.POWER  # pylint: disable=protected-access
-    assert sensor._attr_state_class == SensorStateClass.MEASUREMENT\
-           # pylint: disable=protected-access
-    assert sensor._attr_native_unit_of_measurement == UnitOfPower.WATT\
-           # pylint: disable=protected-access
+    assert sensor._attr_state_class == SensorStateClass.MEASUREMENT
+    # pylint: disable=protected-access
+    assert sensor._attr_native_unit_of_measurement == UnitOfPower.WATT
+    # pylint: disable=protected-access
 
 
 @pytest.mark.asyncio
@@ -87,10 +88,10 @@ async def test_grid_import_add_and_handle_update1():
 
     with (
         patch(
-            "custom_components.maxxi_charge_connect.devices.GridImport.async_dispatcher_connect"
+            "custom_components.maxxi_charge_connect.devices.grid_import.async_dispatcher_connect"
         ) as mock_connect,
         patch(
-            "custom_components.maxxi_charge_connect.devices.GridImport.isPrOk"
+            "custom_components.maxxi_charge_connect.devices.grid_import.isPrOk"
         ) as mock_is_pr_ok,
     ):
         mock_is_pr_ok.return_value = True
@@ -103,8 +104,8 @@ async def test_grid_import_add_and_handle_update1():
         await sensor.async_added_to_hass()
 
         signal = f"{DOMAIN}_webhook456_update_sensor"
-        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)\
-            # pylint: disable=protected-access
+        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)
+        # pylint: disable=protected-access
         sensor.async_on_remove.assert_called_once_with(fake_unsub)
 
         await sensor._handle_update({"Pr": 234.675})  # pylint: disable=protected-access
@@ -137,10 +138,10 @@ async def test_grid_import_add_and_handle_update2():
 
     with (
         patch(
-            "custom_components.maxxi_charge_connect.devices.GridImport.async_dispatcher_connect"
+            "custom_components.maxxi_charge_connect.devices.grid_import.async_dispatcher_connect"
         ) as mock_connect,
         patch(
-            "custom_components.maxxi_charge_connect.devices.GridImport.isPrOk"
+            "custom_components.maxxi_charge_connect.devices.grid_import.isPrOk"
         ) as mock_is_pr_ok,
     ):
         mock_is_pr_ok.return_value = False
@@ -153,32 +154,12 @@ async def test_grid_import_add_and_handle_update2():
         await sensor.async_added_to_hass()
 
         signal = f"{DOMAIN}_webhook456_update_sensor"
-        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)\
-            # pylint: disable=protected-access
+        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)
+        # pylint: disable=protected-access
         sensor.async_on_remove.assert_called_once_with(fake_unsub)
 
         await sensor._handle_update({"Pr": 234.675})  # pylint: disable=protected-access
         assert sensor.native_value is None
-
-
-@pytest.mark.asyncio
-async def test_grid_import_will_remove_from_hass(mock_entry):
-    """Testet das Entfernen des Sensors aus Home Assistant.
-
-    Prüft, ob der Dispatcher korrekt abgemeldet und die interne Variable zurückgesetzt wird.
-    """
-    sensor = GridImport(mock_entry)
-
-    disconnected = {"called": False}
-
-    def unsub():
-        disconnected["called"] = True
-
-    sensor._unsub_dispatcher = unsub  # pylint: disable=protected-access
-    await sensor.async_will_remove_from_hass()
-
-    assert disconnected["called"]
-    assert sensor._unsub_dispatcher is None  # pylint: disable=protected-access
 
 
 def test_device_info(mock_entry):

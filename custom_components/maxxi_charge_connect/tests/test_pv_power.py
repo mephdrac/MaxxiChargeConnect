@@ -12,6 +12,8 @@ import logging
 import sys
 from pathlib import Path
 
+sys.path.append(str(Path(__file__).resolve().parents[3]))
+
 from unittest.mock import MagicMock, patch
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
@@ -21,8 +23,6 @@ from custom_components.maxxi_charge_connect.const import DOMAIN
 from custom_components.maxxi_charge_connect.devices.pv_power import PvPower
 
 
-sys.path.append(str(Path(__file__).resolve().parents[3]))
-
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -31,11 +31,12 @@ WEBHOOK_ID = "abc123"
 
 
 @pytest.fixture
-def mock_entry_local():
+def mock_entry():
     """Gibt ein Mock-Konfigurationsobjekt für den Sensor zurück.
 
     Returns:
         MagicMock: Ein simuliertes Home Assistant-Konfigurationsobjekt.
+
     """
     entry = MagicMock()
     entry.entry_id = "test_entry_id"
@@ -56,10 +57,10 @@ async def test_pv_power_initialization(mock_entry):
     assert sensor._attr_icon == "mdi:solar-power"  # pylint: disable=protected-access
     assert sensor._attr_native_value is None  # pylint: disable=protected-access
     assert sensor._attr_device_class == SensorDeviceClass.POWER  # pylint: disable=protected-access
-    assert sensor._attr_state_class == SensorStateClass.MEASUREMENT\
-        # pylint: disable=protected-access
-    assert sensor._attr_native_unit_of_measurement == UnitOfPower.WATT\
-        # pylint: disable=protected-access
+    assert sensor._attr_state_class == SensorStateClass.MEASUREMENT
+    # pylint: disable=protected-access
+    assert sensor._attr_native_unit_of_measurement == UnitOfPower.WATT
+    # pylint: disable=protected-access
 
 
 @pytest.mark.asyncio
@@ -85,10 +86,10 @@ async def test_pv_power_add_and_handle_update1():
 
     with (
         patch(
-            "custom_components.maxxi_charge_connect.devices.PvPower.async_dispatcher_connect"
+            "custom_components.maxxi_charge_connect.devices.pv_power.async_dispatcher_connect"
         ) as mock_connect,
         patch(
-            "custom_components.maxxi_charge_connect.devices.PvPower.isPowerTotalOk"
+            "custom_components.maxxi_charge_connect.devices.pv_power.isPowerTotalOk"
         ) as mock_is_power_total_ok,
     ):
         mock_is_power_total_ok.return_value = True
@@ -101,8 +102,8 @@ async def test_pv_power_add_and_handle_update1():
         await sensor.async_added_to_hass()
 
         signal = f"{DOMAIN}_webhook456_update_sensor"
-        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)\
-            # pylint: disable=protected-access
+        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)
+        # pylint: disable=protected-access
         sensor.async_on_remove.assert_called_once_with(fake_unsub)
 
         await sensor._handle_update({"PV_power_total": 234.675})  # pylint: disable=protected-access
@@ -132,10 +133,10 @@ async def test_pv_power_add_and_handle_update2():
 
     with (
         patch(
-            "custom_components.maxxi_charge_connect.devices.PvPower.async_dispatcher_connect"
+            "custom_components.maxxi_charge_connect.devices.pv_power.async_dispatcher_connect"
         ) as mock_connect,
         patch(
-            "custom_components.maxxi_charge_connect.devices.PvPower.isPowerTotalOk"
+            "custom_components.maxxi_charge_connect.devices.pv_power.isPowerTotalOk"
         ) as mock_is_power_total_ok,
     ):
         mock_is_power_total_ok.return_value = False
@@ -148,32 +149,12 @@ async def test_pv_power_add_and_handle_update2():
         await sensor.async_added_to_hass()
 
         signal = f"{DOMAIN}_webhook456_update_sensor"
-        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)\
-            # pylint: disable=protected-access
+        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)
+        # pylint: disable=protected-access
         sensor.async_on_remove.assert_called_once_with(fake_unsub)
 
         await sensor._handle_update({"PV_power_total": 234})  # pylint: disable=protected-access
         assert sensor.native_value is None
-
-
-@pytest.mark.asyncio
-async def test_pv_power_will_remove_from_hass(mock_entry):
-    """Testet das Entfernen des PvPower-Sensors aus Home Assistant.
-
-    Erwartet, dass der Dispatcher ordnungsgemäß abgemeldet wird.
-    """
-    sensor = PvPower(mock_entry)
-
-    disconnected = {"called": False}
-
-    def unsub():
-        disconnected["called"] = True
-
-    sensor._unsub_dispatcher = unsub  # pylint: disable=protected-access
-    await sensor.async_will_remove_from_hass()
-
-    assert disconnected["called"]
-    assert sensor._unsub_dispatcher is None  # pylint: disable=protected-access
 
 
 def test_device_info(mock_entry):

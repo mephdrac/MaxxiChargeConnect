@@ -86,13 +86,12 @@ class GridExportEnergyToday(IntegrationSensor):
 
         Registriert einen täglichen Reset der Energiewerte um 0:00 Uhr lokale Zeit.
         """
-        _LOGGER.info("Resetting daily energy at %s", now)
-
         # Setze Reset-Zeitpunkt auf aktuelle Mitternacht lokal (als UTC)
-        local_midnight = dt_util.start_of_local_day()
+        local_midnight = now
         self._last_reset = dt_util.as_utc(local_midnight)
-
+        self._state = 0.0
         self.async_write_ha_state()
+        _LOGGER.info("Resetting daily energy")
 
     @property
     def last_reset(self):

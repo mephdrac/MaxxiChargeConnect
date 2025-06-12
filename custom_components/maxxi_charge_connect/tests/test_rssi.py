@@ -13,6 +13,8 @@ import logging
 import sys
 from pathlib import Path
 
+sys.path.append(str(Path(__file__).resolve().parents[3]))
+
 from unittest.mock import MagicMock, patch
 from homeassistant.const import CONF_WEBHOOK_ID, SIGNAL_STRENGTH_DECIBELS_MILLIWATT
 from homeassistant.components.sensor import SensorDeviceClass
@@ -22,7 +24,6 @@ import pytest
 from custom_components.maxxi_charge_connect.const import DOMAIN
 from custom_components.maxxi_charge_connect.devices.rssi import Rssi
 
-sys.path.append(str(Path(__file__).resolve().parents[3]))
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ WEBHOOK_ID = "abc123"
 
 
 @pytest.fixture
-def mock_entry_entry():
+def mock_entry():
     """Erstellt einen gefälschten ConfigEntry für die Tests."""
     entry = MagicMock()
     entry.entry_id = "test_entry_id"
@@ -52,12 +53,12 @@ async def test_rssi_initialization(mock_entry):
     assert sensor._attr_unique_id == "test_entry_id_rssi"  # pylint: disable=protected-access
     assert sensor._attr_icon == "mdi:wifi"  # pylint: disable=protected-access
     assert sensor._attr_native_value is None  # pylint: disable=protected-access
-    assert sensor._attr_device_class == SensorDeviceClass.SIGNAL_STRENGTH\
-        # pylint: disable=protected-access
-    assert sensor._attr_native_unit_of_measurement == SIGNAL_STRENGTH_DECIBELS_MILLIWATT\
-        # pylint: disable=protected-access
-    assert sensor._attr_entity_category == EntityCategory.DIAGNOSTIC\
-        # pylint: disable=protected-access
+    assert sensor._attr_device_class == SensorDeviceClass.SIGNAL_STRENGTH
+    # pylint: disable=protected-access
+    assert sensor._attr_native_unit_of_measurement == SIGNAL_STRENGTH_DECIBELS_MILLIWATT
+    # pylint: disable=protected-access
+    assert sensor._attr_entity_category == EntityCategory.DIAGNOSTIC
+    # pylint: disable=protected-access
 
 
 @pytest.mark.asyncio
@@ -80,7 +81,7 @@ async def test_rssi_add_and_handle_update():
     dispatcher_called = {}
 
     with patch(
-        "custom_components.maxxi_charge_connect.devices.Rssi.async_dispatcher_connect"
+        "custom_components.maxxi_charge_connect.devices.rssi.async_dispatcher_connect"
     ) as mock_connect:
 
         def fake_unsub():
@@ -91,8 +92,8 @@ async def test_rssi_add_and_handle_update():
         await sensor.async_added_to_hass()
 
         signal = f"{DOMAIN}_webhook456_update_sensor"
-        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)\
-            # pylint: disable=protected-access
+        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)
+        # pylint: disable=protected-access
         sensor.async_on_remove.assert_called_once_with(fake_unsub)
 
         await sensor._handle_update({"wifiStrength": -42})  # pylint: disable=protected-access

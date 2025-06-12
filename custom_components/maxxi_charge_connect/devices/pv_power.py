@@ -30,7 +30,6 @@ class PvPower(SensorEntity):
             entry (ConfigEntry): Die Konfigurationsinstanz für diese Integration.
 
         """
-        self._unsub_dispatcher = None
         self._entry = entry
         # self._attr_name = "PV Power"
         self._attr_unique_id = f"{entry.entry_id}_pv_power"
@@ -47,22 +46,9 @@ class PvPower(SensorEntity):
         """
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
 
-        self._unsub_dispatcher = async_dispatcher_connect(
-            self.hass, signal_sensor, self._handle_update
-        )
-
         self.async_on_remove(
             async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
         )
-
-    async def async_will_remove_from_hass(self):
-        """Wird aufgerufen, wenn die Entität entfernt wird.
-
-        Trennt die Verbindung zum Signal-Dispatcher.
-        """
-        if self._unsub_dispatcher is not None:
-            self._unsub_dispatcher()
-            self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
         """Behandelt eingehende Leistungsdaten von der MaxxiCharge-Station.

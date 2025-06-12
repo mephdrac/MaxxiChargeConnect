@@ -26,6 +26,13 @@ Testfunktionen:
 import sys
 from pathlib import Path
 
+sys.path.append(str(Path(__file__).resolve().parents[3]))
+
+import sys
+from pathlib import Path
+
+sys.path.append(str(Path(__file__).resolve().parents[3]))
+
 from unittest.mock import MagicMock, patch
 import pytest
 from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
@@ -35,14 +42,13 @@ from custom_components.maxxi_charge_connect.devices.firmware_version import (
     FirmwareVersion,
 )
 
-sys.path.append(str(Path(__file__).resolve().parents[3]))
 
 # Dummy-Konstanten
 WEBHOOK_ID = "abc123"
 
 
 @pytest.fixture
-def mock_entr_local():
+def mock_entry():
     """Stellt einen gemockten Konfigurationseintrag für den Sensor bereit.
 
     Returns:
@@ -57,26 +63,28 @@ def mock_entr_local():
 
 
 @pytest.mark.asyncio
-async def test_firmware_version_initialization(mock_entry_local):
+async def test_firmware_version_initialization(mock_entry):
     """Testet die Initialisierung des FirmwareVersion Sensors.
 
     Überprüft, ob Attribute wie unique_id, icon, native_value und entity_category
     beim Erstellen korrekt gesetzt werden.
     """
-    sensor = FirmwareVersion(mock_entry_local)
+    sensor = FirmwareVersion(mock_entry)
 
-    assert sensor._attr_unique_id == "test_entry_id_firmware_version"\
-        # pylint: disable=protected-access
+    assert sensor._attr_unique_id == "test_entry_id_firmware_version"
+    # pylint: disable=protected-access
     assert sensor._attr_icon == "mdi:information-outline"  # pylint: disable=protected-access
     # pylint: disable=protected-access
     assert sensor._attr_native_value is None  # pylint: disable=protected-access
-    assert sensor._attr_entity_category == EntityCategory.DIAGNOSTIC\
-           # pylint: disable=protected-access
+    assert sensor._attr_entity_category == EntityCategory.DIAGNOSTIC
+    # pylint: disable=protected-access
 
 
 @pytest.mark.asyncio
 async def test_firmware_version_add_and_handle_update():
-    """Testet das Hinzufügen des FirmwareVersion Sensors
+    """FirmwareVersion add und update.
+
+    Testet das Hinzufügen des FirmwareVersion Sensors
     und die Verarbeitung von Update-Ereignissen.
 
     Mockt die Verbindung zum Home Assistant Dispatcher und überprüft,
@@ -101,7 +109,7 @@ async def test_firmware_version_add_and_handle_update():
     dispatcher_called = {}
 
     with patch(
-        "custom_components.maxxi_charge_connect.devices.FirmwareVersion.async_dispatcher_connect"
+        "custom_components.maxxi_charge_connect.devices.firmware_version.async_dispatcher_connect"
     ) as mock_connect:
 
         def fake_unsub():
@@ -112,35 +120,14 @@ async def test_firmware_version_add_and_handle_update():
         await sensor.async_added_to_hass()
 
         signal = f"{DOMAIN}_webhook456_update_sensor"
-        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)\
-            # pylint: disable=protected-access
+        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)
+        # pylint: disable=protected-access
         sensor.async_on_remove.assert_called_once_with(fake_unsub)
 
         firmwareversion = "MyVersion"
-        await sensor._handle_update({"firmwareVersion": firmwareversion})\
-            # pylint: disable=protected-access
+        await sensor._handle_update({"firmwareVersion": firmwareversion})
+        # pylint: disable=protected-access
         assert sensor.native_value == firmwareversion
-
-
-@pytest.mark.asyncio
-async def test_firmware_version_will_remove_from_hass(mock_entry):
-    """Testet den Aufräumprozess beim Entfernen des FirmwareVersion Sensors.
-
-    Stellt sicher, dass der Unsubscribe-Callback aufgerufen und danach entfernt wird,
-    wenn der Sensor aus Home Assistant entfernt wird.
-    """
-    sensor = FirmwareVersion(mock_entry)
-
-    disconnected = {"called": False}
-
-    def unsub():
-        disconnected["called"] = True
-
-    sensor._unsub_dispatcher = unsub  # pylint: disable=protected-access
-    await sensor.async_will_remove_from_hass()
-
-    assert disconnected["called"]
-    assert sensor._unsub_dispatcher is None  # pylint: disable=protected-access
 
 
 def test_device_info(mock_entry):

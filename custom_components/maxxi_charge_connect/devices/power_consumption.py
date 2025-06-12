@@ -34,7 +34,6 @@ class PowerConsumption(SensorEntity):
             entry (ConfigEntry): Die Konfigurationsinstanz für diese Integration.
 
         """
-        self._unsub_dispatcher = None
         self._entry = entry
         self._attr_suggested_display_precision = 2
         # self._attr_name = "House Consumption"
@@ -54,22 +53,9 @@ class PowerConsumption(SensorEntity):
         """
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
 
-        self._unsub_dispatcher = async_dispatcher_connect(
-            self.hass, signal_sensor, self._handle_update
-        )
-
         self.async_on_remove(
             async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
         )
-
-    async def async_will_remove_from_hass(self):
-        """Wird aufgerufen, bevor die Entität aus Home Assistant entfernt wird.
-
-        Trennt das Dispatcher-Signal, um Speicherlecks zu vermeiden.
-        """
-        if self._unsub_dispatcher is not None:
-            self._unsub_dispatcher()
-            self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
         """Verarbeitet eingehende Leistungsdaten und aktualisiert den Sensorwert.

@@ -22,7 +22,6 @@ class FirmwareVersion(TextEntity):
             entry (ConfigEntry): Der Konfigurationseintrag der Integration.
 
         """
-        self._unsub_dispatcher = None
         self._entry = entry
         self._attr_name = "Firmware Version"
         self._attr_unique_id = f"{entry.entry_id}_firmware_version"
@@ -38,23 +37,9 @@ class FirmwareVersion(TextEntity):
 
         signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
 
-        self._unsub_dispatcher = async_dispatcher_connect(
-            self.hass, signal_sensor, self._handle_update
-        )
-
         self.async_on_remove(
             async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
         )
-
-    async def async_will_remove_from_hass(self):
-        """Wird beim Entfernen der Entity aus Home Assistant aufgerufen.
-
-        Hebt die Dispatcher-Registrierung auf.
-        """
-
-        if self._unsub_dispatcher is not None:
-            self._unsub_dispatcher()
-            self._unsub_dispatcher = None
 
     async def _handle_update(self, data):
         """Verarbeitet empfangene Webhook-Daten und aktualisiert die Firmware-Version.
@@ -69,6 +54,7 @@ class FirmwareVersion(TextEntity):
         self.async_write_ha_state()
 
     def set_value(self, value):
+        """SetValue."""
         self._attr_native_value = value
 
     @property

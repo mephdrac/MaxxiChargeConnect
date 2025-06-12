@@ -1,6 +1,5 @@
 pylint
 pylint-per-file-ignores
 
-homeassistant
 voluptuous
 homeassistant>=2025.3.0

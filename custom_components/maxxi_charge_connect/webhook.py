@@ -45,7 +45,11 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
 
     _LOGGER.info("Registering webhook '%s'", WEBHOOK_NAME)
 
-    async def handle_webhook(webhook_id, request):
+    # async def handle_webhook(webhook_id, request):
+
+    async def handle_webhook(
+        hass: HomeAssistant, webhook_id: str, request: web.Request
+    ):
         try:
             allowed_ip = entry.data.get(CONF_IP_ADDRESS, "")
             only_one_ip = entry.data.get(ONLY_ONE_IP, False)

@@ -1,1 +1,3 @@
-max-instance-attributes=10
+[DESIGN]
+max-instance-attributes=15
+

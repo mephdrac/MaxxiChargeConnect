@@ -5,7 +5,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from ..const import DOMAIN
 
 
-class HttpScanTextClass(TextEntity):
+class HttpScanText(TextEntity):
     def __init__(self, coordinator, keyname, name, icon):
         self.coordinator = coordinator
         self._keyname = keyname

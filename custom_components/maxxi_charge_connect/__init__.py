@@ -14,6 +14,7 @@ import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 
 from .const import DOMAIN
 from .webhook import async_register_webhook, async_unregister_webhook
@@ -21,7 +22,7 @@ from .webhook import async_register_webhook, async_unregister_webhook
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup(hass: HomeAssistant, config: dict):   # pylint: disable=unused-argument
+async def async_setup(hass: HomeAssistant, config: dict):  # pylint: disable=unused-argument
     """Wird beim Start von Home Assistant einmalig aufgerufen.
 
     Aktuell keine Initialisierung notwendig.
@@ -59,23 +60,79 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     return True
 
 
-async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool: \
-        # pylint: disable=unused-argument
-    """Migrationsfunktion für künftige Änderungen an gespeicherten ConfigEntries.
-
-    Derzeit wird keine Migration benötigt. Es wird lediglich ein Debug-Log ausgegeben.
+async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+    """Migration eines Config-Eintrags von Version 1 auf Version 2.
 
     Args:
-        hass: Die Home Assistant-Instanz.
-        config_entry: Der zu migrierende Konfigurationseintrag.
+        hass (HomeAssistant): Home Assistant Instanz.
+        config_entry (ConfigEntry): Zu migrierender Konfiguration^seintrag.
 
     Returns:
-        True: Migration (falls nötig) erfolgreich abgeschlossen.
+        bool: True, falls Migration durchgeführt wurde, sonst False.
 
     """
+    _LOGGER.warning("Starte Migration: Aktuelle Version: %s", config_entry.version)
 
-    _LOGGER.debug("Migration called for entry: %s", config_entry.entry_id)
-    return True
+    version = config_entry.version
+
+    if version < 2:
+        _LOGGER.warning("Migration MaxxiChargeConnect v1 → v2 gestartet")
+        new_data = {**config_entry.data}
+        # config_entry.version = 2
+        hass.config_entries.async_update_entry(config_entry, data=new_data, version=2)
+        version = 2
+
+    if version == 2:
+        _LOGGER.warning("Migration MaxxiChargeConnect v2 → v3 gestartet")
+
+        # Entferne Sensor mit der alten unique_id
+        entity_registry = async_get_entity_registry(hass)
+        # Liste der veralteten unique_ids
+        unique_ids_to_remove = [
+            f"{config_entry.entry_id}_power_consumption",
+            f"{config_entry.entry_id}_pv_self_consumption_energy_total",
+            f"{config_entry.entry_id}_pv_self_consumption_energy_today",
+        ]
+
+        for entity in list(entity_registry.entities.values()):
+            if (
+                entity.config_entry_id == config_entry.entry_id
+                and entity.unique_id in unique_ids_to_remove
+            ):
+                _LOGGER.warning("Entferne veraltete Entität: %s", entity.entity_id)
+                entity_registry.async_remove(entity.entity_id)
+
+        # Version anpassen und übernehmen
+        # Setze neue Version explizit
+        hass.config_entries.async_update_entry(config_entry, version=3)
+        # await hass.async_block_till_done()
+        _LOGGER.warning("Migration auf Version 3 abgeschlossen")
+
+        return True
+
+    if version >= 3:
+        return True
+
+    return False
+
+
+# async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+#     # pylint: disable=unused-argument
+#     """Migrationsfunktion für künftige Änderungen an gespeicherten ConfigEntries.
+
+#     Derzeit wird keine Migration benötigt. Es wird lediglich ein Debug-Log ausgegeben.
+
+#     Args:
+#         hass: Die Home Assistant-Instanz.
+#         config_entry: Der zu migrierende Konfigurationseintrag.
+
+#     Returns:
+#         True: Migration (falls nötig) erfolgreich abgeschlossen.
+
+#     """
+
+#     _LOGGER.warning("Migration called for entry: %s", config_entry.entry_id)
+#     return True
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):

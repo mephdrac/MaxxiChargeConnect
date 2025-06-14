@@ -25,6 +25,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_IP_ADDRESS, CONF_NAME, CONF_WEBHOOK_ID
 from homeassistant.helpers.selector import BooleanSelector
+
 from .webhook import async_unregister_webhook
 
 from .const import DOMAIN, ONLY_ONE_IP
@@ -45,7 +46,8 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     """
 
-    VERSION = 2
+    VERSION = 3
+    MINOR_VERSION = 0
     reconfigure_supported = True  # <- Aktiviert den Reconfigure-Flow
 
     _name = None
@@ -156,35 +158,3 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if not isinstance(other, MaxxiChargeConnectConfigFlow):
             return False
         return self.webhook_id == other.webhook_id
-
-        # """Vergleicht, ob der aktuelle Flow zu einem bestehenden ConfigEntry passt."""
-        # # Versuche anhand der Webhook-ID zu matchen
-        # if self._webhook_id:
-        #     return entry.data.get(CONF_WEBHOOK_ID) == self._webhook_id
-
-        # # Alternativ: Vergleich anhand mehrerer Felder
-        # return (
-        #     entry.data.get(CONF_NAME) == self._name and
-        #     entry.data.get(CONF_IP_ADDRESS) == self._host_ip
-        # )
-
-    async def async_migrate_entry(
-        self, config_entry: config_entries.ConfigEntry
-    ) -> bool:
-        """Migration eines Config-Eintrags von Version 1 auf Version 2.
-
-        Args:
-            hass (HomeAssistant): Home Assistant Instanz.
-            config_entry (ConfigEntry): Zu migrierender Konfiguration^seintrag.
-
-        Returns:
-            bool: True, falls Migration durchgeführt wurde, sonst False.
-
-        """
-
-        if config_entry.version == 1:
-            new_data = {**config_entry.data}
-            config_entry.version = 2
-            self.hass.config_entries.async_update_entry(config_entry, data=new_data)
-            return True
-        return False

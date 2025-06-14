@@ -71,19 +71,19 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         bool: True, falls Migration durchgeführt wurde, sonst False.
 
     """
-    _LOGGER.warning("Starte Migration: Aktuelle Version: %s", config_entry.version)
+    _LOGGER.info("Starte Migration: Aktuelle Version: %s", config_entry.version)
 
     version = config_entry.version
 
     if version < 2:
-        _LOGGER.warning("Migration MaxxiChargeConnect v1 → v2 gestartet")
+        _LOGGER.info("Migration MaxxiChargeConnect v1 → v2 gestartet")
         new_data = {**config_entry.data}
         # config_entry.version = 2
         hass.config_entries.async_update_entry(config_entry, data=new_data, version=2)
         version = 2
 
     if version == 2:
-        _LOGGER.warning("Migration MaxxiChargeConnect v2 → v3 gestartet")
+        _LOGGER.info("Migration MaxxiChargeConnect v2 → v3 gestartet")
 
         # Entferne Sensor mit der alten unique_id
         entity_registry = async_get_entity_registry(hass)
@@ -99,14 +99,14 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
                 entity.config_entry_id == config_entry.entry_id
                 and entity.unique_id in unique_ids_to_remove
             ):
-                _LOGGER.warning("Entferne veraltete Entität: %s", entity.entity_id)
+                _LOGGER.info("Entferne veraltete Entität: %s", entity.entity_id)
                 entity_registry.async_remove(entity.entity_id)
 
         # Version anpassen und übernehmen
         # Setze neue Version explizit
         hass.config_entries.async_update_entry(config_entry, version=3)
         # await hass.async_block_till_done()
-        _LOGGER.warning("Migration auf Version 3 abgeschlossen")
+        _LOGGER.info("Migration auf Version 3 abgeschlossen")
 
         return True
 

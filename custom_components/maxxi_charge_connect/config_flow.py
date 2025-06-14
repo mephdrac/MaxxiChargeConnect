@@ -93,7 +93,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 {
                     vol.Required(CONF_NAME): str,
                     vol.Required(CONF_WEBHOOK_ID): str,
-                    vol.Optional(CONF_IP_ADDRESS): str,
+                    vol.Optional(CONF_IP_ADDRESS, default=""): str,
                     vol.Optional(ONLY_ONE_IP, default=False): BooleanSelector(),
                 }
             ),

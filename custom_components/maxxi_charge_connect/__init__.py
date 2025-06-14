@@ -13,6 +13,7 @@ Funktionen:
 import logging
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 

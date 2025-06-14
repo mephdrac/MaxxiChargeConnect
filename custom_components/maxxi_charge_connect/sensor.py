@@ -77,7 +77,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals
     """
 
     manager = BatterySensorManager(hass, entry, async_add_entities)
-    SENSOR_MANAGER[entry.entry_id] = manager
+    SENSOR_MANAGER[entry_id] = manager
     await manager.setup()
 
     sensor = DeviceId(entry)

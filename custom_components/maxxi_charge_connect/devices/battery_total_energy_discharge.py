@@ -18,7 +18,7 @@ from homeassistant.const import UnitOfEnergy
 from homeassistant.core import HomeAssistant
 
 from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
-from .translations_for_integration_sensors import get_localized_name
+from .translations_for_integration_sensors import clean_title, get_localized_name
 
 
 class BatteryTotalEnergyDischarge(IntegrationSensor):
@@ -53,7 +53,9 @@ class BatteryTotalEnergyDischarge(IntegrationSensor):
         super().__init__(
             source_entity=source_entity_id,
             # name="Battery Discharge Total",
-            name=get_localized_name(hass, self.__class__.__name__),
+            name=clean_title(entry.title)
+            + "_"
+            + get_localized_name(hass, self.__class__.__name__),
             unique_id=f"{entry.entry_id}_battery_energy_total_discharge",
             integration_method="trapezoidal",
             round_digits=3,

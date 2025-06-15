@@ -24,6 +24,9 @@ class WebhookId(TextEntity):
 
     """
 
+    _attr_translation_key = "WebhookId"
+    _attr_has_entity_name = True
+
     def __init__(self, entry: ConfigEntry) -> None:
         """Initialisiert die WebhookId-TextEntity.
 
@@ -34,7 +37,7 @@ class WebhookId(TextEntity):
         self._attr_native_value = entry.data[CONF_WEBHOOK_ID]
         #  self._unsub_dispatcher = None
         self._entry = entry
-        self._attr_name = "Webhook ID"
+        # self._attr_name = "Webhook ID"
         self._attr_unique_id = f"{entry.entry_id}_webhook_id"
         self._attr_icon = "mdi:webhook"
         self._attr_entity_category = EntityCategory.DIAGNOSTIC

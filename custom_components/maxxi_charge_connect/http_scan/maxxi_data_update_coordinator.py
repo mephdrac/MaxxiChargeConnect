@@ -1,10 +1,19 @@
-# coordinator.py
+"""Coordinator-Modul für die MaxxiChargeConnect-Integration in Home Assistant.
+
+Dieses Modul definiert die Klasse MaxxiDataUpdateCoordinator, die regelmäßig
+eine Web-Oberfläche per HTTP abruft, HTML parst und definierte Werte extrahiert,
+um sie als Sensordaten in Home Assistant bereitzustellen.
+"""
+
 import logging
 from datetime import timedelta
 
 import aiohttp
+import asyncio
+
 import async_timeout
 from homeassistant.const import CONF_IP_ADDRESS
+from homeassistant.core import HomeAssistant
 from bs4 import BeautifulSoup
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -15,7 +24,19 @@ SCAN_INTERVAL = timedelta(seconds=30)  # z.B. alle 30 Sekunden aktualisieren
 
 
 class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
-    def __init__(self, hass, entry, sensorList):
+    """Koordinator zur zyklischen Abfrage und Extraktion von HTML-Werten für MaxxiChargeConnect."""
+
+    def __init__(self, hass: HomeAssistant, entry, sensorList) -> None:
+        """Initialisiert den UpdateCoordinator.
+
+        Args:
+            hass (HomeAssistant): Die Home Assistant Instanz.
+            entry (ConfigEntry): Die Konfiguration des Integrations-Eintrags.
+            sensorList (List[Tuple[str, str]]): Liste von Sensor-Schlüsseln und zugehörigen HTML-Labels,
+                                                z. B. [("PowerMeterIp", "Messgerät IP:")]
+
+        """
+
         super().__init__(
             hass,
             _LOGGER,
@@ -25,14 +46,30 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
 
         self._sensorList = sensorList
         self.entry = entry
-        self._resource = entry.data[CONF_IP_ADDRESS]
-        if not self._resource.startswith(("http://", "https://")):
-            self._resource = f"http://{self._resource}"
+        self._resource = entry.data[CONF_IP_ADDRESS].strip()
 
-        _LOGGER.warning("HOST:" + self._resource)
+        if self._resource:
+            if not self._resource.startswith(("http://", "https://")):
+                self._resource = f"http://{self._resource}"
+        else:
+            _LOGGER.warning("Keine IP Adresse vorhanden")
+
+        _LOGGER.debug("HOST:" + self._resource)
 
     def exract_data(self, soup: BeautifulSoup, label: str):
-        # Daten aus HTML extrahieren
+        """Extrahiert einen Wert aus dem HTML, basierend auf einem <b>-Label.
+
+        Args:
+            soup (BeautifulSoup): Das geparste HTML-Dokument.
+            label (str): Der anzuzeigende HTML-Labeltext, z. B. "Messgerät IP:".
+
+        Returns:
+            str: Der extrahierte Wert als String.
+
+        Raises:
+            UpdateFailed: Wenn das Label im HTML nicht gefunden wurde.
+
+        """
         label_tag = soup.find("b", string=label)
 
         if label_tag and label_tag.parent:
@@ -44,51 +81,54 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
         return result_label
 
     async def _async_update_data(self):
-        """API abfragen und Daten zurückgeben"""
-        _LOGGER.warning("Abfrage - HOST: " + self._resource)
-        try:
-            async with aiohttp.ClientSession() as session:
-                async with async_timeout.timeout(10):
-                    async with session.get(self._resource) as response:
-                        if response.status != 200:
-                            raise UpdateFailed(
-                                f"Fehler beim Abruf: HTTP {response.status}"
-                            )
-                        html = await response.text()
-                        soup = BeautifulSoup(html, "html.parser")
+        """Führt eine HTTP-Abfrage durch, parst HTML und extrahiert Sensordaten.
 
-                        data = {}
+        Returns:
+            dict: Schlüssel-Wert-Paare der extrahierten Sensordaten, z.B.
+                  {"PowerMeterIp": "192.168.0.1", "MaximumPower": "8000 W", ...}
 
-                        for sensor in self._sensorList:
-                            key = sensor[0]  # z. B. "PowerMeterIp"
-                            label = sensor[1]  # z. B. "Messgerät IP:"
-                            value = self.exract_data(soup, label)
-                            data[key] = value
+        Raises:
+            UpdateFailed: Bei Netzwerkfehlern, Timeout oder fehlenden HTML-Elementen.
 
-                        return data
+        """
+        if self._resource:
+            _LOGGER.debug("Abfrage - HOST: " + self._resource)
+            try:
+                async with aiohttp.ClientSession() as session:
+                    async with async_timeout.timeout(10):
+                        async with session.get(self._resource) as response:
+                            if response.status != 200:
+                                raise UpdateFailed(
+                                    f"Fehler beim Abruf: HTTP {response.status}"
+                                )
 
-                        # for element in self._sensorList:
-                        #     power_meter_ip = self.exract_data(soup, element[1])
+                            html = await response.text()
+                            soup = BeautifulSoup(html, "html.parser")
 
-                        # power_meter_ip = self.exract_data(soup, "Messgerät IP:")
-                        # power_meter_typ = self.exract_data(soup, "Messgerät Typ:")
-                        # maximumPower = self.exract_data(soup, "Maximale Leistung:")
-                        # offlineOutputPower = self.exract_data(
-                        #     soup, "Offline-Ausgangsleistung:"
-                        # )
-                        # numberOfBatteries = self.exract_data(
-                        #     soup, "Batterien im System:"
-                        # )
-                        # outputOffset = self.exract_data(soup, "Ausgabe korrigieren:")
+                            data = {}
 
-                        # return {
-                        #     "PowerMeterIp": power_meter_ip,
-                        #     "PowerMeterType": power_meter_typ,
-                        #     "MaximumPower": maximumPower,
-                        #     "OfflineOutputPower": offlineOutputPower,
-                        #     "NumberOfBatteries": numberOfBatteries,
-                        #     "OutputOffset": outputOffset,
-                        # }
+                            for sensor in self._sensorList:
+                                key = sensor[0]  # z. B. "PowerMeterIp"
+                                label = sensor[1]  # z. B. "Messgerät IP:"
+                                value = self.exract_data(soup, label)
+                                data[key] = value
 
-        except Exception as err:
-            raise UpdateFailed(f"Fehler beim Abrufen oder Parsen: {err}")
+                            return data
+
+            except aiohttp.ClientError as e:
+                raise UpdateFailed(f"Netzwerkfehler beim Abruf: {e}") from e
+
+            except TimeoutError as e:
+                raise UpdateFailed(
+                    "Zeitüberschreitung beim Abrufen der HTML-Seite"
+                ) from e
+
+            except UpdateFailed:
+                # Weiterreichen, da z. B. Label nicht gefunden wurde
+                raise
+
+            except Exception as e:
+                _LOGGER.exception("Unerwarteter Fehler bei der Datenabfrage")
+                raise UpdateFailed(f"Unerwarteter Fehler: {e}") from e
+        else:
+            return {}

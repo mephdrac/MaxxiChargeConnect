@@ -44,6 +44,20 @@ LOCALIZED_NAMES = {
     },
 }
 
+import re
+
+
+def clean_title(title: str) -> str:
+    # alles klein machen
+    title = title.lower()
+    # alle Nicht-Buchstaben und Nicht-Zahlen durch Unterstriche ersetzen
+    title = re.sub(r"[^a-z0-9]+", "_", title)
+    # mehrere Unterstriche durch einen ersetzen
+    title = re.sub(r"_+", "_", title)
+    # führende und abschließende Unterstriche entfernen
+    title = title.strip("_")
+    return title
+
 
 def get_localized_name(hass: HomeAssistant, key: str) -> str:
     """Gibt den lokalisierten Namen für einen Sensor anhand der HA-Sprache zurück.

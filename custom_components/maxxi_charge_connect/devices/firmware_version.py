@@ -15,6 +15,9 @@ from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
 class FirmwareVersion(TextEntity):
     """TextEntity zur Anzeige der Firmware-Version eines Geräts."""
 
+    _attr_translation_key = "FirmwareVersion"
+    _attr_has_entity_name = True
+
     def __init__(self, entry: ConfigEntry) -> None:
         """Initialisiert die Entity für die Firmware-Version.
 
@@ -23,7 +26,7 @@ class FirmwareVersion(TextEntity):
 
         """
         self._entry = entry
-        self._attr_name = "Firmware Version"
+        # self._attr_name = "Firmware Version"
         self._attr_unique_id = f"{entry.entry_id}_firmware_version"
         self._attr_icon = "mdi:information-outline"
         self._attr_native_value = None

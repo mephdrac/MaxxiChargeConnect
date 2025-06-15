@@ -13,6 +13,7 @@ Module-Level Variable:
 """
 
 import asyncio
+import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -56,6 +57,8 @@ from .http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
 from .http_scan.http_scan_text import HttpScanText
 
 SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(  # pylint: disable=too-many-locals
@@ -115,61 +118,85 @@ async def async_setup_entry(  # pylint: disable=too-many-locals
     sensorList.append(("DC/DC-Algorithmus", "DC/DC-Algorithmus:"))
     sensorList.append(("Cloudservice", "Cloudservice:"))
     sensorList.append(("LocalServer", "Lokalen Server nutzen:"))
+    sensorList.append(("APIRoute", "API-Route:"))
+
+    _LOGGER.warning(f"Entry: {entry.entry_id}")
 
     coordinator = MaxxiDataUpdateCoordinator(hass, entry, sensorList)
+    # await coordinator.async_config_entry_first_refresh()
 
-    localServer = HttpScanText(
-        coordinator, "LocalServer", "Use Local Server", "mdi:server-off"
-    )
+    http_scan_sensor_list = []
 
-    cloudservice = HttpScanText(
-        coordinator, "Cloudservice", "Cloudservice", "mdi:cloud-outline"
-    )
-
-    dcDcAlgorithmus = HttpScanText(
-        coordinator, "DC/DC-Algorithmus", "DC/DC algorithm", "mdi:source-branch"
+    http_scan_sensor_list.append(
+        HttpScanText(coordinator, "APIRoute", "API - Route", "mdi:link")
     )
 
-    powerMeterIp = HttpScanText(
-        coordinator, "PowerMeterIp", "Power Meter IP", "mdi:ip"
-    )
-    powerMeterType = HttpScanText(
-        coordinator, "PowerMeterType(", "Power Meter Type", "mdi:chip"
-    )
-    maximumPower = HttpScanText(
-        coordinator, "MaximumPower", "Maximum Power", "mdi:flash"
-    )
-    offlineOutputPower = HttpScanText(
-        coordinator, "OfflineOutputPower", "Offline Output Power", "mdi:flash"
-    )
-    numberOfBatteries = HttpScanText(
-        coordinator, "NumberOfBatteries", "Number of Batteries", "mdi:layers"
-    )
-    outputOffset = HttpScanText(
-        coordinator, "OutputOffset", "Output Offset", "mdi:flash"
-    )
-    ccuSpeed = HttpScanText(coordinator, "CcuSpeed", "CCU - Speed", "mdi:flash")
-    microinverter = HttpScanText(
-        coordinator, "Microinverter", "Microinverter", "mdi:current-ac"
-    )
-    responseTolerance = HttpScanText(
-        coordinator, "ResponseTolerance", "Response tolerance", "mdi:current-ac"
+    http_scan_sensor_list.append(
+        HttpScanText(coordinator, "LocalServer", "Use Local Server", "mdi:server-off")
     )
 
-    minimumBatteryDischarge = HttpScanText(
-        coordinator,
-        "MinimumBatteryDischarge",
-        "Minimum Battery Discharge ",
-        "mdi:battery-low",
+    http_scan_sensor_list.append(
+        HttpScanText(coordinator, "Cloudservice", "Cloudservice", "mdi:cloud-outline")
     )
 
-    maximumBatteryDischarge = HttpScanText(
-        coordinator,
-        "MaximumBatteryDischarge",
-        "Maximum Battery Charge ",
-        "mdi:battery-high",
+    http_scan_sensor_list.append(
+        HttpScanText(
+            coordinator, "DC/DC-Algorithmus", "DC/DC algorithm", "mdi:source-branch"
+        )
     )
 
+    http_scan_sensor_list.append(
+        HttpScanText(coordinator, "PowerMeterIp", "Power Meter IP", "mdi:ip")
+    )
+
+    http_scan_sensor_list.append(
+        HttpScanText(coordinator, "PowerMeterType", "Power Meter Type", "mdi:chip")
+    )
+    http_scan_sensor_list.append(
+        HttpScanText(coordinator, "MaximumPower", "Maximum Power", "mdi:flash")
+    )
+    http_scan_sensor_list.append(
+        HttpScanText(
+            coordinator, "OfflineOutputPower", "Offline Output Power", "mdi:flash"
+        )
+    )
+    http_scan_sensor_list.append(
+        HttpScanText(
+            coordinator, "NumberOfBatteries", "Number of Batteries", "mdi:layers"
+        )
+    )
+    http_scan_sensor_list.append(
+        HttpScanText(coordinator, "OutputOffset", "Output Offset", "mdi:flash")
+    )
+    http_scan_sensor_list.append(
+        HttpScanText(coordinator, "CcuSpeed", "CCU - Speed", "mdi:flash")
+    )
+    http_scan_sensor_list.append(
+        HttpScanText(coordinator, "Microinverter", "Microinverter", "mdi:current-ac")
+    )
+    http_scan_sensor_list.append(
+        HttpScanText(
+            coordinator, "ResponseTolerance", "Response tolerance", "mdi:current-ac"
+        )
+    )
+
+    http_scan_sensor_list.append(
+        HttpScanText(
+            coordinator,
+            "MinimumBatteryDischarge",
+            "Minimum Battery Discharge ",
+            "mdi:battery-low",
+        )
+    )
+
+    http_scan_sensor_list.append(
+        HttpScanText(
+            coordinator,
+            "MaximumBatteryCharge",
+            "Maximum Battery Charge ",
+            "mdi:battery-high",
+        )
+    )
 
     async_add_entities(
         [
@@ -189,6 +216,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals
             grid_export,
             grid_import,
             # pv_self_consumption,
+            *http_scan_sensor_list,
         ]
     )
     await asyncio.sleep(0)

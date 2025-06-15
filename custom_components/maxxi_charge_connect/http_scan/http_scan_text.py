@@ -40,7 +40,6 @@ class HttpScanText(TextEntity):
         self._entry = coordinator.entry
         self._attr_unique_id = f"{coordinator.entry.entry_id}_{keyname}"
 
-        _LOGGER.warning("Entry-Http: %s", coordinator.entry.entry_id)
         self._attr_icon = icon
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._attr_should_poll = False

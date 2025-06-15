@@ -52,6 +52,9 @@ from .devices.pv_total_energy import PvTotalEnergy
 from .devices.rssi import Rssi
 from .devices.webhook_id import WebhookId
 
+from .http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
+from .http_scan.http_scan_text import HttpScanText
+
 SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
 
 
@@ -77,7 +80,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals
     """
 
     manager = BatterySensorManager(hass, entry, async_add_entities)
-    SENSOR_MANAGER[entry_id] = manager
+    SENSOR_MANAGER[entry.entry_id] = manager
     await manager.setup()
 
     sensor = DeviceId(entry)
@@ -96,6 +99,77 @@ async def async_setup_entry(  # pylint: disable=too-many-locals
     grid_export = GridExport(entry)
     grid_import = GridImport(entry)
     # pv_self_consumption = PvSelfConsumption(entry)
+
+    sensorList = []
+    sensorList.append(("PowerMeterIp", "Messgerät IP:"))
+    sensorList.append(("PowerMeterType", "Messgerät Typ:"))
+    sensorList.append(("MaximumPower", "Maximale Leistung:"))
+    sensorList.append(("OfflineOutputPower", "Offline-Ausgangsleistung:"))
+    sensorList.append(("NumberOfBatteries", "Batterien im System:"))
+    sensorList.append(("OutputOffset", "Ausgabe korrigieren:"))
+    sensorList.append(("CcuSpeed", "CCU-Geschwindigkeit:"))
+    sensorList.append(("Microinverter", "Mikro-Wechselrichter-Typ:"))
+    sensorList.append(("ResponseTolerance", "Reaktionstoleranz:"))
+    sensorList.append(("MinimumBatteryDischarge", "Minimale Entladung der Batterie:"))
+    sensorList.append(("MaximumBatteryDischarge", "Maximale Akkuladung:"))
+    sensorList.append(("DC/DC-Algorithmus", "DC/DC-Algorithmus:"))
+    sensorList.append(("Cloudservice", "Cloudservice:"))
+    sensorList.append(("LocalServer", "Lokalen Server nutzen:"))
+
+    coordinator = MaxxiDataUpdateCoordinator(hass, entry, sensorList)
+
+    localServer = HttpScanText(
+        coordinator, "LocalServer", "Use Local Server", "mdi:server-off"
+    )
+
+    cloudservice = HttpScanText(
+        coordinator, "Cloudservice", "Cloudservice", "mdi:cloud-outline"
+    )
+
+    dcDcAlgorithmus = HttpScanText(
+        coordinator, "DC/DC-Algorithmus", "DC/DC algorithm", "mdi:source-branch"
+    )
+
+    powerMeterIp = HttpScanText(
+        coordinator, "PowerMeterIp", "Power Meter IP", "mdi:ip"
+    )
+    powerMeterType = HttpScanText(
+        coordinator, "PowerMeterType(", "Power Meter Type", "mdi:chip"
+    )
+    maximumPower = HttpScanText(
+        coordinator, "MaximumPower", "Maximum Power", "mdi:flash"
+    )
+    offlineOutputPower = HttpScanText(
+        coordinator, "OfflineOutputPower", "Offline Output Power", "mdi:flash"
+    )
+    numberOfBatteries = HttpScanText(
+        coordinator, "NumberOfBatteries", "Number of Batteries", "mdi:layers"
+    )
+    outputOffset = HttpScanText(
+        coordinator, "OutputOffset", "Output Offset", "mdi:flash"
+    )
+    ccuSpeed = HttpScanText(coordinator, "CcuSpeed", "CCU - Speed", "mdi:flash")
+    microinverter = HttpScanText(
+        coordinator, "Microinverter", "Microinverter", "mdi:current-ac"
+    )
+    responseTolerance = HttpScanText(
+        coordinator, "ResponseTolerance", "Response tolerance", "mdi:current-ac"
+    )
+
+    minimumBatteryDischarge = HttpScanText(
+        coordinator,
+        "MinimumBatteryDischarge",
+        "Minimum Battery Discharge ",
+        "mdi:battery-low",
+    )
+
+    maximumBatteryDischarge = HttpScanText(
+        coordinator,
+        "MaximumBatteryDischarge",
+        "Maximum Battery Charge ",
+        "mdi:battery-high",
+    )
+
 
     async_add_entities(
         [

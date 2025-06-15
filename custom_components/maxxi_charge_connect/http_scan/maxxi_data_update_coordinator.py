@@ -4,6 +4,7 @@ from datetime import timedelta
 
 import aiohttp
 import async_timeout
+from homeassistant.const import CONF_IP_ADDRESS
 from bs4 import BeautifulSoup
 
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -24,7 +25,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
 
         self._sensorList = sensorList
         self.entry = entry
-        self._resource = entry.data["host"]
+        self._resource = entry.data[CONF_IP_ADDRESS]
         if not self._resource.startswith(("http://", "https://")):
             self._resource = f"http://{self._resource}"
 

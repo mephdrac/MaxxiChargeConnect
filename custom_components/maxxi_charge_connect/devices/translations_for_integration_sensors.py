@@ -6,7 +6,7 @@ Anzeigenamen zu übersetzen – basierend auf der in Home Assistant eingestellte
 Funktionen:
     get_localized_name(hass, key): Gibt den lokalisierten Anzeigenamen für einen Sensor zurück.
 """
-
+import re
 from homeassistant.core import HomeAssistant
 
 LOCALIZED_NAMES = {
@@ -44,10 +44,20 @@ LOCALIZED_NAMES = {
     },
 }
 
-import re
-
-
 def clean_title(title: str) -> str:
+    """Bereinigt einen Titel-String für die Verwendung als Entitäts-ID.
+
+    Der Titel wird in Kleinbuchstaben umgewandelt, Sonderzeichen durch
+    Unterstriche ersetzt, aufeinanderfolgende Unterstriche reduziert und
+    führende bzw. abschließende Unterstriche entfernt.
+
+    Args:
+        title (str): Der ursprüngliche Titel, z. B. ein Geräte- oder Benutzername.
+
+    Returns:
+        str: Ein bereinigter, slug-artiger String, geeignet z. B. für `entity_id`s.
+    """
+
     # alles klein machen
     title = title.lower()
     # alle Nicht-Buchstaben und Nicht-Zahlen durch Unterstriche ersetzen

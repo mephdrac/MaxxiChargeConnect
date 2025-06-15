@@ -60,8 +60,7 @@ SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
 
 _LOGGER = logging.getLogger(__name__)
 
-
-async def async_setup_entry(  # pylint: disable=too-many-locals
+async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statements
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ):
     """Setzt die Sensoren für einen ConfigEntry asynchron auf.
@@ -103,26 +102,24 @@ async def async_setup_entry(  # pylint: disable=too-many-locals
     grid_import = GridImport(entry)
     # pv_self_consumption = PvSelfConsumption(entry)
 
-    sensorList = []
-    sensorList.append(("PowerMeterIp", "Messgerät IP:"))
-    sensorList.append(("PowerMeterType", "Messgerät Typ:"))
-    sensorList.append(("MaximumPower", "Maximale Leistung:"))
-    sensorList.append(("OfflineOutputPower", "Offline-Ausgangsleistung:"))
-    sensorList.append(("NumberOfBatteries", "Batterien im System:"))
-    sensorList.append(("OutputOffset", "Ausgabe korrigieren:"))
-    sensorList.append(("CcuSpeed", "CCU-Geschwindigkeit:"))
-    sensorList.append(("Microinverter", "Mikro-Wechselrichter-Typ:"))
-    sensorList.append(("ResponseTolerance", "Reaktionstoleranz:"))
-    sensorList.append(("MinimumBatteryDischarge", "Minimale Entladung der Batterie:"))
-    sensorList.append(("MaximumBatteryDischarge", "Maximale Akkuladung:"))
-    sensorList.append(("DC/DC-Algorithmus", "DC/DC-Algorithmus:"))
-    sensorList.append(("Cloudservice", "Cloudservice:"))
-    sensorList.append(("LocalServer", "Lokalen Server nutzen:"))
-    sensorList.append(("APIRoute", "API-Route:"))
+    sensor_list = []
+    sensor_list.append(("PowerMeterIp", "Messgerät IP:"))
+    sensor_list.append(("PowerMeterType", "Messgerät Typ:"))
+    sensor_list.append(("MaximumPower", "Maximale Leistung:"))
+    sensor_list.append(("OfflineOutputPower", "Offline-Ausgangsleistung:"))
+    sensor_list.append(("NumberOfBatteries", "Batterien im System:"))
+    sensor_list.append(("OutputOffset", "Ausgabe korrigieren:"))
+    sensor_list.append(("CcuSpeed", "CCU-Geschwindigkeit:"))
+    sensor_list.append(("Microinverter", "Mikro-Wechselrichter-Typ:"))
+    sensor_list.append(("ResponseTolerance", "Reaktionstoleranz:"))
+    sensor_list.append(("MinimumBatteryDischarge", "Minimale Entladung der Batterie:"))
+    sensor_list.append(("MaximumBatteryDischarge", "Maximale Akkuladung:"))
+    sensor_list.append(("DC/DC-Algorithmus", "DC/DC-Algorithmus:"))
+    sensor_list.append(("Cloudservice", "Cloudservice:"))
+    sensor_list.append(("LocalServer", "Lokalen Server nutzen:"))
+    sensor_list.append(("APIRoute", "API-Route:"))
 
-    _LOGGER.warning(f"Entry: {entry.entry_id}")
-
-    coordinator = MaxxiDataUpdateCoordinator(hass, entry, sensorList)
+    coordinator = MaxxiDataUpdateCoordinator(hass, entry, sensor_list)
     # await coordinator.async_config_entry_first_refresh()
 
     http_scan_sensor_list = []

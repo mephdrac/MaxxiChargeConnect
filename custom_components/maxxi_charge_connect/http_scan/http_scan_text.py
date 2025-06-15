@@ -21,14 +21,15 @@ class HttpScanText(TextEntity):
 
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator, keyname, name, icon):
+    def __init__(self, coordinator, keyname, name, icon):  # pylint: disable=unused-argument
         """Initialisiert eine neue HttpScanText-Entität.
 
         Args:
             coordinator: Der DataUpdateCoordinator, der die HTML-Daten liefert.
-            keyname (str): Der Schlüssel für die extrahierten Daten, z. B. "PowerMeterIp".
-            name (str): Anzeigename der Entität (nicht verwendet, falls `_attr_has_entity_name = True`).
-            icon (str): Icon der Entität (Material Design Icon-Name, z. B. "mdi:network").
+            keyname (str): Der Schlüssel für die extrahierten Daten, z.B. "PowerMeterIp".
+            name (str): Anzeigename der Entität\
+                (nicht verwendet, falls `_attr_has_entity_name = True`).
+            icon (str): Icon der Entität (Material Design Icon-Name, z.B. "mdi:network").
 
         """
 
@@ -39,7 +40,7 @@ class HttpScanText(TextEntity):
         self._entry = coordinator.entry
         self._attr_unique_id = f"{coordinator.entry.entry_id}_{keyname}"
 
-        _LOGGER.warning(f"Entry-Http: {coordinator.entry.entry_id}")
+        _LOGGER.warning("Entry-Http: %s", coordinator.entry.entry_id)
         self._attr_icon = icon
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._attr_should_poll = False
@@ -62,6 +63,10 @@ class HttpScanText(TextEntity):
         self.async_on_remove(
             self.coordinator.async_add_listener(self.async_write_ha_state)
         )
+
+    def set_value(self, value):
+        """SetValue."""
+        self._attr_native_value = value
 
     @property
     def device_info(self) -> DeviceInfo:

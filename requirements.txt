@@ -2,3 +2,4 @@ aiohttp>=3.12.9
 pyyaml>=5.4
 voluptuous>=0.13.1
 beautifulsoup4==4.12.2
+types-beautifulsoup4

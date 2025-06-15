@@ -8,14 +8,12 @@ um sie als Sensordaten in Home Assistant bereitzustellen.
 import logging
 from datetime import timedelta
 
+# import asyncio
 import aiohttp
-import asyncio
-
 import async_timeout
+from bs4 import BeautifulSoup
 from homeassistant.const import CONF_IP_ADDRESS
 from homeassistant.core import HomeAssistant
-from bs4 import BeautifulSoup
-
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 _LOGGER = logging.getLogger(__name__)
@@ -26,14 +24,15 @@ SCAN_INTERVAL = timedelta(seconds=30)  # z.B. alle 30 Sekunden aktualisieren
 class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
     """Koordinator zur zyklischen Abfrage und Extraktion von HTML-Werten für MaxxiChargeConnect."""
 
-    def __init__(self, hass: HomeAssistant, entry, sensorList) -> None:
+    def __init__(self, hass: HomeAssistant, entry, sensor_list) -> None:
         """Initialisiert den UpdateCoordinator.
 
         Args:
             hass (HomeAssistant): Die Home Assistant Instanz.
             entry (ConfigEntry): Die Konfiguration des Integrations-Eintrags.
-            sensorList (List[Tuple[str, str]]): Liste von Sensor-Schlüsseln und zugehörigen HTML-Labels,
-                                                z. B. [("PowerMeterIp", "Messgerät IP:")]
+            sensorList (List[Tuple[str, str]]): Liste von Sensor-Schlüsseln 
+                    und zugehörigen HTML-Labels,
+                    z.B. [("PowerMeterIp", "Messgerät IP:")]
 
         """
 
@@ -44,7 +43,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
             update_interval=SCAN_INTERVAL,
         )
 
-        self._sensorList = sensorList
+        self._sensor_list = sensor_list
         self.entry = entry
         self._resource = entry.data[CONF_IP_ADDRESS].strip()
 
@@ -54,7 +53,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
         else:
             _LOGGER.warning("Keine IP Adresse vorhanden")
 
-        _LOGGER.debug("HOST:" + self._resource)
+        _LOGGER.debug("HOST:%s", self._resource)
 
     def exract_data(self, soup: BeautifulSoup, label: str):
         """Extrahiert einen Wert aus dem HTML, basierend auf einem <b>-Label.
@@ -92,7 +91,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
 
         """
         if self._resource:
-            _LOGGER.debug("Abfrage - HOST: " + self._resource)
+            _LOGGER.debug("Abfrage - HOST: %s", self._resource)
             try:
                 async with aiohttp.ClientSession() as session:
                     async with async_timeout.timeout(10):
@@ -107,7 +106,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
 
                             data = {}
 
-                            for sensor in self._sensorList:
+                            for sensor in self._sensor_list:
                                 key = sensor[0]  # z. B. "PowerMeterIp"
                                 label = sensor[1]  # z. B. "Messgerät IP:"
                                 value = self.exract_data(soup, label)

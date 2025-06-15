@@ -4,7 +4,7 @@
       "user": {
         "title": "Connect MaxxiCharge",
         "description": "Configure your MaxxiCharge connection.",
-        "data": {          
+        "data": {
           "only_accept_one_ip": "Limit webhook access",
           "webhook_id": "Webhook ID",
           "name": "Device name",
@@ -14,9 +14,9 @@
       "reconfigure": {
       "title": "Reconfigure MaxxiCharge",
       "description": "Change options.",
-      "data": {        
+      "data": {
         "only_accept_one_ip": "Limit webhook access",
-        "webhook_id": "Webhook ID",        
+        "webhook_id": "Webhook ID",
         "ip_address": "IP-Adress"
         }
       }
@@ -71,6 +71,57 @@
       },
       "BatterySoESensor":{
         "name": "Battery ({index}) SoE"
+      },
+      "APIRoute":{
+        "name": "API-Route"
+      },
+      "LocalServer":{
+        "name": "Use Local Server"
+      },
+      "Cloudservice":{
+        "name": "Cloudservice"
+      },
+      "DC/DC-Algorithmus":{
+        "name": "DC/DC algorithm"
+      },
+      "PowerMeterIp":{
+        "name": "Power meter IP"
+      },
+      "PowerMeterType":{
+        "name": "Power meter type"
+      },
+      "MaximumPower":{
+        "name": "Maximum power"
+      },
+      "OfflineOutputPower":{
+        "name": "Offline output power"
+      },
+      "NumberOfBatteries":{
+        "name": "Number of batteries"
+      },
+      "OutputOffset":{
+        "name": "Output offset"
+      },
+      "CcuSpeed":{
+        "name": "CCU Speed"
+      },
+      "Microinverter":{
+        "name": "Microinverter"
+      },
+      "ResponseTolerance":{
+        "name": "Response tolerance"
+      },
+       "MinimumBatteryDischarge":{
+        "name": "Minimum Battery Discharge"
+      },
+       "MaximumBatteryCharge":{
+        "name": "Maximum Battery Charge"
+      },
+      "FirmwareVersion":{
+        "name": "Firmware version"
+      },
+      "WebhookId":{
+        "name": "Webhook ID"
       }
     }
   }

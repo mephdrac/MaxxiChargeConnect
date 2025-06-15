@@ -17,7 +17,7 @@ from homeassistant.helpers.event import async_track_time_change
 from homeassistant.util import dt as dt_util
 
 from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
-from .translations_for_integration_sensors import get_localized_name
+from .translations_for_integration_sensors import clean_title, get_localized_name
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -47,7 +47,9 @@ class BatteryTodayEnergyDischarge(IntegrationSensor):
         super().__init__(
             source_entity=source_entity_id,
             # name="Battery Discharge Today",
-            name=get_localized_name(hass, self.__class__.__name__),
+            name=clean_title(entry.title)
+            + "_"
+            + get_localized_name(hass, self.__class__.__name__),
             unique_id=f"{entry.entry_id}_battery_energy_discharge_today",
             integration_method="trapezoidal",
             round_digits=3,

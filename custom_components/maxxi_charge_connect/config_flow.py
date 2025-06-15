@@ -74,7 +74,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             self._name = user_input[CONF_NAME]
             self._webhook_id = user_input[CONF_WEBHOOK_ID]
-            self._host_ip = user_input.get(CONF_IP_ADDRESS, "")
+            self._host_ip = user_input.get(CONF_IP_ADDRESS, None)
             self._only_ip = user_input.get(ONLY_ONE_IP, False)
 
             return self.async_create_entry(
@@ -93,7 +93,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 {
                     vol.Required(CONF_NAME): str,
                     vol.Required(CONF_WEBHOOK_ID): str,
-                    vol.Optional(CONF_IP_ADDRESS): str,
+                    vol.Optional(CONF_IP_ADDRESS, default=""): str,
                     vol.Optional(ONLY_ONE_IP, default=False): BooleanSelector(),
                 }
             ),

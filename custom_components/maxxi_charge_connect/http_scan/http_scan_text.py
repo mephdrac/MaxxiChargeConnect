@@ -21,7 +21,7 @@ class HttpScanText(TextEntity):
 
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator, keyname, name, icon):  # pylint: disable=unused-argument
+    def __init__(self, coordinator, keyname, name, icon) -> None:  # pylint: disable=unused-argument
         """Initialisiert eine neue HttpScanText-Entität.
 
         Args:

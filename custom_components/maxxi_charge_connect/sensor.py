@@ -60,6 +60,7 @@ SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
 
 _LOGGER = logging.getLogger(__name__)
 
+
 async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statements
     hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ):
@@ -113,14 +114,13 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     sensor_list.append(("Microinverter", "Mikro-Wechselrichter-Typ:"))
     sensor_list.append(("ResponseTolerance", "Reaktionstoleranz:"))
     sensor_list.append(("MinimumBatteryDischarge", "Minimale Entladung der Batterie:"))
-    sensor_list.append(("MaximumBatteryDischarge", "Maximale Akkuladung:"))
+    sensor_list.append(("MaximumBatteryCharge", "Maximale Akkuladung:"))
     sensor_list.append(("DC/DC-Algorithmus", "DC/DC-Algorithmus:"))
     sensor_list.append(("Cloudservice", "Cloudservice:"))
     sensor_list.append(("LocalServer", "Lokalen Server nutzen:"))
     sensor_list.append(("APIRoute", "API-Route:"))
 
     coordinator = MaxxiDataUpdateCoordinator(hass, entry, sensor_list)
-    # await coordinator.async_config_entry_first_refresh()
 
     http_scan_sensor_list = []
 
@@ -217,6 +217,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
         ]
     )
     await asyncio.sleep(0)
+    await coordinator.async_config_entry_first_refresh()
 
     pv_today_energy = PvTodayEnergy(hass, entry, pv_power_sensor.entity_id)
     pv_total_energy = PvTotalEnergy(hass, entry, pv_power_sensor.entity_id)

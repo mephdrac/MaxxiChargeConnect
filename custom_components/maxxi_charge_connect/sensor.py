@@ -120,7 +120,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     sensor_list.append(("LocalServer", "Lokalen Server nutzen:"))
     sensor_list.append(("APIRoute", "API-Route:"))
 
-    coordinator = MaxxiDataUpdateCoordinator(hass, entry, sensor_list)    
+    coordinator = MaxxiDataUpdateCoordinator(hass, entry, sensor_list)
 
     http_scan_sensor_list = []
 
@@ -193,7 +193,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
             "Maximum Battery Charge ",
             "mdi:battery-high",
         )
-    )    
+    )
 
     async_add_entities(
         [

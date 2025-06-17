@@ -20,6 +20,8 @@ from homeassistant.helpers.entity_registry import async_get as async_get_entity_
 from .const import DOMAIN
 from .webhook import async_register_webhook, async_unregister_webhook
 
+from .http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -54,6 +56,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = {}
+
+    sensor_list = []
+    sensor_list.append(("PowerMeterIp", "Messgerät IP:"))
+    sensor_list.append(("PowerMeterType", "Messgerät Typ:"))
+    sensor_list.append(("MaximumPower", "Maximale Leistung:"))
+    sensor_list.append(("OfflineOutputPower", "Offline-Ausgangsleistung:"))
+    sensor_list.append(("NumberOfBatteries", "Batterien im System:"))
+    sensor_list.append(("OutputOffset", "Ausgabe korrigieren:"))
+    sensor_list.append(("CcuSpeed", "CCU-Geschwindigkeit:"))
+    sensor_list.append(("Microinverter", "Mikro-Wechselrichter-Typ:"))
+    sensor_list.append(("ResponseTolerance", "Reaktionstoleranz:"))
+    sensor_list.append(("MinimumBatteryDischarge", "Minimale Entladung der Batterie:"))
+    sensor_list.append(("MaximumBatteryCharge", "Maximale Akkuladung:"))
+    sensor_list.append(("DC/DC-Algorithmus", "DC/DC-Algorithmus:"))
+    sensor_list.append(("Cloudservice", "Cloudservice:"))
+    sensor_list.append(("LocalServer", "Lokalen Server nutzen:"))
+    sensor_list.append(("APIRoute", "API-Route:"))
+
+    coordinator = MaxxiDataUpdateCoordinator(hass, entry, sensor_list)
+    hass.data[DOMAIN]["coordinator"] = coordinator
+    await coordinator.async_config_entry_first_refresh()
 
     await async_register_webhook(hass, entry)
     await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "number"])

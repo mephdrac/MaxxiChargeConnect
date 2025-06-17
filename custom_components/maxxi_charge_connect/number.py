@@ -1,40 +1,17 @@
 """Number-Plattform für MaxxiChargeConnect."""
 
+import logging
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.const import UnitOfPower, PERCENTAGE
+from .http_post.number_config_entity import (
+    NumberConfigEntity,
+)  # Importiere deine Entity-Klasse
 
-#from .const import DOMAIN
-from .http_post.number_config_entity import NumberConfigEntity  # Importiere deine Entity-Klasse
+from .const import DOMAIN
 
-
-# Beispielhafte Liste konfigurierbarer Parameter
-NUMBER_ENTITY_DESCRIPTIONS = [
-    {
-        "translation_key": "max_soc",
-        "key": "maxSOC",
-        "min": 20,
-        "max": 100,
-        "step": 1,
-        "unit": "%",
-    },
-    {
-        "translation_key": "min_soc",
-        "key": "minSOC",
-        "min": 5,
-        "max": 50,
-        "step": 1,
-        "unit": "%",
-    },
-    {
-        "translation_key": "threshold",
-        "key": "threshold",
-        "min": 0,
-        "max": 1000,
-        "step": 10,
-        "unit": "W",
-    },
-]
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(
@@ -46,16 +23,87 @@ async def async_setup_entry(
 
     entities = []
 
-    for desc in NUMBER_ENTITY_DESCRIPTIONS:
-        entity = NumberConfigEntity(
-            entry=entry,
-            translation_key=desc["translation_key"],
-            key=desc["key"],
-            min_value=desc["min"],
-            max_value=desc["max"],
-            step=desc["step"],
-            unit=desc["unit"],
+    # self._attr_unique_id = f"{entry.entry_id}_MaximumBatteryCharge"
+    coordinator = hass.data[DOMAIN]["coordinator"]
+    await coordinator.async_config_entry_first_refresh()
+
+    entities.append(
+        NumberConfigEntity(
+            hass,
+            entry,
+            "maxOutputPower",
+            "maxOutputPower",
+            "MaximumPower",
+            0,
+            3000,
+            1,
+            UnitOfPower.WATT,
         )
-        entities.append(entity)
+    )
+    entities.append(
+        NumberConfigEntity(
+            hass,
+            entry,
+            "offlinePower",
+            "offlinePower",
+            "OfflineOutputPower",
+            0,
+            3000,
+            1,
+            UnitOfPower.WATT,
+        )
+    )
+    entities.append(
+        NumberConfigEntity(
+            hass,
+            entry,
+            "max_soc",
+            "maxSOC",
+            "MaximumBatteryCharge",
+            0,
+            100,
+            1,
+            PERCENTAGE,
+        )
+    )
+    entities.append(
+        NumberConfigEntity(
+            hass,
+            entry,
+            "min_soc",
+            "minSOC",
+            "MinimumBatteryDischarge",
+            0,
+            100,
+            1,
+            PERCENTAGE,
+        )
+    )
+    entities.append(
+        NumberConfigEntity(
+            hass,
+            entry,
+            "baseLoad",
+            "baseLoad",
+            "OutputOffset",
+            -1000,
+            1000,
+            1,
+            UnitOfPower.WATT,
+        )
+    )
+    entities.append(
+        NumberConfigEntity(
+            hass,
+            entry,
+            "threshold",
+            "threshold",
+            "ResponseTolerance",
+            -1000,
+            1000,
+            1,
+            UnitOfPower.WATT,
+        )
+    )
 
     async_add_entities(entities)

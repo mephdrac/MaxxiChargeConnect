@@ -122,6 +122,26 @@
       },
       "WebhookId":{
         "name": "Webhook ID"
+      }      
+    },
+    "number": {
+      "maxOutputPower": {
+        "name": "Maximale Leistung"
+      },
+      "offlinePower":{
+        "name": "Offline-Ausgangsleistung"
+      },
+      "max_soc":{
+        "name": "Maximale Akkuladung"
+      },
+      "min_soc":{
+        "name": "Minimale Entladung der Batterie"
+      },
+      "baseLoad":{
+        "name": "Ausgabe korrigieren"
+      },
+      "threshold":{
+        "name": "Reaktionstoleranz"
       }
     }
   }

@@ -55,6 +55,7 @@ from .devices.webhook_id import WebhookId
 
 from .http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
 from .http_scan.http_scan_text import HttpScanText
+from .const import DOMAIN
 
 SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
 
@@ -103,24 +104,13 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     grid_import = GridImport(entry)
     # pv_self_consumption = PvSelfConsumption(entry)
 
-    sensor_list = []
-    sensor_list.append(("PowerMeterIp", "Messgerät IP:"))
-    sensor_list.append(("PowerMeterType", "Messgerät Typ:"))
-    sensor_list.append(("MaximumPower", "Maximale Leistung:"))
-    sensor_list.append(("OfflineOutputPower", "Offline-Ausgangsleistung:"))
-    sensor_list.append(("NumberOfBatteries", "Batterien im System:"))
-    sensor_list.append(("OutputOffset", "Ausgabe korrigieren:"))
-    sensor_list.append(("CcuSpeed", "CCU-Geschwindigkeit:"))
-    sensor_list.append(("Microinverter", "Mikro-Wechselrichter-Typ:"))
-    sensor_list.append(("ResponseTolerance", "Reaktionstoleranz:"))
-    sensor_list.append(("MinimumBatteryDischarge", "Minimale Entladung der Batterie:"))
-    sensor_list.append(("MaximumBatteryCharge", "Maximale Akkuladung:"))
-    sensor_list.append(("DC/DC-Algorithmus", "DC/DC-Algorithmus:"))
-    sensor_list.append(("Cloudservice", "Cloudservice:"))
-    sensor_list.append(("LocalServer", "Lokalen Server nutzen:"))
-    sensor_list.append(("APIRoute", "API-Route:"))
+    
+    
+    #self._attr_unique_id = f"{entry.entry_id}_MaximumBatteryCharge"
 
-    coordinator = MaxxiDataUpdateCoordinator(hass, entry, sensor_list)
+#    coordinator = MaxxiDataUpdateCoordinator(hass, entry, sensor_list)
+    # coordinator = MaxxiDataUpdateCoordinator(hass, entry)
+    coordinator = hass.data[DOMAIN]["coordinator"]
 
     http_scan_sensor_list = []
 

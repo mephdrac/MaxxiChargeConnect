@@ -1,4 +1,4 @@
-"""Dieses Modul stellt verschiedene Hilfsfunktionen bereit, die in mehreren Klassen 
+"""Dieses Modul stellt verschiedene Hilfsfunktionen bereit, die in mehreren Klassen
 oder Modulen verwendet werden können.
 
 Die Funktionen dienen hauptsächlich zur Validierung und Plausibilitätsprüfung von Messwerten
@@ -14,6 +14,7 @@ Teilen der Anwendung eingebunden werden kann.
 """
 
 import logging
+import re
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -90,3 +91,13 @@ def is_power_total_ok(power_total: float, batterien: list) -> bool:
     else:
         _LOGGER.error("Power_total Wert ist nicht plausibel und wird verworfen")
     return ok
+
+
+def asFloat(value: str) -> float:
+    match = re.search(r"[\d.]+", value)
+
+    number = None
+    if match:
+        number = float(match.group())
+
+    return number

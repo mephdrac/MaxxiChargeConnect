@@ -79,7 +79,7 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
 
         payload = f"{self._rest_key}={int(value)}"
 
-        _LOGGER.warning("send data (%s, %s) to maxxicharge", self._value_key, payload)
+        _LOGGER.debug("send data (%s, %s) to maxxicharge", self._value_key, payload)
 
         if not self._ip:
             _LOGGER.error("IP-Adresse ist nicht gesetzt")
@@ -102,7 +102,7 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
                         )
                     text = await response.text()
                     # _LOGGER.warning("Antwort: %s", text)
-            _LOGGER.warning("POST fertig")
+            _LOGGER.debug("POST fertig")
             await self._coordinator.async_request_refresh()
 
         except ClientConnectorError as e:

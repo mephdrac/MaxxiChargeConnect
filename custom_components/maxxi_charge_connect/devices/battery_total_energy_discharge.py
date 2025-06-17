@@ -10,18 +10,12 @@ Classes:
     BatteryTotalEnergyDischarge: Sensorentität zur Anzeige der aufsummierten Batterieentladeenergie.
 """
 
-from datetime import timedelta
-
-from homeassistant.components.integration.sensor import IntegrationSensor, UnitOfTime
-from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
-from homeassistant.const import UnitOfEnergy
 from homeassistant.core import HomeAssistant
 
-from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
-from .translations_for_integration_sensors import clean_title, get_localized_name
+from .total_integral_sensor import TotalIntegralSensor
 
 
-class BatteryTotalEnergyDischarge(IntegrationSensor):
+class BatteryTotalEnergyDischarge(TotalIntegralSensor):
     """Sensorentität zur Anzeige der gesamten Batterieentladeenergie (kWh).
 
     Diese Entität summiert die Entladeleistung der Batterie über die Zeit auf, um
@@ -50,41 +44,4 @@ class BatteryTotalEnergyDischarge(IntegrationSensor):
             source_entity_id (str): Die Quell-Entity-ID, die die Entladeleistung in Watt liefert.
 
         """
-        super().__init__(
-            source_entity=source_entity_id,
-            # name="Battery Discharge Total",
-            name=clean_title(entry.title)
-            + "_"
-            + get_localized_name(hass, self.__class__.__name__),
-            unique_id=f"{entry.entry_id}_battery_energy_total_discharge",
-            integration_method="trapezoidal",
-            round_digits=3,
-            unit_prefix="k",
-            unit_time=UnitOfTime.HOURS,
-            max_sub_interval=timedelta(seconds=120),
-        )
-        self._entry = entry
-        self._attr_icon = "mdi:counter"
-        self._attr_device_class = SensorDeviceClass.ENERGY
-        self._attr_state_class = SensorStateClass.TOTAL_INCREASING
-        self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
-
-    @property
-    def device_info(self):
-        """Liefert die Geräteinformationen für diese Sensor-Entity.
-
-        Returns:
-            dict: Ein Dictionary mit Informationen zur Identifikation
-                  des Geräts in Home Assistant, einschließlich:
-                  - identifiers: Eindeutige Identifikatoren (Domain und Entry ID)
-                  - name: Anzeigename des Geräts
-                  - manufacturer: Herstellername
-                  - model: Modellbezeichnung
-
-        """
-
-        return {
-            "identifiers": {(DOMAIN, self._entry.entry_id)},
-            "name": self._entry.title,
-            **DEVICE_INFO,
-        }
+        super().__init__(hass, entry, source_entity_id)

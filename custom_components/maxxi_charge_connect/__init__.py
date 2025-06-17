@@ -13,7 +13,7 @@ Funktionen:
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST
+from homeassistant.helpers import entity_registry as er
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 
@@ -128,13 +128,30 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
 
         # Version anpassen und übernehmen
         # Setze neue Version explizit
+        version = 3
         hass.config_entries.async_update_entry(config_entry, version=3)
         # await hass.async_block_till_done()
         _LOGGER.info("Migration auf Version 3 abgeschlossen")
 
         return True
+    
+    if version == 3:
+        _LOGGER.info("Migration MaxxiChargeConnect v3 → v4 gestartet")
+        registry = er.async_get(hass)
 
-    if version >= 3:
+        old_unique_id = f"{config_entry.entry_id}_battery_energy_discharge_today"
+        new_unique_id = f"{config_entry.entry_id}_BatteryTodayEnergyDischarge"
+
+        # Suche die alte Entität im Entity Registry
+        entity_id = registry.async_get_entity_id("sensor", "maxxi_charge_connect", old_unique_id)
+
+        if entity_id:
+            registry.async_update_entity(entity_id, new_unique_id=new_unique_id)
+
+        version = 4
+        hass.config_entries.async_update_entry(config_entry, version=4)
+        return True
+    if version >= 4:
         return True
 
     return False

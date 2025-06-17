@@ -5,8 +5,6 @@ eines Leistungssensors kontinuierlich die importierte Energie integriert und
 täglich um Mitternacht zurücksetzt.
 """
 
-from homeassistant.core import HomeAssistant
-
 from .today_integral_sensor import TodayIntegralSensor
 
 
@@ -18,15 +16,3 @@ class GridImportEnergyToday(TodayIntegralSensor):
     über den Tag hinweg zu integrieren. Die Energie wird täglich um 0:00 Uhr
     lokale Zeit zurückgesetzt.
     """
-
-    def __init__(self, hass: HomeAssistant, entry, source_entity_id: str) -> None:
-        """Initialisiert den Sensor für importierte Tagesenergie.
-
-        Args:
-            hass (HomeAssistant): Die zentrale Home Assistant Instanz.
-            entry (ConfigEntry): Die Konfigurationsinstanz für diese Integration.
-            source_entity_id (str): Die Entity-ID des Quellsensors (z. B. Netzimportleistung).
-
-        """
-
-        super().__init__(hass, entry, source_entity_id)

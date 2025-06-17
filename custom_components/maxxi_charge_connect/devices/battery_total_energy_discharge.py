@@ -10,8 +10,6 @@ Classes:
     BatteryTotalEnergyDischarge: Sensorentität zur Anzeige der aufsummierten Batterieentladeenergie.
 """
 
-from homeassistant.core import HomeAssistant
-
 from .total_integral_sensor import TotalIntegralSensor
 
 
@@ -34,14 +32,3 @@ class BatteryTotalEnergyDischarge(TotalIntegralSensor):
     """
 
     _attr_entity_registry_enabled_default = True
-
-    def __init__(self, hass: HomeAssistant, entry, source_entity_id: str) -> None:
-        """Initialisiert die Sensorentität für die Batterieentladeenergie.
-
-        Args:
-            hass (HomeAssistant): Die Home Assistant-Instanz.
-            entry (ConfigEntry): Der Konfigurationseintrag mit den Einstellungen dieser Entität.
-            source_entity_id (str): Die Quell-Entity-ID, die die Entladeleistung in Watt liefert.
-
-        """
-        super().__init__(hass, entry, source_entity_id)

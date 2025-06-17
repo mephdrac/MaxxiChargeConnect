@@ -1,3 +1,14 @@
+"""Oberklassen-Sensor für die Tagesenergiezählung.
+
+Dieses Modul definiert eine benutzerdefinierte IntegrationSensor-Entität für Home Assistant,
+die die gesamte Energie über den Tag aufsummiert.
+
+Die Energiemenge wird mittels der Trapezregel integriert und in Kilowattstunden dargestellt.
+
+Classes:
+    TodayIntegralSensor: Oberklassen-Sensorentität zur Anzeige der aufsummierten Energie
+"""
+
 from datetime import UTC, datetime, timedelta
 import logging
 
@@ -21,10 +32,39 @@ from ..tools import clean_title
 _LOGGER = logging.getLogger(__name__)
 
 
+# pylint: disable=too-many-instance-attributes
 class TodayIntegralSensor(IntegrationSensor):
+    """Sensorentität zur Anzeige der gesamten Energie des Tages (kWh).
+
+        Diese Entität summiert Energie über den Tag auf, um
+        die Insgesamtenergie zu berechnen. Sie nutzt dafür die Trapezregel
+        zur Integration und stellt den Wert in Kilowattstunden dar.
+
+        Attributes:
+            _attr_entity_registry_enabled_default (bool): Gibt an, ob die Entität standardmäßig
+            aktiviert ist.
+            _entry (ConfigEntry): Die Konfigurationsdaten dieser Entität.
+            _attr_icon (str): Das Symbol, das in der Benutzeroberfläche angezeigt wird.
+            _attr_device_class (str): Gibt den Typ des Sensors an (hier: ENERGY).
+            _attr_state_class (str): Gibt die Art des Sensorzustands an (TOTAL).
+            _attr_native_unit_of_measurement (str): Die verwendete Energieeinheit (kWh).
+
+        """
+
     _attr_has_entity_name = True
 
+    # pylint: disable=super-init-not-called
     def __init__(self, hass: HomeAssistant, entry, source_entity_id: str) -> None:
+        """Initialisiert die Sensorentität für den gesamten Tag.
+
+        Args:
+            hass (HomeAssistant): Die Home Assistant-Instanz.
+            entry (ConfigEntry): Der Konfigurationseintrag mit den Einstellungen dieser Entität.
+            source_entity_id (str): Die Quell-Entity-ID, die den Wert in Watt liefert.
+
+        """
+
+        self.hass = hass
         self._attr_translation_key = self.__class__.__name__
         self._attr_unique_id = (
             f"{entry.entry_id}_{clean_title(self.__class__.__name__)}"
@@ -37,7 +77,6 @@ class TodayIntegralSensor(IntegrationSensor):
             "trapezoidal"
         )
 
-        # self._attr_name = name if name is not None else f"{source_entity} integral"
         self._unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
         self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
         self.unit_prefix = "k"
@@ -48,11 +87,12 @@ class TodayIntegralSensor(IntegrationSensor):
         self._unit_time = UNIT_TIME[self.unit_time]
         self._unit_time_str = self.unit_time
         self._last_valid_state = None
-        # self._attr_device_info = device_info
+
         self._max_sub_interval = timedelta(seconds=120)
         self._last_integration_time = datetime.now(tz=UTC)
         self._last_integration_trigger = _IntegrationTrigger.StateEvent
         self._attr_suggested_display_precision = self._round_digits or 2
+
         # Zuweisung
         self._max_sub_interval_exceeded_callback = (
             self._handle_max_sub_interval_exceeded
@@ -76,8 +116,6 @@ class TodayIntegralSensor(IntegrationSensor):
             self.entity_id,
             self._max_sub_interval,
         )
-        # self._state = None
-        # self.async_write_ha_state()
 
     async def async_added_to_hass(self):
         """Wird aufgerufen, wenn die Entität zu Home Assistant hinzugefügt wird.
@@ -124,6 +162,7 @@ class TodayIntegralSensor(IntegrationSensor):
 
     @property
     def icon(self):
+        """Liefert das Icon der Entity"""
         return self.my_icon
 
     @property

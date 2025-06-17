@@ -8,8 +8,6 @@ Classes:
     CcuEnergyToday: Sensorentität für die tägliche Energieintegration mit täglichem Reset.
 """
 
-from homeassistant.core import HomeAssistant
-
 from .today_integral_sensor import TodayIntegralSensor
 
 
@@ -25,14 +23,3 @@ class CcuEnergyToday(TodayIntegralSensor):
         _unsub_time_reset (Callable | None): Callback zum Abmelden des täglichen Resets.
 
     """
-
-    def __init__(self, hass: HomeAssistant, entry, source_entity_id: str) -> None:
-        """Initialisiert die Sensorentität für den täglichen Energieverbrauch.
-
-        Args:
-            hass (HomeAssistant): Die Home Assistant-Instanz.
-            entry (ConfigEntry): Der Konfigurationseintrag dieser Integration.
-            source_entity_id (str): Die Entity-ID der Quelle, die die Leistung liefert.
-
-        """
-        super().__init__(hass, entry, source_entity_id)

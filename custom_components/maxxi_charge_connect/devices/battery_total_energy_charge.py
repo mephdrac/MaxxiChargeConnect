@@ -10,8 +10,6 @@ Classes:
     BatteryTotalEnergyCharge: Sensorentität zur Anzeige der aufsummierten Batterieladeenergie.
 """
 
-from homeassistant.core import HomeAssistant
-
 from .total_integral_sensor import TotalIntegralSensor
 
 
@@ -32,15 +30,3 @@ class BatteryTotalEnergyCharge(TotalIntegralSensor):
         _attr_native_unit_of_measurement (str): Die verwendete Energieeinheit (kWh).
 
     """
-
-    def __init__(self, hass: HomeAssistant, entry, source_entity_id: str) -> None:
-        """Initialisiert die Sensorentität für die Batterieladeenergie.
-
-        Args:
-            hass (HomeAssistant): Die Home Assistant-Instanz.
-            entry (ConfigEntry): Die Konfigurationseintrag mit Webhook-Informationen.
-            source_entity_id (str): Die Quell-Entity-ID für die Ladeleistung in Watt.
-
-        """
-
-        super().__init__(hass, entry, source_entity_id)

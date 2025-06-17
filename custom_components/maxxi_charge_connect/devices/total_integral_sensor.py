@@ -1,3 +1,14 @@
+"""Oberklassen-Sensor für die Gesamtenergiezählung.
+
+Dieses Modul definiert eine benutzerdefinierte IntegrationSensor-Entität für Home Assistant,
+die die gesamte Energie über die Zeit aufsummiert.
+
+Die Energiemenge wird mittels der Trapezregel integriert und in Kilowattstunden dargestellt.
+
+Classes:
+    TotalIntegralSensor: Oberklassen-Sensorentität zur Anzeige der aufsummierten Energie
+"""
+
 from datetime import UTC, datetime, timedelta
 import logging
 
@@ -12,7 +23,6 @@ from homeassistant.components.integration.sensor import (
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfEnergy
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.event import async_track_time_change
 from homeassistant.util import dt as dt_util
 
 from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
@@ -21,10 +31,37 @@ from ..tools import clean_title
 _LOGGER = logging.getLogger(__name__)
 
 
+# pylint: disable=too-many-instance-attributes
 class TotalIntegralSensor(IntegrationSensor):
+    """Sensorentität zur Anzeige der gesamten Energie (kWh).
+
+    Diese Entität summiert Energie über die Zeit auf, um
+    die Insgesamtenergie zu berechnen. Sie nutzt dafür die Trapezregel
+    zur Integration und stellt den Wert in Kilowattstunden dar.
+
+    Attributes:
+        _attr_entity_registry_enabled_default (bool): Gibt an, ob die Entität standardmäßig
+           aktiviert ist.
+        _entry (ConfigEntry): Die Konfigurationsdaten dieser Entität.
+        _attr_icon (str): Das Symbol, das in der Benutzeroberfläche angezeigt wird.
+        _attr_device_class (str): Gibt den Typ des Sensors an (hier: ENERGY).
+        _attr_state_class (str): Gibt die Art des Sensorzustands an (TOTAL_INCREASING).
+        _attr_native_unit_of_measurement (str): Die verwendete Energieeinheit (kWh).
+
+    """
     _attr_has_entity_name = True
 
+    # pylint: disable=super-init-not-called
     def __init__(self, hass: HomeAssistant, entry, source_entity_id: str) -> None:
+        """Initialisiert die Sensorentität für die gesamte Energie.
+
+        Args:
+            hass (HomeAssistant): Die Home Assistant-Instanz.
+            entry (ConfigEntry): Der Konfigurationseintrag mit den Einstellungen dieser Entität.
+            source_entity_id (str): Die Quell-Entity-ID, die den Wert in Watt liefert.
+
+        """
+        self.hass = hass
         self._attr_translation_key = self.__class__.__name__
         self._attr_unique_id = (
             f"{entry.entry_id}_{clean_title(self.__class__.__name__)}"
@@ -91,6 +128,7 @@ class TotalIntegralSensor(IntegrationSensor):
 
     @property
     def icon(self):
+        """Liefert das Icon der Entity"""
         return self.my_icon
 
     @property

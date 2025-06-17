@@ -53,7 +53,6 @@ from .devices.pv_total_energy import PvTotalEnergy
 from .devices.rssi import Rssi
 from .devices.webhook_id import WebhookId
 
-from .http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
 from .http_scan.http_scan_text import HttpScanText
 from .const import DOMAIN
 
@@ -102,14 +101,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     # power_consumption = PowerConsumption(entry)
     grid_export = GridExport(entry)
     grid_import = GridImport(entry)
-    # pv_self_consumption = PvSelfConsumption(entry)
 
-    
-    
-    #self._attr_unique_id = f"{entry.entry_id}_MaximumBatteryCharge"
-
-#    coordinator = MaxxiDataUpdateCoordinator(hass, entry, sensor_list)
-    # coordinator = MaxxiDataUpdateCoordinator(hass, entry)
     coordinator = hass.data[DOMAIN]["coordinator"]
 
     http_scan_sensor_list = []

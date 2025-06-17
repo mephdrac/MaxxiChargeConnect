@@ -5,8 +5,6 @@ der Batterie misst. Die Werte werden per Trapezregel integriert und täglich um 
 zurückgesetzt.
 """
 
-from homeassistant.core import HomeAssistant
-
 from .today_integral_sensor import TodayIntegralSensor
 
 
@@ -22,14 +20,3 @@ class BatteryTodayEnergyCharge(TodayIntegralSensor):
         _last_reset (datetime): Der letzte Zeitpunkt des Tagesresets (UTC).
 
     """
-
-    def __init__(self, hass: HomeAssistant, entry, source_entity_id: str) -> None:
-        """Initialisiert den BatteryTodayEnergyCharge-Sensor.
-
-        Args:
-            hass (HomeAssistant): Die Home Assistant-Instanz.
-            entry (ConfigEntry): Der Konfigurationseintrag der Integration.
-            source_entity_id (str): Die Entität, aus der die Ladeleistung bezogen wird.
-
-        """
-        super().__init__(hass, entry, source_entity_id)

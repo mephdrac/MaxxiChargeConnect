@@ -9,8 +9,6 @@ Classes:
 
 """
 
-from homeassistant.core import HomeAssistant
-
 from .total_integral_sensor import TotalIntegralSensor
 
 
@@ -27,14 +25,3 @@ class CcuEnergyTotal(TotalIntegralSensor):
     """
 
     _attr_entity_registry_enabled_default = True
-
-    def __init__(self, hass: HomeAssistant, entry, source_entity_id: str) -> None:
-        """Initialisiert die Sensorentität für die Gesamtenergieintegration.
-
-        Args:
-            hass (HomeAssistant): Die Home Assistant-Instanz.
-            entry (ConfigEntry): Der Konfigurationseintrag dieser Integration.
-            source_entity_id (str): Die Entity-ID der Quelle, die die Leistung liefert.
-
-        """
-        super().__init__(hass, entry, source_entity_id)

@@ -10,7 +10,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.event import async_call_later
 
 from ..const import DEVICE_INFO, DOMAIN
-from ..tools import asFloat
+from ..tools import as_float
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,10 +50,10 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
         self._attr_native_value = None  # Initial leer
         self._attr_entity_category = EntityCategory.CONFIG
 
-        _LOGGER.debug("Wert: %s", asFloat(self._coordinator.data.get(self._value_key)))
+        _LOGGER.debug("Wert: %s", as_float(self._coordinator.data.get(self._value_key)))
 
         if self._coordinator.data:
-            self._attr_native_value = asFloat(
+            self._attr_native_value = as_float(
                 self._coordinator.data.get(self._value_key)
             )
         else:
@@ -128,7 +128,7 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
 
         """
         return (
-            asFloat(self._coordinator.data.get(self._value_key))
+            as_float(self._coordinator.data.get(self._value_key))
             if self._coordinator.data
             else None
         )

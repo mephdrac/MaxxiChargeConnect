@@ -119,7 +119,22 @@ def clean_title(title: str) -> str:
     return title.strip("_")
 
 
-def asFloat(value: str) -> float:
+def as_float(value: str) -> float:
+    """Extrahiert ein Float aus einem String.
+
+    Wenn in einem String nur ein Floatwert und andere Zeichen
+    angegeben sind, z.B. "800 W" so extrahiert diese Funktion
+    den Float-Wert und liefert diesen zurück. Sollte kein 
+    gültiger Float-Wert gefunden werden, so wird None zurück-
+    geliefert.
+
+    Args:
+        value (str): Aus dem String soll eine Zahl extrahiert werden
+
+    Returns:
+        float: Die extrahierte Zahl oder None
+
+    """
     match = re.search(r"[\d.]+", value)
 
     number = None

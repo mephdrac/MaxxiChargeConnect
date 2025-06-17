@@ -142,7 +142,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         # registry = er.async_get(hass)
 
         old_unique_id = f"{config_entry.entry_id}_battery_energy_discharge_today"
-        new_unique_id = f"{config_entry.entry_id}_BatteryTodayEnergyDischarge"
+        new_unique_id = f"{config_entry.entry_id}_batterytodayenergydischarge"
 
         _LOGGER.warning("Suchen nach: %s", old_unique_id)
         _LOGGER.warning("Ersetze mit: %s", new_unique_id)

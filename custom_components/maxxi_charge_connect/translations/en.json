@@ -57,6 +57,12 @@
       "PowerConsumption":{
         "name": "House Consumption"
       },
+      "ConsumptionEnergyToday":{
+        "name": "House Consumption today"
+      },
+      "ConsumptionEnergyTotal":{
+        "name": "House Consumption total"
+      },
       "PvSelfConsumption":{
         "name": "PV Self Consumption"
       },

@@ -30,9 +30,6 @@
       "rssi": {
         "name": "WiFi Signalstärke"
       },
-      "PvTotalEnergy":{
-        "name": "PV Gesamtenergie"
-      },
       "device_id":{
         "name": "Gerätenummer"
       },
@@ -59,6 +56,12 @@
       },
       "PowerConsumption":{
         "name": "Hausverbrauch"
+      },
+      "ConsumptionEnergyToday":{
+        "name": "Hausverbrauch heute"
+      },
+      "ConsumptionEnergyTotal":{
+        "name": "Hausverbrauch gesamt"
       },
       "PvSelfConsumption":{
         "name": "PV Eigenverbrauch"
@@ -122,6 +125,68 @@
       },
       "WebhookId":{
         "name": "Webhook ID"
+      },
+      "BatteryTotalEnergyCharge": {
+        "name": "Batterie Laden gesamt"
+      },
+      "BatteryTotalEnergyDischarge": {
+        "name":  "Batterie Entladen gesamt"
+      },
+      "BatteryTodayEnergyCharge": {
+        "name":  "Batterie Laden heute"
+      },
+      "BatteryTodayEnergyDischarge": {
+        "name": "Batterie Entladen heute"
+      },
+      "CcuEnergyToday":  {
+        "name": "CCU Energie heute"
+      },
+      "CcuEnergyTotal": {
+        "name": "CCU Energie gesamt"
+      },
+      "GridImportEnergyToday": {
+        "name": "Netzbezug heute"
+      },
+      "GridImportEnergyTotal": {
+        "name": "Netzbezug gesamt"
+      },
+      "GridExportEnergyToday": {
+        "name": "Netzeinspeisung heute"
+      },
+      "GridExportEnergyTotal": {
+        "name": "Netzeinspeisung gesamt"
+      },
+      "PvSelfConsumptionEnergyToday": {
+        "name": "PV Eigenverbrauch heute"
+      },
+      "PvSelfConsumptionEnergyTotal":  {
+        "name": "PV Eigenverbrauch gesamt"
+      },
+      "PvTodayEnergy": {
+        "name": "PV Produktion heute"
+      },
+      "PvTotalEnergy": {
+        "name": "PV Produktion gesamt"
+      }
+    },
+    "number": {
+      "maxOutputPower": {
+        "name": "Maximale Leistung"
+      },
+      "offlinePower":{
+        "name": "Offline-Ausgangsleistung"
+      },
+      "max_soc":{
+        "name": "Maximale Akkuladung"
+      },
+      "min_soc":{
+        "name": "Minimale Entladung der Batterie"
+      },
+      "baseLoad":{
+        "name": "Ausgabe korrigieren"
+      },
+      "threshold":{
+        "name": "Reaktionstoleranz"
       }
     }
   }

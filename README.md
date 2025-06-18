@@ -10,6 +10,22 @@ MaxxiChargeConnect ist eine benutzerdefinierte Home Assistant Integration, die d
 Diese Integration wurde nicht von Maxxisun bzw. der Maxxihandel GmbH, 04509 Wiedemar entwickelt oder unterstützt.
 Ich, @mephdrac, stehe in keinerlei Verbindung von Maxxisun bzw. der Maxxihandel GmbH. Die Verwendung der Begriffe MaxxiCharge und Maxxisun dient ausschließlich der Beschreibung der Kompatibilität.
 
+## ⚠️ Limitationen:
+
+für folgende Sensoren gilt:
+- Hausverbrauch
+- Hausverbrauch gesamt
+- Hausverbrauch heute
+
+- PV Eigenverbrauch
+- PV Eigenverbrauch gesamt
+- PV Eigenverbrauch gesamt
+
+Falls der User diese Sensoren nutzen möchte, so muss er sie selbst aktivieren. Grundsätzlich gilt, dass die Sensoren nur gute Werte liefer,
+sofern nur 1 CCU verwendet wird und keine weiten PV-Anlagen. Denn es kann nicht ermittelt werden, welchen Einfluss weitere PV-Anlagen haben.
+Der User soll selbst entscheiden, ob er diese Sensoren nutzen möchte.
+
+
 ## ✅ Funktionen
 Empfang von Daten über einen lokalen Webhook
 

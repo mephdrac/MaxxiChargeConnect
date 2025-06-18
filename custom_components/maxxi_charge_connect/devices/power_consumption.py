@@ -24,6 +24,7 @@ class PowerConsumption(SensorEntity):
     um den gesamten aktuellen Stromverbrauch zu berechnen.
     """
 
+    _attr_entity_registry_enabled_default = False
     _attr_translation_key = "PowerConsumption"
     _attr_has_entity_name = True
 

@@ -20,7 +20,7 @@ from ..tools import is_power_total_ok, is_pr_ok  # noqa: TID252
 class PvSelfConsumption(SensorEntity):
     """Sensor-Entität zur Anzeige des PV-Eigenverbrauchs (PV Self-Consumption)."""
 
-    _attr_entity_registry_enabled_default = True
+    _attr_entity_registry_enabled_default = False
     _attr_translation_key = "PvSelfConsumption"
     _attr_has_entity_name = True
 

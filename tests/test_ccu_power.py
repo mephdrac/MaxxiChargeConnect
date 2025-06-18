@@ -1,8 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch, Mock
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntity,
+    SensorDeviceClass,    
     SensorStateClass,
 )
 import pytest

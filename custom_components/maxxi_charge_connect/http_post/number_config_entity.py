@@ -1,3 +1,17 @@
+"""
+NumberConfigEntity-Modul für MaxxiCharge-Integration in Home Assistant.
+
+Dieses Modul stellt eine beschreibbare `NumberEntity` zur Verfügung, mit der konfigurierbare
+Parameter des MaxxiCharge-Geräts via HTTP-POST gesetzt werden können.
+
+Verwendet wird der DataUpdateCoordinator aus `hass.data[DOMAIN]["coordinator"]`.
+
+Abhängigkeiten:
+    - aiohttp
+    - Home Assistant Core und Komponenten
+    - Lokale Hilfsmodule: const, tools
+
+"""
 import logging
 import aiohttp
 from aiohttp import ClientConnectorError, ClientError
@@ -7,19 +21,29 @@ from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_IP_ADDRESS, EntityCategory
 from homeassistant.helpers.entity import DeviceInfo
-from homeassistant.helpers.event import async_call_later
 
-from ..const import DEVICE_INFO, DOMAIN
-from ..tools import as_float
+from ..const import DEVICE_INFO, DOMAIN  # pylint: disable=relative-beyond-top-level
+from ..tools import as_float  # pylint: disable=relative-beyond-top-level
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
-    """Beschreibbare NumberEntity für MaxxiCharge-Konfigurationsparameter."""
+    """Konfigurierbare NumberEntity für MaxxiCharge-Geräteeinstellungen.
+
+    Diese Entität ermöglicht die Anzeige und Änderung eines konfigurierbaren Parameters
+    auf dem MaxxiCharge-Gerät. Änderungen werden über eine HTTP-POST-Anfrage an das Gerät gesendet.
+
+    Attribute:
+        _rest_key (str): Der REST-Parametername, der an das Gerät gesendet wird.
+        _value_key (str): Der Schlüssel zur Extraktion des Werts aus dem Koordinator.
+        _ip (str): IP-Adresse des MaxxiCharge-Geräts.
+        _coordinator: Der DataUpdateCoordinator mit aktuellen Gerätedaten.
+    """
 
     _attr_has_entity_name = True
 
+    # pylint: disable=too-many-positional-arguments,too-many-arguments
     def __init__(
         self,
         hass: HomeAssistant,
@@ -32,7 +56,20 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
         step: float,
         unit: str,
     ) -> None:
-        """Initialisiert die NumberConfigEntity."""
+        """Initialisiert die NumberConfigEntity.
+
+        Args:
+            hass (HomeAssistant): Die Home Assistant-Instanz.
+            entry (ConfigEntry): Die Konfigurationseintrag-Instanz.
+            translation_key (str): Der Schlüssel zur Übersetzung der Entität.
+            rest_key (str): Der Schlüsselname für den POST-Request.
+            value_key (str): Der Schlüsselname zum Extrahieren des Werts aus Koordinator-Daten.
+            min_value (float): Minimal erlaubter Wert.
+            max_value (float): Maximal erlaubter Wert.
+            step (float): Schrittweite für die Eingabe.
+            unit (str): Einheit der Messgröße.
+
+        """
 
         self._attr_mode = NumberMode.BOX
         self._entry = entry
@@ -113,7 +150,7 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
             _LOGGER.error(
                 "HTTP-Fehler beim Senden von %s = %s: %s", self._rest_key, value, e
             )
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.exception(
                 "Unerwarteter Fehler bei %s = %s: %s", self._rest_key, value, e
             )

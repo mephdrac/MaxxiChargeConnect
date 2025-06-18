@@ -50,38 +50,9 @@ fehlerhafte oder veraltete Messwerte
 
 Kompatibilitätsprobleme mit zukünftigen Home Assistant-Versionen
 
-## 🛠️ Installation
+## 🛠️ Installation / Dokumentation usw.
 
-Über HACS (Empfohlen):
-
-- HACS installieren
-In HACS → Integrationen → Drei-Punkte-Menü → Benutzerdefiniertes Repository hinzufügen
-URL: https://github.com/mephdrac/MaxxiChargeConnect
-Typ: Integration
-- *MaxxiChargeConnect*  installieren
-- Home Assistant neu starten
-- Integration in den Einstellungen hinzufügen
-
-### Manuell
-- Repository klonen oder ZIP herunterladen
-- Inhalt in das Verzeichnis custom_components/maxxi_charge_connect kopieren
-- Home Assistant neu starten
-- Integration wie gewohnt 
-
-## Einrichten
-Zunächst muss in der maxxisun.app unter Cloudservice "nein" eingestellt ist. Und die Einstellung für "Lokalen Server nutzen" auf "Ja" steht.
-
-Dort muss eine API-Route noch vergeben sein. Z.B.:
-
-```
-http://**dein_homeassistant**/api/webhook/**webhook_id**
-```
-
-
-Die **webhook_id** ist frei vergebbar.
-
-Nachdem die Integration über HACS installiert ist. Kann ein Gerät eingerichtet werden. Für die Einrichtung ist es notwendig eine **webhook_id** anzugeben. Diese **webhook_id** ist die zuvor in der Api-Route verwendete **webhook_id**. Danach ist die Integration eingerichtet.
-
+siehe hier [Beschreibung](documentation/doc.md)
 
 
 ## 🙌 Mitwirken

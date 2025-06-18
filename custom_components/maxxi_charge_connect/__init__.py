@@ -13,12 +13,13 @@ Funktionen:
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 
 from .const import DOMAIN
 from .webhook import async_register_webhook, async_unregister_webhook
+
+from .http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -55,12 +56,33 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = {}
 
+    sensor_list = []
+    sensor_list.append(("PowerMeterIp", "Messgerät IP:"))
+    sensor_list.append(("PowerMeterType", "Messgerät Typ:"))
+    sensor_list.append(("MaximumPower", "Maximale Leistung:"))
+    sensor_list.append(("OfflineOutputPower", "Offline-Ausgangsleistung:"))
+    sensor_list.append(("NumberOfBatteries", "Batterien im System:"))
+    sensor_list.append(("OutputOffset", "Ausgabe korrigieren:"))
+    sensor_list.append(("CcuSpeed", "CCU-Geschwindigkeit:"))
+    sensor_list.append(("Microinverter", "Mikro-Wechselrichter-Typ:"))
+    sensor_list.append(("ResponseTolerance", "Reaktionstoleranz:"))
+    sensor_list.append(("MinimumBatteryDischarge", "Minimale Entladung der Batterie:"))
+    sensor_list.append(("MaximumBatteryCharge", "Maximale Akkuladung:"))
+    sensor_list.append(("DC/DC-Algorithmus", "DC/DC-Algorithmus:"))
+    sensor_list.append(("Cloudservice", "Cloudservice:"))
+    sensor_list.append(("LocalServer", "Lokalen Server nutzen:"))
+    sensor_list.append(("APIRoute", "API-Route:"))
+
+    coordinator = MaxxiDataUpdateCoordinator(hass, entry, sensor_list)
+    hass.data[DOMAIN]["coordinator"] = coordinator
+    await coordinator.async_config_entry_first_refresh()
+
     await async_register_webhook(hass, entry)
-    await hass.config_entries.async_forward_entry_setups(entry, ["sensor"])
+    await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "number"])
 
     return True
 
-
+# pylint: disable=too-many-statements
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Migration eines Config-Eintrags von Version 1 auf Version 2.
 
@@ -75,6 +97,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
     _LOGGER.info("Starte Migration: Aktuelle Version: %s", config_entry.version)
 
     version = config_entry.version
+    minor_version = config_entry.minor_version
 
     if version < 2:
         _LOGGER.info("Migration MaxxiChargeConnect v1 → v2 gestartet")
@@ -105,16 +128,74 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
 
         # Version anpassen und übernehmen
         # Setze neue Version explizit
+        version = 3
         hass.config_entries.async_update_entry(config_entry, version=3)
         # await hass.async_block_till_done()
         _LOGGER.info("Migration auf Version 3 abgeschlossen")
 
         return True
 
-    if version >= 3:
+    if version == 3 and minor_version == 0:
+        _LOGGER.warning("Migration MaxxiChargeConnect v3.0 → v3.1 gestartet")
+
+        try:
+            # Entferne Sensor mit der alten unique_id
+            entity_registry = async_get_entity_registry(hass)
+
+            keys = []
+            keys.append(("battery_energy_charge_today", "batterytodayenergycharge"))
+            keys.append(
+                ("battery_energy_discharge_today", "batterytodayenergydischarge")
+            )
+            keys.append(("battery_energy_total_charge", "batterytotalenergycharge"))
+            keys.append(
+                ("battery_energy_total_discharge", "batterytotalenergydischarge")
+            )
+            keys.append(("CcuEnergyToday", "ccuenergytoday"))
+            keys.append(("ccu_energy_total", "ccuenergytotal"))
+            keys.append(("grid_export_energy_today", "gridexportenergytoday"))
+            keys.append(("grid_export_energy_total", "gridexportenergytotal"))
+            keys.append(("grid_import_energy_today", "gridimportenergytoday"))
+            keys.append(("grid_import_energy_total", "gridimportenergytotal"))
+            keys.append(
+                ("pv_self_consumption_energy_today", "pvselfconsumptionenergytoday")
+            )
+            keys.append(
+                ("pv_self_consumption_energy_total", "pvselfconsumptionenergytotal")
+            )
+            keys.append(("pv_energy_today", "pvtodayenergy"))
+            keys.append(("pv_energy_total", "pvtotalenergy"))
+
+            for old_key, new_key in keys:
+                old_unique_id = f"{config_entry.entry_id}_{old_key}"
+                new_unique_id = f"{config_entry.entry_id}_{new_key}"
+
+                _LOGGER.info("Suchen nach: %s", old_unique_id)
+
+                # Suche die alte Entität im Entity Registry
+                entity_id = entity_registry.async_get_entity_id(
+                    "sensor", "maxxi_charge_connect", old_unique_id
+                )
+
+                if entity_id:
+                    _LOGGER.info("Ersetze mit: %s", new_unique_id)
+                    entity_registry.async_update_entity(
+                        entity_id, new_unique_id=new_unique_id
+                    )
+
+            version = 3
+            minor_version = 1
+            hass.config_entries.async_update_entry(
+                config_entry, version=4, minor_version=minor_version
+            )
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            _LOGGER.error("Fehler beim migrieren: %s", e)
+            return False
+
         return True
 
-    return False
+    _LOGGER.info("MaxxiChargeConnect - config v3.1 installiert")
+    return version == 3 and minor_version == 1  # true == aktuelle Version
 
 
 # async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:

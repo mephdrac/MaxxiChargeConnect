@@ -30,9 +30,6 @@
       "rssi": {
         "name": "rssi"
       },
-      "PvTotalEnergy":{
-        "name": "PV Energie Total"
-      },
       "device_id":{
         "name": "Device ID"
       },
@@ -122,6 +119,68 @@
       },
       "WebhookId":{
         "name": "Webhook ID"
+      },
+      "BatteryTotalEnergyCharge": {
+        "name": "Battery Charge Total"
+      },
+      "BatteryTotalEnergyDischarge": {
+        "name": "Battery Discharge Total"
+      },
+      "BatteryTodayEnergyCharge": {
+        "name": "Battery Charge Today"
+      },
+      "BatteryTodayEnergyDischarge": {
+        "name": "Battery Discharge Today"
+      },
+      "CcuEnergyToday": {
+        "name": "CCU Energy Today"
+      },
+      "CcuEnergyTotal": {
+        "name": "CCU Energy Total"
+      },
+      "GridImportEnergyToday": {
+        "name": "Grid Import Today"
+      },
+      "GridImportEnergyTotal": {
+        "name": "Grid Import Energy Total"
+      },
+      "GridExportEnergyToday": {
+        "name": "Grid Export Energy Today"
+      },
+      "GridExportEnergyTotal": {
+        "name": "Grid Export Energy Total"
+      },
+      "PvSelfConsumptionEnergyToday": {
+        "name": "PV Self Cons. Today"
+      },
+      "PvSelfConsumptionEnergyTotal": {
+        "name": "PV Self Cons. Total"
+      },
+      "PvTodayEnergy": {
+        "name": "PV Energy Today"
+      },
+      "PvTotalEnergy": {
+        "name": "PV Energy Total"
+      }
+    },
+    "number": {
+      "maxOutputPower": {
+        "name": "Maximum power"
+      },
+      "offlinePower":{
+        "name": "Offline output power"
+      },
+      "max_soc":{
+        "name": "Maximum SOC"
+      },
+      "min_soc":{
+        "name": "Minimum SOC"
+      },
+      "baseLoad":{
+        "name": "Output offset"
+      },
+      "threshold":{
+        "name": "Response tolerance"
       }
     }
   }

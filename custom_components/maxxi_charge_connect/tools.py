@@ -1,4 +1,4 @@
-"""Dieses Modul stellt verschiedene Hilfsfunktionen bereit, die in mehreren Klassen 
+"""Dieses Modul stellt verschiedene Hilfsfunktionen bereit, die in mehreren Klassen
 oder Modulen verwendet werden können.
 
 Die Funktionen dienen hauptsächlich zur Validierung und Plausibilitätsprüfung von Messwerten
@@ -14,6 +14,7 @@ Teilen der Anwendung eingebunden werden kann.
 """
 
 import logging
+import re
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -90,3 +91,54 @@ def is_power_total_ok(power_total: float, batterien: list) -> bool:
     else:
         _LOGGER.error("Power_total Wert ist nicht plausibel und wird verworfen")
     return ok
+
+
+def clean_title(title: str) -> str:
+    """Bereinigt einen Titel-String für die Verwendung als Entitäts-ID.
+
+    Der Titel wird in Kleinbuchstaben umgewandelt, Sonderzeichen durch
+    Unterstriche ersetzt, aufeinanderfolgende Unterstriche reduziert und
+    führende bzw. abschließende Unterstriche entfernt.
+
+    Args:
+        title (str): Der ursprüngliche Titel, z.B. ein Geräte- oder Benutzername.
+
+    Returns:
+        str: Ein bereinigter, slug-artiger String, geeignet z.B. für `entity_id`s.
+
+    """
+
+    # alles klein machen
+    title = title.lower()
+    # alle Nicht-Buchstaben und Nicht-Zahlen durch Unterstriche ersetzen
+    title = re.sub(r"[^a-z0-9]+", "_", title)
+    # mehrere Unterstriche durch einen ersetzen
+    title = re.sub(r"_+", "_", title)
+    # führende und abschließende Unterstriche entfernen
+
+    return title.strip("_")
+
+
+def as_float(value: str) -> float:
+    """Extrahiert ein Float aus einem String.
+
+    Wenn in einem String nur ein Floatwert und andere Zeichen
+    angegeben sind, z.B. "800 W" so extrahiert diese Funktion
+    den Float-Wert und liefert diesen zurück. Sollte kein 
+    gültiger Float-Wert gefunden werden, so wird None zurück-
+    geliefert.
+
+    Args:
+        value (str): Aus dem String soll eine Zahl extrahiert werden
+
+    Returns:
+        float: Die extrahierte Zahl oder None
+
+    """
+    match = re.search(r"[\d.]+", value)
+
+    number = None
+    if match:
+        number = float(match.group())
+
+    return number

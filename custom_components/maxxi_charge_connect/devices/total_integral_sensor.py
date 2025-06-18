@@ -25,7 +25,7 @@ from homeassistant.const import UnitOfEnergy
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 
-from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+from .. const import DEVICE_INFO, DOMAIN  # noqa: TID252
 from ..tools import clean_title
 
 _LOGGER = logging.getLogger(__name__)

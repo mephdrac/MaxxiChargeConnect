@@ -7,6 +7,7 @@ der durch Webhook-Daten aktualisiert wird.
 Der Sensor wird dynamisch in Home Assistant registriert und aktualisiert.
 """
 
+# import logging
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -17,6 +18,8 @@ from homeassistant.const import CONF_WEBHOOK_ID, PERCENTAGE
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+
+# _LOGGER = logging.getLogger(__name__)
 
 
 class BatterySoc(SensorEntity):
@@ -77,10 +80,17 @@ class BatterySoc(SensorEntity):
             level = max(0, min(100, int(self._attr_native_value)))  # Clamping 0–100
             level = round(level / 10) * 10  # z. B. 57 → 60
 
+            # _LOGGER.warning("Level: %s", level)
+
         except (TypeError, ValueError):
             result = "mdi:battery-unknown"
         else:
-            result = f"mdi:battery-{level}"
+            if level == 100:
+                result = "mdi:battery"
+            elif level == 0:
+                result = "mdi:battery-outline"
+            else:
+                result = f"mdi:battery-{level}"
         return result
 
     @property

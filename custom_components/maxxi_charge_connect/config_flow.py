@@ -46,8 +46,8 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     """
 
-    VERSION = 4
-    MINOR_VERSION = 0
+    VERSION = 3
+    MINOR_VERSION = 1
     reconfigure_supported = True  # <- Aktiviert den Reconfigure-Flow
 
     _name = None

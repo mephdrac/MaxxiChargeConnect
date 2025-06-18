@@ -143,7 +143,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             entity_registry = async_get_entity_registry(hass)
 
             keys = []
-            keys.append(("battery_energy_charge_today", " batterytodayenergycharge"))
+            keys.append(("battery_energy_charge_today", "batterytodayenergycharge"))
             keys.append(
                 ("battery_energy_discharge_today", "batterytodayenergydischarge")
             )

@@ -36,9 +36,7 @@ async def test_ccu_power_init(caplog):
 
 @pytest.mark.asyncio
 async def test_ccu_power_device_info(caplog):
-    hass = MagicMock()
-    hass.async_add_job = AsyncMock()
-
+    
     dummy_config_entry = MagicMock()
     dummy_config_entry.entry_id = "1234abcd"
     dummy_config_entry.title = "Test Entry"
@@ -55,9 +53,7 @@ async def test_ccu_power_device_info(caplog):
 
 @pytest.mark.asyncio
 async def test_ccu_power__handle_update_pccu_is_ok(caplog):
-    hass = MagicMock()
-    hass.async_add_job = AsyncMock()
-
+    
     dummy_config_entry = MagicMock()
     dummy_config_entry.entry_id = "1234abcd"
     dummy_config_entry.title = "Test Entry"
@@ -65,7 +61,7 @@ async def test_ccu_power__handle_update_pccu_is_ok(caplog):
     dummy_config_entry.options = {}
     
     data = {
-        "Pccu": "10"
+        "Pccu": 10
     }
 
     sensor = CcuPower(dummy_config_entry)
@@ -89,7 +85,7 @@ async def test_ccu_power__handle_update_pccu_is_too_high(caplog):
     dummy_config_entry.options = {}
     # if 0 <= pccu <= (2300 * 1.5):
     data = {
-        "Pccu": "36500"
+        "Pccu": 36500
     }
 
     sensor = CcuPower(dummy_config_entry)
@@ -113,7 +109,7 @@ async def test_ccu_power__handle_update_pccu_is_too_low(caplog):
     dummy_config_entry.options = {}
     # if 0 <= pccu <= (2300 * 1.5):
     data = {
-        "Pccu": "-500"
+        "Pccu": -500
     }
 
     sensor = CcuPower(dummy_config_entry)
@@ -137,7 +133,7 @@ async def test_ccu_power__async_added_to_hass(mock_dispatcher_connect):
     dummy_config_entry = MagicMock()
     dummy_config_entry.entry_id = "1234abcd"
     dummy_config_entry.title = "Test Entry"
-    #dummy_config_entry.data = {}
+
     dummy_config_entry.options = {}
 
     dummy_config_entry.data = {

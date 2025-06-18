@@ -170,7 +170,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
                 old_unique_id = f"{config_entry.entry_id}_{old_key}"
                 new_unique_id = f"{config_entry.entry_id}_{new_key}"
 
-                _LOGGER.warning("Suchen nach: %s", old_unique_id)
+                _LOGGER.info("Suchen nach: %s", old_unique_id)
 
                 # Suche die alte Entität im Entity Registry
                 entity_id = entity_registry.async_get_entity_id(
@@ -178,7 +178,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
                 )
 
                 if entity_id:
-                    _LOGGER.warning("Ersetze mit: %s", new_unique_id)
+                    _LOGGER.info("Ersetze mit: %s", new_unique_id)
                     entity_registry.async_update_entity(
                         entity_id, new_unique_id=new_unique_id
                     )
@@ -194,7 +194,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
 
         return True
 
-    _LOGGER.warning("MaxxiChargeConnect - config v3.1 installiert")
+    _LOGGER.info("MaxxiChargeConnect - config v3.1 installiert")
     return version == 3 and minor_version == 1  # true == aktuelle Version
 
 

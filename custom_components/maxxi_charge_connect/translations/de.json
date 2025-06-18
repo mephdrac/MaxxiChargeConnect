@@ -57,6 +57,12 @@
       "PowerConsumption":{
         "name": "Hausverbrauch"
       },
+      "ConsumptionEnergyToday":{
+        "name": "Hausverbrauch heute"
+      },
+      "ConsumptionEnergyTotal":{
+        "name": "Hausverbrauch gesamt"
+      },
       "PvSelfConsumption":{
         "name": "PV Eigenverbrauch"
       },
@@ -151,10 +157,10 @@
         "name": "Netzeinspeisung gesamt"
       },
       "PvSelfConsumptionEnergyToday": {
-        "name": "Eigenverbrauch heute"
+        "name": "PV Eigenverbrauch heute"
       },
       "PvSelfConsumptionEnergyTotal":  {
-        "name": "Eigenverbrauch gesamt"
+        "name": "PV Eigenverbrauch gesamt"
       },
       "PvTodayEnergy": {
         "name": "PV Produktion heute"

@@ -41,17 +41,20 @@ from .devices.grid_import import GridImport
 from .devices.grid_import_energy_today import GridImportEnergyToday
 from .devices.grid_import_energy_total import GridImportEnergyTotal
 
-# from .devices.power_consumption import PowerConsumption
+from .devices.power_consumption import PowerConsumption
 from .devices.power_meter import PowerMeter
 from .devices.pv_power import PvPower
 
-# from .devices.pv_self_consumption import PvSelfConsumption
-# from .devices.pv_self_consumption_energy_today import PvSelfConsumptionEnergyToday
-# from .devices.pv_self_consumption_energy_total import PvSelfConsumptionEnergyTotal
+from .devices.pv_self_consumption import PvSelfConsumption
+from .devices.pv_self_consumption_energy_today import PvSelfConsumptionEnergyToday
+from .devices.pv_self_consumption_energy_total import PvSelfConsumptionEnergyTotal
 from .devices.pv_today_energy import PvTodayEnergy
 from .devices.pv_total_energy import PvTotalEnergy
 from .devices.rssi import Rssi
 from .devices.webhook_id import WebhookId
+
+from .devices.consumption_energy_today import ConsumptionEnergyToday
+from .devices.consumption_energy_total import ConsumptionEnergyTotal
 
 from .http_scan.http_scan_text import HttpScanText
 from .const import DOMAIN
@@ -98,9 +101,10 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     firmware_version = FirmwareVersion(entry)
     webhook_id = WebhookId(entry)
     battery_power = BatteryPower(entry)
-    # power_consumption = PowerConsumption(entry)
+    power_consumption = PowerConsumption(entry)
     grid_export = GridExport(entry)
     grid_import = GridImport(entry)
+    pv_self_consumption = PvSelfConsumption(entry)
 
     coordinator = hass.data[DOMAIN]["coordinator"]
 
@@ -191,10 +195,10 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
             firmware_version,
             battery_soe,
             webhook_id,
-            # power_consumption,
+            power_consumption,
             grid_export,
             grid_import,
-            # pv_self_consumption,
+            pv_self_consumption,
             *http_scan_sensor_list,
         ]
     )
@@ -226,12 +230,20 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     grid_import_energy_today = GridImportEnergyToday(hass, entry, grid_import.entity_id)
     grid_import_energy_total = GridImportEnergyTotal(hass, entry, grid_import.entity_id)
 
-    # pv_self_consumption_today = PvSelfConsumptionEnergyToday(
-    #     hass, entry, pv_self_consumption.entity_id
-    # )
-    # pv_self_consumption_total = PvSelfConsumptionEnergyTotal(
-    #     hass, entry, pv_self_consumption.entity_id
-    # )
+    pv_self_consumption_today = PvSelfConsumptionEnergyToday(
+        hass, entry, pv_self_consumption.entity_id
+    )
+    pv_self_consumption_total = PvSelfConsumptionEnergyTotal(
+        hass, entry, pv_self_consumption.entity_id
+    )
+
+    consumption_energy_today = ConsumptionEnergyToday(
+        hass, entry, pv_self_consumption.entity_id
+    )
+
+    consumption_energy_total = ConsumptionEnergyTotal(
+        hass, entry, pv_self_consumption.entity_id
+    )
 
     async_add_entities(
         [
@@ -247,7 +259,9 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
             grid_export_energy_total,
             grid_import_energy_today,
             grid_import_energy_total,
-            # pv_self_consumption_today,
-            # pv_self_consumption_total,
+            pv_self_consumption_today,
+            pv_self_consumption_total,
+            consumption_energy_today,
+            consumption_energy_total,
         ]
     )

@@ -82,6 +82,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     return True
 
+
 # pylint: disable=too-many-statements
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Migration eines Config-Eintrags von Version 1 auf Version 2.
@@ -94,17 +95,18 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         bool: True, falls Migration durchgeführt wurde, sonst False.
 
     """
-    _LOGGER.info("Starte Migration: Aktuelle Version: %s", config_entry.version)
-
     version = config_entry.version
     minor_version = config_entry.minor_version
+
+    _LOGGER.info("Prüfe Migration: Aktuelle Version: %s.%s", version, minor_version)
 
     if version < 2:
         _LOGGER.info("Migration MaxxiChargeConnect v1 → v2 gestartet")
         new_data = {**config_entry.data}
-        # config_entry.version = 2
-        hass.config_entries.async_update_entry(config_entry, data=new_data, version=2)
         version = 2
+        hass.config_entries.async_update_entry(
+            config_entry, data=new_data, version=version
+        )
 
     if version == 2:
         _LOGGER.info("Migration MaxxiChargeConnect v2 → v3 gestartet")
@@ -126,11 +128,8 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
                 _LOGGER.info("Entferne veraltete Entität: %s", entity.entity_id)
                 entity_registry.async_remove(entity.entity_id)
 
-        # Version anpassen und übernehmen
-        # Setze neue Version explizit
         version = 3
-        hass.config_entries.async_update_entry(config_entry, version=3)
-        # await hass.async_block_till_done()
+        hass.config_entries.async_update_entry(config_entry, version=version)
         _LOGGER.info("Migration auf Version 3 abgeschlossen")
 
         return True
@@ -186,7 +185,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             version = 3
             minor_version = 1
             hass.config_entries.async_update_entry(
-                config_entry, version=4, minor_version=minor_version
+                config_entry, version=version, minor_version=minor_version
             )
         except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error("Fehler beim migrieren: %s", e)

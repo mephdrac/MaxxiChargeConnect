@@ -9,4 +9,4 @@ from .total_integral_sensor import TotalIntegralSensor
 class PvSelfConsumptionEnergyTotal(TotalIntegralSensor):
     """Sensor zur Integration der PV-Eigenverbrauchsleistung (kWh gesamt)."""
 
-    _attr_entity_registry_enabled_default = True
+    _attr_entity_registry_enabled_default = False

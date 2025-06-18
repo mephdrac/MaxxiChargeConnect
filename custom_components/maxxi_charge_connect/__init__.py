@@ -97,7 +97,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
     _LOGGER.info("Starte Migration: Aktuelle Version: %s", config_entry.version)
 
     version = config_entry.version
-    minor_version = config_entry.minor_version    
+    minor_version = config_entry.minor_version
 
     if version < 2:
         _LOGGER.info("Migration MaxxiChargeConnect v1 → v2 gestartet")
@@ -138,46 +138,63 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
     if version == 3 and minor_version == 0:
         _LOGGER.warning("Migration MaxxiChargeConnect v3.0 → v3.1 gestartet")
 
-        # Entferne Sensor mit der alten unique_id
-        entity_registry = async_get_entity_registry(hass)        
+        try:
+            # Entferne Sensor mit der alten unique_id
+            entity_registry = async_get_entity_registry(hass)
 
-        keys []
-        keys.append( ("battery_energy_charge_today", " batterytodayenergycharge") )
-        keys.append( ("battery_energy_discharge_today", "batterytodayenergydischarge") )
-        keys.append( ("battery_energy_total_charge", "batterytotalenergycharge") )
-        keys.append( ("battery_energy_total_discharge", "batterytotalenergydischarge") )
-        keys.append( ("CcuEnergyToday", "ccuenergytoday") )
-        keys.append( ("ccu_energy_total", "ccuenergytotal") )
-        keys.append( ("grid_export_energy_today", "gridexportenergytoday") )
-        keys.append( ("grid_export_energy_total", "gridexportenergytotal") )
-        keys.append( ("grid_import_energy_today", "gridimportenergytoday") )
-        keys.append( ("grid_import_energy_total", "gridimportenergytotal") )
-        keys.append( ("pv_self_consumption_energy_today", "pvselfconsumptionenergytoday") )
-        keys.append( ("pv_self_consumption_energy_total", "pvselfconsumptionenergytotal") )
-        keys.append( ("pv_energy_today", "pvtodayenergy") )
-        keys.append( ("pv_energy_total", "pvtotalenergy") )
-        
-
-        for old_key, new_key in keys:
-            old_unique_id = f"{config_entry.entry_id}_{old_key}"
-            new_unique_id = f"{config_entry.entry_id}_{new_key}"
-
-            _LOGGER.warning("Suchen nach: %s", old_key)
-        
-            # Suche die alte Entität im Entity Registry
-            entity_id = entity_registry.async_get_entity_id(
-                "sensor", "maxxi_charge_connect", old_key
+            keys = []
+            keys.append(("battery_energy_charge_today", " batterytodayenergycharge"))
+            keys.append(
+                ("battery_energy_discharge_today", "batterytodayenergydischarge")
             )
+            keys.append(("battery_energy_total_charge", "batterytotalenergycharge"))
+            keys.append(
+                ("battery_energy_total_discharge", "batterytotalenergydischarge")
+            )
+            keys.append(("CcuEnergyToday", "ccuenergytoday"))
+            keys.append(("ccu_energy_total", "ccuenergytotal"))
+            keys.append(("grid_export_energy_today", "gridexportenergytoday"))
+            keys.append(("grid_export_energy_total", "gridexportenergytotal"))
+            keys.append(("grid_import_energy_today", "gridimportenergytoday"))
+            keys.append(("grid_import_energy_total", "gridimportenergytotal"))
+            keys.append(
+                ("pv_self_consumption_energy_today", "pvselfconsumptionenergytoday")
+            )
+            keys.append(
+                ("pv_self_consumption_energy_total", "pvselfconsumptionenergytotal")
+            )
+            keys.append(("pv_energy_today", "pvtodayenergy"))
+            keys.append(("pv_energy_total", "pvtotalenergy"))
 
-            if entity_id:
-                _LOGGER.warning("Ersetze mit: %s", new_key)
-                entity_registry.async_update_entity(entity_id, new_unique_id=new_key)
+            for old_key, new_key in keys:
+                old_unique_id = f"{config_entry.entry_id}_{old_key}"
+                new_unique_id = f"{config_entry.entry_id}_{new_key}"
 
-        version = 3
-        minor_version = 1
-        hass.config_entries.async_update_entry(config_entry, version=4, minor_version=minor_version)
+                _LOGGER.warning("Suchen nach: %s", old_unique_id)
+
+                # Suche die alte Entität im Entity Registry
+                entity_id = entity_registry.async_get_entity_id(
+                    "sensor", "maxxi_charge_connect", old_unique_id
+                )
+
+                if entity_id:
+                    _LOGGER.warning("Ersetze mit: %s", new_unique_id)
+                    entity_registry.async_update_entity(
+                        entity_id, new_unique_id=new_unique_id
+                    )
+
+            version = 3
+            minor_version = 1
+            hass.config_entries.async_update_entry(
+                config_entry, version=4, minor_version=minor_version
+            )
+        except Exception as e:
+            _LOGGER.error("Fehler beim migrieren: %s", e)
+            return False
+
         return True
-    
+
+    _LOGGER.warning("MaxxiChargeConnect - config v3.1 installiert")
     return version == 3 and minor_version == 1  # true == aktuelle Version
 
 

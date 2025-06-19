@@ -40,28 +40,35 @@ class MigrateFromYaml:
             return "firmware_version"
         return None
 
-    def async_handle_trigger_migration(self, call):
+    async def async_handle_trigger_migration(self, call):
         _LOGGER.warning("Starte die Migration ...")
         old_sensors = self.find_old_maxxicharge_sensors()
+
+        _LOGGER.warning("Alte Sensoren: %s", old_sensors)
         sensor_map = {}
         for entity_id, state in old_sensors.items():
             sensor_type = self.detect_sensor_type(state)
             if sensor_type and sensor_type not in sensor_map:
                 sensor_map[sensor_type] = entity_id
 
-        # # Update ConfigEntry mit Migrationsdaten
-        # self._hass.config_entries.async_update_entry(
-        #     self._entry,
-        #     data={
-        #         **self._entry.data,
-        #         "migration": True,
-        #         "legacy_sensor_map": sensor_map,
-        #     },
-        # )
+        # Update ConfigEntry mit Migrationsdaten
+        self._hass.config_entries.async_update_entry(
+            self._entry,
+            data={
+                **self._entry.data,
+                "migration": True,
+                "legacy_sensor_map": sensor_map,
+            },
+        )
 
-        # # Optional: Notification für User
-        # self._hass.components.persistent_notification.async_create(
-        #     "Migration der alten MaxxiCharge YAML-Sensoren wurde ausgeführt.",
-        #     title="MaxxiCharge Migration",
-        # )
+        # Optional: Notification für User
+        await self._hass.services.async_call(
+            "persistent_notification",
+            "create",
+            {
+                "title": "MaxxiCharge Migration",
+                "message": "Migration der alten MaxxiCharge YAML-Sensoren wurde ausgeführt.",
+            },
+        )
+
         _LOGGER.warning("Migration beendet")

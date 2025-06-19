@@ -85,8 +85,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     # Migrationsservice für die Yaml-Konfiguration von Joern-R registrieren
 
-    def handle_trigger_migration(call):
-        migrator.async_handle_trigger_migration(call)
+    async def handle_trigger_migration(call):
+        await migrator.async_handle_trigger_migration(call)
 
     hass.services.async_register(
         DOMAIN, "migration_von_yaml_konfiguration", handle_trigger_migration

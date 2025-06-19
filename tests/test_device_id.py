@@ -47,6 +47,14 @@ def mock_entry():
     entry.data = {"webhook_id": WEBHOOK_ID}
     return entry
 
+@pytest.mark.asyncio
+async def test_device_id__set_value(mock_entry):
+    testText = "HalloText"
+    sensor = DeviceId(mock_entry)
+    sensor.set_value(testText)
+
+    assert sensor._attr_native_value == testText
+
 
 @pytest.mark.asyncio
 async def test_device_id_initialization(mock_entry):

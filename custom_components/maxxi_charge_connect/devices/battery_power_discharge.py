@@ -17,7 +17,7 @@ from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
-from ..tools import is_pccu_ok  # noqa: TID252
+from ..tools import is_pccu_ok, is_power_total_ok  # noqa: TID252
 
 
 class BatteryPowerDischarge(SensorEntity):
@@ -81,19 +81,21 @@ class BatteryPowerDischarge(SensorEntity):
         Pccu negativ ist, und setzt den neuen Zustand der Entität.
 
         """
-
         ccu = float(data.get("Pccu", 0))
 
         if is_pccu_ok(ccu):
             pv_power = float(data.get("PV_power_total", 0))
-            batterie_leistung = round(pv_power - ccu, 3)
+            batteries = data.get("batteriesInfo", [])
 
-            if batterie_leistung <= 0:
-                self._attr_native_value = -1 * batterie_leistung
-            else:
-                self._attr_native_value = 0
+            if is_power_total_ok(pv_power, batteries):
+                batterie_leistung = round(pv_power - ccu, 3)
 
-            self.async_write_ha_state()
+                if batterie_leistung <= 0:
+                    self._attr_native_value = -1 * batterie_leistung
+                else:
+                    self._attr_native_value = 0
+
+                self.async_write_ha_state()
 
     @property
     def device_info(self):

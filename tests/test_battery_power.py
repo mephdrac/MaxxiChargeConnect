@@ -110,18 +110,12 @@ async def test_ccu_power__handle_update_alles_ok(caplog):
 async def test_ccu_power__handle_update_pccu_nicht_ok(caplog):
     # is_pccu_ok(ccu) == false 
     # is_power_total_ok(pv_power, batteries) == true
-    hass = MagicMock()
-    hass.async_add_job = AsyncMock()
-
+ 
     dummy_config_entry = MagicMock()
-    dummy_config_entry2 = MagicMock()
 
-     pccu = 36500
+    pccu = 36500
     pv_power = 218
-
-    pccu2 = -1532
-    pv_power2 = 218
-
+    
     data = {
         "Pccu": pccu,
         "PV_power_total": pv_power,
@@ -132,18 +126,7 @@ async def test_ccu_power__handle_update_pccu_nicht_ok(caplog):
         ]
     }
 
-    data2 = {
-        "Pccu": pccu2,
-        "PV_power_total": pv_power2,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
-
     sensor1 = BatteryPower(dummy_config_entry)
-    sensor2 = BatteryPower(dummy_config_entry2)
 
     with patch("custom_components.maxxi_charge_connect.devices.battery_power.BatteryPower.async_write_ha_state", 
                new_callable=MagicMock
@@ -152,65 +135,89 @@ async def test_ccu_power__handle_update_pccu_nicht_ok(caplog):
         patch("custom_components.maxxi_charge_connect.devices.battery_power.is_power_total_ok",return_value=True) as mock_is_power_ok1:
         await sensor1._handle_update(data)
 
-    # with patch("custom_components.maxxi_charge_connect.devices.battery_power.BatteryPower.async_write_ha_state", new_callable=MagicMock
-    #            ) as mock_write_ha_state2:
-    #     await sensor2._handle_update(data2)
+        mock_is_power_ok1.assert_not_called()
+        mock_is_pccu_ok1.assert_called_once()
+        mock_write_ha_state1.assert_not_called()
+
+        args, kwargs = mock_is_pccu_ok1.call_args
+
+        assert args[0] == pccu
+        assert sensor1._attr_native_value is None
+
+@pytest.mark.asyncio
+async def test_ccu_power__handle_update_alles_nicht_ok(caplog):
+    # is_pccu_ok(ccu) == false 
+    # is_power_total_ok(pv_power, batteries) == false
+ 
+    dummy_config_entry = MagicMock()
+
+    pccu = 36500
+    pv_power = 218
+    
+    data = {
+        "Pccu": pccu,
+        "PV_power_total": pv_power,
+        "batteriesInfo": [
+            {
+                "batteryCapacity": 1187.339966
+            }
+        ]
+    }
+
+    sensor1 = BatteryPower(dummy_config_entry)
+
+    with patch("custom_components.maxxi_charge_connect.devices.battery_power.BatteryPower.async_write_ha_state", 
+               new_callable=MagicMock
+               ) as mock_write_ha_state1,\
+        patch("custom_components.maxxi_charge_connect.devices.battery_power.is_pccu_ok",return_value=False) as mock_is_pccu_ok1,\
+        patch("custom_components.maxxi_charge_connect.devices.battery_power.is_power_total_ok",return_value=False) as mock_is_power_ok1:
+        await sensor1._handle_update(data)
+
+        mock_is_power_ok1.assert_not_called()
+        mock_is_pccu_ok1.assert_called_once()
+        mock_write_ha_state1.assert_not_called()
+
+        args, kwargs = mock_is_pccu_ok1.call_args
+
+        assert args[0] == pccu
+        assert sensor1._attr_native_value is None
+
+@pytest.mark.asyncio
+async def test_ccu_power__handle_update_power_total_nicht_ok(caplog):
+    # is_pccu_ok(ccu) == true
+    # is_power_total_ok(pv_power, batteries) == false
+ 
+    dummy_config_entry = MagicMock()
+
+    pccu = 45.345
+    pv_power = 218
+    
+    data = {
+        "Pccu": pccu,
+        "PV_power_total": pv_power,
+        "batteriesInfo": [
+            {
+                "batteryCapacity": 1187.339966
+            }
+        ]
+    }
+
+    sensor1 = BatteryPower(dummy_config_entry)
+
+    with patch("custom_components.maxxi_charge_connect.devices.battery_power.BatteryPower.async_write_ha_state", 
+               new_callable=MagicMock
+               ) as mock_write_ha_state1,\
+        patch("custom_components.maxxi_charge_connect.devices.battery_power.is_pccu_ok",return_value=True) as mock_is_pccu_ok1,\
+        patch("custom_components.maxxi_charge_connect.devices.battery_power.is_power_total_ok",return_value=False) as mock_is_power_ok1:
+        await sensor1._handle_update(data)
 
         mock_is_power_ok1.assert_called_once()
         mock_is_pccu_ok1.assert_called_once()
         mock_write_ha_state1.assert_not_called()
+
+        args1, kwargs1 = mock_is_pccu_ok1.call_args
+        args2, kwargs2 = mock_is_power_ok1.call_args
+        assert args1[0] == pccu
+        assert args2[0] == pv_power
+        assert args2[1] == [{"batteryCapacity": 1187.339966}]
         assert sensor1._attr_native_value is None
-
-        # mock_write_ha_state2.assert_not_called()
-#         # assert sensor2._attr_native_value is None
-
-
-# @pytest.mark.asyncio
-# async def test_ccu_power__handle_update_pccu_is_too_high(caplog):
-#     hass = MagicMock()
-#     hass.async_add_job = AsyncMock()
-
-#     dummy_config_entry = MagicMock()
-#     dummy_config_entry.entry_id = "1234abcd"
-#     dummy_config_entry.title = "Test Entry"
-#     dummy_config_entry.data = {}
-#     dummy_config_entry.options = {}
-#     # if 0 <= pccu <= (2300 * 1.5):
-#     data = {
-#         "Pccu": "36500"
-#     }
-
-#     sensor = CcuPower(dummy_config_entry)
-
-#     with patch("custom_components.maxxi_charge_connect.devices.ccu_power.CcuPower.async_write_ha_state", new_callable=MagicMock
-#                ) as mock_write_ha_state:
-#         await sensor._handle_update(data)
-#         mock_write_ha_state.assert_not_called()
-
-#     assert sensor._attr_native_value is None
-
-# @pytest.mark.asyncio
-# async def test_ccu_power__handle_update_pccu_is_too_low(caplog):
-#     hass = MagicMock()
-#     hass.async_add_job = AsyncMock()
-
-#     dummy_config_entry = MagicMock()
-#     dummy_config_entry.entry_id = "1234abcd"
-#     dummy_config_entry.title = "Test Entry"
-#     dummy_config_entry.data = {}
-#     dummy_config_entry.options = {}
-#     # if 0 <= pccu <= (2300 * 1.5):
-#     data = {
-#         "Pccu": "-500"
-#     }
-
-#     sensor = CcuPower(dummy_config_entry)
-
-#     with patch("custom_components.maxxi_charge_connect.devices.ccu_power.CcuPower.async_write_ha_state", new_callable=MagicMock
-#                ) as mock_write_ha_state:
-#         await sensor._handle_update(data)
-#         mock_write_ha_state.assert_not_called()
-
-#     assert sensor._attr_native_value is None
-
-

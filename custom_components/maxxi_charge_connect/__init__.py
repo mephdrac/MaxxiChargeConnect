@@ -17,9 +17,9 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 
 from .const import DOMAIN
-from .webhook import async_register_webhook, async_unregister_webhook
-
 from .http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
+from .migration.migration_from_yaml import MigrateFromYaml
+from .webhook import async_register_webhook, async_unregister_webhook
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -53,6 +53,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         True: Setup erfolgreich.
 
     """
+
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = {}
 
@@ -80,6 +81,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     await async_register_webhook(hass, entry)
     await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "number"])
 
+    migrator = MigrateFromYaml(hass, entry)
+
+    # Migrationsservice für die Yaml-Konfiguration von Joern-R registrieren
+
+    def handle_trigger_migration(call):
+        migrator.async_handle_trigger_migration(call)
+
+    hass.services.async_register(
+        DOMAIN, "migration_von_yaml_konfiguration", handle_trigger_migration
+    )
     return True
 
 

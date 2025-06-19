@@ -1,0 +1,8 @@
+migration_von_yaml_konfiguration:
+  name: Migration von YAML Konfiguration
+  description: Führt eine Migration der YAML-Konfiguration durch.
+  # fields:
+  #   dummy_field:
+  #     name: Dummy Feld
+  #     description: Nur ein Beispiel-Feld
+  #     example: "Beispielwert"

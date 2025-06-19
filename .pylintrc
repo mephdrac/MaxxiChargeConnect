@@ -1,6 +1,6 @@
 [MAIN]
-ignore=custom_components/maxxi_charge_connect/tests
-ignore-paths=custom_components/maxxi_charge_connect/tests
+ignore=tests
+ignore-paths=tests
 
 [MESSAGES CONTROL]
 disable=duplicate-code

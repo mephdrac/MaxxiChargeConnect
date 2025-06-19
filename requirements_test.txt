@@ -2,8 +2,9 @@ pytest
 pytest-asyncio
 pytest-mock
 pytest-cov
+pytest-homeassistant-custom-component
 pylint-per-file-ignores
-homeassistant>=2025.1.0
+# homeassistant>=2025.1.0
 
 beautifulsoup4==4.12.3
 
@@ -11,3 +12,4 @@ beautifulsoup4==4.12.3
 cryptography>=44.0.1
 jinja2>=3.1.5
 requests>=2.32.3
+urllib3>=2.5.0

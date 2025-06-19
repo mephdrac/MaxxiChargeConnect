@@ -24,8 +24,7 @@ class BatterySoE(SensorEntity):
     """SensorEntity zur Darstellung des Batteriezustands in Wattstunden (State of Energy).
 
     Attribute:
-        _attr_suggested_display_precision (int): Vorgeschlagene Genauigkeit für Anzeige.
-        _unsub_dispatcher (Callable|None): Funktion zur Abmeldung vom Dispatcher-Signal.
+        _attr_suggested_display_precision (int): Vorgeschlagene Genauigkeit für Anzeige.        
         _entry (ConfigEntry): Referenz auf den ConfigEntry dieser Instanz.
         _attr_unique_id (str): Eindeutige ID der Entity.
         _attr_icon (str): Icon für die Entity im Frontend.
@@ -47,7 +46,6 @@ class BatterySoE(SensorEntity):
 
         """
         self._attr_suggested_display_precision = 2
-        self._unsub_dispatcher = None
         self._entry = entry
         # self._attr_name = "Battery State of Energy"
         self._attr_unique_id = f"{entry.entry_id}_battery_soe"

@@ -1,8 +1,6 @@
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfEnergy
 from homeassistant.components.sensor import (
-    SensorDeviceClass,    
-    SensorStateClass,
 )
 import pytest
 from custom_components.maxxi_charge_connect.const import DOMAIN
@@ -122,4 +120,3 @@ async def test_battery_soe_sensor__handle_update__index_error(caplog):
         mock_write_ha_state.assert_not_called()
 
     assert sensor._attr_native_value is None
-    

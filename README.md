@@ -10,10 +10,14 @@ MaxxiChargeConnect ist eine benutzerdefinierte Home Assistant Integration, die d
 Diese Integration wurde nicht von Maxxisun bzw. der Maxxihandel GmbH, 04509 Wiedemar entwickelt oder unterstützt.
 Ich, @mephdrac, stehe in keinerlei Verbindung von Maxxisun bzw. der Maxxihandel GmbH. Die Verwendung der Begriffe MaxxiCharge und Maxxisun dient ausschließlich der Beschreibung der Kompatibilität.
 
-## ⚠️ Limitationen:
-**ACHTUNG:** beim Wechsel auf Version 1.2.0 kann es u.U. zu Datenverlusten kommen. Bitte vorher Backup machen - und mir Bescheid geben - wenn es ein Problem gab.
+## Update - Hiweist für Version 1.2.0
 
-für folgende Sensoren gilt:
+**ACHTUNG:** beim Wechsel auf Version 1.2.0 von einer früheren Version kann es u.U. zu Datenverlusten kommen. Beim Betrieb der Version 1.2.0 kommt es selbstverständlich nicht mehr zu Datenverlusten. Bitte vorher Backup machen - und mir Bescheid geben - wenn es ein Problem gab.
+
+
+## ⚠️ Limitationen:
+
+Für folgende Sensoren gilt:
 - Hausverbrauch
 - Hausverbrauch gesamt
 - Hausverbrauch heute

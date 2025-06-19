@@ -1,8 +1,12 @@
 migration_von_yaml_konfiguration:
   name: Migration von YAML Konfiguration
   description: Führt eine Migration der YAML-Konfiguration durch.
-  # fields:
-  #   dummy_field:
-  #     name: Dummy Feld
-  #     description: Nur ein Beispiel-Feld
-  #     example: "Beispielwert"
+  fields:
+    mappings:
+      name: Mappings
+      description: List of sensor migrations with old and new sensor IDs
+      example:
+        - old_sensor: "alte_sensor_id_1"
+        - new_sensor: "neuer_sensor_id_1"
+        - old_sensor: "alte_sensor_id_2"
+        - new_sensor: "neuer_sensor_id_2"

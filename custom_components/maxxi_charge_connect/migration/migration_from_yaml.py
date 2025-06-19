@@ -1,6 +1,5 @@
 import logging
-
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.config_entries import ConfigEntry
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,35 +39,86 @@ class MigrateFromYaml:
             return "firmware_version"
         return None
 
-    async def async_handle_trigger_migration(self, call):
-        _LOGGER.warning("Starte die Migration ...")
-        old_sensors = self.find_old_maxxicharge_sensors()
+    async def async_handle_trigger_migration(self, sensor_mapping: list[dict]):
+        _LOGGER.info("Starte Migration ...")
 
-        _LOGGER.warning("Alte Sensoren: %s", old_sensors)
+        # Sensors aus Service-Aufruf holen (kann leer sein)
+
+        _LOGGER.warning("Starte Migration für Sensoren: %s", sensor_mapping)
+
+        # Mapping aus Typ → neue Entity-ID
         sensor_map = {}
-        for entity_id, state in old_sensors.items():
-            sensor_type = self.detect_sensor_type(state)
-            if sensor_type and sensor_type not in sensor_map:
-                sensor_map[sensor_type] = entity_id
+        # Hole alle States nur einmal
+        all_states = {s.entity_id: s for s in self._hass.states.async_all()}
 
-        # Update ConfigEntry mit Migrationsdaten
-        self._hass.config_entries.async_update_entry(
-            self._entry,
-            data={
-                **self._entry.data,
-                "migration": True,
-                "legacy_sensor_map": sensor_map,
-            },
-        )
+        for mapping in sensor_mapping:
+            old_entity_id = mapping.get("old_sensor")
+            new_entity_id = mapping.get("new_sensor")
 
-        # Optional: Notification für User
-        await self._hass.services.async_call(
-            "persistent_notification",
-            "create",
-            {
-                "title": "MaxxiCharge Migration",
-                "message": "Migration der alten MaxxiCharge YAML-Sensoren wurde ausgeführt.",
-            },
-        )
+            if not old_entity_id or not new_entity_id:
+                _LOGGER.warning("Ungültiges Mapping übersprungen: %s", mapping)
+                continue
 
-        _LOGGER.warning("Migration beendet")
+            old_state = all_states.get(old_entity_id)
+            if not old_state:
+                _LOGGER.warning("Alter Sensor %s nicht gefunden", old_entity_id)
+                continue
+
+            sensor_type = self.detect_sensor_type(old_state)
+            if not sensor_type:
+                _LOGGER.warning(
+                    "Sensor-Typ von %s konnte nicht erkannt werden", old_entity_id
+                )
+                continue
+
+            sensor_map[sensor_type] = new_entity_id
+            _LOGGER.info(
+                "Mapping: %s → %s (Typ: %s)", old_entity_id, new_entity_id, sensor_type
+            )
+
+            if not sensor_map:
+                _LOGGER.warning("Keine gültigen Mappings gefunden. Abbruch")
+            return
+
+        # _LOGGER.warning("AllStates: %s", all_states)
+
+        # for cur_mappping in sensor_mapping:
+        #     _LOGGER.warning("Sensor-Map: %s", cur_mappping)
+
+        # if sensor_ids:
+        #     _LOGGER.info(f"Verwende übergebene Sensoren: {sensor_ids}")
+        #     # all_states = {s.entity_id: s for s in self._hass.states.async_all()}
+        #     # sensors = {eid: all_states[eid] for eid in sensor_ids if eid in all_states}
+        # else:
+        #     _LOGGER.info("Erkenne Sensoren automatisch ...")
+        # sensors = self.find_old_maxxicharge_sensors()
+
+        # _LOGGER.info("Gefundene Sensoren zur Migration: %s", list(sensors.keys()))
+
+        # Mapping aus Typ → Entity-ID erzeugen
+        # sensor_map = {}
+        # for entity_id, state in sensors.items():
+        #     sensor_type = self.detect_sensor_type(state)
+        #     if sensor_type and sensor_type not in sensor_map:
+        #         sensor_map[sensor_type] = entity_id
+
+        # ConfigEntry aktualisieren
+        # self._hass.config_entries.async_update_entry(
+        #     self._entry,
+        #     data={
+        #         **self._entry.data,
+        #         "migration": True,
+        #         "legacy_sensor_map": sensor_map,
+        #     },
+        # )
+
+        # await self._hass.services.async_call(
+        #     "persistent_notification",
+        #     "create",
+        #     {
+        #         "title": "MaxxiCharge Migration",
+        #         "message": f"Migration für {len(sensor_mapping)} Sensoren wurde durchgeführt.",
+        #     },
+        # )
+
+        _LOGGER.info("Migration abgeschlossen.")

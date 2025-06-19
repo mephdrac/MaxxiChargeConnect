@@ -124,7 +124,7 @@ def as_float(value: str) -> float:
 
     Wenn in einem String nur ein Floatwert und andere Zeichen
     angegeben sind, z.B. "800 W" so extrahiert diese Funktion
-    den Float-Wert und liefert diesen zurück. Sollte kein 
+    den Float-Wert und liefert diesen zurück. Sollte kein
     gültiger Float-Wert gefunden werden, so wird None zurück-
     geliefert.
 
@@ -135,10 +135,12 @@ def as_float(value: str) -> float:
         float: Die extrahierte Zahl oder None
 
     """
-    match = re.search(r"[\d.]+", value)
-
     number = None
-    if match:
-        number = float(match.group())
+
+    if value is not None:
+        match = re.search(r"[\d.]+", value)
+
+        if match:
+            number = float(match.group())
 
     return number

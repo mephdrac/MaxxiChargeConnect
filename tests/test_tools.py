@@ -110,3 +110,9 @@ async def test_tools__as_float__kein_wert_extrahierbar (caplog):
 
     value = "Das ist der Wert"
     assert as_float(value) is None
+
+@pytest.mark.asyncio
+async def test_tools__as_float__param_ist_none (caplog):
+
+    value = None
+    assert as_float(value) is None

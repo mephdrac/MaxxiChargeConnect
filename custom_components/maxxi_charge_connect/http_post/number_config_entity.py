@@ -12,6 +12,7 @@ Abhängigkeiten:
     - Lokale Hilfsmodule: const, tools
 
 """
+
 import logging
 import aiohttp
 from aiohttp import ClientConnectorError, ClientError

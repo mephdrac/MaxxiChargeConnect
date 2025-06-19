@@ -1,7 +1,5 @@
 from unittest.mock import MagicMock, patch
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfEnergy
-from homeassistant.components.sensor import (
-)
 import pytest
 from custom_components.maxxi_charge_connect.const import DOMAIN
 from custom_components.maxxi_charge_connect.devices.battery_soe_sensor import (

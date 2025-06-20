@@ -81,21 +81,36 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     await async_register_webhook(hass, entry)
     await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "number"])
 
+    # entity_registry = async_get_entity_registry(hass)
+    # Das ist die ID des Geräts, das mit dem ConfigEntry verknüpft ist
+    # device_id = entry.device_id
+
+    # ConfigEntry.get(CONF_WEBHOOK_ID, "")
+    _LOGGER.error("TITEL: %s", entry)
+
+    # if device_id is not None:
+    #     device = entity_registry.async_get(device_id)
+    #     if device:
+    #         device_name = device.name_by_user or device.name or "Unbekanntes Gerät"
+    #         _LOGGER.error(f"Name des verknüpften Geräts: {device_name}")
+    #     else:
+    #         _LOGGER.warning("Kein Gerät zu device_id gefunden.")
+    # else:
+    #     _LOGGER.warning("Kein device_id im ConfigEntry vorhanden.")
+
     migrator = MigrateFromYaml(hass, entry)
+    await migrator.async_notify_possible_migration()
 
     # Migrationsservice für die Yaml-Konfiguration von Joern-R registrieren
 
     async def handle_trigger_migration(call):
-        _LOGGER.warning("HIER BIN ICH1")
         mappings = call.data.get("mappings", [])
         await migrator.async_handle_trigger_migration(mappings)
-        _LOGGER.warning("HIER BIN ICH2")
-
-        # _LOGGER.info(f"Starte Migration für Sensoren: {mappings}")
 
     hass.services.async_register(
         DOMAIN, "migration_von_yaml_konfiguration", handle_trigger_migration
     )
+
     return True
 
 

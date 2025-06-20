@@ -3,10 +3,11 @@ migration_von_yaml_konfiguration:
   description: Führt eine Migration der YAML-Konfiguration durch.
   fields:
     mappings:
-      name: Mappings
-      description: List of sensor migrations with old and new sensor IDs
+      name: Sensor-Mappings
+      description: Alte und neue Sensor-IDs
+      required: false
       example:
-        - old_sensor: "alte_sensor_id_1"
-        - new_sensor: "neuer_sensor_id_1"
-        - old_sensor: "alte_sensor_id_2"
-        - new_sensor: "neuer_sensor_id_2"
+        - old_sensor: "sensor.alt_soc"
+          new_sensor: "sensor.neu_soc"
+      selector:
+        object: {}

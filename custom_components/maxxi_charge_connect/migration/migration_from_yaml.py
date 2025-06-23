@@ -1,7 +1,12 @@
+import sqlite3
+import os
+
 import logging
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
+
+from homeassistant.components.recorder.statistics import clear_statistics
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,9 +32,9 @@ class MigrateFromYaml:
                 entity.config_entry_id == self._entry.entry_id
                 and entity.domain == "sensor"
             ):
-                type = entity.unique_id.removeprefix(f"{self._entry.entry_id}_").lower()
-                old_type = self.get_type(type)
-                neu_sensor_map[entity.entity_id] = (type, old_type, entity)
+                typ = entity.unique_id.removeprefix(f"{self._entry.entry_id}_").lower()
+                old_typ = self.get_type(typ)
+                neu_sensor_map[entity.entity_id] = (typ, old_typ, entity)
 
         return neu_sensor_map
 
@@ -95,73 +100,166 @@ class MigrateFromYaml:
         if "pvtotalenergy" in type:
             return "pv_leistung_kwh"
 
+        if "battery_state_of_energy" in type:
+            return "pv_leistung_kwh"
+
         return None
 
-    def get_new_sensor(self, old_entity_id):
+    def get_new_sensor(self, old_entity):
         """Ermittelt den neuen Sensor, der dem alten Sensor entspricht"""
-        if old_entity_id is None or self._current_sensors is None:
+        if old_entity is None or self._current_sensors is None:
             return None
 
         for entity_id, (sensor_type, old_type, entity) in self._current_sensors.items():
-            if old_type is not None and old_type in old_entity_id:
+            if sensor_type is not None and sensor_type == self.get_type_from_unique_id(
+                old_entity.unique_id
+            ):
                 return entity_id
 
         return None
 
-    def find_old_maxxicharge_sensors(self):
+    def get_type_from_unique_id(self, unique_id):
+        typ = unique_id.lower()
+
+        if typ.endswith("batterie_entladen"):
+            return "battery_power_discharge"
+
+        if typ.endswith("ladestand_detail"):
+            return "battery_soe"
+
+        if typ.endswith("batterie_laden"):
+            return "battery_power_charge"
+
+        if typ.endswith("ladestand"):
+            return "battery_soc"
+
+        if typ.endswith("batterie_leistung"):
+            return "battery_power"
+
+        if typ.endswith("ccu_gesamtleistung"):
+            return "ccu_power"
+
+        if typ.endswith("ccu_version"):
+            return "firmware_version"
+
+        if typ.endswith("deviceid"):
+            return "deviceid"
+
+        if typ.endswith("wifi-dbm"):
+            return "rssi"  #
+
+        if typ.endswith("pv_leistung"):
+            return "pv_power"
+
+        if typ.endswith("e-leistung"):
+            return "power_meter"
+
+        if typ.endswith("e_zaehler_netzbezug"):
+            return "grid_import"
+
+        if typ.endswith("e_zaehler_netzeinspeisung"):
+            return "grid_export"
+
+        if typ.endswith("batterie_laden_kwh"):
+            return "batterytotalenergycharge"
+
+        if typ.endswith("batterie_entladen_kwh"):
+            return "batterytotalenergydischarge"
+
+        if typ.endswith("e_zaehler_netzbezug_kwh"):
+            return "gridimportenergytotal"
+
+        if typ.endswith("e_zaehler_netzeinspeisung_kwh"):
+            return "gridexportenergytotal"
+
+        if typ.endswith("pv_leistung_kwh"):
+            return "pvtotalenergy"
+
+        if typ.endswith("ladestanddetail"):
+            return "battery_soe"
+
+        # _LOGGER.warning("None-Typ: %s", typ)
+        return None
+
+    def get_entities_for_migrate(self):
+        entity_registry = async_get_entity_registry(self._hass)
+        all_entries = list(entity_registry.entities.values())
+
         sensors = {}
-        for state in self._hass.states.async_all("sensor"):
+
+        for entry in all_entries:
             if (
-                "maxxi" in state.entity_id.lower()
-                or "maxxi" in (state.name or "").lower()
+                not self._current_sensors.__contains__(entry.entity_id)
+                and entry.domain == "sensor"
+                and "maxxi" in entry.entity_id
+                and self.get_type_from_unique_id(entry.unique_id) is not None
             ):
-                sensors[state.entity_id] = state
+                sensors[entry.entity_id] = entry
 
         return sensors
 
-    def detect_sensor_type(self, state):
-        # name = (state.name or "").lower()
-        name = (state.friendly_name or "").lower()
-        # name = state.attributes.get("friendly_name", state.entity_id).lower()
+    # def find_old_maxxicharge_sensors(self):
+    #     sensors = {}
+    #     for state in self._hass.states.async_all("sensor"):
+    #         if (
+    #             "maxxi" in state.entity_id.lower()
+    #             or "maxxi" in (state.name or "").lower()
+    #         ):
+    #             sensors[state.entity_id] = state
 
-        # unit = state.attributes.get("unit_of_measurement", "").lower()
-        # device_class = state.attributes.get("device_class", "").lower()
+    #     return sensors
 
-        # name = state
+    # def detect_sensor_type(self, state):
+    #     # name = (state.name or "").lower()
+    #     name = (state.friendly_name or "").lower()
+    #     # name = state.attributes.get("friendly_name", state.entity_id).lower()
 
-        if "ladestand %" in name or (unit == "%" and "battery" in name):
-            return "soc"
-        if "ladestand detail" in name or unit == "wh":
-            return "capacity_wh"
-        if "leistung" in name and "ccu" in name:
-            return "ccu_power"
-        if "leistung" in name and "batterie" in name:
-            return "battery_power"
-        if "signalstärke" in name or device_class == "signal_strength":
-            return "wifi_signal_strength"
-        if "firmware" in name:
-            return "firmware_version"
-        if "deviceid" in name:
-            return "DeviceId"
+    #     # unit = state.attributes.get("unit_of_measurement", "").lower()
+    #     # device_class = state.attributes.get("device_class", "").lower()
 
-        return None
+    #     # name = state
+
+    #     if "ladestand %" in name or (unit == "%" and "battery" in name):
+    #         return "soc"
+    #     if "ladestand detail" in name or unit == "wh":
+    #         return "capacity_wh"
+    #     if "leistung" in name and "ccu" in name:
+    #         return "ccu_power"
+    #     if "leistung" in name and "batterie" in name:
+    #         return "battery_power"
+    #     if "signalstärke" in name or device_class == "signal_strength":
+    #         return "wifi_signal_strength"
+    #     if "firmware" in name:
+    #         return "firmware_version"
+    #     if "deviceid" in name:
+    #         return "DeviceId"
+
+    #     return None
 
     async def async_notify_possible_migration(self):
-        old_sensors = self.find_old_maxxicharge_sensors()
+        self._current_sensors = self.load_current_sensors()
+        old_sensors = self.get_entities_for_migrate()
+
+        # _LOGGER.warning(
+        #     "Typ: %s", self.get_type_from_unique_id("Maxxicharge1-LadestandDetail")
+        # )
+        # return
 
         if not old_sensors:
-            _LOGGER.info("Keine alten Sensoren zur Migration erkannt.")
+            _LOGGER.info("Keine alten Sensoren zur Migration erkannt")
             return
-
-        self._current_sensors = self.load_current_sensors()
 
         lines = ["Folgende alte Sensoren wurden erkannt:\n"]
 
-        for eid in old_sensors:
-            lines.append(f'- old_sensor: "{eid}"')
+        for entity_id, entry in old_sensors.items():
+            lines.append(f'- old_sensor: "{entity_id}"')
 
-            new_entity_id = self.get_new_sensor(eid)
+            new_entity_id = self.get_new_sensor(entry)
             if new_entity_id is None:
+                _LOGGER.warning(
+                    "Typ: %s", self.get_type_from_unique_id(entry.unique_id)
+                )
+
                 lines.append(f'  new_sensor: "sensor.HIER_EINTRAGEN"')
             else:
                 lines.append(f'  new_sensor: "{new_entity_id}"')
@@ -191,8 +289,8 @@ class MigrateFromYaml:
     ):
         _LOGGER.info("Starte Migration ...")
 
-        entity_registry = async_get_entity_registry(self._hass)
         self._current_sensors = self.load_current_sensors()
+        entity_registry = async_get_entity_registry(self._hass)
 
         if self._current_sensors is None:
             _LOGGER.error(
@@ -237,6 +335,9 @@ class MigrateFromYaml:
                 "Mapping: %s → %s (Typ: %s)", old_entity_id, new_entity_id, type
             )
 
+            db_path = self._hass.config.path("home-assistant_v2.db")
+            self.migrate_sqlite_statistics(old_entity_id, new_entity_id, db_path)
+
             # Schritt 1: Temporären Namen erzeugen
             # temp_entity_id = f"{new_entity_id}_to_be_removed"
 
@@ -261,6 +362,11 @@ class MigrateFromYaml:
                 if entity:
                     _LOGGER.warning("%s -> %s", new_entity_id, old_entity_id)
 
+                    # await self._hass.async_add_executor_job(
+                    #     clear_statistics, self._hass, new_entity_id
+                    # )
+
+                    # clear_statistics(self._hass, new_entity_id)
                     entity_registry.async_remove(old_entity_id)
                     await self._hass.async_block_till_done()
 
@@ -325,3 +431,61 @@ class MigrateFromYaml:
         )
 
         _LOGGER.info("Migration abgeschlossen.")
+
+    def migrate_sqlite_statistics(self, old_sensor, new_sensor, db_path):
+        if not os.path.exists(db_path):
+            _LOGGER.error("SQLite-DB nicht gefunden unter: %s", db_path)
+            return
+
+        try:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+
+            # IDs aus statistics_meta holen
+            cursor.execute(
+                "SELECT id FROM statistics_meta WHERE statistic_id = ?", (old_sensor,)
+            )
+            old_row = cursor.fetchone()
+            if not old_row:
+                _LOGGER.warning("Keine Statistikdaten für alten Sensor %s", old_sensor)
+                return
+            old_id = old_row[0]
+
+            cursor.execute(
+                "SELECT id FROM statistics_meta WHERE statistic_id = ?", (new_sensor,)
+            )
+            new_row = cursor.fetchone()
+            if not new_row:
+                _LOGGER.warning("Keine Statistikdaten für neuen Sensor %s", new_sensor)
+                return
+            new_id = new_row[0]
+
+            _LOGGER.info(
+                "Migriere Statistikdaten von %s (%s) nach %s (%s)",
+                old_sensor,
+                old_id,
+                new_sensor,
+                new_id,
+            )
+
+            # Vorhandene Daten des neuen Sensors löschen (optional)
+            for table in ["statistics", "statistics_short_term", "statistics_runs"]:
+                cursor.execute(f"DELETE FROM {table} WHERE metadata_id = ?", (new_id,))
+
+            # Alte Daten übernehmen
+            for table in ["statistics", "statistics_short_term", "statistics_runs"]:
+                cursor.execute(
+                    f"UPDATE {table} SET metadata_id = ? WHERE metadata_id = ?",
+                    (new_id, old_id),
+                )
+
+            # Alten Meta-Eintrag löschen (optional)
+            cursor.execute("DELETE FROM statistics_meta WHERE id = ?", (old_id,))
+
+            conn.commit()
+            _LOGGER.info("Statistikmigration abgeschlossen.")
+
+        except Exception as e:
+            _LOGGER.exception("Fehler bei Statistik-Migration: %s", e)
+        finally:
+            conn.close()

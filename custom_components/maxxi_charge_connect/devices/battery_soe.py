@@ -24,7 +24,7 @@ class BatterySoE(SensorEntity):
     """SensorEntity zur Darstellung des Batteriezustands in Wattstunden (State of Energy).
 
     Attribute:
-        _attr_suggested_display_precision (int): Vorgeschlagene Genauigkeit für Anzeige.        
+        _attr_suggested_display_precision (int): Vorgeschlagene Genauigkeit für Anzeige.
         _entry (ConfigEntry): Referenz auf den ConfigEntry dieser Instanz.
         _attr_unique_id (str): Eindeutige ID der Entity.
         _attr_icon (str): Icon für die Entity im Frontend.

@@ -198,44 +198,6 @@ class MigrateFromYaml:
 
         return sensors
 
-    # def find_old_maxxicharge_sensors(self):
-    #     sensors = {}
-    #     for state in self._hass.states.async_all("sensor"):
-    #         if (
-    #             "maxxi" in state.entity_id.lower()
-    #             or "maxxi" in (state.name or "").lower()
-    #         ):
-    #             sensors[state.entity_id] = state
-
-    #     return sensors
-
-    # def detect_sensor_type(self, state):
-    #     # name = (state.name or "").lower()
-    #     name = (state.friendly_name or "").lower()
-    #     # name = state.attributes.get("friendly_name", state.entity_id).lower()
-
-    #     # unit = state.attributes.get("unit_of_measurement", "").lower()
-    #     # device_class = state.attributes.get("device_class", "").lower()
-
-    #     # name = state
-
-    #     if "ladestand %" in name or (unit == "%" and "battery" in name):
-    #         return "soc"
-    #     if "ladestand detail" in name or unit == "wh":
-    #         return "capacity_wh"
-    #     if "leistung" in name and "ccu" in name:
-    #         return "ccu_power"
-    #     if "leistung" in name and "batterie" in name:
-    #         return "battery_power"
-    #     if "signalstärke" in name or device_class == "signal_strength":
-    #         return "wifi_signal_strength"
-    #     if "firmware" in name:
-    #         return "firmware_version"
-    #     if "deviceid" in name:
-    #         return "DeviceId"
-
-    #     return None
-
     async def async_notify_possible_migration(self):
         self._current_sensors = self.load_current_sensors()
         old_sensors = self.get_entities_for_migrate()
@@ -288,6 +250,8 @@ class MigrateFromYaml:
         self, sensor_mapping: list[dict] | None = None
     ):
         _LOGGER.info("Starte Migration ...")
+        await self._hass.services.async_call("recorder", "disable")
+        await self._hass.async_block_till_done()
 
         self._current_sensors = self.load_current_sensors()
         entity_registry = async_get_entity_registry(self._hass)
@@ -336,43 +300,36 @@ class MigrateFromYaml:
             )
 
             db_path = self._hass.config.path("home-assistant_v2.db")
-            self.migrate_sqlite_statistics(old_entity_id, new_entity_id, db_path)
-
-            # Schritt 1: Temporären Namen erzeugen
-            # temp_entity_id = f"{new_entity_id}_to_be_removed"
-
-            # # 1. Neue Entity umbenennen (temporär freimachen)
-            # try:
-            #     entity_registry.async_update_entity(
-            #         entity_id=new_entity_id, new_entity_id=temp_entity_id
-            #     )
-            #     _LOGGER.info(
-            #         "Temporär umbenannt: %s → %s", new_entity_id, temp_entity_id
-            #     )
-            # except Exception as e:
-            #     _LOGGER.warning(
-            #         "Konnte %s nicht temporär umbenennen: %s", new_entity_id, e
-            #     )
-
-            # await self._hass.async_block_till_done()
-
-            # Alte Entity zur neuen machen
 
             try:
-                if entity:
+                # if entity:
+                #     _LOGGER.warning("%s -> %s", new_entity_id, old_entity_id)
+
+                #     entity_registry.async_remove(old_entity_id)
+                #     await self._hass.async_block_till_done()
+
+                #     entity_registry.async_update_entity(
+                #         entity_id=new_entity_id, new_entity_id=old_entity_id
+                #     )
+                entity_old = entity_registry.entities.get(old_entity_id)
+                entity_new = entity_registry.entities.get(new_entity_id)
+
+                if entity_old and entity_new:
                     _LOGGER.warning("%s -> %s", new_entity_id, old_entity_id)
 
-                    # await self._hass.async_add_executor_job(
-                    #     clear_statistics, self._hass, new_entity_id
-                    # )
-
-                    # clear_statistics(self._hass, new_entity_id)
+                    # Entferne den alten Entity-Eintrag (macht den Namen frei)
                     entity_registry.async_remove(old_entity_id)
                     await self._hass.async_block_till_done()
 
+                    self.migrate_sqlite_statistics(
+                        new_entity_id, old_entity_id, db_path, False
+                    )
+
+                    # Benenne den neuen Entity-Namen auf den alten um
                     entity_registry.async_update_entity(
                         entity_id=new_entity_id, new_entity_id=old_entity_id
                     )
+                    await self._hass.async_block_till_done()
                 else:
                     _LOGGER.error("Neuer Unique-Key konnte nicht gesetzt werden")
                     return
@@ -430,9 +387,20 @@ class MigrateFromYaml:
             },
         )
 
+        await self._hass.services.async_call("recorder", "enable")
+
         _LOGGER.info("Migration abgeschlossen.")
 
-    def migrate_sqlite_statistics(self, old_sensor, new_sensor, db_path):
+    def migrate_sqlite_statistics(
+        self, old_sensor, new_sensor, db_path, clear_existing=True
+    ):
+        if old_sensor == new_sensor:
+            _LOGGER.warning(
+                "Alter und neuer Sensor sind identisch (%s) – keine Migration erforderlich.",
+                old_sensor,
+            )
+            return
+
         if not os.path.exists(db_path):
             _LOGGER.error("SQLite-DB nicht gefunden unter: %s", db_path)
             return
@@ -455,35 +423,84 @@ class MigrateFromYaml:
                 "SELECT id FROM statistics_meta WHERE statistic_id = ?", (new_sensor,)
             )
             new_row = cursor.fetchone()
-            if not new_row:
-                _LOGGER.warning("Keine Statistikdaten für neuen Sensor %s", new_sensor)
-                return
-            new_id = new_row[0]
 
-            _LOGGER.info(
-                "Migriere Statistikdaten von %s (%s) nach %s (%s)",
-                old_sensor,
-                old_id,
-                new_sensor,
-                new_id,
-            )
-
-            # Vorhandene Daten des neuen Sensors löschen (optional)
-            for table in ["statistics", "statistics_short_term", "statistics_runs"]:
-                cursor.execute(f"DELETE FROM {table} WHERE metadata_id = ?", (new_id,))
-
-            # Alte Daten übernehmen
-            for table in ["statistics", "statistics_short_term", "statistics_runs"]:
-                cursor.execute(
-                    f"UPDATE {table} SET metadata_id = ? WHERE metadata_id = ?",
-                    (new_id, old_id),
+            if new_row:
+                new_id = new_row[0]
+                _LOGGER.info(
+                    "Neue Sensor-ID %s existiert bereits mit ID %s", new_sensor, new_id
                 )
 
-            # Alten Meta-Eintrag löschen (optional)
+                if clear_existing:
+                    _LOGGER.info(
+                        "Lösche vorhandene Statistikdaten für %s (ID %s)",
+                        new_sensor,
+                        new_id,
+                    )
+                    for table in [
+                        "statistics",
+                        "statistics_short_term",
+                        "statistics_runs",
+                    ]:
+                        cursor.execute(
+                            f"DELETE FROM {table} WHERE metadata_id = ?", (new_id,)
+                        )
+            else:
+                _LOGGER.info(
+                    "Neuer Sensor %s hat noch keinen statistics_meta-Eintrag – erstelle neuen.",
+                    new_sensor,
+                )
+
+                # Alten metadata-Eintrag kopieren
+                cursor.execute("SELECT * FROM statistics_meta WHERE id = ?", (old_id,))
+                old_meta = list(cursor.fetchone())
+
+                # Spaltennamen ermitteln
+                cursor.execute("PRAGMA table_info(statistics_meta)")
+                columns_info = cursor.fetchall()
+                columns = [col[1] for col in columns_info]
+
+                # ID-Spalte entfernen, damit sie nicht eingefügt wird
+                if "id" in columns:
+                    id_index = columns.index("id")
+                    columns.pop(id_index)
+                    old_meta.pop(id_index)
+
+                # statistic_id auf neue Entität setzen
+                stat_id_index = columns.index("statistic_id")
+                old_meta[stat_id_index] = new_sensor
+
+                columns_sql = ", ".join(columns)
+                placeholders = ", ".join(["?"] * len(columns))
+
+                cursor.execute(
+                    f"INSERT INTO statistics_meta ({columns_sql}) VALUES ({placeholders})",
+                    tuple(old_meta),
+                )
+                new_id = cursor.lastrowid
+                _LOGGER.info(
+                    "Neuer statistics_meta-Eintrag erstellt für %s mit ID %s",
+                    new_sensor,
+                    new_id,
+                )
+
+            # Migration der Statistikdaten
+            for table in ["statistics", "statistics_short_term"]:
+                updated = cursor.execute(
+                    f"UPDATE {table} SET metadata_id = ? WHERE metadata_id = ?",
+                    (new_id, old_id),
+                ).rowcount
+                _LOGGER.info("Tabelle %s: %d Zeilen migriert.", table, updated)
+
+            # Alten Meta-Eintrag löschen
             cursor.execute("DELETE FROM statistics_meta WHERE id = ?", (old_id,))
+            _LOGGER.info("Alter statistics_meta-Eintrag (%s) gelöscht.", old_sensor)
 
             conn.commit()
-            _LOGGER.info("Statistikmigration abgeschlossen.")
+            _LOGGER.info(
+                "Statistikmigration von '%s' nach '%s' abgeschlossen.",
+                old_sensor,
+                new_sensor,
+            )
 
         except Exception as e:
             _LOGGER.exception("Fehler bei Statistik-Migration: %s", e)

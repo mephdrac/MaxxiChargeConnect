@@ -86,7 +86,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     # device_id = entry.device_id
 
     # ConfigEntry.get(CONF_WEBHOOK_ID, "")
-    _LOGGER.error("TITEL: %s", entry)
 
     # if device_id is not None:
     #     device = entity_registry.async_get(device_id)

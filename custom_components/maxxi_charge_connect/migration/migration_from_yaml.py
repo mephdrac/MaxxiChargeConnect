@@ -14,7 +14,8 @@ from homeassistant.helpers.entity_registry import async_get as async_get_entity_
 _LOGGER = logging.getLogger(__name__)
 
 
-DEVICE_ID = "deviceid"
+ID_E_LEISTUNG = "E-Leistung"
+ID_BATTERIE_LEISTUNG = "Batterie_Leistung"
 
 
 class MigrateFromYaml:
@@ -139,7 +140,7 @@ class MigrateFromYaml:
         if typ.endswith("dc/dc-algorithmus"):
             return "konf_dc_algorithm"
 
-        if typ.endswith("Microinverter"):
+        if typ.endswith("microinverter"):
             return "konf_wr"
 
         if typ.endswith("ccuspeed"):
@@ -276,7 +277,7 @@ class MigrateFromYaml:
             return "dc/dc-algorithmus"
 
         if typ.endswith("konf_wr"):
-            return "Microinverter"
+            return "microinverter"
 
         if typ.endswith("konf_ccu_speed"):
             return "ccuspeed"
@@ -306,6 +307,31 @@ class MigrateFromYaml:
         # _LOGGER.warning("None-Typ: %s", typ)
         return None
 
+    def get_riemann_entities_for_migrate(self):
+        entity_registry = async_get_entity_registry(self._hass)
+        all_entries = list(entity_registry.entities.values())
+
+        sensors = {}
+
+        for entry in all_entries:
+            typ = self.get_type_from_unique_id(entry.unique_id)
+            if (
+                not self._current_sensors.__contains__(entry.entity_id)
+                and entry.domain == "sensor"
+                and "maxxi" in entry.entity_id
+                and typ is not None
+                and typ
+                in {
+                    "batterytotalenergycharge",
+                    "batterytotalenergydischarge",
+                    "gridimportenergytotal",
+                    "gridexportenergytotal",
+                }
+            ):
+                sensors[entry.entity_id] = entry
+
+        return sensors
+
     def get_entities_for_migrate(self):
         entity_registry = async_get_entity_registry(self._hass)
         all_entries = list(entity_registry.entities.values())
@@ -313,11 +339,19 @@ class MigrateFromYaml:
         sensors = {}
 
         for entry in all_entries:
+            typ = self.get_type_from_unique_id(entry.unique_id)
             if (
                 not self._current_sensors.__contains__(entry.entity_id)
                 and entry.domain == "sensor"
                 and "maxxi" in entry.entity_id
-                and self.get_type_from_unique_id(entry.unique_id) is not None
+                and typ is not None
+                and typ
+                not in {
+                    "batterytotalenergycharge",
+                    "batterytotalenergydischarge",
+                    "gridimportenergytotal",
+                    "gridexportenergytotal",
+                }
             ):
                 sensors[entry.entity_id] = entry
 
@@ -334,18 +368,33 @@ class MigrateFromYaml:
     async def async_notify_possible_migration(self):
         self._current_sensors = self.load_current_sensors()
         old_sensors = self.get_entities_for_migrate()
+        riemann_sensors = self.get_riemann_entities_for_migrate()
 
         # _LOGGER.warning(
         #     "Typ: %s", self.get_type_from_unique_id("Maxxicharge1-LadestandDetail")
         # )
         # return
 
-        if not old_sensors:
+        if not old_sensors and not riemann_sensors:
             _LOGGER.info("Keine alten Sensoren zur Migration erkannt")
             return
 
-        lines = ["Folgende alte Sensoren wurden erkannt:\n"]
+        lines = ["Folgende alte Riemann-Sensoren wurden erkannt:\n"]
 
+        for entity_id, entry in riemann_sensors.items():
+            lines.append(f'- old_sensor: "{entity_id}"')
+
+            new_entity_id = self.get_new_sensor(entry)
+            if new_entity_id is None:
+                _LOGGER.warning(
+                    "Typ: %s", self.get_type_from_unique_id(entry.unique_id)
+                )
+
+                lines.append(f'  new_sensor: "sensor.HIER_EINTRAGEN"')
+            else:
+                lines.append(f'  new_sensor: "{new_entity_id}"')
+
+        lines.append("\n\nFolgende alte Sensoren wurden erkannt:\n")
         for entity_id, entry in old_sensors.items():
             lines.append(f'- old_sensor: "{entity_id}"')
 
@@ -363,6 +412,7 @@ class MigrateFromYaml:
 
         message = (
             "Die folgenden alten MaxxiCharge-Sensoren wurden erkannt und könnten migriert werden.\n\n"
+            "ACHTUNG: Immer zuerst die Riemann-Sensoren migrieren.\n\n"
             "Kopiere den folgenden Block und verwende ihn im Service `maxxi_charge_connect.migration_von_yaml_konfiguration`:\n\n"
             "```yaml\n"
             f"{sensor_block}"
@@ -448,7 +498,7 @@ class MigrateFromYaml:
                 entity_new = entity_registry.entities.get(new_entity_id)
 
                 if entity_old and entity_new:
-                    _LOGGER.warning("%s -> %s", new_entity_id, old_entity_id)
+                    _LOGGER.info("%s -> %s", new_entity_id, old_entity_id)
 
                     # Entferne den alten Entity-Eintrag (macht den Namen frei)
                     # entity_registry.async_remove(old_entity_id)
@@ -461,26 +511,26 @@ class MigrateFromYaml:
                     if typ == "batterytotalenergydischarge":
                         self.migrate_negative_statistics(
                             db_path,
-                            self.resolve_entity_id_from_unique_id("Batterie_Leistung"),
+                            self.resolve_entity_id_from_unique_id(ID_BATTERIE_LEISTUNG),
                             new_entity_id,
                         )
                     elif typ == "gridexportenergytotal":
                         self.migrate_negative_statistics(
                             db_path,
-                            self.resolve_entity_id_from_unique_id("E-Leistung"),
+                            self.resolve_entity_id_from_unique_id(ID_E_LEISTUNG),
                             new_entity_id,
                         )
 
                     elif typ == "gridimportenergytotal":
                         self.migrate_positive_statistics(
                             db_path,
-                            self.resolve_entity_id_from_unique_id("E-Leistung"),
+                            self.resolve_entity_id_from_unique_id(ID_E_LEISTUNG),
                             new_entity_id,
                         )
                     elif typ == "batterytotalenergycharge":
                         self.migrate_positive_statistics(
                             db_path,
-                            self.resolve_entity_id_from_unique_id("Batterie_Leistung"),
+                            self.resolve_entity_id_from_unique_id(ID_BATTERIE_LEISTUNG),
                             new_entity_id,
                         )
 
@@ -540,14 +590,12 @@ class MigrateFromYaml:
         try:
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
-            _LOGGER.warning("1")
 
             # IDs holen
             cursor.execute(
                 "SELECT metadata_id FROM states_meta WHERE entity_id = ?",
                 (old_entity_id,),
             )
-            _LOGGER.warning("2")
             old_row = cursor.fetchone()
             if not old_row:
                 _LOGGER.warning("Keine states_meta für %s gefunden.", old_entity_id)
@@ -558,7 +606,6 @@ class MigrateFromYaml:
                 "SELECT metadata_id FROM states_meta WHERE entity_id = ?",
                 (new_entity_id,),
             )
-            _LOGGER.warning("3")
             new_row = cursor.fetchone()
 
             if new_row:
@@ -572,14 +619,11 @@ class MigrateFromYaml:
                     "states_meta für %s erstellt mit ID %s", new_entity_id, new_id
                 )
 
-            _LOGGER.warning("4")
-
             # States umhängen
             updated = cursor.execute(
                 "UPDATE states SET metadata_id = ? WHERE metadata_id = ?",
                 (new_id, old_id),
             ).rowcount
-            _LOGGER.warning("5")
 
             conn.commit()
             _LOGGER.info(
@@ -592,7 +636,6 @@ class MigrateFromYaml:
         except Exception as e:
             _LOGGER.exception("Fehler bei State-Migration (states_meta): %s", e)
         finally:
-            _LOGGER.warning("6")
             conn.close()
 
     # def migrate_state_history(self, db_path, old_entity_id, new_entity_id):

@@ -1,12 +1,14 @@
-import sqlite3
-import os
-
 import logging
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
+import os
+import re
+import sqlite3
+import asyncio
 
 from homeassistant.components.recorder.statistics import clear_statistics
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -321,14 +323,20 @@ class MigrateFromYaml:
                     entity_registry.async_remove(old_entity_id)
                     await self._hass.async_block_till_done()
 
+                    self.migrate_states_meta(db_path, old_entity_id, new_entity_id)
+                    self.migrate_logbook_entries(db_path, old_entity_id, new_entity_id)
                     self.migrate_sqlite_statistics(
-                        new_entity_id, old_entity_id, db_path, False
+                        old_entity_id, new_entity_id, db_path, False
+                    )
+                    await self._hass.async_block_till_done()
+                    await self.async_replace_entity_ids_in_yaml_files(
+                        old_entity_id=old_entity_id, new_entity_id=new_entity_id
                     )
 
-                    # Benenne den neuen Entity-Namen auf den alten um
-                    entity_registry.async_update_entity(
-                        entity_id=new_entity_id, new_entity_id=old_entity_id
-                    )
+                    # # Benenne den neuen Entity-Namen auf den alten um
+                    # entity_registry.async_update_entity(
+                    #     entity_id=new_entity_id, new_entity_id=old_entity_id
+                    # )
                     await self._hass.async_block_till_done()
                 else:
                     _LOGGER.error("Neuer Unique-Key konnte nicht gesetzt werden")
@@ -390,6 +398,130 @@ class MigrateFromYaml:
         await self._hass.services.async_call("recorder", "enable")
 
         _LOGGER.info("Migration abgeschlossen.")
+
+    def migrate_states_meta(self, db_path, old_entity_id, new_entity_id):
+        if not os.path.exists(db_path):
+            _LOGGER.error("Recorder-DB nicht gefunden unter: %s", db_path)
+            return
+
+        try:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+
+            # IDs holen
+            cursor.execute(
+                "SELECT metadata_id FROM states_meta WHERE entity_id = ?",
+                (old_entity_id,),
+            )
+            old_row = cursor.fetchone()
+            if not old_row:
+                _LOGGER.warning("Keine states_meta für %s gefunden.", old_entity_id)
+                return
+            old_id = old_row[0]
+
+            cursor.execute(
+                "SELECT metadata_id FROM states_meta WHERE entity_id = ?",
+                (new_entity_id,),
+            )
+            new_row = cursor.fetchone()
+
+            if new_row:
+                new_id = new_row[0]
+            else:
+                cursor.execute(
+                    "INSERT INTO states_meta (entity_id) VALUES (?)", (new_entity_id,)
+                )
+                new_id = cursor.lastrowid
+                _LOGGER.info(
+                    "states_meta für %s erstellt mit ID %s", new_entity_id, new_id
+                )
+
+            # States umhängen
+            updated = cursor.execute(
+                "UPDATE states SET metadata_id = ? WHERE metadata_id = ?",
+                (new_id, old_id),
+            ).rowcount
+
+            conn.commit()
+            _LOGGER.info(
+                "States: %d Einträge migriert von %s nach %s.",
+                updated,
+                old_entity_id,
+                new_entity_id,
+            )
+
+        except Exception as e:
+            _LOGGER.exception("Fehler bei State-Migration (states_meta): %s", e)
+        finally:
+            conn.close()
+
+    # def migrate_state_history(self, db_path, old_entity_id, new_entity_id):
+    #     if not os.path.exists(db_path):
+    #         _LOGGER.error("Recorder-DB nicht gefunden unter: %s", db_path)
+    #         return
+
+    #     try:
+    #         conn = sqlite3.connect(db_path)
+    #         cursor = conn.cursor()
+
+    #         cursor.execute(
+    #             """
+    #             UPDATE states
+    #             SET entity_id = ?
+    #             WHERE entity_id = ?
+    #             """,
+    #             (new_entity_id, old_entity_id),
+    #         )
+    #         count = cursor.rowcount
+    #         conn.commit()
+
+    #         _LOGGER.info(
+    #             "States: %d Einträge von %s nach %s migriert.",
+    #             count,
+    #             old_entity_id,
+    #             new_entity_id,
+    #         )
+
+    #     except Exception as e:
+    #         _LOGGER.exception("Fehler bei State-Migration: %s", e)
+    #     finally:
+    #         conn.close()
+
+    def migrate_logbook_entries(self, db_path, old_entity_id, new_entity_id):
+        if not os.path.exists(db_path):
+            _LOGGER.error("Recorder-DB nicht gefunden unter: %s", db_path)
+            return
+
+        try:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
+
+            old_json = f'"{old_entity_id}"'
+            new_json = f'"{new_entity_id}"'
+
+            cursor.execute(
+                """
+                UPDATE events
+                SET event_data = REPLACE(event_data, ?, ?)
+                WHERE event_type = 'state_changed'
+                AND event_data LIKE ?
+                """,
+                (old_json, new_json, f"%{old_json}%"),
+            )
+            count = cursor.rowcount
+            conn.commit()
+
+            _LOGGER.info(
+                "Logbuch: %d Einträge von %s nach %s migriert.",
+                count,
+                old_entity_id,
+                new_entity_id,
+            )
+
+        except Exception as e:
+            _LOGGER.exception("Fehler bei Logbuch-Migration: %s", e)
+        finally:
+            conn.close()
 
     def migrate_sqlite_statistics(
         self, old_sensor, new_sensor, db_path, clear_existing=True
@@ -506,3 +638,50 @@ class MigrateFromYaml:
             _LOGGER.exception("Fehler bei Statistik-Migration: %s", e)
         finally:
             conn.close()
+
+    async def async_replace_entity_ids_in_yaml_files(
+        self, old_entity_id: str, new_entity_id: str
+    ) -> None:
+        await asyncio.to_thread(
+            self._replace_entity_ids_in_yaml_files_blocking,
+            old_entity_id,
+            new_entity_id,
+        )
+
+    def _replace_entity_ids_in_yaml_files_blocking(
+        self, old_entity_id, new_entity_id, base_path=None
+    ):
+        """Durchsucht alle .yaml-Dateien im config-Verzeichnis nach der alten Entity-ID und ersetzt sie durch die neue."""
+        if base_path is None:
+            base_path = self._hass.config.config_dir
+
+        replaced_files = []
+        for root, _, files in os.walk(base_path):
+            for file in files:
+                if not file.endswith(".yaml"):
+                    continue
+                file_path = os.path.join(root, file)
+                try:
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        content = f.read()
+
+                    if old_entity_id in content:
+                        new_content = re.sub(
+                            rf"\b{re.escape(old_entity_id)}\b",
+                            new_entity_id,
+                            content,
+                        )
+                        with open(file_path, "w", encoding="utf-8") as f:
+                            f.write(new_content)
+
+                        _LOGGER.info("Ersetzt in Datei: %s", file_path)
+                        replaced_files.append(file_path)
+                except Exception as e:
+                    _LOGGER.error("Fehler beim Bearbeiten von %s: %s", file_path, e)
+
+        if replaced_files:
+            _LOGGER.info(
+                "Ersetzungen abgeschlossen in %d Datei(en)", len(replaced_files)
+            )
+        else:
+            _LOGGER.info("Keine YAML-Dateien mit %s gefunden", old_entity_id)

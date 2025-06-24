@@ -46,64 +46,112 @@ class MigrateFromYaml:
         Es wird aus dem übergebenen String ermittelt, ob der Sensor-Typ einen alten Typ
         von Joern-R beinhaltet"""
 
-        type = value.lower()
+        typ = value.lower()
 
-        if "battery_power_discharge" in type:  #
+        if typ.endswith("battery_power_discharge"):
             return "batterie_entladen"
 
-        if "battery_soe" in type:  #
+        if typ.endswith("battery_soe"):
             return "ladestand_detail"
 
-        if "battery_power_charge" in type:  #
+        if typ.endswith("battery_power_charge"):
             return "batterie_laden"
 
-        if "battery_soc" in type:  #
+        if typ.endswith("battery_soc"):
             return "ladestand"
 
-        if "battery_power" in type:  #
+        if typ.endswith("battery_power"):
             return "batterie_leistung"
 
-        if "ccu_power" in type:  #
+        if typ.endswith("ccu_power"):
             return "ccu_leistung"
 
-        if "firmware_version" in type:  #
+        if typ.endswith("firmware_version"):
             return "ccu_version"
 
-        if "deviceid" in type:  #
+        if typ.endswith("deviceid"):
             return "deviceid"
 
-        if "rssi" in type:
-            return "wifi_signalstarke_dbm"  #
+        if typ.endswith("rssi"):
+            return "wifi_signalstarke_dbm"
 
-        if "pv_power" in type:  #
+        if typ.endswith("pv_power"):
             return "pv_leistung"
 
-        if "power_meter" in type:  #
+        if typ.endswith("power_meter"):
             return "e_zaehler_leistungswert"
 
-        if "grid_import" in type:
+        if typ.endswith("grid_import"):
             return "e_zaehler_netzbezug"
 
-        if "grid_export" in type:
+        if typ.endswith("grid_export"):
             return "e_zaehler_netzeinspeisung"
 
-        if "batterytotalenergycharge" in type:
+        if typ.endswith("batterytotalenergycharge"):
             return "batterie_laden_kwh"
 
-        if "batterytotalenergydischarge" in type:
+        if typ.endswith("batterytotalenergydischarge"):
             return "batterie_entladen_kwh"
 
-        if "gridimportenergytotal" in type:
+        if typ.endswith("gridimportenergytotal"):
             return "e_zaehler_netzbezug_kwh"
 
-        if "gridexportenergytotal" in type:
+        if typ.endswith("gridexportenergytotal"):
             return "e_zaehler_netzeinspeisung_kwh"
 
-        if "pvtotalenergy" in type:
+        if typ.endswith("pvtotalenergy"):
             return "pv_leistung_kwh"
 
-        if "battery_state_of_energy" in type:
+        if typ.endswith("battery_state_of_energy"):
             return "pv_leistung_kwh"
+
+        if typ.endswith("powermeterip"):
+            return "konf_lok_meter_ip"
+
+        if typ.endswith("maximumpower"):
+            return "konf_lok_max_leistung"
+
+        if typ.endswith("offlineoutputpower"):
+            return "konf_lok_offline_leistung"
+
+        if typ.endswith("numberofbatteries"):
+            return "konf_lok_batterien"
+
+        if typ.endswith("outputoffset"):
+            return "konf_lok_ausgabekorrektur"
+
+        if typ.endswith("responsetolerance"):
+            return "konf_lok_reak_toleranz"
+
+        if typ.endswith("minimumbatterydischarge"):
+            return "konf_lok_min_soc"
+
+        if typ.endswith("maximumbatterycharge"):
+            return "konf_lok_max_soc"
+
+        # if typ.endswith("konf_lok_meter_auto"):
+        #     return None
+
+        if typ.endswith("powermetertype"):
+            return "konf_lok_meter_manu"
+
+        if typ.endswith("dc/dc-algorithmus"):
+            return "konf_dc_algorithm"
+
+        if typ.endswith("Microinverter"):
+            return "konf_wr"
+
+        if typ.endswith("ccuspeed"):
+            return "konf_ccu_speed"
+
+        if typ.endswith("cloudservice"):
+            return "konf_lok_cloud"
+
+        if typ.endswith("localserver"):
+            return "konf_lok_lserver"
+
+        if typ.endswith("apiroute"):
+            return "konf_api_route"
 
         return None
 
@@ -179,6 +227,54 @@ class MigrateFromYaml:
 
         if typ.endswith("ladestanddetail"):
             return "battery_soe"
+
+        if typ.endswith("konf_lok_meter_ip"):
+            return "powermeterip"
+
+        if typ.endswith("konf_lok_max_leistung"):
+            return "maximumpower"
+
+        if typ.endswith("konf_lok_offline_leistung"):
+            return "offlineoutputpower"
+
+        if typ.endswith("konf_lok_batterien"):
+            return "numberofbatteries"
+
+        if typ.endswith("konf_lok_ausgabekorrektur"):
+            return "outputoffset"
+
+        if typ.endswith("konf_lok_reak_toleranz"):
+            return "responsetolerance"
+
+        if typ.endswith("konf_lok_min_soc"):
+            return "minimumbatterydischarge"
+
+        if typ.endswith("konf_lok_max_soc"):
+            return "maximumbatterycharge"
+
+        # if typ.endswith("konf_lok_meter_auto"):
+        #     return None
+
+        if typ.endswith("konf_lok_meter_manu"):
+            return "powermetertype"
+
+        if typ.endswith("konf_dc_algorithm"):
+            return "dc/dc-algorithmus"
+
+        if typ.endswith("konf_wr"):
+            return "Microinverter"
+
+        if typ.endswith("konf_ccu_speed"):
+            return "ccuspeed"
+
+        if typ.endswith("konf_lok_cloud"):
+            return "cloudservice"
+
+        if typ.endswith("konf_lok_lserver"):
+            return "localserver"
+
+        if typ.endswith("konf_api_route"):
+            return "apiroute"
 
         # _LOGGER.warning("None-Typ: %s", typ)
         return None

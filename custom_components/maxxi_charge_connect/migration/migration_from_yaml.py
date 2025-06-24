@@ -3,6 +3,7 @@ import os
 import re
 import sqlite3
 import asyncio
+import json
 
 from homeassistant.components.recorder.statistics import clear_statistics
 from homeassistant.config_entries import ConfigEntry
@@ -153,6 +154,19 @@ class MigrateFromYaml:
         if typ.endswith("apiroute"):
             return "konf_api_route"
 
+        # Riemann
+        if typ.endswith("batterytotalenergycharge"):
+            return "batterieladen_1"
+
+        if typ.endswith("batterytotalenergydischarge"):
+            return "akku_entladen_1"
+
+        if typ.endswith("gridimportenergytotal"):
+            return "e-zaehler_netzbezug1"
+
+        if typ.endswith("gridexportenergytotal"):
+            return "e-zaehler netzeinspeisung"
+
         return None
 
     def get_new_sensor(self, old_entity):
@@ -276,6 +290,19 @@ class MigrateFromYaml:
         if typ.endswith("konf_api_route"):
             return "apiroute"
 
+        # Riemann
+        if typ.endswith("batterieladen_1"):
+            return "batterytotalenergycharge"
+
+        if typ.endswith("akku_entladen_1"):
+            return "batterytotalenergydischarge"
+
+        if typ.endswith("e-zaehler_netzbezug1"):
+            return "gridimportenergytotal"
+
+        if typ.endswith("e-zaehler netzeinspeisung"):
+            return "gridexportenergytotal"
+
         # _LOGGER.warning("None-Typ: %s", typ)
         return None
 
@@ -295,6 +322,14 @@ class MigrateFromYaml:
                 sensors[entry.entity_id] = entry
 
         return sensors
+
+    def resolve_entity_id_from_unique_id(self, unique_id: str):
+        registry = async_get_entity_registry(self._hass)
+
+        for entry in registry.entities.values():
+            if entry.unique_id.lower().endswith(unique_id.lower()):
+                return entry.entity_id
+        return None
 
     async def async_notify_possible_migration(self):
         self._current_sensors = self.load_current_sensors()
@@ -384,7 +419,7 @@ class MigrateFromYaml:
                 _LOGGER.warning("Neue Entity %s nicht gefunden", new_entity_id)
                 continue
 
-            type, old_type, entity = sensor_info
+            typ, old_type, entity = sensor_info
 
             if not old_type or not entity:
                 _LOGGER.warning(
@@ -394,7 +429,7 @@ class MigrateFromYaml:
 
             sensor_map[old_type] = new_entity_id
             _LOGGER.info(
-                "Mapping: %s → %s (Typ: %s)", old_entity_id, new_entity_id, type
+                "Mapping: %s → %s (Typ: %s)", old_entity_id, new_entity_id, typ
             )
 
             db_path = self._hass.config.path("home-assistant_v2.db")
@@ -416,14 +451,44 @@ class MigrateFromYaml:
                     _LOGGER.warning("%s -> %s", new_entity_id, old_entity_id)
 
                     # Entferne den alten Entity-Eintrag (macht den Namen frei)
-                    entity_registry.async_remove(old_entity_id)
-                    await self._hass.async_block_till_done()
+                    # entity_registry.async_remove(old_entity_id)
+                    # await self._hass.async_block_till_done()
 
                     self.migrate_states_meta(db_path, old_entity_id, new_entity_id)
                     self.migrate_logbook_entries(db_path, old_entity_id, new_entity_id)
-                    self.migrate_sqlite_statistics(
-                        old_entity_id, new_entity_id, db_path, False
-                    )
+
+                    # Spezialbehandlung von Statistics
+                    if typ == "batterytotalenergydischarge":
+                        self.migrate_negative_statistics(
+                            db_path,
+                            self.resolve_entity_id_from_unique_id("Batterie_Leistung"),
+                            new_entity_id,
+                        )
+                    elif typ == "gridexportenergytotal":
+                        self.migrate_negative_statistics(
+                            db_path,
+                            self.resolve_entity_id_from_unique_id("E-Leistung"),
+                            new_entity_id,
+                        )
+
+                    elif typ == "gridimportenergytotal":
+                        self.migrate_positive_statistics(
+                            db_path,
+                            self.resolve_entity_id_from_unique_id("E-Leistung"),
+                            new_entity_id,
+                        )
+                    elif typ == "batterytotalenergycharge":
+                        self.migrate_positive_statistics(
+                            db_path,
+                            self.resolve_entity_id_from_unique_id("Batterie_Leistung"),
+                            new_entity_id,
+                        )
+
+                    else:
+                        self.migrate_sqlite_statistics(
+                            old_entity_id, new_entity_id, db_path, False
+                        )
+
                     await self._hass.async_block_till_done()
                     await self.async_replace_entity_ids_in_yaml_files(
                         old_entity_id=old_entity_id, new_entity_id=new_entity_id
@@ -434,6 +499,10 @@ class MigrateFromYaml:
                     #     entity_id=new_entity_id, new_entity_id=old_entity_id
                     # )
                     await self._hass.async_block_till_done()
+
+                    entity_registry.async_remove(old_entity_id)
+                    await self._hass.async_block_till_done()
+
                 else:
                     _LOGGER.error("Neuer Unique-Key konnte nicht gesetzt werden")
                     return
@@ -441,46 +510,14 @@ class MigrateFromYaml:
                 _LOGGER.error("Fehler beim Umbenennen der Entity: %s", e)
 
             # ConfigEntry aktualisieren
-            self._hass.config_entries.async_update_entry(
-                self._entry,
-                data={
-                    **self._entry.data,
-                    "migration": True,
-                    "legacy_sensor_map": sensor_map,
-                },
-            )
-
-        # _LOGGER.warning("AllStates: %s", all_states)
-
-        # for cur_mappping in sensor_mapping:
-        #     _LOGGER.warning("Sensor-Map: %s", cur_mappping)
-
-        # if sensor_ids:
-        #     _LOGGER.info(f"Verwende übergebene Sensoren: {sensor_ids}")
-        #     # all_states = {s.entity_id: s for s in self._hass.states.async_all()}
-        #     # sensors = {eid: all_states[eid] for eid in sensor_ids if eid in all_states}
-        # else:
-        #     _LOGGER.info("Erkenne Sensoren automatisch ...")
-        # sensors = self.find_old_maxxicharge_sensors()
-
-        # _LOGGER.info("Gefundene Sensoren zur Migration: %s", list(sensors.keys()))
-
-        # Mapping aus Typ → Entity-ID erzeugen
-        # sensor_map = {}
-        # for entity_id, state in sensors.items():
-        #     sensor_type = self.detect_sensor_type(state)
-        #     if sensor_type and sensor_type not in sensor_map:
-        #         sensor_map[sensor_type] = entity_id
-
-        # ConfigEntry aktualisieren
-        # self._hass.config_entries.async_update_entry(
-        #     self._entry,
-        #     data={
-        #         **self._entry.data,
-        #         "migration": True,
-        #         "legacy_sensor_map": sensor_map,
-        #     },
-        # )
+            # self._hass.config_entries.async_update_entry(
+            #     self._entry,
+            #     data={
+            #         **self._entry.data,
+            #         "migration": True,
+            #         "legacy_sensor_map": sensor_map,
+            #     },
+            # )
 
         await self._hass.services.async_call(
             "persistent_notification",
@@ -503,12 +540,14 @@ class MigrateFromYaml:
         try:
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
+            _LOGGER.warning("1")
 
             # IDs holen
             cursor.execute(
                 "SELECT metadata_id FROM states_meta WHERE entity_id = ?",
                 (old_entity_id,),
             )
+            _LOGGER.warning("2")
             old_row = cursor.fetchone()
             if not old_row:
                 _LOGGER.warning("Keine states_meta für %s gefunden.", old_entity_id)
@@ -519,6 +558,7 @@ class MigrateFromYaml:
                 "SELECT metadata_id FROM states_meta WHERE entity_id = ?",
                 (new_entity_id,),
             )
+            _LOGGER.warning("3")
             new_row = cursor.fetchone()
 
             if new_row:
@@ -532,11 +572,14 @@ class MigrateFromYaml:
                     "states_meta für %s erstellt mit ID %s", new_entity_id, new_id
                 )
 
+            _LOGGER.warning("4")
+
             # States umhängen
             updated = cursor.execute(
                 "UPDATE states SET metadata_id = ? WHERE metadata_id = ?",
                 (new_id, old_id),
             ).rowcount
+            _LOGGER.warning("5")
 
             conn.commit()
             _LOGGER.info(
@@ -549,6 +592,7 @@ class MigrateFromYaml:
         except Exception as e:
             _LOGGER.exception("Fehler bei State-Migration (states_meta): %s", e)
         finally:
+            _LOGGER.warning("6")
             conn.close()
 
     # def migrate_state_history(self, db_path, old_entity_id, new_entity_id):
@@ -781,3 +825,196 @@ class MigrateFromYaml:
             )
         else:
             _LOGGER.info("Keine YAML-Dateien mit %s gefunden", old_entity_id)
+
+    def migrate_positive_statistics(
+        self, db_path, old_sensor, new_sensor, clear_existing=True
+    ):
+        if old_sensor == new_sensor:
+            _LOGGER.warning("Quelle und Ziel identisch – abgebrochen")
+            return
+        if not os.path.exists(db_path):
+            _LOGGER.error("DB nicht gefunden: %s", db_path)
+            return
+
+        conn = sqlite3.connect(db_path)
+        cur = conn.cursor()
+
+        # IDs besorgen
+        cur.execute(
+            "SELECT id FROM statistics_meta WHERE statistic_id=?", (old_sensor,)
+        )
+        row = cur.fetchone()
+        if not row:
+            _LOGGER.info("Kein statistics_meta für %s", old_sensor)
+            return
+        old_id = row[0]
+
+        cur.execute(
+            "SELECT id FROM statistics_meta WHERE statistic_id=?", (new_sensor,)
+        )
+        row = cur.fetchone()
+
+        if row:
+            new_id = row[0]
+            if clear_existing:
+                for tbl in ("statistics", "statistics_short_term"):
+                    cur.execute(f"DELETE FROM {tbl} WHERE metadata_id=?", (new_id,))
+                _LOGGER.info("Alte Daten von %s gelöscht.", new_sensor)
+        else:
+            # meta kopieren
+            cur.execute("SELECT * FROM statistics_meta WHERE id=?", (old_id,))
+            meta = list(cur.fetchone())
+            cur.execute("PRAGMA table_info(statistics_meta)")
+            cols = [c[1] for c in cur.fetchall()]
+            id_idx = cols.index("id")
+            stat_idx = cols.index("statistic_id")
+            shared_idx = cols.index("shared_attrs") if "shared_attrs" in cols else None
+
+            cols.pop(id_idx)
+            meta.pop(id_idx)
+            meta[stat_idx - 1] = new_sensor
+            if shared_idx is not None:
+                meta[shared_idx - 1] = json.dumps(
+                    {
+                        "state_class": "measurement",
+                        "device_class": "power",
+                        "unit_of_measurement": "W",
+                    }
+                )
+
+            ph = ", ".join("?" * len(meta))
+            cur.execute(
+                f"INSERT INTO statistics_meta ({', '.join(cols)}) VALUES ({ph})", meta
+            )
+            new_id = cur.lastrowid
+            _LOGGER.info("statistics_meta angelegt für %s, ID: %s", new_sensor, new_id)
+
+        # Daten kopieren + transformieren (nur positive Werte)
+        for tbl in ("statistics", "statistics_short_term"):
+            cur.execute(f"SELECT * FROM {tbl} WHERE metadata_id=?", (old_id,))
+            rows = cur.fetchall()
+            if not rows:
+                continue
+
+            cur.execute(f"PRAGMA table_info({tbl})")
+            tcols = [c[1] for c in cur.fetchall()]
+            id_idx = tcols.index("id")
+            meta_idx = tcols.index("metadata_id")
+
+            inserted = 0
+            for r in rows:
+                r = list(r)
+                r.pop(id_idx)
+                r[meta_idx - 1] = new_id
+                for name in ("state", "mean", "min", "max", "sum"):
+                    if name in tcols:
+                        i = tcols.index(name)
+                        v = r[i - 1]
+                        r[i - 1] = v if v is not None and v > 0 else 0.0
+                cur.execute(
+                    f"INSERT INTO {tbl} ({', '.join(c for i, c in enumerate(tcols) if i != id_idx)}) VALUES ({', '.join('?' * len(r))})",
+                    r,
+                )
+                inserted += 1
+            _LOGGER.info("%s Zeilen in %s kopiert.", inserted, tbl)
+
+        conn.commit()
+        conn.close()
+        _LOGGER.info("Fertig! Home Assistant neu starten.")
+
+    def migrate_negative_statistics(
+        self, db_path, old_sensor, new_sensor, clear_existing=True
+    ):
+        if old_sensor == new_sensor:
+            _LOGGER.warning("Quelle und Ziel identisch – abgebrochen")
+            return
+        if not os.path.exists(db_path):
+            _LOGGER.error("DB nicht gefunden: %s", db_path)
+            return
+
+        conn = sqlite3.connect(db_path)
+        cur = conn.cursor()
+
+        # IDs besorgen
+        cur.execute(
+            "SELECT id FROM statistics_meta WHERE statistic_id=?", (old_sensor,)
+        )
+        row = cur.fetchone()
+        if not row:
+            _LOGGER.info("Kein statistics_meta für %s", old_sensor)
+            return
+        old_id = row[0]
+
+        cur.execute(
+            "SELECT id FROM statistics_meta WHERE statistic_id=?", (new_sensor,)
+        )
+        row = cur.fetchone()
+
+        if row:
+            new_id = row[0]
+            if clear_existing:
+                for tbl in ("statistics", "statistics_short_term"):
+                    cur.execute(f"DELETE FROM {tbl} WHERE metadata_id=?", (new_id,))
+                _LOGGER.info("Alte Daten von %s gelöscht", new_sensor)
+        else:
+            # meta kopieren
+            cur.execute("SELECT * FROM statistics_meta WHERE id=?", (old_id,))
+            meta = list(cur.fetchone())
+            cur.execute("PRAGMA table_info(statistics_meta)")
+            cols = [c[1] for c in cur.fetchall()]
+            id_idx = cols.index("id")
+            stat_idx = cols.index("statistic_id")
+            # optional shared_attrs
+            shared_idx = cols.index("shared_attrs") if "shared_attrs" in cols else None
+
+            cols.pop(id_idx)
+            meta.pop(id_idx)
+            meta[stat_idx - 1] = new_sensor
+            if shared_idx is not None:
+                meta[shared_idx - 1] = json.dumps(
+                    {
+                        "state_class": "measurement",
+                        "device_class": "power",
+                        "unit_of_measurement": "W",
+                    }
+                )
+
+            ph = ", ".join("?" * len(meta))
+            cur.execute(
+                f"INSERT INTO statistics_meta ({', '.join(cols)}) VALUES ({ph})", meta
+            )
+            new_id = cur.lastrowid
+            _LOGGER.info("statistics_meta angelegt für %s, ID: %s", new_sensor, new_id)
+
+        # Daten kopieren + transformieren
+        for tbl in ("statistics", "statistics_short_term"):
+            cur.execute(f"SELECT * FROM {tbl} WHERE metadata_id=?", (old_id,))
+            rows = cur.fetchall()
+            if not rows:
+                continue
+
+            cur.execute(f"PRAGMA table_info({tbl})")
+            tcols = [c[1] for c in cur.fetchall()]
+            id_idx = tcols.index("id")
+            meta_idx = tcols.index("metadata_id")
+
+            inserted = 0
+            for r in rows:
+                r = list(r)
+                r.pop(id_idx)
+                r[meta_idx - 1] = new_id
+                for name in ("state", "mean", "min", "max", "sum"):
+                    if name in tcols:
+                        i = tcols.index(name)
+                        v = r[i - 1]
+                        r[i - 1] = abs(v) if v is not None and v < 0 else 0.0
+                cur.execute(
+                    f"INSERT INTO {tbl} ({', '.join(c for i, c in enumerate(tcols) if i != id_idx)}) VALUES ({', '.join('?' * len(r))})",
+                    r,
+                )
+                inserted += 1
+            _LOGGER.info("%s Zeilen in %s kopiert.", inserted, tbl)
+
+        conn.commit()
+        conn.close()
+        _LOGGER.info("Fertig! Home Assistant neu starten.")

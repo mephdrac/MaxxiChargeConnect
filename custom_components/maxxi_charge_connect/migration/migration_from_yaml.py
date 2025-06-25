@@ -9,6 +9,7 @@ from homeassistant.components.recorder.statistics import clear_statistics
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
+from homeassistant.components.integration.sensor import IntegrationSensor
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -311,26 +312,37 @@ class MigrateFromYaml:
         entity_registry = async_get_entity_registry(self._hass)
         all_entries = list(entity_registry.entities.values())
 
-        sensors = {}
+        sensors_temp = {}
+        sensors_temp2 = {}
+        sensors_kwh = {}
+
+        unique_list = {
+            ("BatterieLaden_1", "batterytotalenergycharge"),
+            ("E-Zaehler_Netzbezug1", "gridimportenergytotal"),
+            ("E-Zaehler Netzeinspeisung", "gridexportenergytotal"),
+            ("Akku_Entladen_1", "batterytotalenergydischarge"),
+            ("PV_Leistung", "pvtotalenergy"),
+        }
 
         for entry in all_entries:
-            typ = self.get_type_from_unique_id(entry.unique_id)
-            if (
-                not self._current_sensors.__contains__(entry.entity_id)
-                and entry.domain == "sensor"
-                and "maxxi" in entry.entity_id
-                and typ is not None
-                and typ
-                in {
-                    "batterytotalenergycharge",
-                    "batterytotalenergydischarge",
-                    "gridimportenergytotal",
-                    "gridexportenergytotal",
-                }
-            ):
-                sensors[entry.entity_id] = entry
+            for key, key_neu in unique_list:
+                if entry.unique_id.endswith(key):
+                    # _LOGGER.warning("Key found: %s", entry.entity_id)
+                    # _LOGGER.warning(
+                    #     "Riemann: %s",
+                    #     self.find_integral_helpers_by_input_sensor(entry.entity_id),
+                    # )
+                    sensors_temp[key] = self.find_integral_helpers_by_input_sensor(
+                        entry.entity_id
+                    )
+                elif entry.unique_id.lower().endswith(key_neu):
+                    sensors_temp2[key] = entry
 
-        return sensors
+        for key, entry in sensors_temp.items():
+            if sensors_temp2.__contains__(key):
+                sensors_kwh[entry.entity_id] = (entry, sensors_temp2[key])
+
+        return sensors_kwh
 
     def get_entities_for_migrate(self):
         entity_registry = async_get_entity_registry(self._hass)
@@ -381,18 +393,13 @@ class MigrateFromYaml:
 
         lines = ["Folgende alte Riemann-Sensoren wurden erkannt:\n"]
 
-        for entity_id, entry in riemann_sensors.items():
-            lines.append(f'- old_sensor: "{entity_id}"')
+        for entity_id, (old_entry, new_entry) in riemann_sensors.items():
+            lines.append(f'- old_sensor: "{old_entry.entity_id}"')
 
-            new_entity_id = self.get_new_sensor(entry)
-            if new_entity_id is None:
-                _LOGGER.warning(
-                    "Typ: %s", self.get_type_from_unique_id(entry.unique_id)
-                )
-
-                lines.append(f'  new_sensor: "sensor.HIER_EINTRAGEN"')
+            if new_entry:
+                lines.append(f'  new_sensor: "{new_entry.entity_id}"')
             else:
-                lines.append(f'  new_sensor: "{new_entity_id}"')
+                lines.append(f'  new_sensor: "sensor.HIER_EINTRAGEN"')
 
         lines.append("\n\nFolgende alte Sensoren wurden erkannt:\n")
         for entity_id, entry in old_sensors.items():
@@ -1061,3 +1068,56 @@ class MigrateFromYaml:
         conn.commit()
         conn.close()
         _LOGGER.info("Fertig! Home Assistant neu starten.")
+
+    def find_integral_helpers_by_input_sensor(self, input_entity_id: str):
+        # _LOGGER.warning("Suche kwh - Sensor für: %s", input_entity_id)
+        for entity in self._hass.data["sensor"].entities:
+            if isinstance(entity, IntegrationSensor):
+                # _LOGGER.warning("Found: %s, %s", entity._source_entity, input_entity_id)
+                if entity._source_entity == input_entity_id:
+                    _LOGGER.debug(
+                        "Found: %s, %s", entity._source_entity, entity.entity_id
+                    )
+                    return entity
+
+        return None
+        # entity_registry = async_get_entity_registry(self._hass)
+        result = []
+
+        # for entry in entity_registry.entities.values():
+        #     if entry.platform != "integration":
+        #         continue
+        #     if not entry.entity_id.startswith("sensor."):
+        #         continue
+        #     if entry.domain != "sensor":
+        #         continue
+
+        #     # Auf Integralsensor prüfen
+        #     if entry.original_icon != "mdi:chart-histogram":
+        #         continue
+
+        #     # _LOGGER.warning("Integrasensor gefunden. %s", entry.entity_id)
+        #     # Konfigurationsquelle auslesen
+        #     # options = entry.options.get("sensor", {})
+        #     # input_id = options.get("source")
+
+        #     # _LOGGER.warning("Found: %s, %s", entry.entity_id, entry.options)
+
+        #     # if input_id == input_entity_id:
+        #     #     result.append(entry.entity_id)
+
+        #     # Hole zugehörige ConfigEntry
+        #     config_entry = self._hass.config_entries.async_get_entry(
+        #         entry.config_entry_id
+        #     )
+        #     if not config_entry or config_entry.domain != "integration":
+        #         continue
+
+        #     _LOGGER.warning("Found: %s, %s", entry.entity_id, config_entry)
+
+        #     # Jetzt schauen, ob dieser Helper unseren Sensor als Quelle hat
+        #     source = config_entry.data.get("source")
+        #     if source == input_entity_id:
+        #         result.append(entry.entity_id)
+
+        return result

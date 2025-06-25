@@ -90,24 +90,6 @@ class MigrateFromYaml:
         if typ.endswith("grid_export"):
             return "e_zaehler_netzeinspeisung"
 
-        if typ.endswith("batterytotalenergycharge"):
-            return "batterie_laden_kwh"
-
-        if typ.endswith("batterytotalenergydischarge"):
-            return "batterie_entladen_kwh"
-
-        if typ.endswith("gridimportenergytotal"):
-            return "e_zaehler_netzbezug_kwh"
-
-        if typ.endswith("gridexportenergytotal"):
-            return "e_zaehler_netzeinspeisung_kwh"
-
-        if typ.endswith("pvtotalenergy"):
-            return "pv_leistung_kwh"
-
-        if typ.endswith("battery_state_of_energy"):
-            return "pv_leistung_kwh"
-
         if typ.endswith("powermeterip"):
             return "konf_lok_meter_ip"
 
@@ -156,19 +138,6 @@ class MigrateFromYaml:
         if typ.endswith("apiroute"):
             return "konf_api_route"
 
-        # Riemann
-        if typ.endswith("batterytotalenergycharge"):
-            return "batterieladen_1"
-
-        if typ.endswith("batterytotalenergydischarge"):
-            return "akku_entladen_1"
-
-        if typ.endswith("gridimportenergytotal"):
-            return "e-zaehler_netzbezug1"
-
-        if typ.endswith("gridexportenergytotal"):
-            return "e-zaehler netzeinspeisung"
-
         return None
 
     def get_new_sensor(self, old_entity):
@@ -212,7 +181,7 @@ class MigrateFromYaml:
             return "deviceid"
 
         if typ.endswith("wifi-dbm"):
-            return "rssi"  #
+            return "rssi"
 
         if typ.endswith("pv_leistung"):
             return "pv_power"
@@ -225,21 +194,6 @@ class MigrateFromYaml:
 
         if typ.endswith("e_zaehler_netzeinspeisung"):
             return "grid_export"
-
-        if typ.endswith("batterie_laden_kwh"):
-            return "batterytotalenergycharge"
-
-        if typ.endswith("batterie_entladen_kwh"):
-            return "batterytotalenergydischarge"
-
-        if typ.endswith("e_zaehler_netzbezug_kwh"):
-            return "gridimportenergytotal"
-
-        if typ.endswith("e_zaehler_netzeinspeisung_kwh"):
-            return "gridexportenergytotal"
-
-        if typ.endswith("pv_leistung_kwh"):
-            return "pvtotalenergy"
 
         if typ.endswith("ladestanddetail"):
             return "battery_soe"
@@ -292,20 +246,6 @@ class MigrateFromYaml:
         if typ.endswith("konf_api_route"):
             return "apiroute"
 
-        # Riemann
-        if typ.endswith("batterieladen_1"):
-            return "batterytotalenergycharge"
-
-        if typ.endswith("akku_entladen_1"):
-            return "batterytotalenergydischarge"
-
-        if typ.endswith("e-zaehler_netzbezug1"):
-            return "gridimportenergytotal"
-
-        if typ.endswith("e-zaehler netzeinspeisung"):
-            return "gridexportenergytotal"
-
-        # _LOGGER.warning("None-Typ: %s", typ)
         return None
 
     def get_riemann_entities_for_migrate(self):
@@ -363,6 +303,7 @@ class MigrateFromYaml:
                     "batterytotalenergydischarge",
                     "gridimportenergytotal",
                     "gridexportenergytotal",
+                    "pvtotalenergy",
                 }
             ):
                 sensors[entry.entity_id] = entry
@@ -478,16 +419,17 @@ class MigrateFromYaml:
 
             typ, old_type, entity = sensor_info
 
-            if not old_type or not entity:
-                _LOGGER.warning(
-                    "Sensor-Typ von %s konnte nicht erkannt werden", new_entity_id
-                )
-                continue
+            # if typ or not entity:
+            #     _LOGGER.warning(
+            #         "Sensor-Typ von %s konnte nicht erkannt werden", new_entity_id
+            #     )
+            #     continue
 
-            sensor_map[old_type] = new_entity_id
-            _LOGGER.info(
+            # sensor_map[old_type] = new_entity_id
+            _LOGGER.warning(
                 "Mapping: %s → %s (Typ: %s)", old_entity_id, new_entity_id, typ
             )
+
 
             db_path = self._hass.config.path("home-assistant_v2.db")
 
@@ -514,37 +456,37 @@ class MigrateFromYaml:
                     self.migrate_states_meta(db_path, old_entity_id, new_entity_id)
                     self.migrate_logbook_entries(db_path, old_entity_id, new_entity_id)
 
-                    # Spezialbehandlung von Statistics
-                    if typ == "batterytotalenergydischarge":
-                        self.migrate_negative_statistics(
-                            db_path,
-                            self.resolve_entity_id_from_unique_id(ID_BATTERIE_LEISTUNG),
-                            new_entity_id,
-                        )
-                    elif typ == "gridexportenergytotal":
-                        self.migrate_negative_statistics(
-                            db_path,
-                            self.resolve_entity_id_from_unique_id(ID_E_LEISTUNG),
-                            new_entity_id,
-                        )
+                    # # Spezialbehandlung von Statistics
+                    # if typ == "batterytotalenergydischarge":
+                    #     self.migrate_negative_statistics(
+                    #         db_path,
+                    #         self.resolve_entity_id_from_unique_id(ID_BATTERIE_LEISTUNG),
+                    #         new_entity_id,
+                    #     )
+                    # elif typ == "gridexportenergytotal":
+                    #     self.migrate_negative_statistics(
+                    #         db_path,
+                    #         self.resolve_entity_id_from_unique_id(ID_E_LEISTUNG),
+                    #         new_entity_id,
+                    #     )
 
-                    elif typ == "gridimportenergytotal":
-                        self.migrate_positive_statistics(
-                            db_path,
-                            self.resolve_entity_id_from_unique_id(ID_E_LEISTUNG),
-                            new_entity_id,
-                        )
-                    elif typ == "batterytotalenergycharge":
-                        self.migrate_positive_statistics(
-                            db_path,
-                            self.resolve_entity_id_from_unique_id(ID_BATTERIE_LEISTUNG),
-                            new_entity_id,
-                        )
+                    # elif typ == "gridimportenergytotal":
+                    #     self.migrate_positive_statistics(
+                    #         db_path,
+                    #         self.resolve_entity_id_from_unique_id(ID_E_LEISTUNG),
+                    #         new_entity_id,
+                    #     )
+                    # elif typ == "batterytotalenergycharge":
+                    #     self.migrate_positive_statistics(
+                    #         db_path,
+                    #         self.resolve_entity_id_from_unique_id(ID_BATTERIE_LEISTUNG),
+                    #         new_entity_id,
+                    #     )
 
-                    else:
-                        self.migrate_sqlite_statistics(
-                            old_entity_id, new_entity_id, db_path, False
-                        )
+                    # else:
+                    self.migrate_sqlite_statistics(
+                        old_entity_id, new_entity_id, db_path, False
+                    )
 
                     await self._hass.async_block_till_done()
                     await self.async_replace_entity_ids_in_yaml_files(

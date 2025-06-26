@@ -165,6 +165,9 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
                         falls keine Daten vorhanden sind.
 
         """
+        _LOGGER.debug(
+            "Value: %s", as_float(self._coordinator.data.get(self._value_key))
+        )
         return (
             as_float(self._coordinator.data.get(self._value_key))
             if self._coordinator.data

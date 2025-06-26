@@ -265,3 +265,27 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
             consumption_energy_total,
         ]
     )
+    await asyncio.sleep(0)
+
+    hass.data[DOMAIN][pv_total_energy.unique_id] = pv_total_energy
+    hass.data[DOMAIN][pv_today_energy.unique_id] = pv_today_energy
+
+    hass.data[DOMAIN][battery_total_energy_charge.unique_id] = (
+        battery_total_energy_charge
+    )
+    hass.data[DOMAIN][battery_today_energy_charge.unique_id] = (
+        battery_today_energy_charge
+    )
+
+    hass.data[DOMAIN][battery_total_energy_discharge.unique_id] = (
+        battery_total_energy_discharge
+    )
+    hass.data[DOMAIN][battery_today_energy_discharge.unique_id] = (
+        battery_today_energy_discharge
+    )
+
+    hass.data[DOMAIN][grid_export_energy_total.unique_id] = grid_export_energy_total
+    hass.data[DOMAIN][grid_export_energy_today.unique_id] = grid_export_energy_today
+
+    hass.data[DOMAIN][grid_import_energy_total.unique_id] = grid_import_energy_total
+    hass.data[DOMAIN][grid_import_energy_today.unique_id] = grid_import_energy_today

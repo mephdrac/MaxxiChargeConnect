@@ -4,6 +4,14 @@ import re
 import sqlite3
 import asyncio
 import json
+from functools import partial
+# import datetime
+
+from pathlib import Path
+from datetime import datetime, timezone
+
+from decimal import Decimal
+
 
 from homeassistant.components.recorder.statistics import clear_statistics
 from homeassistant.config_entries import ConfigEntry
@@ -11,12 +19,22 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 from homeassistant.components.integration.sensor import IntegrationSensor
 
+from ..devices.pv_total_energy import PvTotalEnergy
+from ..const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
 
 ID_E_LEISTUNG = "E-Leistung"
 ID_BATTERIE_LEISTUNG = "Batterie_Leistung"
+
+RIEMANN_LIST = {
+    ("BatterieLaden_1", "batterytotalenergycharge"),
+    ("E-Zaehler_Netzbezug1", "gridimportenergytotal"),
+    ("E-Zaehler Netzeinspeisung", "gridexportenergytotal"),
+    ("Akku_Entladen_1", "batterytotalenergydischarge"),
+    ("PV_Leistung", "pvtotalenergy"),
+}
 
 
 class MigrateFromYaml:
@@ -256,16 +274,8 @@ class MigrateFromYaml:
         sensors_temp2 = {}
         sensors_kwh = {}
 
-        unique_list = {
-            ("BatterieLaden_1", "batterytotalenergycharge"),
-            ("E-Zaehler_Netzbezug1", "gridimportenergytotal"),
-            ("E-Zaehler Netzeinspeisung", "gridexportenergytotal"),
-            ("Akku_Entladen_1", "batterytotalenergydischarge"),
-            ("PV_Leistung", "pvtotalenergy"),
-        }
-
         for entry in all_entries:
-            for key, key_neu in unique_list:
+            for key, key_neu in RIEMANN_LIST:
                 if entry.unique_id.endswith(key):
                     # _LOGGER.warning("Key found: %s", entry.entity_id)
                     # _LOGGER.warning(
@@ -430,7 +440,6 @@ class MigrateFromYaml:
                 "Mapping: %s → %s (Typ: %s)", old_entity_id, new_entity_id, typ
             )
 
-
             db_path = self._hass.config.path("home-assistant_v2.db")
 
             try:
@@ -453,7 +462,9 @@ class MigrateFromYaml:
                     # entity_registry.async_remove(old_entity_id)
                     # await self._hass.async_block_till_done()
 
-                    self.migrate_states_meta(db_path, old_entity_id, new_entity_id)
+                    await self.migrate_states_meta(db_path, old_entity_id, entity)
+                    await self._hass.async_block_till_done()
+
                     self.migrate_logbook_entries(db_path, old_entity_id, new_entity_id)
 
                     # # Spezialbehandlung von Statistics
@@ -484,9 +495,18 @@ class MigrateFromYaml:
                     #     )
 
                     # else:
+
                     self.migrate_sqlite_statistics(
                         old_entity_id, new_entity_id, db_path, False
                     )
+                    # self.migrate_positive_statistics(
+                    #     db_path, old_entity_id, new_entity_id
+                    # )
+
+                    # self.migrate_positive_statistics(
+                    #     db_path, old_entity_id, new_entity_id
+                    # )
+                    # self.migrate_state_history(db_path, old_entity_id, new_entity_id)
 
                     await self._hass.async_block_till_done()
                     await self.async_replace_entity_ids_in_yaml_files(
@@ -531,7 +551,7 @@ class MigrateFromYaml:
 
         _LOGGER.info("Migration abgeschlossen.")
 
-    def migrate_states_meta(self, db_path, old_entity_id, new_entity_id):
+    async def migrate_states_meta(self, db_path, old_entity_id, entity_new):
         if not os.path.exists(db_path):
             _LOGGER.error("Recorder-DB nicht gefunden unter: %s", db_path)
             return
@@ -539,6 +559,27 @@ class MigrateFromYaml:
         try:
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
+
+            new_entity_id = entity_new.entity_id
+
+            # # IDs holen
+            # cursor.execute(
+            #     "SELECT metadata_id FROM states_meta WHERE entity_id = ?",
+            #     (new_entity_id,),
+            # )
+            # neu_row = cursor.fetchone()
+            # if not neu_row:
+            #     _LOGGER.warning("Keine states_meta für %s gefunden.", new_entity_id)
+            # else:
+            #     neu_id = neu_row[0]
+
+            #     cursor.execute(
+            #         "delete from states where metadata_id = ?",
+            #         (neu_id,),
+            #     )
+            #     deleted_rows = cursor.rowcount
+
+            # _LOGGER.warning("%s Zeilen gelöscht.", deleted_rows)
 
             # IDs holen
             cursor.execute(
@@ -574,7 +615,46 @@ class MigrateFromYaml:
                 (new_id, old_id),
             ).rowcount
 
+            # get Last valid value
+            cursor.execute(
+                "SELECT s.state FROM states_meta sm INNER JOIN states s ON sm.metadata_id = s.metadata_id WHERE sm.entity_id = ? and (s.state != 'unavailable' and s.state != 'unknown') order by s.last_updated_ts desc LIMIT 1",
+                (new_entity_id,),
+            )
+            cur_row = cursor.fetchone()
+
+            if not cur_row:
+                _LOGGER.warning("Keine gültigen states für %s gefunden.", new_entity_id)
+                return
+            cur_valid_state = cur_row[0]
+
+            # IDs holen
+            cursor.execute(
+                "SELECT state_id FROM states_meta sm INNER JOIN states s ON sm.metadata_id = s.metadata_id WHERE sm.entity_id = ? order by last_updated_ts desc LIMIT 1",
+                (new_entity_id,),
+            )
+            cur_row = cursor.fetchone()
+            if not cur_row:
+                _LOGGER.warning("Keine states_meta für %s gefunden.", new_entity_id)
+                return
+            cur_state_id = cur_row[0]
+
+            cursor.execute(
+                "update states set state=? where state_id = ?",
+                (
+                    cur_valid_state,
+                    cur_state_id,
+                ),
+            )
+            updated_rows = cursor.rowcount
+
+            _LOGGER.warning("%s Zeilen geupdatet.", updated_rows)
+
             conn.commit()
+
+            sensor = self._hass.data[DOMAIN].get(entity_new.unique_id)
+            if sensor is not None:
+                sensor.set_state_from_migration(cur_valid_state)
+
             _LOGGER.info(
                 "States: %d Einträge migriert von %s nach %s.",
                 updated,
@@ -587,37 +667,86 @@ class MigrateFromYaml:
         finally:
             conn.close()
 
-    # def migrate_state_history(self, db_path, old_entity_id, new_entity_id):
-    #     if not os.path.exists(db_path):
-    #         _LOGGER.error("Recorder-DB nicht gefunden unter: %s", db_path)
-    #         return
+    def migrate_state_history(self, db_path, old_entity_id, new_entity_id):
+        _LOGGER.info("Migrate State History ...")
 
-    #     try:
-    #         conn = sqlite3.connect(db_path)
-    #         cursor = conn.cursor()
+        if not os.path.exists(db_path):
+            _LOGGER.error("Recorder-DB nicht gefunden unter: %s", db_path)
+            return
 
-    #         cursor.execute(
-    #             """
-    #             UPDATE states
-    #             SET entity_id = ?
-    #             WHERE entity_id = ?
-    #             """,
-    #             (new_entity_id, old_entity_id),
-    #         )
-    #         count = cursor.rowcount
-    #         conn.commit()
+        try:
+            conn = sqlite3.connect(db_path)
+            cursor = conn.cursor()
 
-    #         _LOGGER.info(
-    #             "States: %d Einträge von %s nach %s migriert.",
-    #             count,
-    #             old_entity_id,
-    #             new_entity_id,
-    #         )
+            # Neuesten Zustand des alten Sensors holen
+            cursor.execute(
+                """
+                SELECT * FROM states
+                WHERE entity_id = ?
+                ORDER BY last_updated_ts DESC
+                LIMIT 1
+                """,
+                (old_entity_id,),
+            )
+            row = cursor.fetchone()
 
-    #     except Exception as e:
-    #         _LOGGER.exception("Fehler bei State-Migration: %s", e)
-    #     finally:
-    #         conn.close()
+            # Spaltennamen holen
+            cursor.execute("PRAGMA table_info(states)")
+            columns_info = cursor.fetchall()
+            columns = [col[1] for col in columns_info]
+
+            # 'state_id' statt 'id'
+            if "state_id" in columns:
+                id_idx = columns.index("state_id")
+                columns.pop(id_idx)
+                if row:
+                    row = list(row)
+                    row.pop(id_idx)
+            else:
+                _LOGGER.warning("'state_id' nicht gefunden – fahre trotzdem fort.")
+
+            if row:
+                # entity_id anpassen
+                entity_id_index = columns.index("entity_id")
+                row[entity_id_index] = new_entity_id
+
+                placeholders = ", ".join(["?"] * len(row))
+                cursor.execute(
+                    f"INSERT INTO states ({', '.join(columns)}) VALUES ({placeholders})",
+                    row,
+                )
+                _LOGGER.info(
+                    "Letzter Zustand von %s → %s migriert.",
+                    old_entity_id,
+                    new_entity_id,
+                )
+            else:
+                _LOGGER.warning(
+                    "Kein letzter Zustand für %s gefunden – Erzeuge Dummy-Zustand",
+                    old_entity_id,
+                )
+
+                now = datetime.now().isoformat()
+                cursor.execute(
+                    """
+                    INSERT INTO states (
+                        entity_id, state, last_changed, last_updated, attributes
+                    ) VALUES (?, ?, ?, ?, ?)
+                    """,
+                    (new_entity_id, "0", now, now, "{}"),
+                )
+                _LOGGER.info("Dummy-Zustand für %s erzeugt (0)", new_entity_id)
+
+            conn.commit()
+
+            # self.update_restore_state(new_entity_id, Decimal("0"))
+
+        except Exception as e:
+            _LOGGER.exception("Fehler bei State-Migration: %s", e)
+        finally:
+            conn.close()
+
+            _LOGGER.info("Migrate State History ...abgeschlossen")
 
     def migrate_logbook_entries(self, db_path, old_entity_id, new_entity_id):
         if not os.path.exists(db_path):
@@ -1063,3 +1192,89 @@ class MigrateFromYaml:
         #         result.append(entry.entity_id)
 
         return result
+
+    async def update_restore_state(self, entity_id: str, new_value: Decimal):
+        """Aktualisiert state / native_value / last_valid_state in core.restore_state."""
+        restore_file = Path(self._hass.config.path(".storage/core.restore_state"))
+
+        if not restore_file.exists():
+            _LOGGER.warning("%s fehlt – nichts zu patchen", restore_file)
+            return
+
+        try:
+            # data = json.loads(restore_file.read_text(encoding="utf-8"))
+            # Nicht blockierend lesen
+
+            # Partial mit benanntem Argument
+            read_func = partial(restore_file.read_text, encoding="utf-8")
+            raw = await self._hass.async_add_executor_job(read_func)
+
+            data = json.loads(raw)
+
+            if (
+                not isinstance(data, dict)
+                or "data" not in data
+                or not isinstance(data["data"], list)
+            ):
+                _LOGGER.error("Unerwartiges Format in restore_state – Abbruch")
+                return
+
+            entries = data["data"]
+            now_iso = datetime.now(timezone.utc).isoformat()
+            val_str = str(new_value)
+
+            # passenden Eintrag suchen
+            entry = next(
+                (e for e in entries if e["state"]["entity_id"] == entity_id), None
+            )
+
+            if entry is None:
+                _LOGGER.warning(
+                    "Kein restore_state-Eintrag für %s – lege neuen an", entity_id
+                )
+                entry = {
+                    "state": {
+                        "entity_id": entity_id,
+                        "state": val_str,
+                        "attributes": {},
+                        "last_changed": now_iso,
+                        "last_reported": now_iso,
+                        "last_updated": now_iso,
+                        "context": {"id": "", "parent_id": None, "user_id": None},
+                    },
+                    "extra_data": {
+                        "native_value": {
+                            "__type": "<class 'decimal.Decimal'>",
+                            "decimal_str": val_str,
+                        },
+                        "native_unit_of_measurement": None,
+                        "source_entity": None,
+                        "last_valid_state": val_str,
+                    },
+                    "last_seen": now_iso,
+                }
+                entries.append(entry)
+            else:
+                # vorhandenen Eintrag patchen
+                entry["state"]["state"] = val_str
+                entry["state"]["last_changed"] = now_iso
+                entry["state"]["last_updated"] = now_iso
+                entry["state"]["last_reported"] = now_iso
+
+                nv = {
+                    "__type": "<class 'decimal.Decimal'>",
+                    "decimal_str": val_str,
+                }
+                entry["extra_data"]["native_value"] = nv
+                entry["extra_data"]["last_valid_state"] = val_str
+                entry["last_seen"] = now_iso
+
+            # restore_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+
+            new_data = json.dumps(data, indent=2)
+            write_func = partial(restore_file.write_text, new_data, encoding="utf-8")
+            await self._hass.async_add_executor_job(write_func)
+            _LOGGER.info("restore_state für %s ⇒ %s aktualisiert", entity_id, val_str)
+
+        except Exception as e:
+            _LOGGER.exception("Fehler beim Patchen von restore_state: %s", e)

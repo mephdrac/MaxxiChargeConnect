@@ -10,6 +10,7 @@ Funktionen:
 - async_migrate_entry: Platzhalter für zukünftige Migrationslogik.
 """
 
+import asyncio
 import logging
 
 from homeassistant.config_entries import ConfigEntry
@@ -98,7 +99,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     #     _LOGGER.warning("Kein device_id im ConfigEntry vorhanden.")
 
     migrator = MigrateFromYaml(hass, entry)
-    await migrator.async_notify_possible_migration()
+    # await migrator.async_notify_possible_migration()
 
     # Migrationsservice für die Yaml-Konfiguration von Joern-R registrieren
 
@@ -259,7 +260,16 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     """
     await async_unregister_webhook(hass, entry)
 
-    unload_ok = await hass.config_entries.async_forward_entry_unload(entry, "sensor")
-    if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id, None)
+    unload_ok = all(
+        await asyncio.gather(
+            *[
+                hass.config_entries.async_forward_entry_unload(entry, platform)
+                for platform in ("sensor", "number")
+            ]
+        )
+    )
+
+    # unload_ok = await hass.config_entries.async_forward_entry_unload(entry, "sensor")
+    # if unload_ok:
+    #     hass.data[DOMAIN].pop(entry.entry_id, None)
     return unload_ok

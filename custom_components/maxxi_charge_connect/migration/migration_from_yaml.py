@@ -28,14 +28,6 @@ _LOGGER = logging.getLogger(__name__)
 ID_E_LEISTUNG = "E-Leistung"
 ID_BATTERIE_LEISTUNG = "Batterie_Leistung"
 
-RIEMANN_LIST = {
-    ("BatterieLaden_1", "batterytotalenergycharge"),
-    ("E-Zaehler_Netzbezug1", "gridimportenergytotal"),
-    ("E-Zaehler Netzeinspeisung", "gridexportenergytotal"),
-    ("Akku_Entladen_1", "batterytotalenergydischarge"),
-    ("PV_Leistung", "pvtotalenergy"),
-}
-
 
 class MigrateFromYaml:
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry):
@@ -274,6 +266,14 @@ class MigrateFromYaml:
         sensors_temp2 = {}
         sensors_kwh = {}
 
+        RIEMANN_LIST = {
+            ("BatterieLaden_1", "batterytotalenergycharge"),
+            ("E-Zaehler_Netzbezug1", "gridimportenergytotal"),
+            ("E-Zaehler Netzeinspeisung", "gridexportenergytotal"),
+            ("Akku_Entladen_1", "batterytotalenergydischarge"),
+            ("PV_Leistung", "pvtotalenergy"),
+        }
+
         for entry in all_entries:
             for key, key_neu in RIEMANN_LIST:
                 if entry.unique_id.endswith(key):
@@ -289,7 +289,7 @@ class MigrateFromYaml:
                     sensors_temp2[key] = entry
 
         for key, entry in sensors_temp.items():
-            if sensors_temp2.__contains__(key):
+            if sensors_temp2.__contains__(key) and entry is not None:
                 sensors_kwh[entry.entity_id] = (entry, sensors_temp2[key])
 
         return sensors_kwh

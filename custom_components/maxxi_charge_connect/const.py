@@ -4,7 +4,7 @@ Attributes:
     DOMAIN (str): Der Domain-Name der Integration, wird als eindeutiger Namespace
         in Home Assistant verwendet.
     WEBHOOK_NAME (str): Der Name des registrierten Webhooks, der bei der Integration verwendet wird.
-    ONLY_ONE_IP (str): Schlüssel für die Option, die angibt, ob nur eine IP-Adresse für 
+    ONLY_ONE_IP (str): Schlüssel für die Option, die angibt, ob nur eine IP-Adresse für
         den Zugriff erlaubt ist.
 
 """
@@ -16,3 +16,4 @@ DEVICE_INFO = {
     "manufacturer": "mephdrac",
     "model": "CCU - Maxxicharge",
 }
+NOTIFY_MIGRATION = "notify_migration"

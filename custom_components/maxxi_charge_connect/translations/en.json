@@ -5,19 +5,21 @@
         "title": "Connect MaxxiCharge",
         "description": "Configure your MaxxiCharge connection.",
         "data": {
-          "only_accept_one_ip": "Limit webhook access",
+          "only_accept_one_ip": "Limit webhook access?",
           "webhook_id": "Webhook ID",
           "name": "Device name",
-          "ip_address": "IP-Adress"
+          "ip_address": "IP-Adress",
+          "notify_migration": "Detect migration sensors?"
         }
       },
       "reconfigure": {
       "title": "Reconfigure MaxxiCharge",
       "description": "Change options.",
       "data": {
-        "only_accept_one_ip": "Limit webhook access",
+        "only_accept_one_ip": "Limit webhook access?",
         "webhook_id": "Webhook ID",
-        "ip_address": "IP-Adress"
+        "ip_address": "IP-Adress",
+        "notify_migration": "Detect migration sensors?"
         }
       }
     }

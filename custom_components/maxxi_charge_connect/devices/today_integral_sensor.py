@@ -138,7 +138,17 @@ class TodayIntegralSensor(IntegrationSensor):
             self.async_on_remove(self._unsub_time_reset)
 
     def set_state_from_migration(self, value: Decimal):
-        _LOGGER.warning("Setze neuen State: %s", value)
+        """Einen valid Status setzen, nach der Migration.
+
+        Diese Methode dient dem Setzen eines Statusses nach einer erfolgreichen Migration
+        von der YAML-Integration zu dieser. Sie sollte nicht aus anderen Gründen verwendet
+        werden
+
+        Args:
+            value (Decimal): Statuswert, der als letzter Valid Status gezeigt werden soll.
+        """
+
+        _LOGGER.info("Setze neuen State: %s", value)
         self._state = value
         self._last_valid_state = value
         self.async_write_ha_state()

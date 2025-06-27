@@ -106,6 +106,13 @@ async def test_tools__as_float__alle_ok (caplog):
 
 
 @pytest.mark.asyncio
+async def test_tools__as_float__is_lower_than_0 (caplog):
+
+    value = "Das ist der Wert: -800.45 W"
+    assert as_float(value) == -800.45
+
+
+@pytest.mark.asyncio
 async def test_tools__as_float__kein_wert_extrahierbar (caplog):
 
     value = "Das ist der Wert"

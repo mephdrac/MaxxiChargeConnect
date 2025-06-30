@@ -77,6 +77,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._webhook_id = user_input[CONF_WEBHOOK_ID]
             self._host_ip = user_input.get(CONF_IP_ADDRESS, None)
             self._only_ip = user_input.get(ONLY_ONE_IP, False)
+            self._notify_migration = user_input.get(NOTIFY_MIGRATION, False)
 
             return self.async_create_entry(
                 title=self._name,
@@ -85,6 +86,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_NAME: self._name,
                     CONF_IP_ADDRESS: self._host_ip,
                     ONLY_ONE_IP: self._only_ip,
+                    NOTIFY_MIGRATION: self._notify_migration,
                 },
             )
 

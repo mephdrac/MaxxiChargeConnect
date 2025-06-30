@@ -17,7 +17,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 
-from .const import DOMAIN
+from .const import DOMAIN, NOTIFY_MIGRATION
 from .http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
 from .migration.migration_from_yaml import MigrateFromYaml
 from .webhook import async_register_webhook, async_unregister_webhook
@@ -110,6 +110,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.services.async_register(
         DOMAIN, "migration_von_yaml_konfiguration", handle_trigger_migration
     )
+
+    notify_migration = entry.data.get(NOTIFY_MIGRATION, False)
+    if notify_migration:
+        hass.async_create_task(
+            migrator.async_notify_possible_migration()
+        )
 
     return True
 

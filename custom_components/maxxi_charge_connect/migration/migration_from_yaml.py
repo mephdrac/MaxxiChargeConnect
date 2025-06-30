@@ -1,3 +1,9 @@
+"""Migration von YAML-Koniguration zu HACS-Integration
+
+Dieses Modul beihnhaltet alles, was für eine Migration notwendig ist.
+"""
+
+# pylint:disable=too-many-lines
 import logging
 import os
 import re
@@ -12,15 +18,12 @@ from datetime import datetime, timezone
 
 from decimal import Decimal
 
-
-from homeassistant.components.recorder.statistics import clear_statistics
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 from homeassistant.components.integration.sensor import IntegrationSensor
 
-from ..devices.pv_total_energy import PvTotalEnergy
-from ..const import DOMAIN
+from ..const import DOMAIN  # pylint:disable=relative-beyond-top-level
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,10 +33,15 @@ ID_BATTERIE_LEISTUNG = "Batterie_Leistung"
 
 
 class MigrateFromYaml:
+    """Migrationsklasse.
+
+    Die Klasse führt die Migration von der yaml-basierten
+    Lösung zu dienser HACS Lösung durch."""
+
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry):
         self._hass = hass
         self._entry = entry
-        self._sensor_map = {}
+        self._sensor_map: dict = {}
         self._current_sensors = None
 
     def load_current_sensors(self):
@@ -53,6 +61,7 @@ class MigrateFromYaml:
 
         return neu_sensor_map
 
+    # pylint:disable=too-many-return-statements,too-many-branches
     def get_type(self, value):
         """Liefert den Sensor-Type.
 
@@ -155,7 +164,7 @@ class MigrateFromYaml:
         if old_entity is None or self._current_sensors is None:
             return None
 
-        for entity_id, (sensor_type, old_type, entity) in self._current_sensors.items():
+        for entity_id, (sensor_type, old_type, entity) in self._current_sensors.items():  # pylint:disable=unused-variable
             if sensor_type is not None and sensor_type == self.get_type_from_unique_id(
                 old_entity.unique_id
             ):
@@ -163,7 +172,10 @@ class MigrateFromYaml:
 
         return None
 
+    # pylint:disable=too-many-return-statements,too-many-branches
     def get_type_from_unique_id(self, unique_id):
+        """Extrahiert aus der unique_id den Typ."""
+
         typ = unique_id.lower()
 
         if typ.endswith("batterie_entladen"):
@@ -259,6 +271,8 @@ class MigrateFromYaml:
         return None
 
     def get_riemann_entities_for_migrate(self):
+        """Liefert eine Liste der Riemann-Sensoren, die migriert werden sollen."""
+
         entity_registry = async_get_entity_registry(self._hass)
         all_entries = list(entity_registry.entities.values())
 
@@ -266,7 +280,7 @@ class MigrateFromYaml:
         sensors_temp2 = {}
         sensors_kwh = {}
 
-        RIEMANN_LIST = {
+        riemann_list = {
             ("BatterieLaden_1", "batterytotalenergycharge"),
             ("E-Zaehler_Netzbezug1", "gridimportenergytotal"),
             ("E-Zaehler Netzeinspeisung", "gridexportenergytotal"),
@@ -275,13 +289,8 @@ class MigrateFromYaml:
         }
 
         for entry in all_entries:
-            for key, key_neu in RIEMANN_LIST:
+            for key, key_neu in riemann_list:
                 if entry.unique_id.endswith(key):
-                    # _LOGGER.warning("Key found: %s", entry.entity_id)
-                    # _LOGGER.warning(
-                    #     "Riemann: %s",
-                    #     self.find_integral_helpers_by_input_sensor(entry.entity_id),
-                    # )
                     sensors_temp[key] = self.find_integral_helpers_by_input_sensor(
                         entry.entity_id
                     )
@@ -289,12 +298,14 @@ class MigrateFromYaml:
                     sensors_temp2[key] = entry
 
         for key, entry in sensors_temp.items():
-            if sensors_temp2.__contains__(key) and entry is not None:
+            if key in sensors_temp2 and entry is not None:
                 sensors_kwh[entry.entity_id] = (entry, sensors_temp2[key])
 
         return sensors_kwh
 
     def get_entities_for_migrate(self):
+        """Suche nach Entitäten, die migriert werden soll."""
+
         entity_registry = async_get_entity_registry(self._hass)
         all_entries = list(entity_registry.entities.values())
 
@@ -303,7 +314,7 @@ class MigrateFromYaml:
         for entry in all_entries:
             typ = self.get_type_from_unique_id(entry.unique_id)
             if (
-                not self._current_sensors.__contains__(entry.entity_id)
+                entry.entity_id not in self._current_sensors
                 and entry.domain == "sensor"
                 and "maxxi" in entry.entity_id
                 and typ is not None
@@ -321,6 +332,7 @@ class MigrateFromYaml:
         return sensors
 
     def resolve_entity_id_from_unique_id(self, unique_id: str):
+        """Ermittelt die aktuelle entity_id basierend auf der unique_id."""
         registry = async_get_entity_registry(self._hass)
 
         for entry in registry.entities.values():
@@ -329,6 +341,7 @@ class MigrateFromYaml:
         return None
 
     async def async_notify_possible_migration(self):
+        """Benachrichtigung, welche Sensoren für die Migration gefunden wurden."""
         self._current_sensors = self.load_current_sensors()
         old_sensors = self.get_entities_for_migrate()
         riemann_sensors = self.get_riemann_entities_for_migrate()
@@ -350,7 +363,7 @@ class MigrateFromYaml:
             if new_entry:
                 lines.append(f'  new_sensor: "{new_entry.entity_id}"')
             else:
-                lines.append(f'  new_sensor: "sensor.HIER_EINTRAGEN"')
+                lines.append('  new_sensor: "sensor.HIER_EINTRAGEN"')
 
         lines.append("\n\nFolgende alte Sensoren wurden erkannt:\n")
         for entity_id, entry in old_sensors.items():
@@ -362,16 +375,18 @@ class MigrateFromYaml:
                     "Typ: %s", self.get_type_from_unique_id(entry.unique_id)
                 )
 
-                lines.append(f'  new_sensor: "sensor.HIER_EINTRAGEN"')
+                lines.append('  new_sensor: "sensor.HIER_EINTRAGEN"')
             else:
                 lines.append(f'  new_sensor: "{new_entity_id}"')
 
         sensor_block = "\n".join(lines)
 
+        # pylint:disable=line-too-long
         message = (
             "Die folgenden alten MaxxiCharge-Sensoren wurden erkannt und könnten migriert werden.\n\n"
             "ACHTUNG: Immer zuerst die Riemann-Sensoren migrieren.\n\n"
-            "Kopiere den folgenden Block und verwende ihn im Service `maxxi_charge_connect.migration_von_yaml_konfiguration`:\n\n"
+            "Kopiere den folgenden Block und verwende ihn im Service `maxxi_charge_connect."
+            "migration_von_yaml_konfiguration`:\n\n"
             "```yaml\n"
             f"{sensor_block}"
             "\n```"
@@ -387,9 +402,12 @@ class MigrateFromYaml:
             },
         )
 
+    # pylint:disable=too-many-locals
     async def async_handle_trigger_migration(
         self, sensor_mapping: list[dict] | None = None
     ):
+        """Service - Trigger zum Starten des Migrationsvorgangs."""
+
         _LOGGER.info("Starte Migration ...")
         await self._hass.services.async_call("recorder", "disable")
         await self._hass.async_block_till_done()
@@ -403,8 +421,6 @@ class MigrateFromYaml:
             )
             return
 
-        # Mapping aus Typ → neue Entity-ID
-        sensor_map = {}
         # Hole alle States nur einmal
         all_states = {s.entity_id: s for s in self._hass.states.async_all()}
 
@@ -427,7 +443,7 @@ class MigrateFromYaml:
                 _LOGGER.warning("Neue Entity %s nicht gefunden", new_entity_id)
                 continue
 
-            typ, old_type, entity = sensor_info
+            typ, old_type, entity = sensor_info  # pylint:disable=unused-variable
 
             # if typ or not entity:
             #     _LOGGER.warning(
@@ -525,7 +541,7 @@ class MigrateFromYaml:
                 else:
                     _LOGGER.error("Neuer Unique-Key konnte nicht gesetzt werden")
                     return
-            except Exception as e:
+            except Exception as e:  # pylint:disable=broad-exception-caught
                 _LOGGER.error("Fehler beim Umbenennen der Entity: %s", e)
 
             # ConfigEntry aktualisieren
@@ -551,7 +567,10 @@ class MigrateFromYaml:
 
         _LOGGER.info("Migration abgeschlossen.")
 
+    # pylint:disable=too-many-locals
     async def migrate_states_meta(self, db_path, old_entity_id, entity_new):
+        """Kopieren der Status-Meta-Daten eines Sensors in den neuen Sensor."""
+
         if not os.path.exists(db_path):
             _LOGGER.error("Recorder-DB nicht gefunden unter: %s", db_path)
             return
@@ -616,6 +635,7 @@ class MigrateFromYaml:
             ).rowcount
 
             # get Last valid value
+            # pylint:disable=line-too-long
             cursor.execute(
                 "SELECT s.state FROM states_meta sm INNER JOIN states s ON sm.metadata_id = s.metadata_id WHERE sm.entity_id = ? and (s.state != 'unavailable' and s.state != 'unknown') order by s.last_updated_ts desc LIMIT 1",
                 (new_entity_id,),
@@ -628,6 +648,7 @@ class MigrateFromYaml:
             cur_valid_state = cur_row[0]
 
             # IDs holen
+            # pylint:disable=line-too-long
             cursor.execute(
                 "SELECT state_id FROM states_meta sm INNER JOIN states s ON sm.metadata_id = s.metadata_id WHERE sm.entity_id = ? order by last_updated_ts desc LIMIT 1",
                 (new_entity_id,),
@@ -647,7 +668,7 @@ class MigrateFromYaml:
             )
             updated_rows = cursor.rowcount
 
-            _LOGGER.warning("%s Zeilen geupdatet.", updated_rows)
+            _LOGGER.info("%s Zeilen geupdatet.", updated_rows)
 
             conn.commit()
 
@@ -662,12 +683,14 @@ class MigrateFromYaml:
                 new_entity_id,
             )
 
-        except Exception as e:
+        except Exception as e:  # pylint:disable=broad-exception-caught
             _LOGGER.exception("Fehler bei State-Migration (states_meta): %s", e)
         finally:
             conn.close()
 
     def migrate_state_history(self, db_path, old_entity_id, new_entity_id):
+        """Kopieren der Status-Historie eines Sensors in den neuen Sensor."""
+
         _LOGGER.info("Migrate State History ...")
 
         if not os.path.exists(db_path):
@@ -741,7 +764,7 @@ class MigrateFromYaml:
 
             # self.update_restore_state(new_entity_id, Decimal("0"))
 
-        except Exception as e:
+        except Exception as e:  # pylint:disable=broad-exception-caught
             _LOGGER.exception("Fehler bei State-Migration: %s", e)
         finally:
             conn.close()
@@ -749,6 +772,8 @@ class MigrateFromYaml:
             _LOGGER.info("Migrate State History ...abgeschlossen")
 
     def migrate_logbook_entries(self, db_path, old_entity_id, new_entity_id):
+        """Kopieren der Logbuch-Einträge eine Sensors in den neuen Sensor."""
+
         if not os.path.exists(db_path):
             _LOGGER.error("Recorder-DB nicht gefunden unter: %s", db_path)
             return
@@ -779,14 +804,17 @@ class MigrateFromYaml:
                 new_entity_id,
             )
 
-        except Exception as e:
+        except Exception as e:  # pylint:disable=broad-exception-caught
             _LOGGER.exception("Fehler bei Logbuch-Migration: %s", e)
         finally:
             conn.close()
 
+    # pylint:disable=too-many-locals
     def migrate_sqlite_statistics(
         self, old_sensor, new_sensor, db_path, clear_existing=True
     ):
+        """Kopieren der Statistik eines Sensors in einen neuen Sensor."""
+
         if old_sensor == new_sensor:
             _LOGGER.warning(
                 "Alter und neuer Sensor sind identisch (%s) – keine Migration erforderlich.",
@@ -895,7 +923,7 @@ class MigrateFromYaml:
                 new_sensor,
             )
 
-        except Exception as e:
+        except Exception as e:  # pylint:disable=broad-exception-caught
             _LOGGER.exception("Fehler bei Statistik-Migration: %s", e)
         finally:
             conn.close()
@@ -903,6 +931,8 @@ class MigrateFromYaml:
     async def async_replace_entity_ids_in_yaml_files(
         self, old_entity_id: str, new_entity_id: str
     ) -> None:
+        """Suche, die entity_id in allen YAML-Dateien und benennt diese in die neue entity_id um."""
+
         await asyncio.to_thread(
             self._replace_entity_ids_in_yaml_files_blocking,
             old_entity_id,
@@ -912,7 +942,10 @@ class MigrateFromYaml:
     def _replace_entity_ids_in_yaml_files_blocking(
         self, old_entity_id, new_entity_id, base_path=None
     ):
-        """Durchsucht alle .yaml-Dateien im config-Verzeichnis nach der alten Entity-ID und ersetzt sie durch die neue."""
+        """Durchsucht alle .yaml-Dateien im config-Verzeichnis nach der
+
+           alten Entity-ID und ersetzt sie durch die neue.
+        """
         if base_path is None:
             base_path = self._hass.config.config_dir
 
@@ -937,7 +970,8 @@ class MigrateFromYaml:
 
                         _LOGGER.info("Ersetzt in Datei: %s", file_path)
                         replaced_files.append(file_path)
-                except Exception as e:
+
+                except Exception as e:  # pylint:disable=broad-exception-caught
                     _LOGGER.error("Fehler beim Bearbeiten von %s: %s", file_path, e)
 
         if replaced_files:
@@ -947,9 +981,12 @@ class MigrateFromYaml:
         else:
             _LOGGER.info("Keine YAML-Dateien mit %s gefunden", old_entity_id)
 
+    # pylint:disable=too-many-locals, too-many-statements
     def migrate_positive_statistics(
         self, db_path, old_sensor, new_sensor, clear_existing=True
     ):
+        """Obsolet, kopieren nur der positiven Statistikwerte eines Sensors in einen neuen Sensor."""  # pylint:disable=line-too-long
+
         if old_sensor == new_sensor:
             _LOGGER.warning("Quelle und Ziel identisch – abgebrochen")
             return
@@ -1032,6 +1069,8 @@ class MigrateFromYaml:
                         i = tcols.index(name)
                         v = r[i - 1]
                         r[i - 1] = v if v is not None and v > 0 else 0.0
+
+                # pylint:disable=line-too-long
                 cur.execute(
                     f"INSERT INTO {tbl} ({', '.join(c for i, c in enumerate(tcols) if i != id_idx)}) VALUES ({', '.join('?' * len(r))})",
                     r,
@@ -1046,6 +1085,8 @@ class MigrateFromYaml:
     def migrate_negative_statistics(
         self, db_path, old_sensor, new_sensor, clear_existing=True
     ):
+        """Obsolet, kopieren nur der negativen Statistikwerte eines Sensors in einen neuen Sensor."""  # pylint:disable=line-too-long
+
         if old_sensor == new_sensor:
             _LOGGER.warning("Quelle und Ziel identisch – abgebrochen")
             return
@@ -1129,6 +1170,8 @@ class MigrateFromYaml:
                         i = tcols.index(name)
                         v = r[i - 1]
                         r[i - 1] = abs(v) if v is not None and v < 0 else 0.0
+
+                # pylint:disable=line-too-long
                 cur.execute(
                     f"INSERT INTO {tbl} ({', '.join(c for i, c in enumerate(tcols) if i != id_idx)}) VALUES ({', '.join('?' * len(r))})",
                     r,
@@ -1141,57 +1184,20 @@ class MigrateFromYaml:
         _LOGGER.info("Fertig! Home Assistant neu starten.")
 
     def find_integral_helpers_by_input_sensor(self, input_entity_id: str):
+        """Sucht die Integralsensoren"""
         # _LOGGER.warning("Suche kwh - Sensor für: %s", input_entity_id)
         for entity in self._hass.data["sensor"].entities:
             if isinstance(entity, IntegrationSensor):
                 # _LOGGER.warning("Found: %s, %s", entity._source_entity, input_entity_id)
-                if entity._source_entity == input_entity_id:
+
+                if entity._source_entity == input_entity_id:  # pylint:disable=protected-access
+                    # pylint:disable=protected-access
                     _LOGGER.debug(
                         "Found: %s, %s", entity._source_entity, entity.entity_id
                     )
                     return entity
 
         return None
-        # entity_registry = async_get_entity_registry(self._hass)
-        result = []
-
-        # for entry in entity_registry.entities.values():
-        #     if entry.platform != "integration":
-        #         continue
-        #     if not entry.entity_id.startswith("sensor."):
-        #         continue
-        #     if entry.domain != "sensor":
-        #         continue
-
-        #     # Auf Integralsensor prüfen
-        #     if entry.original_icon != "mdi:chart-histogram":
-        #         continue
-
-        #     # _LOGGER.warning("Integrasensor gefunden. %s", entry.entity_id)
-        #     # Konfigurationsquelle auslesen
-        #     # options = entry.options.get("sensor", {})
-        #     # input_id = options.get("source")
-
-        #     # _LOGGER.warning("Found: %s, %s", entry.entity_id, entry.options)
-
-        #     # if input_id == input_entity_id:
-        #     #     result.append(entry.entity_id)
-
-        #     # Hole zugehörige ConfigEntry
-        #     config_entry = self._hass.config_entries.async_get_entry(
-        #         entry.config_entry_id
-        #     )
-        #     if not config_entry or config_entry.domain != "integration":
-        #         continue
-
-        #     _LOGGER.warning("Found: %s, %s", entry.entity_id, config_entry)
-
-        #     # Jetzt schauen, ob dieser Helper unseren Sensor als Quelle hat
-        #     source = config_entry.data.get("source")
-        #     if source == input_entity_id:
-        #         result.append(entry.entity_id)
-
-        return result
 
     async def update_restore_state(self, entity_id: str, new_value: Decimal):
         """Aktualisiert state / native_value / last_valid_state in core.restore_state."""
@@ -1276,5 +1282,5 @@ class MigrateFromYaml:
             await self._hass.async_add_executor_job(write_func)
             _LOGGER.info("restore_state für %s ⇒ %s aktualisiert", entity_id, val_str)
 
-        except Exception as e:
+        except Exception as e:  # pylint:disable=broad-exception-caught
             _LOGGER.exception("Fehler beim Patchen von restore_state: %s", e)

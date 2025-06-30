@@ -55,6 +55,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     _webhook_id: str = ""
     _host_ip = None
     _only_ip = False
+    _notify_migration = False
 
     @property
     def webhook_id(self) -> str:

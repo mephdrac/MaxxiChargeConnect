@@ -25,10 +25,11 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_IP_ADDRESS, CONF_NAME, CONF_WEBHOOK_ID
 from homeassistant.helpers.selector import BooleanSelector
+from .migration.migration_from_yaml import MigrateFromYaml
 
 from .webhook import async_unregister_webhook
 
-from .const import DOMAIN, ONLY_ONE_IP
+from .const import DOMAIN, ONLY_ONE_IP, NOTIFY_MIGRATION
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -54,6 +55,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     _webhook_id: str = ""
     _host_ip = None
     _only_ip = False
+    _notify_migration = False
 
     @property
     def webhook_id(self) -> str:
@@ -76,6 +78,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._webhook_id = user_input[CONF_WEBHOOK_ID]
             self._host_ip = user_input.get(CONF_IP_ADDRESS, None)
             self._only_ip = user_input.get(ONLY_ONE_IP, False)
+            self._notify_migration = user_input.get(NOTIFY_MIGRATION, False)
 
             return self.async_create_entry(
                 title=self._name,
@@ -84,6 +87,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_NAME: self._name,
                     CONF_IP_ADDRESS: self._host_ip,
                     ONLY_ONE_IP: self._only_ip,
+                    NOTIFY_MIGRATION: self._notify_migration,
                 },
             )
 
@@ -95,6 +99,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Required(CONF_WEBHOOK_ID): str,
                     vol.Optional(CONF_IP_ADDRESS, default=""): str,
                     vol.Optional(ONLY_ONE_IP, default=False): BooleanSelector(),
+                    vol.Optional(NOTIFY_MIGRATION, default=False): BooleanSelector(),
                 }
             ),
         )
@@ -113,6 +118,10 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         entry = self._get_reconfigure_entry()
 
         if user_input is not None:
+            if user_input.get(NOTIFY_MIGRATION):
+                migrator = MigrateFromYaml(self.hass, entry)
+                await migrator.async_notify_possible_migration()
+
             old_webhook_id = entry.data.get(CONF_WEBHOOK_ID)
             new_data = {
                 # CONF_NAME: user_input[CONF_NAME],
@@ -149,6 +158,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Optional(
                         ONLY_ONE_IP, default=current_data.get(ONLY_ONE_IP, False)
                     ): BooleanSelector(),
+                    vol.Optional(NOTIFY_MIGRATION, default=False): BooleanSelector(),
                 }
             ),
         )

@@ -138,7 +138,8 @@ def as_float(value: str) -> float:
     number = None
 
     if value is not None:
-        match = re.search(r"[\d.]+", value)
+        # match = re.search(r"[\d.]+", value)
+        match = re.search(r"-?\d+(?:\.\d+)?", value)
 
         if match:
             number = float(match.group())

@@ -1,0 +1,13 @@
+migration_von_yaml_konfiguration:
+  name: Migration von YAML Konfiguration
+  description: Führt eine Migration der YAML-Konfiguration durch.
+  fields:
+    mappings:
+      name: Sensor-Mappings
+      description: Alte und neue Sensor-IDs
+      required: false
+      example:
+        - old_sensor: "sensor.alt_soc"
+          new_sensor: "sensor.neu_soc"
+      selector:
+        object: {}

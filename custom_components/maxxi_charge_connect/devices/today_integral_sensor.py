@@ -10,6 +10,7 @@ Classes:
 """
 
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 import logging
 
 from homeassistant.components.integration.sensor import (
@@ -36,20 +37,20 @@ _LOGGER = logging.getLogger(__name__)
 class TodayIntegralSensor(IntegrationSensor):
     """Sensorentität zur Anzeige der gesamten Energie des Tages (kWh).
 
-        Diese Entität summiert Energie über den Tag auf, um
-        die Insgesamtenergie zu berechnen. Sie nutzt dafür die Trapezregel
-        zur Integration und stellt den Wert in Kilowattstunden dar.
+    Diese Entität summiert Energie über den Tag auf, um
+    die Insgesamtenergie zu berechnen. Sie nutzt dafür die Trapezregel
+    zur Integration und stellt den Wert in Kilowattstunden dar.
 
-        Attributes:
-            _attr_entity_registry_enabled_default (bool): Gibt an, ob die Entität standardmäßig
-            aktiviert ist.
-            _entry (ConfigEntry): Die Konfigurationsdaten dieser Entität.
-            _attr_icon (str): Das Symbol, das in der Benutzeroberfläche angezeigt wird.
-            _attr_device_class (str): Gibt den Typ des Sensors an (hier: ENERGY).
-            _attr_state_class (str): Gibt die Art des Sensorzustands an (TOTAL).
-            _attr_native_unit_of_measurement (str): Die verwendete Energieeinheit (kWh).
+    Attributes:
+        _attr_entity_registry_enabled_default (bool): Gibt an, ob die Entität standardmäßig
+        aktiviert ist.
+        _entry (ConfigEntry): Die Konfigurationsdaten dieser Entität.
+        _attr_icon (str): Das Symbol, das in der Benutzeroberfläche angezeigt wird.
+        _attr_device_class (str): Gibt den Typ des Sensors an (hier: ENERGY).
+        _attr_state_class (str): Gibt die Art des Sensorzustands an (TOTAL).
+        _attr_native_unit_of_measurement (str): Die verwendete Energieeinheit (kWh).
 
-        """
+    """
 
     _attr_has_entity_name = True
 
@@ -135,6 +136,22 @@ class TodayIntegralSensor(IntegrationSensor):
 
         if self._unsub_time_reset is not None:
             self.async_on_remove(self._unsub_time_reset)
+
+    def set_state_from_migration(self, value: Decimal):
+        """Einen valid Status setzen, nach der Migration.
+
+        Diese Methode dient dem Setzen eines Statusses nach einer erfolgreichen Migration
+        von der YAML-Integration zu dieser. Sie sollte nicht aus anderen Gründen verwendet
+        werden
+
+        Args:
+            value (Decimal): Statuswert, der als letzter Valid Status gezeigt werden soll.
+        """
+
+        _LOGGER.info("Setze neuen State: %s", value)
+        self._state = value
+        self._last_valid_state = value
+        self.async_write_ha_state()
 
     async def _reset_energy_daily(self, now):
         """Setzt den Energiewert jeden Tag um Mitternacht zurück.

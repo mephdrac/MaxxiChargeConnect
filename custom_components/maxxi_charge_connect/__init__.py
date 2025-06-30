@@ -10,16 +10,17 @@ Funktionen:
 - async_migrate_entry: Platzhalter für zukünftige Migrationslogik.
 """
 
+import asyncio
 import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 
-from .const import DOMAIN
-from .webhook import async_register_webhook, async_unregister_webhook
-
+from .const import DOMAIN, NOTIFY_MIGRATION
 from .http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
+from .migration.migration_from_yaml import MigrateFromYaml
+from .webhook import async_register_webhook, async_unregister_webhook
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -53,6 +54,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         True: Setup erfolgreich.
 
     """
+
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = {}
 
@@ -79,6 +81,41 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     await async_register_webhook(hass, entry)
     await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "number"])
+
+    # entity_registry = async_get_entity_registry(hass)
+    # Das ist die ID des Geräts, das mit dem ConfigEntry verknüpft ist
+    # device_id = entry.device_id
+
+    # ConfigEntry.get(CONF_WEBHOOK_ID, "")
+
+    # if device_id is not None:
+    #     device = entity_registry.async_get(device_id)
+    #     if device:
+    #         device_name = device.name_by_user or device.name or "Unbekanntes Gerät"
+    #         _LOGGER.error(f"Name des verknüpften Geräts: {device_name}")
+    #     else:
+    #         _LOGGER.warning("Kein Gerät zu device_id gefunden.")
+    # else:
+    #     _LOGGER.warning("Kein device_id im ConfigEntry vorhanden.")
+
+    migrator = MigrateFromYaml(hass, entry)
+    # await migrator.async_notify_possible_migration()
+
+    # Migrationsservice für die Yaml-Konfiguration von Joern-R registrieren
+
+    async def handle_trigger_migration(call):
+        mappings = call.data.get("mappings", [])
+        await migrator.async_handle_trigger_migration(mappings)
+
+    hass.services.async_register(
+        DOMAIN, "migration_von_yaml_konfiguration", handle_trigger_migration
+    )
+
+    notify_migration = entry.data.get(NOTIFY_MIGRATION, False)
+    if notify_migration:
+        hass.async_create_task(
+            migrator.async_notify_possible_migration()
+        )
 
     return True
 
@@ -229,7 +266,16 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     """
     await async_unregister_webhook(hass, entry)
 
-    unload_ok = await hass.config_entries.async_forward_entry_unload(entry, "sensor")
-    if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id, None)
+    unload_ok = all(
+        await asyncio.gather(
+            *[
+                hass.config_entries.async_forward_entry_unload(entry, platform)
+                for platform in ("sensor", "number")
+            ]
+        )
+    )
+
+    # unload_ok = await hass.config_entries.async_forward_entry_unload(entry, "sensor")
+    # if unload_ok:
+    #     hass.data[DOMAIN].pop(entry.entry_id, None)
     return unload_ok

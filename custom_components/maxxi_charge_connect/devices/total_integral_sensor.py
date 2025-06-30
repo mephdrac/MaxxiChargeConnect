@@ -10,6 +10,7 @@ Classes:
 """
 
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 import logging
 
 from homeassistant.components.integration.sensor import (
@@ -25,7 +26,7 @@ from homeassistant.const import UnitOfEnergy
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 
-from .. const import DEVICE_INFO, DOMAIN  # noqa: TID252
+from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
 from ..tools import clean_title
 
 _LOGGER = logging.getLogger(__name__)
@@ -49,6 +50,7 @@ class TotalIntegralSensor(IntegrationSensor):
         _attr_native_unit_of_measurement (str): Die verwendete Energieeinheit (kWh).
 
     """
+
     _attr_has_entity_name = True
 
     # pylint: disable=super-init-not-called
@@ -106,6 +108,22 @@ class TotalIntegralSensor(IntegrationSensor):
         self._unsub_time_reset = None
         local_midnight = dt_util.start_of_local_day()
         self._last_reset = dt_util.as_utc(local_midnight)
+
+    def set_state_from_migration(self, value: Decimal):
+        """Einen valid Status setzen, nach der Migration.
+
+        Diese Methode dient dem Setzen eines Statusses nach einer erfolgreichen Migration
+        von der YAML-Integration zu dieser. Sie sollte nicht aus anderen Gründen verwendet
+        werden
+
+        Args:
+            value (Decimal): Statuswert, der als letzter Valid Status gezeigt werden soll.
+        """
+
+        _LOGGER.info("Setze neuen State: %s", value)
+        self._state = value
+        self._last_valid_state = value
+        self.async_write_ha_state()
 
     def _handle_max_sub_interval_exceeded(self):
         _LOGGER.debug(

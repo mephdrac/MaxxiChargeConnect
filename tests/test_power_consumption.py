@@ -119,7 +119,7 @@ async def test_power_consumption_add_and_handle_update1():
         pccu = 34.678
         pr = 234.675
         await sensor._handle_update({"Pccu": pccu, "Pr": pr})  # pylint: disable=protected-access
-        assert sensor.native_value == round(pccu + max(-pr, 0), 2)
+        assert sensor.native_value == round(pccu + max(pr, 0), 2)
 
 
 @pytest.mark.asyncio

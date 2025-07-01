@@ -1,3 +1,6 @@
+# ICH BIN IM URLAUB vom 04.07.2025 bis 29.07.2025
+In der Zeit kann ich keine Bugfixe vornehmen. Falls ein Bug auftritt - bitte als Issue hinterlegen. Sobald ich zurück bin, kümmere ich mich drum.
+
 ![MaxxiChargeConnect](images/logo.png)
 
 # MaxxiChargeConnect

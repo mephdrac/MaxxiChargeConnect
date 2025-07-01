@@ -238,11 +238,11 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     )
 
     consumption_energy_today = ConsumptionEnergyToday(
-        hass, entry, pv_self_consumption.entity_id
+        hass, entry, power_consumption.entity_id
     )
 
     consumption_energy_total = ConsumptionEnergyTotal(
-        hass, entry, pv_self_consumption.entity_id
+        hass, entry, power_consumption.entity_id
     )
 
     async_add_entities(

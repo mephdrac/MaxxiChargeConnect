@@ -74,7 +74,7 @@ class PowerConsumption(SensorEntity):
         if is_pccu_ok(pccu):
             pr = float(data.get("Pr", 0))
             if is_pr_ok(pr):
-                self._attr_native_value = round(pccu + max(-pr, 0), 2)
+                self._attr_native_value = round(pccu + max(pr, 0), 2)
                 self.async_write_ha_state()
 
     @property

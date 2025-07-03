@@ -15,6 +15,9 @@ on:
 
 jobs:
   pip-audit:
+    permissions:
+        contents: read
+        pull-requests: write
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code

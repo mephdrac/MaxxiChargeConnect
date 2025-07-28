@@ -1,6 +1,3 @@
-# ICH BIN IM URLAUB vom 04.07.2025 bis 29.07.2025
-In der Zeit kann ich keine Bugfixe vornehmen. Falls ein Bug auftritt - bitte als Issue hinterlegen. Sobald ich zurück bin, kümmere ich mich drum.
-
 ![MaxxiChargeConnect](images/logo.png)
 
 # MaxxiChargeConnect
@@ -13,7 +10,7 @@ MaxxiChargeConnect ist eine benutzerdefinierte Home Assistant Integration, die d
 Diese Integration wurde nicht von Maxxisun bzw. der Maxxihandel GmbH, 04509 Wiedemar entwickelt oder unterstützt.
 Ich, @mephdrac, stehe in keinerlei Verbindung von Maxxisun bzw. der Maxxihandel GmbH. Die Verwendung der Begriffe MaxxiCharge und Maxxisun dient ausschließlich der Beschreibung der Kompatibilität.
 
-## Update - Hiweist für Version 1.2.0
+## Update - Hiweis für Version 1.2.0
 
 **ACHTUNG:** beim Wechsel auf Version 1.2.0 von einer früheren Version kann es u.U. zu Datenverlusten kommen. Beim Betrieb der Version 1.2.0 kommt es selbstverständlich nicht mehr zu Datenverlusten. Bitte vorher Backup machen - und mir Bescheid geben - wenn es ein Problem gab.
 

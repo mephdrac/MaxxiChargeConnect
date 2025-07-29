@@ -10,6 +10,13 @@ MaxxiChargeConnect ist eine benutzerdefinierte Home Assistant Integration, die d
 Diese Integration wurde nicht von Maxxisun bzw. der Maxxihandel GmbH, 04509 Wiedemar entwickelt oder unterstützt.
 Ich, @mephdrac, stehe in keinerlei Verbindung von Maxxisun bzw. der Maxxihandel GmbH. Die Verwendung der Begriffe MaxxiCharge und Maxxisun dient ausschließlich der Beschreibung der Kompatibilität.
 
+## Warum hat meine Integration kein Logo in Home Assistant
+Der Grund ist, es wurde mir nicht erlaubt. Ich habe versucht mein Logo in "https://brands.home-assistant.io/" zu hinterlegen. Das wurde mir verwehrt mit dem Hinweis, dass mein Logo nicht das von Maxxisun ist. An dem Logo von Maxxisun habe ich indes keine Rechte, daher kann ich es nicht verwenden. Als ich daraufhinwies, wurde mir gesagt, dass ich dann kein Logo hinterlegen kann. 
+
+Evt. wäre es möglich, wenn ich meinen Integration breiter mache, d.h. nicht nur Maxxisun unterstütze. Aber ob es dann klappt - keine Ahnnung. Falls jemand von Euch weiß, wie ich ein Logo für meine Integration hinterlegt bekomme - so bin ich für den Tipp sehr dankbar.
+
+Es ist schade und ich verstehe auch nicht - warum HA sich da so anstellt.
+
 ## Update - Hiweis für Version 1.2.0
 
 **ACHTUNG:** beim Wechsel auf Version 1.2.0 von einer früheren Version kann es u.U. zu Datenverlusten kommen. Beim Betrieb der Version 1.2.0 kommt es selbstverständlich nicht mehr zu Datenverlusten. Bitte vorher Backup machen - und mir Bescheid geben - wenn es ein Problem gab.

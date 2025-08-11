@@ -31,7 +31,8 @@ from .webhook import async_unregister_webhook
 
 from .const import DOMAIN, ONLY_ONE_IP, NOTIFY_MIGRATION, CONF_REAL_CLOUD_URL, \
                     CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_REAL_CLOUD_URL, \
-                    CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
+                    CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD, \
+                    DEFAULT_ENABLE_LOCAL_CLOUD_PROXY
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -111,8 +112,8 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Optional(CONF_IP_ADDRESS, default=""): str,
                     vol.Optional(ONLY_ONE_IP, default=False): BooleanSelector(),
                     vol.Optional(NOTIFY_MIGRATION, default=False): BooleanSelector(),
-                    vol.Optional(CONF_ENABLE_LOCAL_CLOUD_PROXY, default=True): BooleanSelector(),
-                    vol.Optional(CONF_ENABLE_FORWARD_TO_CLOUD, default=True): BooleanSelector(),
+                    vol.Optional(CONF_ENABLE_LOCAL_CLOUD_PROXY, default=DEFAULT_ENABLE_LOCAL_CLOUD_PROXY): BooleanSelector(),
+                    vol.Optional(CONF_ENABLE_FORWARD_TO_CLOUD, default=DEFAULT_ENABLE_FORWARD_TO_CLOUD): BooleanSelector(),
                     vol.Optional(CONF_REAL_CLOUD_URL, default=DEFAULT_REAL_CLOUD_URL): str,
 
                 }
@@ -142,7 +143,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_WEBHOOK_ID: user_input[CONF_WEBHOOK_ID],
                 CONF_IP_ADDRESS: user_input.get(CONF_IP_ADDRESS, ""),
                 ONLY_ONE_IP: user_input.get(ONLY_ONE_IP, False),
-                CONF_ENABLE_LOCAL_CLOUD_PROXY: user_input.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, False),
+                CONF_ENABLE_LOCAL_CLOUD_PROXY: user_input.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_ENABLE_LOCAL_CLOUD_PROXY),
                 CONF_REAL_CLOUD_URL: user_input.get(CONF_REAL_CLOUD_URL, DEFAULT_REAL_CLOUD_URL),
                 CONF_ENABLE_FORWARD_TO_CLOUD: user_input.get(CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD)
             }
@@ -175,8 +176,8 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         ONLY_ONE_IP, default=current_data.get(ONLY_ONE_IP, False)
                     ): BooleanSelector(),
                     vol.Optional(NOTIFY_MIGRATION, default=False): BooleanSelector(),
-                    vol.Optional(CONF_ENABLE_LOCAL_CLOUD_PROXY, default=current_data.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, False)): BooleanSelector(),
-                    vol.Optional(CONF_ENABLE_FORWARD_TO_CLOUD, default=current_data.get(CONF_ENABLE_FORWARD_TO_CLOUD, False)): BooleanSelector(),
+                    vol.Optional(CONF_ENABLE_LOCAL_CLOUD_PROXY, default=current_data.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_ENABLE_LOCAL_CLOUD_PROXY)): BooleanSelector(),
+                    vol.Optional(CONF_ENABLE_FORWARD_TO_CLOUD, default=current_data.get(CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD)): BooleanSelector(),
                     vol.Optional(CONF_REAL_CLOUD_URL, default=current_data.get(CONF_REAL_CLOUD_URL, DEFAULT_REAL_CLOUD_URL)): str,
                 }
             ),

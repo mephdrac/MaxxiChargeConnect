@@ -19,7 +19,9 @@ from homeassistant.helpers.entity_registry import async_get as async_get_entity_
 
 from .const import DOMAIN, NOTIFY_MIGRATION, CONF_REAL_CLOUD_URL, \
     CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_REAL_CLOUD_URL, \
-    CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
+    CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD, \
+    DEFAULT_ENABLE_LOCAL_CLOUD_PROXY
+
 from .http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
 from .migration.migration_from_yaml import MigrateFromYaml
 from .webhook import async_register_webhook, async_unregister_webhook
@@ -123,7 +125,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
             migrator.async_notify_possible_migration()
         )
     
-    if entry.data.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, False):
+    if entry.data.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_ENABLE_LOCAL_CLOUD_PROXY):
         _LOGGER.info("Starte Proxy-Server")
         forward_to_cloud = entry.data.get(CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD)
         

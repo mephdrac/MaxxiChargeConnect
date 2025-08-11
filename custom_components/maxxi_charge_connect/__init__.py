@@ -17,10 +17,16 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 
-from .const import DOMAIN, NOTIFY_MIGRATION
+from .const import DOMAIN, NOTIFY_MIGRATION, CONF_REAL_CLOUD_URL, \
+    CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_REAL_CLOUD_URL, \
+    CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
 from .http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
 from .migration.migration_from_yaml import MigrateFromYaml
 from .webhook import async_register_webhook, async_unregister_webhook
+
+from .reverse_proxy.proxy_server import MaxxiProxyServer
+
+PROXY_INSTANCE = None  # optional global fallback
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -116,7 +122,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
         hass.async_create_task(
             migrator.async_notify_possible_migration()
         )
+    
+    if entry.data.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, False):
+        _LOGGER.info("Starte Proxy-Server")
+        forward_to_cloud = entry.data.get(CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD)
+        
+        forward_url = entry.options.get(CONF_REAL_CLOUD_URL, DEFAULT_REAL_CLOUD_URL)
+        proxy = MaxxiProxyServer(hass, listen_port=3001, enable_forward=forward_to_cloud, forward_url=forward_url)
+        hass.loop.create_task(proxy.start())
 
+        hass.data[DOMAIN]["proxy"] = proxy  # ggf. für späteres Stoppen
+        global PROXY_INSTANCE
+        PROXY_INSTANCE = proxy
     return True
 
 
@@ -227,11 +244,20 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error("Fehler beim migrieren: %s", e)
             return False
+        
+        if version == 3 and minor_version == 1:
+            _LOGGER.warning("Migration MaxxiChargeConnect v3.1 → v3.2 gestartet")
 
+            version = 3
+            minor_version = 2
+            hass.config_entries.async_update_entry(
+                config_entry, version=version, minor_version=minor_version
+            )
         return True
-
-    _LOGGER.info("MaxxiChargeConnect - config v3.1 installiert")
-    return version == 3 and minor_version == 1  # true == aktuelle Version
+    
+    
+    _LOGGER.info("MaxxiChargeConnect - config v3.2 installiert")
+    return version == 3 and minor_version == 2  # true == aktuelle Version
 
 
 # async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
@@ -265,6 +291,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     """
     await async_unregister_webhook(hass, entry)
+
+    proxy = hass.data[DOMAIN].get("proxy")
+    if proxy:
+        await proxy.stop()
 
     unload_ok = all(
         await asyncio.gather(

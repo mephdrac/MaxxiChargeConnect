@@ -1,37 +1,53 @@
 import logging
-from aiohttp import web, ClientSession
+from aiohttp import web, ClientSession, ClientError
 
 _LOGGER = logging.getLogger(__name__)
 
 class MaxxiProxyServer:
-    def __init__(self, hass, listen_port=3001, forward_url=None):
+    def __init__(self, hass, listen_port=3001, enable_forward=False, forward_url=None):
         self.hass = hass
         self.listen_port = listen_port
         self.forward_url = forward_url
+        self.enable_forward_to_cloud = enable_forward
         self.runner = None
 
     async def _handle_text(self, request):
         try:
             data = await request.json()
-            _LOGGER.info("Lokaler Maxxi-Fehler empfangen: %s", data)
-
-            # Beispiel: Aktuellen Fehler als HA-State speichern
-            self.hass.states.async_set("maxxichargeconnect.last_error", str(data))
-
-            # An echte Cloud weiterleiten
-            if self.forward_url:
-                async with ClientSession() as session:
-                    async with session.post(self.forward_url, json=data) as resp:
-                        cloud_resp = await resp.text()
-                        _LOGGER.info("Antwort der echten Cloud (%s): %s", self.forward_url, cloud_resp)
-            else:
-                _LOGGER.warning("Keine Weiterleitungs-URL gesetzt. Cloud-Forwarding übersprungen.")
-
-            return web.Response(text="OK")
-
         except Exception as e:
-            _LOGGER.exception("Fehler im Maxxi-Proxy-Server: %s", e)
-            return web.Response(status=500, text="Interner Fehler")
+            _LOGGER.error("Ungültige JSON-Daten empfangen: %s", e)
+            return web.Response(status=400, text="Invalid JSON")
+
+        _LOGGER.warning("Lokaler Maxxi-Fehler empfangen: %s", data)
+
+        # Beispiel: Aktuellen Fehler als HA-State speichern
+        self.hass.states.async_set("maxxichargeconnect.last_error", str(data))
+
+        # An echte Cloud weiterleiten
+        if self.enable_forward_to_cloud:
+            _LOGGER.info("Forwarding to cloud is enabled")
+
+            if self.forward_url:
+
+                try:
+                    async with ClientSession() as session:
+                        async with session.post(self.forward_url, json=data) as resp:
+                            cloud_resp = await resp.text()
+                            _LOGGER.info("Antwort der echten Cloud (%s): %s", self.forward_url, cloud_resp)
+                except ClientError as e:
+                    _LOGGER.error(
+                        "Cloud-Weiterleitung fehlgeschlagen: %s", e
+                    )
+                except Exception as e:
+                    _LOGGER.error(
+                        "Unerwarteter Fehler bei Cloud-Weiterleitung: %s", e
+                    )
+            else:
+                _LOGGER.error("Keine Weiterleitungs-URL gesetzt")
+
+        # Dem Maxxi-Gerät antworten, auch wenn Cloud weg ist
+        return web.Response(status=200, text="OK")
+
 
     async def start(self):
         app = web.Application()

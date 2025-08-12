@@ -22,7 +22,7 @@ Zunächst muss in der maxxisun.app unter Cloudservice "nein" eingestellt ist. Un
 Dort muss eine API-Route noch vergeben sein. Z.B.:
 
 ```
-http://**dein_homeassistant**/api/webhook/**webhook_id**
+http://**dein_homeassistant**:8123/api/webhook/**webhook_id**
 ```
 
 # Einrichten der Integration

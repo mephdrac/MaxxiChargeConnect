@@ -13,6 +13,7 @@ import dns.resolver
 
 from aiohttp import web, ClientSession, ClientError
 
+# pylint: disable=relative-beyond-top-level
 from ..const import (
     PROXY_ERROR_EVENTNAME,
     PROXY_ERROR_DEVICE_ID,

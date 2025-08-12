@@ -9,7 +9,10 @@
           "webhook_id": "Webhook-ID",
           "name": "Name des Gerätes",
           "ip_address": "IP-Adresse der MaxxiCharge",
-          "notify_migration": "Migrations-Sensoren erkennen?"
+          "notify_migration": "Migrations-Sensoren erkennen?",
+          "conf_enable_forward_to_cloud": "Weiterleiten an Maxxi-Cloud?",
+          "enable_local_cloud_proxy": "Reverse-Proxy starten?",
+          "CONF_DEVICE_ID": "Geräte-ID, (z.B. Maxxi-xxxxxxx-xxx)"
         }
       },
       "reconfigure": {
@@ -19,9 +22,19 @@
           "only_accept_one_ip": "Webhook-Zugriff einschränken?",
           "webhook_id": "Webhook-ID",
           "ip_address": "IP-Adresse der MaxxiCharge",
-          "notify_migration": "Migrations-Sensoren erkennen?"
+          "notify_migration": "Migrations-Sensoren erkennen?",
+          "conf_enable_forward_to_cloud": "Weiterleiten an Maxxi-Cloud?",
+          "enable_local_cloud_proxy": "Reverse-Proxy starten?",
+          "CONF_DEVICE_ID": "Geräte-ID, (z.B. Maxxi-xxxxxxx-xxx)"
         }
-      }
+      }      
+    }
+  },
+  "issue": {
+    "missing_device_id": {
+    "title": "Fehlende Geräte-ID",
+    "description": "Die Geräte-ID ist nicht gesetzt. Bitte öffne die Konfiguration und trage eine gültige Geräte-ID ein, damit die Integration korrekt funktioniert.",
+    "fix_title": "Geräte-ID hinzufügen"
     }
   },
   "entity": {
@@ -169,6 +182,9 @@
       },
       "PvTotalEnergy": {
         "name": "PV Produktion gesamt"
+      },
+      "ErrorSensor": {
+        "name": "Status"
       }
     },
     "number": {

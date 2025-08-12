@@ -8,3 +8,6 @@ disable=duplicate-code
 [DESIGN]
 # Maximum number of attributes for a class (see R0902).
 max-attributes=15
+
+[FORMAT]
+max-line-length=190

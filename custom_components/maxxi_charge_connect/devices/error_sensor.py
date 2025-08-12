@@ -6,7 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 
 from ..const import DEVICE_INFO, DOMAIN, PROXY_ERROR_CODE, \
                     PROXY_ERROR_EVENTNAME,PROXY_ERROR_MESSAGE,PROXY_ERROR_TOTAL, \
-                    PROXY_ERROR_CCU, PROXY_ERROR_IP
+                    PROXY_ERROR_CCU, PROXY_ERROR_IP, CONF_DEVICE_ID
                     
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ class ErrorSensor(TextEntity):
     _attr_translation_key = "error_state"
     _attr_has_entity_name = True
 
-    def __init__(self, entry: ConfigEntry, device_id: str) -> None:
+    def __init__(self, entry: ConfigEntry) -> None:
         """Initialisiert die Entity zur Anzeige des Fehlerstatus.
 
         Args:
@@ -28,7 +28,7 @@ class ErrorSensor(TextEntity):
         self._attr_icon = "mdi:alert-circle"
         self._attr_native_value = None
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
-        self._device_id = device_id
+        self._device_id = self._entry.data.get(CONF_DEVICE_ID)
         
         # Hier die Zusatzinfos
         self._error_code = None

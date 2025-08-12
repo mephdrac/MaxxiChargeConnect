@@ -7,6 +7,7 @@ pylint-per-file-ignores
 # homeassistant>=2025.1.0
 
 beautifulsoup4==4.12.3
+dnspython
 
 # Sicherheitsfixes erzwingen:
 cryptography>=44.0.1

@@ -45,7 +45,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
 
         self._sensor_list = sensor_list
         self.entry = entry
-        self._resource = entry.data[CONF_IP_ADDRESS].strip()
+        self._resource = entry.data[CONF_IP_ADDRESS].strip()        
 
         if self._resource:
             if not self._resource.startswith(("http://", "https://")):
@@ -118,13 +118,9 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                 raise UpdateFailed(f"Netzwerkfehler beim Abruf: {e}") from e
 
             except TimeoutError as e:
-                raise UpdateFailed(
-                    "Zeitüberschreitung beim Abrufen der HTML-Seite"
-                ) from e
 
-            except UpdateFailed:
-                # Weiterreichen, da z. B. Label nicht gefunden wurde
-                raise
+                _LOGGER.error("%s:Zeitüberschreitung beim Abrufen der HTML-Seite", e)
+                return {}
 
             except Exception as e:
                 _LOGGER.exception("Unerwarteter Fehler bei der Datenabfrage")

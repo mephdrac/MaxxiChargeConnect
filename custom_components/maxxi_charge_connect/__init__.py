@@ -40,10 +40,8 @@ from .reverse_proxy.proxy_server import MaxxiProxyServer
 _LOGGER = logging.getLogger(__name__)
 PROXY_INSTANCE = None  # globale Proxy-Instanz für Zugriff
 
-
 async def check_device_id_issue(hass):
-
-    _LOGGER.warning("CHECK.....")
+    _LOGGER.debug("CHECK Device_ID.....")
     for entry in hass.config_entries.async_entries(DOMAIN):
         device_id = entry.data.get(CONF_DEVICE_ID)
         if not device_id:
@@ -53,13 +51,16 @@ async def check_device_id_issue(hass):
                 DOMAIN,
                 f"missing_device_id_{entry.entry_id}",
                 is_fixable=True,
-                severity="critical",
+                severity=IssueSeverity.CRITICAL,
+                issue_domain=DOMAIN,
                 translation_key="missing_device_id",
                 translation_placeholders={"entry_title": entry.title},
             )
         else:
             # Issue löschen, wenn device_id da ist
             async_delete_issue(hass, DOMAIN, f"missing_device_id_{entry.entry_id}")
+
+        _LOGGER.debug("Device_ID checked.")
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:
     """Wird beim Start von Home Assistant einmalig aufgerufen.
@@ -174,16 +175,16 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
     version = config_entry.version or 1
     minor_version = getattr(config_entry, "minor_version", 0)
 
-    _LOGGER.warning("Prüfe Migration: Aktuelle Version: %s.%s", version, minor_version)
+    _LOGGER.info("Prüfe Migration: Aktuelle Version: %s.%s", version, minor_version)
 
     if version < 2:
-        _LOGGER.warning("Migration MaxxiChargeConnect v1 → v2 gestartet")
+        _LOGGER.info("Migration MaxxiChargeConnect v1 → v2 gestartet")
         new_data = {**config_entry.data}
         version = 2
         hass.config_entries.async_update_entry(config_entry, data=new_data, version=version)
 
     if version == 2:
-        _LOGGER.warning("Migration MaxxiChargeConnect v2 → v3 gestartet")
+        _LOGGER.info("Migration MaxxiChargeConnect v2 → v3 gestartet")
         entity_registry = async_get_entity_registry(hass)
         unique_ids_to_remove = [
             f"{config_entry.entry_id}_power_consumption",
@@ -203,7 +204,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         _LOGGER.info("Migration auf Version 3 abgeschlossen")
 
     if version == 3 and minor_version == 0:
-        _LOGGER.warning("Migration MaxxiChargeConnect v3.0 → v3.1 gestartet")
+        _LOGGER.info("Migration MaxxiChargeConnect v3.0 → v3.1 gestartet")
 
         try:
             entity_registry = async_get_entity_registry(hass)
@@ -248,7 +249,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             return False
 
     if version == 3 and minor_version == 1:
-        _LOGGER.warning("Migration MaxxiChargeConnect v3.1 → v3.2 gestartet")
+        _LOGGER.info("Migration MaxxiChargeConnect v3.1 → v3.2 gestartet")
 
         try:
             new_data = dict(config_entry.data)
@@ -267,6 +268,6 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             _LOGGER.error("Fehler beim Migrieren der Konfiguration: %s", e)
             return False
 
-    _LOGGER.warning("MaxxiChargeConnect - config v%s.%s installiert", version, minor_version)
+    _LOGGER.info("MaxxiChargeConnect - config v%s.%s installiert", version, minor_version)
     await check_device_id_issue(hass)
     return version == 3 and minor_version == 2

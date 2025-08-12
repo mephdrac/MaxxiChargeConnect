@@ -25,9 +25,16 @@
           "conf_enable_forward_to_cloud": "Weiterleiten an Maxxi-Cloud?",
           "enable_local_cloud_proxy": "Reverse-Proxy starten?"
         }
-      }
+      }      
     }
   },
+  "issue": {
+    "missing_device_id": {
+    "title": "Fehlende Geräte-ID",
+    "description": "Die Geräte-ID ist nicht gesetzt. Bitte öffne die Konfiguration und trage eine gültige Geräte-ID ein, damit die Integration korrekt funktioniert.",
+    "fix_title": "Geräte-ID hinzufügen"
+    }
+  },      
   "entity": {
     "sensor": {
       "battery_power": {
@@ -173,6 +180,9 @@
       },
       "PvTotalEnergy": {
         "name": "PV Produktion gesamt"
+      },
+      "ErrorSensor": {
+        "name": "Status"
       }
     },
     "number": {

@@ -1,19 +1,22 @@
+""" Proxy-Server zum Abfangen der Meldungen an die MaxxiCloud
+"""
 import logging
 
-from homeassistant.components.text import TextEntity
+from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import EntityCategory
 from homeassistant.config_entries import ConfigEntry
 
 from ..const import DEVICE_INFO, DOMAIN, PROXY_ERROR_CODE, \
-                    PROXY_ERROR_EVENTNAME,PROXY_ERROR_MESSAGE,PROXY_ERROR_TOTAL, \
+                    PROXY_ERROR_EVENTNAME, PROXY_ERROR_MESSAGE, PROXY_ERROR_TOTAL, \
                     PROXY_ERROR_CCU, PROXY_ERROR_IP, CONF_DEVICE_ID
                     
 _LOGGER = logging.getLogger(__name__)
 
-class ErrorSensor(TextEntity):
-    """TextEntity für die Anzeige des Fehlerstatus eines verbundenen Geräts."""
 
-    _attr_translation_key = "error_state"
+class ErrorSensor(SensorEntity):
+    """Entity für die Anzeige des Fehlerstatus eines verbundenen Geräts."""
+
+    _attr_translation_key = "ErrorSensor"
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry) -> None:
@@ -37,9 +40,10 @@ class ErrorSensor(TextEntity):
         self._ip_addr = None
 
     async def async_added_to_hass(self):
-        """Wird beim Hinzufügen zur Home Assistant-Instanz aufgerufen.        
+        """Wird beim Hinzufügen zur Home Assistant-Instanz aufgerufen.
         """
-       # Event-Listener registrieren
+
+        # Event-Listener registrieren
         self.async_on_remove(
             self.hass.bus.async_listen(PROXY_ERROR_EVENTNAME, self._handle_error_event)
         )
@@ -52,26 +56,38 @@ class ErrorSensor(TextEntity):
             return  # Falls mehrere Geräte existieren
 
         self._error_message = data.get(PROXY_ERROR_MESSAGE)
+
         # State = "Fehler" oder "OK"
         self._attr_native_value = self._error_message if data.get(PROXY_ERROR_CODE) else "OK"
 
-        # Zusatzattribute speichern
-        self._error_code = data.get(PROXY_ERROR_CODE)
-        self._error_message = data.get(PROXY_ERROR_MESSAGE)
-        self._total_errors = data.get(PROXY_ERROR_TOTAL)
-        self._ip_addr = data.get(PROXY_ERROR_IP)
+        if self._attr_native_value == "OK":
+
+            await self.hass.services.async_call(
+                "persistent_notification",
+                "dismiss",
+                {
+                    "notification_id": f"maxxicharge_error_{self._entry.entry_id}"
+                }
+            )
+        else:
+            # Zusatzattribute speichern
+            self._error_code = data.get(PROXY_ERROR_CODE)
+            self._error_message = data.get(PROXY_ERROR_MESSAGE)
+            self._total_errors = data.get(PROXY_ERROR_TOTAL)
+            self._ip_addr = data.get(PROXY_ERROR_IP)
+
+            # Notification senden
+            await self.hass.services.async_call(
+                "persistent_notification",
+                "create",
+                {
+                    "title": "MaxxiCharge Fehler",
+                    "message": f"{self._error_message} (Code {self._error_code})",
+                    "notification_id": f"maxxicharge_error_{self._entry.entry_id}"
+                }
+            )
 
         self.async_write_ha_state()
-
-        # Notification senden
-        await self.hass.services.async_call(
-            "persistent_notification",
-            "create",
-            {
-                "title": "MaxxiCharge Fehler",
-                "message": f"{self._error_message} (Code {self._error_code})"
-            }
-        )
 
     @property
     def extra_state_attributes(self):

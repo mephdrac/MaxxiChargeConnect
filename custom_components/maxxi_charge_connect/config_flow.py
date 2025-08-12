@@ -1,3 +1,4 @@
+"""Konfigurationsfluss für das Maxxicharge Gerät"""
 import logging
 from typing import Any
 
@@ -41,6 +42,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @property
     def webhook_id(self) -> str:
+        """Liefert die Webhook_id zurück"""
         return self._webhook_id
 
     async def async_step_user(self, user_input=None):
@@ -125,9 +127,13 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_fix_device_id(self, user_input: dict[str, Any] | None = None):
         """Extra-Flow, um fehlende device_id nachzutragen."""
-        entry = self.hass.config_entries.async_get_entry(
-            self.context.get("config_entry_id")
-        )
+
+        config_entry_id = self.context.get("config_entry_id")
+        if not isinstance(config_entry_id, str):
+            # Hier Fehler werfen oder abbrechen
+            return self.async_abort(reason="missing_config_entry_id")
+
+        entry = self.hass.config_entries.async_get_entry(config_entry_id)
 
         if not entry:
             return self.async_abort(reason="entry_not_found")
@@ -149,8 +155,8 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Import aus YAML."""
         return await self.async_step_user(user_input)
 
-    def is_matching(self, other: config_entries.ConfigFlow) -> bool:
-        return isinstance(other, MaxxiChargeConnectConfigFlow) and self.webhook_id == other.webhook_id
+    def is_matching(self, other_flow: config_entries.ConfigFlow) -> bool:
+        return isinstance(other_flow, MaxxiChargeConnectConfigFlow) and self.webhook_id == other_flow.webhook_id
 
     # -------------------------------------------------------
     # Hilfsfunktionen

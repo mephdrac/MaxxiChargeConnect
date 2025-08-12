@@ -9,7 +9,7 @@ from homeassistant.config_entries import ConfigEntry
 from ..const import DEVICE_INFO, DOMAIN, PROXY_ERROR_CODE, \
                     PROXY_ERROR_EVENTNAME, PROXY_ERROR_MESSAGE, PROXY_ERROR_TOTAL, \
                     PROXY_ERROR_CCU, PROXY_ERROR_IP, CONF_DEVICE_ID
-                    
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -26,13 +26,13 @@ class ErrorSensor(SensorEntity):
             entry (ConfigEntry): Die Konfigurationseintrag-Instanz für diese Integration.
 
         """
-        self._entry = entry        
+        self._entry = entry
         self._attr_unique_id = f"{entry.entry_id}_error_sensor"
         self._attr_icon = "mdi:alert-circle"
         self._attr_native_value = None
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._device_id = self._entry.data.get(CONF_DEVICE_ID)
-        
+
         # Hier die Zusatzinfos
         self._error_code = None
         self._error_message = None
@@ -49,7 +49,7 @@ class ErrorSensor(SensorEntity):
         )
 
     async def _handle_error_event(self, event):
-        _LOGGER.warning("ERROR-EVENT erhalten.")
+        _LOGGER.debug("ERROR-EVENT erhalten.")
 
         data = event.data
         if data.get(PROXY_ERROR_CCU) != self._device_id:

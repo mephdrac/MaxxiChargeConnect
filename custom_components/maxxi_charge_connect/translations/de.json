@@ -34,7 +34,7 @@
     "description": "Die Geräte-ID ist nicht gesetzt. Bitte öffne die Konfiguration und trage eine gültige Geräte-ID ein, damit die Integration korrekt funktioniert.",
     "fix_title": "Geräte-ID hinzufügen"
     }
-  },      
+  },
   "entity": {
     "sensor": {
       "battery_power": {

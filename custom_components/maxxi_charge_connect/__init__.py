@@ -12,35 +12,40 @@ Funktionen:
 
 import asyncio
 import logging
+from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.issue_registry import IssueSeverity
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
-from homeassistant.helpers.issue_registry import async_create_issue, async_delete_issue
 from homeassistant.helpers.event import async_track_time_interval
-from datetime import timedelta
-
-from .const import (
-    DOMAIN,
-    NOTIFY_MIGRATION,
-    CONF_ENABLE_LOCAL_CLOUD_PROXY,
-    CONF_ENABLE_FORWARD_TO_CLOUD,
-    DEFAULT_ENABLE_FORWARD_TO_CLOUD,
-    DEFAULT_ENABLE_LOCAL_CLOUD_PROXY,
-    CONF_DEVICE_ID,
-    CONF_NEEDS_DEVICE_ID,
+from homeassistant.helpers.issue_registry import (
+    IssueSeverity,
+    async_create_issue,
+    async_delete_issue,
 )
 
+from .const import (
+    CONF_DEVICE_ID,
+    CONF_ENABLE_FORWARD_TO_CLOUD,
+    CONF_ENABLE_LOCAL_CLOUD_PROXY,
+    CONF_NEEDS_DEVICE_ID,
+    DEFAULT_ENABLE_FORWARD_TO_CLOUD,
+    DEFAULT_ENABLE_LOCAL_CLOUD_PROXY,
+    DOMAIN,
+    NOTIFY_MIGRATION,
+)
 from .http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
 from .migration.migration_from_yaml import MigrateFromYaml
-from .webhook import async_register_webhook, async_unregister_webhook
 from .reverse_proxy.proxy_server import MaxxiProxyServer
+from .webhook import async_register_webhook, async_unregister_webhook
 
 _LOGGER = logging.getLogger(__name__)
 PROXY_INSTANCE = None  # globale Proxy-Instanz für Zugriff
 
+
 async def check_device_id_issue(hass):
+    """Prüfen, ob die Device ID gesetzt wurde."""
+
     _LOGGER.debug("CHECK Device_ID.....")
     for entry in hass.config_entries.async_entries(DOMAIN):
         device_id = entry.data.get(CONF_DEVICE_ID)
@@ -62,7 +67,8 @@ async def check_device_id_issue(hass):
 
         _LOGGER.debug("Device_ID checked.")
 
-async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:  # pylint: disable=unused-argument
     """Wird beim Start von Home Assistant einmalig aufgerufen.
 
     Aktuell keine Initialisierung notwendig.
@@ -121,7 +127,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     notify_migration = entry.data.get(NOTIFY_MIGRATION, False)
     if notify_migration:
         hass.async_create_task(migrator.async_notify_possible_migration())
-   
 
     # Proxy-Server starten, falls aktiviert
     if entry.data.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_ENABLE_LOCAL_CLOUD_PROXY):
@@ -132,10 +137,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.loop.create_task(proxy.start())
 
         hass.data[DOMAIN]["proxy"] = proxy
-        global PROXY_INSTANCE
+        global PROXY_INSTANCE  # pylint: disable=global-statement
         PROXY_INSTANCE = proxy
 
-        async def periodic_check(now):
+        async def periodic_check(now):  # pylint: disable=unused-argument
             await check_device_id_issue(hass)
 
         await check_device_id_issue(hass)
@@ -167,6 +172,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return unload_ok
 
 
+# pylint: disable=too-many-statements
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Migration eines Config-Eintrags auf neuere Versionen.
 
@@ -244,7 +250,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             hass.config_entries.async_update_entry(
                 config_entry, version=version, minor_version=minor_version
             )
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error("Fehler beim Migrieren der Konfiguration: %s", e)
             return False
 
@@ -264,7 +270,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             hass.config_entries.async_update_entry(
                 config_entry, data=new_data, version=version, minor_version=minor_version
             )
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error("Fehler beim Migrieren der Konfiguration: %s", e)
             return False
 

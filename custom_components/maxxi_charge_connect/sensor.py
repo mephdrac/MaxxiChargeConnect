@@ -56,6 +56,8 @@ from .devices.webhook_id import WebhookId
 from .devices.consumption_energy_today import ConsumptionEnergyToday
 from .devices.consumption_energy_total import ConsumptionEnergyTotal
 
+from .devices.error_sensor import ErrorSensor
+
 from .http_scan.http_scan_text import HttpScanText
 from .const import DOMAIN
 
@@ -181,6 +183,8 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
         )
     )
 
+    error_sensor = ErrorSensor(entry)
+
     async_add_entities(
         [
             sensor,
@@ -200,6 +204,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
             grid_import,
             pv_self_consumption,
             *http_scan_sensor_list,
+            error_sensor
         ]
     )
     await asyncio.sleep(0)

@@ -11,8 +11,7 @@
           "ip_address": "IP-Adress",
           "notify_migration": "Detect migration sensors?",
           "conf_enable_forward_to_cloud": "Forward to Maxxi-Cloud?",
-          "enable_local_cloud_proxy": "Start reverse-proxy?",
-          "real_cloud_url": "URL-Maxxi-Cloud"
+          "enable_local_cloud_proxy": "Start reverse-proxy?"
         }
       },
       "reconfigure": {
@@ -24,8 +23,7 @@
         "ip_address": "IP-Adress",
         "notify_migration": "Detect migration sensors?",
         "conf_enable_forward_to_cloud": "Forward to Maxxi-Cloud?",
-        "enable_local_cloud_proxy": "Start reverse-proxy?",
-        "real_cloud_url": "URL-Maxxi-Cloud"
+        "enable_local_cloud_proxy": "Start reverse-proxy?"
         }
       }
     }

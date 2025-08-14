@@ -11,7 +11,14 @@ from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
 from homeassistant.core import Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
-from ..const import DEVICE_INFO, DOMAIN, PROXY_ERROR_EVENTNAME, CONF_ENABLE_CLOUD_DATA  # noqa: TID252
+from ..const import (
+    DEVICE_INFO,
+    DOMAIN,
+    PROXY_ERROR_EVENTNAME,
+    CONF_ENABLE_CLOUD_DATA,
+    CONF_DEVICE_ID,
+    PROXY_ERROR_DEVICE_ID,
+)  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -63,7 +70,9 @@ class FirmwareVersion(TextEntity):
         """Aktualisiert Sensor von Proxy-Event."""
 
         json_data = event.data.get("payload", {})
-        await self._handle_update(json_data)
+
+        if json_data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(CONF_DEVICE_ID):
+            await self._handle_update(json_data)
 
     async def _handle_update(self, data):
         """Verarbeitet empfangene Webhook-Daten und aktualisiert die Firmware-Version.

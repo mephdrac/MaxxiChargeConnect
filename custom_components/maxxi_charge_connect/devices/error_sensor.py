@@ -1,14 +1,23 @@
-""" Proxy-Server zum Abfangen der Meldungen an die MaxxiCloud
-"""
+"""Proxy-Server zum Abfangen der Meldungen an die MaxxiCloud"""
+
 import logging
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import EntityCategory
 from homeassistant.config_entries import ConfigEntry
 
-from ..const import DEVICE_INFO, DOMAIN, PROXY_ERROR_CODE, \
-                    PROXY_ERROR_EVENTNAME, PROXY_ERROR_MESSAGE, PROXY_ERROR_TOTAL, \
-                    PROXY_ERROR_CCU, PROXY_ERROR_IP, CONF_DEVICE_ID
+from ..const import (
+    DEVICE_INFO,
+    DOMAIN,
+    PROXY_ERROR_CODE,
+    PROXY_ERROR_EVENTNAME,
+    PROXY_ERROR_MESSAGE,
+    PROXY_ERROR_TOTAL,
+    PROXY_ERROR_CCU,
+    PROXY_ERROR_IP,
+    CONF_DEVICE_ID,
+    PROXY_ERROR_DEVICE_ID,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,8 +49,7 @@ class ErrorSensor(SensorEntity):
         self._ip_addr = None
 
     async def async_added_to_hass(self):
-        """Wird beim Hinzufügen zur Home Assistant-Instanz aufgerufen.
-        """
+        """Wird beim Hinzufügen zur Home Assistant-Instanz aufgerufen."""
 
         # Event-Listener registrieren
         self.async_on_remove(
@@ -49,25 +57,23 @@ class ErrorSensor(SensorEntity):
         )
 
     async def _handle_error_event(self, event):
-        _LOGGER.debug("ERROR-EVENT erhalten.")
-
         data = event.data
-        if data.get(PROXY_ERROR_CCU) != self._device_id:
+
+        if data.get(PROXY_ERROR_DEVICE_ID) != self._device_id:
             return  # Falls mehrere Geräte existieren
 
         self._error_message = data.get(PROXY_ERROR_MESSAGE)
 
         # State = "Fehler" oder "OK"
-        self._attr_native_value = self._error_message if data.get(PROXY_ERROR_CODE) else "OK"
+        self._attr_native_value = (
+            self._error_message if data.get(PROXY_ERROR_CODE) else "OK"
+        )
 
         if self._attr_native_value == "OK":
-
             await self.hass.services.async_call(
                 "persistent_notification",
                 "dismiss",
-                {
-                    "notification_id": f"maxxicharge_error_{self._entry.entry_id}"
-                }
+                {"notification_id": f"maxxicharge_error_{self._entry.entry_id}"},
             )
         else:
             # Zusatzattribute speichern
@@ -83,8 +89,8 @@ class ErrorSensor(SensorEntity):
                 {
                     "title": "MaxxiCharge Fehler",
                     "message": f"{self._error_message} (Code {self._error_code})",
-                    "notification_id": f"maxxicharge_error_{self._entry.entry_id}"
-                }
+                    "notification_id": f"maxxicharge_error_{self._entry.entry_id}",
+                },
             )
 
         self.async_write_ha_state()

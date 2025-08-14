@@ -11,7 +11,13 @@ from homeassistant.const import CONF_WEBHOOK_ID
 from homeassistant.core import HomeAssistant, Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
-from ..const import DOMAIN, PROXY_ERROR_EVENTNAME, CONF_ENABLE_CLOUD_DATA  # noqa: TID252
+from ..const import (
+    DOMAIN,
+    PROXY_ERROR_EVENTNAME,
+    CONF_ENABLE_CLOUD_DATA,
+    CONF_DEVICE_ID,
+    PROXY_ERROR_DEVICE_ID,
+)  # noqa: TID252
 from .battery_soe_sensor import BatterySoESensor
 
 _LOGGER = logging.getLogger(__name__)
@@ -72,7 +78,9 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
         """Aktualisiert Sensor von Proxy-Event."""
 
         json_data = event.data.get("payload", {})
-        await self._handle_update(json_data)
+
+        if json_data.get(PROXY_ERROR_DEVICE_ID) == self.entry.data.get(CONF_DEVICE_ID):
+            await self._handle_update(json_data)
 
     async def _handle_update(self, data):
         batteries = data.get("batteriesInfo", [])

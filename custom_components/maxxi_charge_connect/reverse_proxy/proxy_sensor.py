@@ -3,7 +3,13 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, Event
 from homeassistant.config_entries import ConfigEntry
-from ..const import DOMAIN, PROXY_ERROR_EVENTNAME, DEVICE_INFO, PROXY_ERROR_DEVICE_ID # noqa: TID252
+from ..const import (
+    DOMAIN,
+    PROXY_ERROR_EVENTNAME,
+    DEVICE_INFO,
+    PROXY_ERROR_DEVICE_ID,
+    CONF_DEVICE_ID,
+)  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -19,26 +25,26 @@ _LOGGER = logging.getLogger(__name__)
 #     "uptime": "Uptime"
 # }
 
+
 class ProxySensor(SensorEntity):
     """Sensor für MaxxiCloud-Daten vom Proxy."""
 
     def __init__(self, entry: ConfigEntry):
         self._entry = entry
-        #self._key = key
+        # self._key = key
 
         self._attr_name = "MeinTestsensor"
         self._attr_unique_id = f"{entry.entry_id}_proxy_sensor"
-        
+
         self._state = None
         self._attr_native_value = None
         self._attr_device_class = None
         self._attr_icon = "mdi:home-battery"
 
         self._attr_extra_state_attributes = {}
-        #_LOGGER.warning("SENSOR - INITIALISIERT: %s", name)
+        # _LOGGER.warning("SENSOR - INITIALISIERT: %s", name)
 
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
-
 
     async def async_added_to_hass(self):
         """Register.
@@ -54,8 +60,7 @@ class ProxySensor(SensorEntity):
         hours, remainder = divmod(remainder, 3600)  # 3600 Sekunden pro Stunde
         minutes, seconds = divmod(remainder, 60)
         return f"{days}d {hours}h {minutes}m {seconds}s"
-    
-    
+
     @property
     def native_value(self):
         return self._state
@@ -68,10 +73,15 @@ class ProxySensor(SensorEntity):
         """Aktualisiert Sensor von Proxy-Event."""
 
         _LOGGER.warning("Event erhalten: %s", self._attr_name)
+
         data = event.data
-        self._state = "OK"
-        # json_data = data.get("payload", {})
-        self._attr_extra_state_attributes = data.get("payload", {})
+        json_data = data.get("payload", {})
+
+        if json_data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(CONF_DEVICE_ID):
+            data = event.data
+            self._state = "OK"
+            # json_data = data.get("payload", {})
+            self._attr_extra_state_attributes = data.get("payload", {})
         # self._state = "TEST"
 
         # if self._key == PROXY_ERROR_DEVICE_ID:
@@ -79,9 +89,8 @@ class ProxySensor(SensorEntity):
         # elif self._key == "ccu":
         #     self._state = data.get("ccu")
         # elif self._key == "uptime":
-        #     uptime_seconds = int(json_data.get("uptime"))         
+        #     uptime_seconds = int(json_data.get("uptime"))
         #     self._state = self.format_uptime(uptime_seconds)
-        
 
         # elif self._key == "ip":
         #     self._state = data.get("ip")

@@ -110,7 +110,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     grid_import = GridImport(entry)
     pv_self_consumption = PvSelfConsumption(entry)
 
-    coordinator = hass.data[DOMAIN]["coordinator"]
+    coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
 
 
     # ---Proxy -- 

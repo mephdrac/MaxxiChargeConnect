@@ -16,7 +16,7 @@ import asyncio
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, Event
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .devices.battery_power import BatteryPower
@@ -59,7 +59,9 @@ from .devices.consumption_energy_total import ConsumptionEnergyTotal
 from .devices.error_sensor import ErrorSensor
 
 from .http_scan.http_scan_text import HttpScanText
-from .const import DOMAIN
+
+from .reverse_proxy.proxy_sensor import ProxySensor
+from .const import DOMAIN, PROXY_ERROR_EVENTNAME
 
 SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
 
@@ -110,6 +112,12 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
 
     coordinator = hass.data[DOMAIN]["coordinator"]
 
+
+    # ---Proxy -- 
+    #proxySensors = [ProxySensor(entry, key, name) for key, name in SENSOR_TYPES.items()]
+    proxySensor = ProxySensor(entry)
+    
+    #---Http-Scan----
     http_scan_sensor_list = []
 
     http_scan_sensor_list.append(
@@ -204,10 +212,23 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
             grid_import,
             pv_self_consumption,
             *http_scan_sensor_list,
-            error_sensor
+            error_sensor,
+            proxySensor
         ]
     )
     await asyncio.sleep(0)
+
+    # # Proxy - Events
+    # async def handle_proxy_event(event: Event):
+    #     for sensor in proxySensors:
+    #         sensor.async_update_from_event(event)
+    #         if sensor.hass:  # <-- verhindert RuntimeError
+    #             sensor.async_write_ha_state()
+
+    # hass.bus.async_listen(PROXY_ERROR_EVENTNAME, handle_proxy_event)
+
+    # --
+
     await coordinator.async_config_entry_first_refresh()
 
     pv_today_energy = PvTodayEnergy(hass, entry, pv_power_sensor.entity_id)

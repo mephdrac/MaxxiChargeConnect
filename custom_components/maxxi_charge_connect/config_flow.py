@@ -1,4 +1,5 @@
 """Konfigurationsfluss für das Maxxicharge Gerät"""
+
 import logging
 from typing import Any
 
@@ -19,6 +20,7 @@ from .const import (
     DEFAULT_ENABLE_FORWARD_TO_CLOUD,
     DEFAULT_ENABLE_LOCAL_CLOUD_PROXY,
     CONF_DEVICE_ID,
+    CONF_ENABLE_CLOUD_DATA,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -38,6 +40,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     _notify_migration = False
     _enable_local_cloud_proxy = False
     _enable_forward_to_cloud = DEFAULT_ENABLE_FORWARD_TO_CLOUD
+    _enable_cloud_data = False  # True == Daten werden vom Reverse-Proxy gelesen; False == Daten kommen per WebHook
     _device_id = None
 
     @property
@@ -75,14 +78,12 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     NOTIFY_MIGRATION: self._notify_migration,
                     CONF_ENABLE_LOCAL_CLOUD_PROXY: self._enable_local_cloud_proxy,
                     CONF_ENABLE_FORWARD_TO_CLOUD: self._enable_forward_to_cloud,
+                    CONF_ENABLE_CLOUD_DATA: self._enable_cloud_data,
                 },
             )
 
         # Zeige Formular beim ersten Laden oder bei Fehlern
-        return self.async_show_form(
-            step_id="user",
-            data_schema=self._get_user_schema()
-        )
+        return self.async_show_form(step_id="user", data_schema=self._get_user_schema())
 
     async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None):
         """Reconfigure-Schritt."""
@@ -118,6 +119,9 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_ENABLE_FORWARD_TO_CLOUD: user_input.get(
                         CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
                     ),
+                    CONF_ENABLE_CLOUD_DATA: user_input.get(
+                        CONF_ENABLE_CLOUD_DATA, False
+                    ),
                 },
             )
 
@@ -146,9 +150,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="fix_device_id",
-            data_schema=vol.Schema(
-                {vol.Required(CONF_DEVICE_ID, default=""): str}
-            ),
+            data_schema=vol.Schema({vol.Required(CONF_DEVICE_ID, default=""): str}),
         )
 
     async def async_step_import(self, user_input=None):
@@ -156,7 +158,10 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return await self.async_step_user(user_input)
 
     def is_matching(self, other_flow: config_entries.ConfigFlow) -> bool:
-        return isinstance(other_flow, MaxxiChargeConnectConfigFlow) and self.webhook_id == other_flow.webhook_id
+        return (
+            isinstance(other_flow, MaxxiChargeConnectConfigFlow)
+            and self.webhook_id == other_flow.webhook_id
+        )
 
     # -------------------------------------------------------
     # Hilfsfunktionen
@@ -167,26 +172,72 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return vol.Schema(
             {
                 vol.Required(CONF_NAME, default=defaults.get(CONF_NAME, "")): str,
-                vol.Required(CONF_DEVICE_ID, default=defaults.get(CONF_DEVICE_ID, "")): str,
-                vol.Required(CONF_WEBHOOK_ID, default=defaults.get(CONF_WEBHOOK_ID, "")): str,
-                vol.Optional(CONF_IP_ADDRESS, default=defaults.get(CONF_IP_ADDRESS, "")): str,
-                vol.Optional(ONLY_ONE_IP, default=defaults.get(ONLY_ONE_IP, False)): BooleanSelector(),
-                vol.Optional(NOTIFY_MIGRATION, default=defaults.get(NOTIFY_MIGRATION, False)): BooleanSelector(),
-                vol.Optional(CONF_ENABLE_LOCAL_CLOUD_PROXY, default=defaults.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_ENABLE_LOCAL_CLOUD_PROXY)): BooleanSelector(),
-                vol.Optional(CONF_ENABLE_FORWARD_TO_CLOUD, default=defaults.get(CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD)): BooleanSelector(),
+                vol.Required(
+                    CONF_DEVICE_ID, default=defaults.get(CONF_DEVICE_ID, "")
+                ): str,
+                vol.Required(
+                    CONF_WEBHOOK_ID, default=defaults.get(CONF_WEBHOOK_ID, "")
+                ): str,
+                vol.Optional(
+                    CONF_IP_ADDRESS, default=defaults.get(CONF_IP_ADDRESS, "")
+                ): str,
+                vol.Optional(
+                    ONLY_ONE_IP, default=defaults.get(ONLY_ONE_IP, False)
+                ): BooleanSelector(),
+                vol.Optional(
+                    NOTIFY_MIGRATION, default=defaults.get(NOTIFY_MIGRATION, False)
+                ): BooleanSelector(),
+                vol.Optional(
+                    CONF_ENABLE_LOCAL_CLOUD_PROXY,
+                    default=defaults.get(
+                        CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_ENABLE_LOCAL_CLOUD_PROXY
+                    ),
+                ): BooleanSelector(),
+                vol.Optional(
+                    CONF_ENABLE_FORWARD_TO_CLOUD,
+                    default=defaults.get(
+                        CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
+                    ),
+                ): BooleanSelector(),
+                vol.Optional(
+                    CONF_ENABLE_CLOUD_DATA,
+                    default=defaults.get(CONF_ENABLE_CLOUD_DATA, False),
+                ): BooleanSelector(),
             }
         )
 
     def _get_reconfigure_schema(self, current_data):
         return vol.Schema(
             {
-                vol.Required(CONF_WEBHOOK_ID, default=current_data.get(CONF_WEBHOOK_ID, "")): str,
-                vol.Required(CONF_DEVICE_ID, default=current_data.get(CONF_DEVICE_ID, "")): str,
-                vol.Optional(CONF_IP_ADDRESS, default=current_data.get(CONF_IP_ADDRESS, "")): str,
-                vol.Optional(ONLY_ONE_IP, default=current_data.get(ONLY_ONE_IP, False)): BooleanSelector(),
+                vol.Required(
+                    CONF_WEBHOOK_ID, default=current_data.get(CONF_WEBHOOK_ID, "")
+                ): str,
+                vol.Required(
+                    CONF_DEVICE_ID, default=current_data.get(CONF_DEVICE_ID, "")
+                ): str,
+                vol.Optional(
+                    CONF_IP_ADDRESS, default=current_data.get(CONF_IP_ADDRESS, "")
+                ): str,
+                vol.Optional(
+                    ONLY_ONE_IP, default=current_data.get(ONLY_ONE_IP, False)
+                ): BooleanSelector(),
                 vol.Optional(NOTIFY_MIGRATION, default=False): BooleanSelector(),
-                vol.Optional(CONF_ENABLE_LOCAL_CLOUD_PROXY, default=current_data.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_ENABLE_LOCAL_CLOUD_PROXY)): BooleanSelector(),
-                vol.Optional(CONF_ENABLE_FORWARD_TO_CLOUD, default=current_data.get(CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD)): BooleanSelector(),
+                vol.Optional(
+                    CONF_ENABLE_LOCAL_CLOUD_PROXY,
+                    default=current_data.get(
+                        CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_ENABLE_LOCAL_CLOUD_PROXY
+                    ),
+                ): BooleanSelector(),
+                vol.Optional(
+                    CONF_ENABLE_FORWARD_TO_CLOUD,
+                    default=current_data.get(
+                        CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
+                    ),
+                ): BooleanSelector(),
+                vol.Optional(
+                    CONF_ENABLE_CLOUD_DATA,
+                    default=current_data.get(CONF_ENABLE_CLOUD_DATA, False),
+                ): BooleanSelector(),
             }
         )
 
@@ -197,13 +248,19 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._host_ip = user_input.get(CONF_IP_ADDRESS, None)
         self._only_ip = user_input.get(ONLY_ONE_IP, False)
         self._notify_migration = user_input.get(NOTIFY_MIGRATION, False)
-        self._enable_local_cloud_proxy = user_input.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, False)
-        self._enable_forward_to_cloud = user_input.get(CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD)
+        self._enable_local_cloud_proxy = user_input.get(
+            CONF_ENABLE_LOCAL_CLOUD_PROXY, False
+        )
+        self._enable_forward_to_cloud = user_input.get(
+            CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
+        )
+        self._enable_cloud_data = user_input.get(CONF_ENABLE_CLOUD_DATA, False)
 
 
 # -------------------------------------------------------
 # Repair-Issue bei fehlender device_id
 # -------------------------------------------------------
+
 
 async def async_check_device_id_and_create_issue(hass, entry):
     """Prüft device_id und erstellt Repair-Issue falls nötig."""

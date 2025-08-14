@@ -24,6 +24,11 @@ Es ist schade und ich verstehe auch nicht - warum HA sich da so anstellt.
 
 ## ⚠️ Limitationen:
 
+Die Integration unterstützt zur Zeit die CCUv1 Version .44 und .45
+Die Version .41 nur bedingt. Der Webhook teil funktioniert. Die weiteren Informationen, die auf maxxi.local erscheinen, bleiben auf **unbekann**. (Falls hier eine Unterstützung gewünscht ist. Bitte hier als ISSUE (#77) melden. 
+
+Die Versionen < .41 werden nicht unterstützt. Da es hier auch noch kein maxxi.local gibt, soweit mir bekannt ist.
+
 Für folgende Sensoren gilt:
 - Hausverbrauch
 - Hausverbrauch gesamt

@@ -93,6 +93,12 @@ class Rssi(SensorEntity):
             self._unsub_dispatcher()
             self._unsub_dispatcher = None
 
+    async def async_update_from_event(self, event: Event):
+        """Aktualisiert Sensor von Proxy-Event."""
+
+        json_data = event.data.get("payload", {})
+        await self._handle_update(json_data)
+
     async def _handle_update(self, data):
         """Wird aufgerufen, beim Empfang neuer Daten vom Dispatcher.
 
@@ -106,12 +112,6 @@ class Rssi(SensorEntity):
 
         self._attr_native_value = data.get("wifiStrength")
         self.async_write_ha_state()
-
-    async def async_update_from_event(self, event: Event):
-        """Aktualisiert Sensor von Proxy-Event."""
-
-        json_data = event.data.get("payload", {})
-        await self._handle_update(json_data)
 
     @property
     def device_info(self):

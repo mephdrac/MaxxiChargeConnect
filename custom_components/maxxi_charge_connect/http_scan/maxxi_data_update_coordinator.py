@@ -119,11 +119,12 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
 
             except TimeoutError as e:
 
-                _LOGGER.error("%s:Zeitüberschreitung beim Abrufen der HTML-Seite", e)
+                _LOGGER.exception("%s: Zeitüberschreitung beim Abrufen der HTML-Seite", e)
                 return {}
 
             except Exception as e:
-                _LOGGER.exception("Unerwarteter Fehler bei der Datenabfrage")
-                raise UpdateFailed(f"Unerwarteter Fehler: {e}") from e
+                _LOGGER.exception("%s: Unerwarteter Fehler bei der Datenabfrage", e)
+                #raise UpdateFailed(f"Unerwarteter Fehler: {e}") from e
+                return {}
         else:
             return {}

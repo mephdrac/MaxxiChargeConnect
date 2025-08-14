@@ -12,12 +12,16 @@ Konstanten:
 
 """
 
+import logging
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfEnergy
+from homeassistant.core import Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
-from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+from ..const import DEVICE_INFO, DOMAIN, PROXY_ERROR_EVENTNAME, CONF_ENABLE_CLOUD_DATA  # noqa: TID252
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class BatterySoE(SensorEntity):
@@ -54,6 +58,8 @@ class BatterySoE(SensorEntity):
         self._attr_device_class = None
         self._attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
 
+        self._enable_cloud_data = self._entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
+
     async def async_added_to_hass(self):
         """Register.
 
@@ -61,12 +67,28 @@ class BatterySoE(SensorEntity):
         bei Hinzufügen zur Home Assistant Instanz.
         """
 
-        signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
+        if self._enable_cloud_data:
+            _LOGGER.info("Daten kommen vom Proxy")
+            self.hass.bus.async_listen(
+                PROXY_ERROR_EVENTNAME, self.async_update_from_event
+            )
+        else:
+            _LOGGER.info("Daten kommen vom Webhook")
 
-        remove_callback = async_dispatcher_connect(
-            self.hass, signal_sensor, self._handle_update
-        )
-        self.async_on_remove(remove_callback)
+            signal_sensor = (
+                f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
+            )
+
+            remove_callback = async_dispatcher_connect(
+                self.hass, signal_sensor, self._handle_update
+            )
+            self.async_on_remove(remove_callback)
+
+    async def async_update_from_event(self, event: Event):
+        """Aktualisiert Sensor von Proxy-Event."""
+
+        json_data = event.data.get("payload", {})
+        await self._handle_update(json_data)
 
     async def _handle_update(self, data):
         """Aktualisiert den State of Energy anhand der empfangenen Sensordaten.

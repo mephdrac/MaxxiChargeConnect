@@ -8,10 +8,10 @@ initialisiert und anschließend bei jedem Update aktualisiert.
 
 import logging
 from homeassistant.const import CONF_WEBHOOK_ID
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
-from ..const import DOMAIN
+from ..const import DOMAIN, PROXY_ERROR_EVENTNAME, CONF_ENABLE_CLOUD_DATA  # noqa: TID252
 from .battery_soe_sensor import BatterySoESensor
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,18 +40,39 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
         self.sensors: dict[str, BatterySoESensor] = {}
         self._registered = False
 
+        self._enable_cloud_data = self.entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
+
     async def setup(self):
         """Richtet den Dispatcher für eingehende Sensordaten ein.
 
         Erstellt den Listener auf das Dispatcher-Signal für diesen Konfigurationseintrag,
         um später automatisch neue Sensoren zu erzeugen und Daten zu verarbeiten.
         """
-        signal = f"{DOMAIN}_{self.entry.data[CONF_WEBHOOK_ID]}_update_sensor"
-        self.hass.data.setdefault(DOMAIN, {}).setdefault(self.entry.entry_id, {})
-        self.hass.data[DOMAIN][self.entry.entry_id]["listeners"] = []
-        if not self._registered:
-            async_dispatcher_connect(self.hass, signal, self._handle_update)
-            self._registered = True
+
+        if self._enable_cloud_data:
+            _LOGGER.info("Daten kommen vom Proxy")
+
+            self.hass.data.setdefault(DOMAIN, {}).setdefault(self.entry.entry_id, {})
+            self.hass.data[DOMAIN][self.entry.entry_id]["listeners"] = []
+
+            self.hass.bus.async_listen(
+                PROXY_ERROR_EVENTNAME, self.async_update_from_event
+            )
+        else:
+            _LOGGER.info("Daten kommen vom Webhook")
+            signal = f"{DOMAIN}_{self.entry.data[CONF_WEBHOOK_ID]}_update_sensor"
+            self.hass.data.setdefault(DOMAIN, {}).setdefault(self.entry.entry_id, {})
+            self.hass.data[DOMAIN][self.entry.entry_id]["listeners"] = []
+
+            if not self._registered:
+                async_dispatcher_connect(self.hass, signal, self._handle_update)
+                self._registered = True
+
+    async def async_update_from_event(self, event: Event):
+        """Aktualisiert Sensor von Proxy-Event."""
+
+        json_data = event.data.get("payload", {})
+        await self._handle_update(json_data)
 
     async def _handle_update(self, data):
         batteries = data.get("batteriesInfo", [])

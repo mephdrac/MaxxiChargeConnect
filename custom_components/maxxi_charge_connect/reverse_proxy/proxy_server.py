@@ -2,7 +2,7 @@
 Reverse-Proxy für MaxxiChargeConnect.
 
 Der Proxy fängt Daten ab, die das Maxxigerät an maxxisun.app sendet, und gibt sie
-an die Integration weiter. Optional werden die Daten auch an die echte Cloud weitergeleitet.
+an die Integration weiter. Optional werden die Daten auch an die originale Cloud weitergeleitet.
 """
 
 import logging
@@ -23,6 +23,11 @@ from ..const import (
     PROXY_ERROR_IP,
     PROXY_FORWARDED,
     PROXY_PAYLOAD,
+    CONF_REFRESH_CONFIG_FROM_CLOUD,
+    CONF_ENABLE_FORWARD_TO_CLOUD,
+    CONF_DEVICE_ID,
+    DOMAIN,
+    DEFAULT_ENABLE_FORWARD_TO_CLOUD,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,10 +36,9 @@ _LOGGER = logging.getLogger(__name__)
 class MaxxiProxyServer:
     """Reverse-Proxy für MaxxiCloud-Daten."""
 
-    def __init__(self, hass, listen_port: int = 3001, enable_forward: bool = False):
+    def __init__(self, hass, listen_port: int = 3001):
         self.hass = hass
         self.listen_port = listen_port
-        self.enable_forward_to_cloud = enable_forward
         self.runner: Optional[web.AppRunner] = None
 
         self._device_config_cache: dict[str, dict] = {}  # Cache pro deviceId
@@ -51,7 +55,7 @@ class MaxxiProxyServer:
             self._device_config_cache = {}
 
     async def fetch_cloud_config(self, device_id: str):
-        """Ruft die originale Cloud einmalig ab und speichert die Daten in HA-Store."""
+        """Ruft die originale Cloud einmalig ab und speichert die Daten im Cache + Store."""
         ip = await self.resolve_external("maxxisun.app")
         cloud_url = f"http://{ip}:3001/config?deviceId={device_id}"
         try:
@@ -61,7 +65,6 @@ class MaxxiProxyServer:
                         data = await resp.json()
                         self._device_config_cache[device_id] = data
                         _LOGGER.info("Cloud-Daten für %s gespeichert", device_id)
-                        # Persistieren
                         if self._store:
                             await self._store.async_save(self._device_config_cache)
                         return data
@@ -76,26 +79,44 @@ class MaxxiProxyServer:
         return None
 
     async def _handle_config(self, request):
+        """Antwortet mit aktueller Konfiguration oder Cloud-Daten."""
         device_id = request.query.get("deviceId")
         if not device_id:
             return web.Response(status=400, text="Missing deviceId")
 
-        config_data = self._device_config_cache.get(device_id)
-        refresh = False
-        if config_data:
-            refresh = config_data.get("refresh_cloud_data", False)
+        # --- Aktuelle HA-Entry für dieses Gerät finden ---
+        entry = None
+        enable_forward = False
+        refresh_cloud = False
+        for e in self.hass.config_entries.async_entries(DOMAIN):
+            if e.data.get(CONF_DEVICE_ID) == device_id:
+                entry = e
+                enable_forward = e.data.get(
+                    CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
+                )
+                refresh_cloud = e.data.get(CONF_REFRESH_CONFIG_FROM_CLOUD, False)
+                break
 
-        # Wenn kein Cache, Refresh-Flag oder enable_forward_to_cloud → Cloud abrufen
-        if not config_data or refresh or self.enable_forward_to_cloud:
+        # Cache prüfen, Cloud abrufen wenn nötig
+        if (
+            refresh_cloud
+            or enable_forward
+            or device_id not in self._device_config_cache
+        ):
+            _LOGGER.info("Konfiguration wird von der Cloud gelesen für %s", device_id)
             config_data = await self.fetch_cloud_config(device_id)
             if not config_data:
                 return web.Response(status=500, text="Cannot fetch config from cloud")
-            # Refresh-Flag zurücksetzen
-            config_data["refresh_cloud_data"] = False
-            # Cache + Store aktualisieren
-            self._device_config_cache[device_id] = config_data
-            if self._store:
-                await self._store.async_save(self._device_config_cache)
+
+            # Refresh-Flag in HA zurücksetzen
+            if entry:
+                data = dict(entry.data)
+                data[CONF_REFRESH_CONFIG_FROM_CLOUD] = False
+                await self.hass.config_entries.async_update_entry(entry, data=data)
+
+        else:
+            config_data = self._device_config_cache[device_id]
+            _LOGGER.info("Konfiguration kommt aus dem Proxy Cache für %s", device_id)
 
         headers = {
             "X-Powered-By": "Express",
@@ -112,7 +133,7 @@ class MaxxiProxyServer:
         )
 
     async def _handle_text(self, request):
-        """Empfängt Daten vom Gerät."""
+        """Empfängt Daten vom Gerät und optional Weiterleitung an Cloud."""
         try:
             data = await request.json()
         except Exception as e:
@@ -121,17 +142,28 @@ class MaxxiProxyServer:
 
         _LOGGER.debug("Proxy-Daten empfangen: %s", data)
 
-        forwarded = await self._forward_to_cloud(data=data)
+        device_id = data.get(CONF_DEVICE_ID)
+        entry = None
+        enable_forward = False
+        for e in self.hass.config_entries.async_entries(DOMAIN):
+            if e.data.get(CONF_DEVICE_ID) == device_id:
+                entry = e
+                enable_forward = e.data.get(
+                    CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
+                )
+                break
 
-        # Event in Home Assistant feuern
+        forwarded = await self._forward_to_cloud(
+            data=data, enable_forward=enable_forward
+        )
+
         await self._on_reverse_proxy_message(data, forwarded)
-
         return web.Response(status=200, text="OK")
 
-    async def _forward_to_cloud(self, data) -> bool:
-        """Optional an Cloud weiterleiten."""
+    async def _forward_to_cloud(self, data, enable_forward: bool) -> bool:
+        """Optional an Cloud weiterleiten (nur für /text)."""
         forwarded = False
-        if self.enable_forward_to_cloud:
+        if enable_forward:
             _LOGGER.debug("Cloud-Forwarding aktiv")
             try:
                 ip = await self.resolve_external("maxxisun.app")
@@ -146,7 +178,6 @@ class MaxxiProxyServer:
                 _LOGGER.error("Cloud-Forwarding fehlgeschlagen: %s", e)
             except Exception as e:
                 _LOGGER.error("Unerwarteter Fehler beim Cloud-Forwarding: %s", e)
-
         return forwarded
 
     async def start(self):
@@ -198,7 +229,7 @@ class MaxxiProxyServer:
                 PROXY_ERROR_CODE: json_data.get(PROXY_ERROR_CODE),
                 PROXY_ERROR_MESSAGE: json_data.get(PROXY_ERROR_MESSAGE),
                 PROXY_ERROR_TOTAL: json_data.get(PROXY_ERROR_TOTAL),
-                PROXY_PAYLOAD: json_data,  # voller Payload für Sensoren
+                PROXY_PAYLOAD: json_data,
                 PROXY_FORWARDED: forwarded,
             },
         )

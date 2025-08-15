@@ -21,6 +21,7 @@ from .const import (
     DEFAULT_ENABLE_LOCAL_CLOUD_PROXY,
     CONF_DEVICE_ID,
     CONF_ENABLE_CLOUD_DATA,
+    CONF_REFRESH_CONFIG_FROM_CLOUD,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -42,6 +43,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     _enable_forward_to_cloud = DEFAULT_ENABLE_FORWARD_TO_CLOUD
     _enable_cloud_data = False  # True == Daten werden vom Reverse-Proxy gelesen; False == Daten kommen per WebHook
     _device_id = None
+    _refresh_cloud_data = False
 
     @property
     def webhook_id(self) -> str:
@@ -79,6 +81,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_ENABLE_LOCAL_CLOUD_PROXY: self._enable_local_cloud_proxy,
                     CONF_ENABLE_FORWARD_TO_CLOUD: self._enable_forward_to_cloud,
                     CONF_ENABLE_CLOUD_DATA: self._enable_cloud_data,
+                    CONF_REFRESH_CONFIG_FROM_CLOUD: self._refresh_cloud_data,
                 },
             )
 
@@ -121,6 +124,9 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     ),
                     CONF_ENABLE_CLOUD_DATA: user_input.get(
                         CONF_ENABLE_CLOUD_DATA, False
+                    ),
+                    CONF_REFRESH_CONFIG_FROM_CLOUD: user_input.get(
+                        CONF_REFRESH_CONFIG_FROM_CLOUD, False
                     ),
                 },
             )
@@ -203,6 +209,10 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_ENABLE_CLOUD_DATA,
                     default=defaults.get(CONF_ENABLE_CLOUD_DATA, False),
                 ): BooleanSelector(),
+                vol.Optional(
+                    CONF_REFRESH_CONFIG_FROM_CLOUD,
+                    default=defaults.get(CONF_REFRESH_CONFIG_FROM_CLOUD, False),
+                ): BooleanSelector(),
             }
         )
 
@@ -238,6 +248,10 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_ENABLE_CLOUD_DATA,
                     default=current_data.get(CONF_ENABLE_CLOUD_DATA, False),
                 ): BooleanSelector(),
+                vol.Optional(
+                    CONF_REFRESH_CONFIG_FROM_CLOUD,
+                    default=current_data.get(CONF_REFRESH_CONFIG_FROM_CLOUD, False),
+                ): BooleanSelector(),
             }
         )
 
@@ -255,6 +269,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
         )
         self._enable_cloud_data = user_input.get(CONF_ENABLE_CLOUD_DATA, False)
+        self._refresh_cloud_data = user_input.get(CONF_REFRESH_CONFIG_FROM_CLOUD, False)
 
 
 # -------------------------------------------------------

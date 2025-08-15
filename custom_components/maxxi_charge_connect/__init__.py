@@ -33,6 +33,7 @@ from .const import (
     DEFAULT_ENABLE_LOCAL_CLOUD_PROXY,
     DOMAIN,
     NOTIFY_MIGRATION,
+    CONF_REFRESH_CONFIG_FROM_CLOUD,
 )
 from .http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
 from .migration.migration_from_yaml import MigrateFromYaml
@@ -126,13 +127,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if proxy_enabled:
         if hass.data[DOMAIN]["proxy"] is None:
             _LOGGER.info("Starte globalen Proxy-Server (Port 3001)")
-            forward_to_cloud = entry.data.get(
-                CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
-            )
 
-            proxy = MaxxiProxyServer(
-                hass, listen_port=3001, enable_forward=forward_to_cloud
-            )
+            # Lese die Config-Werte aus dem Entry
+            refresh_cloud = entry.data.get(CONF_REFRESH_CONFIG_FROM_CLOUD, False)
+
+            proxy = MaxxiProxyServer(hass, listen_port=3001)
+
+            # Optional: einmaliges Refresh-Flag für dieses Gerät setzen
+            device_id = entry.data.get(CONF_DEVICE_ID)
+            if device_id and refresh_cloud:
+                proxy._device_config_cache[device_id] = {
+                    CONF_REFRESH_CONFIG_FROM_CLOUD: True
+                }
+
             hass.loop.create_task(proxy.start())
 
             hass.data[DOMAIN]["proxy"] = proxy

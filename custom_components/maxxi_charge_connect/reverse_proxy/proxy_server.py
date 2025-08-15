@@ -76,7 +76,6 @@ class MaxxiProxyServer:
         return None
 
     async def _handle_config(self, request):
-        """Antwortet mit gespeicherter Config oder ruft einmalig die Cloud ab (inkl. Refresh-Flag)."""
         device_id = request.query.get("deviceId")
         if not device_id:
             return web.Response(status=400, text="Missing deviceId")
@@ -84,21 +83,19 @@ class MaxxiProxyServer:
         config_data = self._device_config_cache.get(device_id)
         refresh = False
         if config_data:
-            # Prüfen, ob refresh_cloud_data gesetzt ist
             refresh = config_data.get("refresh_cloud_data", False)
 
-        if not config_data or refresh:
-            # Cloud einmalig abfragen
+        # Wenn kein Cache, Refresh-Flag oder enable_forward_to_cloud → Cloud abrufen
+        if not config_data or refresh or self.enable_forward_to_cloud:
             config_data = await self.fetch_cloud_config(device_id)
-            if config_data:
-                # Flag zurücksetzen
-                config_data["refresh_cloud_data"] = False
-                self._device_config_cache[device_id] = config_data
-                # Persistieren
-                if self._store:
-                    await self._store.async_save(self._device_config_cache)
-            else:
+            if not config_data:
                 return web.Response(status=500, text="Cannot fetch config from cloud")
+            # Refresh-Flag zurücksetzen
+            config_data["refresh_cloud_data"] = False
+            # Cache + Store aktualisieren
+            self._device_config_cache[device_id] = config_data
+            if self._store:
+                await self._store.async_save(self._device_config_cache)
 
         headers = {
             "X-Powered-By": "Express",

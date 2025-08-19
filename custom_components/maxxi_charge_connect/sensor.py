@@ -60,8 +60,9 @@ from .devices.error_sensor import ErrorSensor
 
 from .http_scan.http_scan_text import HttpScanText
 
-from .reverse_proxy.proxy_sensor import ProxySensor
-from .const import DOMAIN, PROXY_ERROR_EVENTNAME
+from .devices.status_sensor import StatusSensor
+
+from .const import DOMAIN
 
 SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
 
@@ -112,12 +113,9 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
 
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
 
+    status_sensor = StatusSensor(entry)
 
-    # ---Proxy -- 
-    #proxySensors = [ProxySensor(entry, key, name) for key, name in SENSOR_TYPES.items()]
-    proxySensor = ProxySensor(entry)
-    
-    #---Http-Scan----
+    # ---Http-Scan----
     http_scan_sensor_list = []
 
     http_scan_sensor_list.append(
@@ -213,7 +211,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
             pv_self_consumption,
             *http_scan_sensor_list,
             error_sensor,
-            proxySensor
+            status_sensor,
         ]
     )
     await asyncio.sleep(0)

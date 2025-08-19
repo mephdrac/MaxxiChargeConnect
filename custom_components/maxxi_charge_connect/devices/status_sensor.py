@@ -26,15 +26,16 @@ _LOGGER = logging.getLogger(__name__)
 # }
 
 
-class ProxySensor(SensorEntity):
+class StatusSensor(SensorEntity):
     """Sensor für MaxxiCloud-Daten vom Proxy."""
+
+    _attr_entity_registry_enabled_default = True
+    _attr_translation_key = "StatusSensor"
+    _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry):
         self._entry = entry
-        # self._key = key
-
-        self._attr_name = "MeinTestsensor"
-        self._attr_unique_id = f"{entry.entry_id}_proxy_sensor"
+        self._attr_unique_id = f"{entry.entry_id}_status_sensor"
 
         self._state = None
         self._attr_native_value = None

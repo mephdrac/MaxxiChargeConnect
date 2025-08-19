@@ -185,8 +185,12 @@
         "name": "PV Produktion gesamt"
       },
       "ErrorSensor": {
+        "name": "Fehler"
+      },
+      "StatusSensor": {
         "name": "Status"
       }
+
     },
     "number": {
       "maxOutputPower": {

@@ -116,9 +116,16 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                                 if cmd == REQUIRED:
                                     value = self.exract_data(soup, label)
                                 elif cmd == NEIN:
-                                    value = "Nein"
+                                    try:
+                                        value = self.exract_data(soup, label)
+                                    except Exception as e:
+                                        value = "Nein"
                                 else:
-                                    value = "nicht gesetzt"
+                                    try:
+                                        value = self.exract_data(soup, label)
+                                    except Exception as e:
+                                        value = "nicht gesetzt"
+
                                 data[key] = value
 
                             return data

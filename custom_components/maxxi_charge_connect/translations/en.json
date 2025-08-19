@@ -186,6 +186,9 @@
         "name": "PV Energy Total"
       },
       "ErrorSensor": {
+        "name": "Error"
+      },
+      "StatusSensor": {
         "name": "State"
       }
     },

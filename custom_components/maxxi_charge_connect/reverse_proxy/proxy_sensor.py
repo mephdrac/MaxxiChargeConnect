@@ -52,7 +52,7 @@ class ProxySensor(SensorEntity):
         Registriert den Sensor für Updates über das Dispatcher-Signal
         bei Hinzufügen zur Home Assistant Instanz.
         """
-        _LOGGER.warning("Listen to Event")
+        _LOGGER.info("Listen to Event")
         self.hass.bus.async_listen(PROXY_ERROR_EVENTNAME, self.async_update_from_event)
 
     def format_uptime(self, seconds: int):
@@ -72,7 +72,7 @@ class ProxySensor(SensorEntity):
     def async_update_from_event(self, event: Event):
         """Aktualisiert Sensor von Proxy-Event."""
 
-        _LOGGER.warning("Event erhalten: %s", self._attr_name)
+        _LOGGER.debug("Event erhalten: %s", self._attr_name)
 
         data = event.data
         json_data = data.get("payload", {})

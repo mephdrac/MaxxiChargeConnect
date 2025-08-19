@@ -1,13 +1,8 @@
-"""Initialisierung der MaxxiChargeConnect-Integration in Home Assistant.
+"""
+Initialisierung der MaxxiChargeConnect-Integration in Home Assistant.
 
 Dieses Modul registriert beim Setup den Webhook und leitet den
 Konfigurations-Flow an die zuständigen Plattformen weiter.
-
-Funktionen:
-- async_setup: Wird einmal beim Start von Home Assistant aufgerufen.
-- async_setup_entry: Initialisiert eine neue Instanz beim Hinzufügen.
-- async_unload_entry: Entfernt die Instanz und deregistriert den Webhook.
-- async_migrate_entry: Migrationslogik für ConfigEntries.
 """
 
 import asyncio
@@ -120,39 +115,28 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if notify_migration:
         hass.async_create_task(migrator.async_notify_possible_migration())
 
-    # Proxy-Server starten – nur EINMAL für alle Geräte
+    # --- GLOBALEN PROXY starten ---
     proxy_enabled = entry.data.get(
         CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_ENABLE_LOCAL_CLOUD_PROXY
     )
     if proxy_enabled:
         if hass.data[DOMAIN]["proxy"] is None:
             _LOGGER.info("Starte globalen Proxy-Server (Port 3001)")
-
-            # Lese die Config-Werte aus dem Entry
-            refresh_cloud = entry.data.get(CONF_REFRESH_CONFIG_FROM_CLOUD, False)
-
             proxy = MaxxiProxyServer(hass, listen_port=3001)
-
-            # Optional: einmaliges Refresh-Flag für dieses Gerät setzen
-            device_id = entry.data.get(CONF_DEVICE_ID)
-            if device_id and refresh_cloud:
-                proxy._device_config_cache[device_id] = {
-                    CONF_REFRESH_CONFIG_FROM_CLOUD: True
-                }
-
             hass.loop.create_task(proxy.start())
-
             hass.data[DOMAIN]["proxy"] = proxy
-
-            async def periodic_check(now):
-                await check_device_id_issue(hass)
-
-            await check_device_id_issue(hass)
-            async_track_time_interval(hass, periodic_check, timedelta(minutes=10))
         else:
+            proxy = hass.data[DOMAIN]["proxy"]
             _LOGGER.info("Proxy-Server läuft bereits – Gerät wird nur angebunden.")
+
+        # Registriere diesen Entry beim Proxy
+        proxy.register_entry(entry)
+
     else:
         _LOGGER.info("Lokaler Cloud-Proxy für dieses Gerät deaktiviert.")
+
+    # Device-ID prüfen
+    await check_device_id_issue(hass)
 
     return True
 
@@ -170,16 +154,19 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         )
     )
 
+    # Proxy-Entry deregistrieren
+    proxy = hass.data[DOMAIN].get("proxy")
+    if proxy:
+        proxy.unregister_entry(entry)
+
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id, None)
 
     # Prüfen, ob noch andere Einträge aktiv sind, bevor der Proxy gestoppt wird
-    if not hass.config_entries.async_entries(DOMAIN):
-        proxy = hass.data[DOMAIN].get("proxy")
-        if proxy:
-            _LOGGER.info("Stoppe globalen Proxy-Server")
-            await proxy.stop()
-            hass.data[DOMAIN]["proxy"] = None
+    if proxy and not hass.config_entries.async_entries(DOMAIN):
+        _LOGGER.info("Stoppe globalen Proxy-Server")
+        await proxy.stop()
+        hass.data[DOMAIN]["proxy"] = None
 
     return unload_ok
 
@@ -191,6 +178,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
 
     _LOGGER.info("Prüfe Migration: Aktuelle Version: %s.%s", version, minor_version)
 
+    # --- Migrationen wie bisher ---
     if version < 2:
         _LOGGER.info("Migration MaxxiChargeConnect v1 → v2 gestartet")
         new_data = {**config_entry.data}
@@ -214,10 +202,8 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             ):
                 _LOGGER.info("Entferne veraltete Entität: %s", entity.entity_id)
                 entity_registry.async_remove(entity.entity_id)
-
         version = 3
         hass.config_entries.async_update_entry(config_entry, version=version)
-        _LOGGER.info("Migration auf Version 3 abgeschlossen")
 
     if version == 3 and minor_version == 0:
         _LOGGER.info("Migration MaxxiChargeConnect v3.0 → v3.1 gestartet")
@@ -242,17 +228,13 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             for old_key, new_key in keys:
                 old_unique_id = f"{config_entry.entry_id}_{old_key}"
                 new_unique_id = f"{config_entry.entry_id}_{new_key}"
-                _LOGGER.info("Suchen nach: %s", old_unique_id)
                 entity_id = entity_registry.async_get_entity_id(
                     "sensor", "maxxi_charge_connect", old_unique_id
                 )
                 if entity_id:
-                    _LOGGER.info("Ersetze mit: %s", new_unique_id)
                     entity_registry.async_update_entity(
                         entity_id, new_unique_id=new_unique_id
                     )
-
-            version = 3
             minor_version = 1
             hass.config_entries.async_update_entry(
                 config_entry, version=version, minor_version=minor_version
@@ -271,7 +253,6 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
                 )
                 new_data[CONF_DEVICE_ID] = ""
                 new_data[CONF_NEEDS_DEVICE_ID] = True
-            version = 3
             minor_version = 2
             hass.config_entries.async_update_entry(
                 config_entry,

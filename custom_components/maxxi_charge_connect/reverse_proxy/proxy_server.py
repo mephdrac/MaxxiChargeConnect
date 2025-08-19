@@ -164,7 +164,7 @@ class MaxxiProxyServer:
                     if resp.status == 200:
                         data = await resp.json()
                         self._device_config_cache[device_id] = data
-                        _LOGGER.info("Cloud-Daten für %s gespeichert", device_id)
+                        _LOGGER.debug("Cloud-Daten für %s gespeichert", device_id)
                         if self._store:
                             await self._store.async_save(self._device_config_cache)
                         return data
@@ -199,17 +199,17 @@ class MaxxiProxyServer:
             or enable_forward
             or device_id not in self._device_config_cache
         ):
-            _LOGGER.info("Konfiguration wird von der Cloud gelesen für %s", device_id)
+            _LOGGER.debug("Konfiguration wird von der Cloud gelesen für %s", device_id)
             config_data = await self.fetch_cloud_config(device_id)
             if not config_data:
                 return web.Response(status=500, text="Cannot fetch config from cloud")
             if entry:
                 data = dict(entry.data)
                 data[CONF_REFRESH_CONFIG_FROM_CLOUD] = False
-                await self.hass.config_entries.async_update_entry(entry, data=data)
+                self.hass.config_entries.async_update_entry(entry, data=data)
         else:
             config_data = self._device_config_cache[device_id]
-            _LOGGER.info("Konfiguration kommt aus dem Proxy Cache für %s", device_id)
+            _LOGGER.debug("Konfiguration kommt aus dem Proxy Cache für %s", device_id)
 
         headers = {
             "X-Powered-By": "Express",
@@ -233,7 +233,7 @@ class MaxxiProxyServer:
             return web.Response(status=400, text="Invalid JSON")
 
         device_id = data.get(CONF_DEVICE_ID)
-        _LOGGER.warning("Proxy-Daten empfangen: %s", data)
+        _LOGGER.debug("Proxy-Daten empfangen: %s", data)
 
         # Entscheiden, ob Transformation nötig ist
 

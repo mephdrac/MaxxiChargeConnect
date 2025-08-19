@@ -46,3 +46,4 @@ MAXXISUN_CLOUD_URL = "maxxisun.app"
 
 OPTIONAL = "optional"
 REQUIRED = "required"
+NEIN = "NEIN"

@@ -7,12 +7,10 @@ Konfigurations-Flow an die zuständigen Plattformen weiter.
 
 import asyncio
 import logging
-from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
-from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.issue_registry import (
     IssueSeverity,
     async_create_issue,
@@ -20,14 +18,15 @@ from homeassistant.helpers.issue_registry import (
 )
 
 from .const import (
-    CONF_DEVICE_ID,    
+    CONF_DEVICE_ID,
     CONF_ENABLE_LOCAL_CLOUD_PROXY,
-    CONF_NEEDS_DEVICE_ID,    
+    CONF_NEEDS_DEVICE_ID,
     DEFAULT_ENABLE_LOCAL_CLOUD_PROXY,
     DOMAIN,
     NOTIFY_MIGRATION,
     OPTIONAL,
-    REQUIRED    
+    REQUIRED,
+    NEIN,
 )
 from .http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
 from .migration.migration_from_yaml import MigrateFromYaml
@@ -84,7 +83,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         ("MaximumBatteryCharge", "Maximale Akkuladung:", REQUIRED),
         ("DC/DC-Algorithmus", "DC/DC-Algorithmus:", REQUIRED),
         ("Cloudservice", "Cloudservice:", REQUIRED),
-        ("LocalServer", "Lokalen Server nutzen:", REQUIRED),
+        ("LocalServer", "Lokalen Server nutzen:", NEIN),
         ("APIRoute", "API-Route:", OPTIONAL),
     ]
 

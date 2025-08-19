@@ -25,7 +25,7 @@
         "description": "Steuert, welche Daten zur Cloud gehen oder von dort abgerufen werden.",
         "data": {
           "conf_enable_forward_to_cloud": "Messdaten an die Maxxisun-Cloud senden?",
-          "CONF_ENABLE_CLOUD_DATA": "Messdaten von der Maxxisun-Cloud holen?",
+          "CONF_ENABLE_CLOUD_DATA": "Messdaten abfangen statt an Cloud zu senden?",
           "CONF_REFRESH_CONFIG_FROM_CLOUD": "Konfiguration einmalig aus der Cloud holen?"
         }
       }

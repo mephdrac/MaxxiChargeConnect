@@ -16,7 +16,7 @@ from homeassistant.const import CONF_IP_ADDRESS
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from ..const import REQUIRED
+from ..const import REQUIRED, NEIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -115,6 +115,8 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
 
                                 if cmd == REQUIRED:
                                     value = self.exract_data(soup, label)
+                                elif cmd == NEIN:
+                                    value = "Nein"
                                 else:
                                     value = "nicht gesetzt"
                                 data[key] = value

@@ -25,7 +25,7 @@
         "description": "Controls which data is sent to or retrieved from the Cloud.",
         "data": {
           "conf_enable_forward_to_cloud": "Send measurement data to the Maxxisun Cloud?",
-          "CONF_ENABLE_CLOUD_DATA": "Retrieve measurement data from the Maxxisun Cloud?",
+          "CONF_ENABLE_CLOUD_DATA": "Intercept data instead of sending to cloud?",
           "CONF_REFRESH_CONFIG_FROM_CLOUD": "Retrieve configuration once from the Cloud?"
         }
       }

@@ -16,6 +16,8 @@ from homeassistant.const import CONF_IP_ADDRESS
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
+from ..const import REQUIRED
+
 _LOGGER = logging.getLogger(__name__)
 
 SCAN_INTERVAL = timedelta(seconds=30)  # z.B. alle 30 Sekunden aktualisieren
@@ -30,7 +32,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
         Args:
             hass (HomeAssistant): Die Home Assistant Instanz.
             entry (ConfigEntry): Die Konfiguration des Integrations-Eintrags.
-            sensorList (List[Tuple[str, str]]): Liste von Sensor-Schlüsseln 
+            sensorList (List[Tuple[str, str]]): Liste von Sensor-Schlüsseln
                     und zugehörigen HTML-Labels,
                     z.B. [("PowerMeterIp", "Messgerät IP:")]
 
@@ -45,7 +47,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
 
         self._sensor_list = sensor_list
         self.entry = entry
-        self._resource = entry.data[CONF_IP_ADDRESS].strip()        
+        self._resource = entry.data[CONF_IP_ADDRESS].strip()
 
         if self._resource:
             if not self._resource.startswith(("http://", "https://")):
@@ -109,7 +111,12 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                             for sensor in self._sensor_list:
                                 key = sensor[0]  # z. B. "PowerMeterIp"
                                 label = sensor[1]  # z. B. "Messgerät IP:"
-                                value = self.exract_data(soup, label)
+                                cmd = sensor[2]  # z. B. "Messgerät IP:"
+
+                                if cmd == REQUIRED:
+                                    value = self.exract_data(soup, label)
+                                else:
+                                    value = "nicht gesetzt"
                                 data[key] = value
 
                             return data
@@ -118,13 +125,14 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                 raise UpdateFailed(f"Netzwerkfehler beim Abruf: {e}") from e
 
             except TimeoutError as e:
-
-                _LOGGER.exception("%s: Zeitüberschreitung beim Abrufen der HTML-Seite", e)
+                _LOGGER.exception(
+                    "%s: Zeitüberschreitung beim Abrufen der HTML-Seite", e
+                )
                 return {}
 
             except Exception as e:
                 _LOGGER.exception("%s: Unerwarteter Fehler bei der Datenabfrage", e)
-                #raise UpdateFailed(f"Unerwarteter Fehler: {e}") from e
+                # raise UpdateFailed(f"Unerwarteter Fehler: {e}") from e
                 return {}
         else:
             return {}

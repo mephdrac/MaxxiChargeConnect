@@ -20,15 +20,14 @@ from homeassistant.helpers.issue_registry import (
 )
 
 from .const import (
-    CONF_DEVICE_ID,
-    CONF_ENABLE_FORWARD_TO_CLOUD,
+    CONF_DEVICE_ID,    
     CONF_ENABLE_LOCAL_CLOUD_PROXY,
-    CONF_NEEDS_DEVICE_ID,
-    DEFAULT_ENABLE_FORWARD_TO_CLOUD,
+    CONF_NEEDS_DEVICE_ID,    
     DEFAULT_ENABLE_LOCAL_CLOUD_PROXY,
     DOMAIN,
     NOTIFY_MIGRATION,
-    CONF_REFRESH_CONFIG_FROM_CLOUD,
+    OPTIONAL,
+    REQUIRED    
 )
 from .http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
 from .migration.migration_from_yaml import MigrateFromYaml
@@ -72,21 +71,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[DOMAIN][entry.entry_id] = {}
 
     sensor_list = [
-        ("PowerMeterIp", "Messgerät IP:"),
-        ("PowerMeterType", "Messgerät Typ:"),
-        ("MaximumPower", "Maximale Leistung:"),
-        ("OfflineOutputPower", "Offline-Ausgangsleistung:"),
-        ("NumberOfBatteries", "Batterien im System:"),
-        ("OutputOffset", "Ausgabe korrigieren:"),
-        ("CcuSpeed", "CCU-Geschwindigkeit:"),
-        ("Microinverter", "Mikro-Wechselrichter-Typ:"),
-        ("ResponseTolerance", "Reaktionstoleranz:"),
-        ("MinimumBatteryDischarge", "Minimale Entladung der Batterie:"),
-        ("MaximumBatteryCharge", "Maximale Akkuladung:"),
-        ("DC/DC-Algorithmus", "DC/DC-Algorithmus:"),
-        ("Cloudservice", "Cloudservice:"),
-        ("LocalServer", "Lokalen Server nutzen:"),
-        ("APIRoute", "API-Route:"),
+        ("PowerMeterIp", "Messgerät IP:", REQUIRED),
+        ("PowerMeterType", "Messgerät Typ:", REQUIRED),
+        ("MaximumPower", "Maximale Leistung:", REQUIRED),
+        ("OfflineOutputPower", "Offline-Ausgangsleistung:", REQUIRED),
+        ("NumberOfBatteries", "Batterien im System:", REQUIRED),
+        ("OutputOffset", "Ausgabe korrigieren:", REQUIRED),
+        ("CcuSpeed", "CCU-Geschwindigkeit:", REQUIRED),
+        ("Microinverter", "Mikro-Wechselrichter-Typ:", REQUIRED),
+        ("ResponseTolerance", "Reaktionstoleranz:", REQUIRED),
+        ("MinimumBatteryDischarge", "Minimale Entladung der Batterie:", REQUIRED),
+        ("MaximumBatteryCharge", "Maximale Akkuladung:", REQUIRED),
+        ("DC/DC-Algorithmus", "DC/DC-Algorithmus:", REQUIRED),
+        ("Cloudservice", "Cloudservice:", REQUIRED),
+        ("LocalServer", "Lokalen Server nutzen:", REQUIRED),
+        ("APIRoute", "API-Route:", OPTIONAL),
     ]
 
     coordinator = MaxxiDataUpdateCoordinator(hass, entry, sensor_list)

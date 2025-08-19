@@ -1,5 +1,4 @@
-"""
-Reverse-Proxy für MaxxiChargeConnect.
+"""Reverse-Proxy für MaxxiChargeConnect.
 
 Der Proxy fängt Daten ab, die das Maxxi-Gerät an maxxisun.app sendet,
 oder als Webhook von Home Assistant, und gibt sie an die Integration weiter.
@@ -7,14 +6,15 @@ Optional werden die Daten auch an die originale Cloud weitergeleitet.
 """
 
 import asyncio
+from collections.abc import Callable
 import json
 import logging
 import time
-from typing import Callable, Optional
 
 from aiohttp import ClientSession, web
 import dns.resolver
 
+from homeassistant.core import HomeAssistant
 from homeassistant.const import CONF_IP_ADDRESS, CONF_WEBHOOK_ID
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.storage import Store
@@ -44,6 +44,7 @@ _send_counters = {}
 
 
 def webhook_to_cloud_format(webhook_data: dict, ip_addr: str) -> dict:
+    """Erstellt aus den Webhook-Daten einen Datensatz für die Cloud."""
     device_id = webhook_data.get("deviceId")
     if not device_id:
         raise ValueError("deviceId fehlt im Webhook")
@@ -133,13 +134,14 @@ def webhook_to_cloud_format(webhook_data: dict, ip_addr: str) -> dict:
 class MaxxiProxyServer:
     """Reverse-Proxy für MaxxiCloud-Daten."""
 
-    def __init__(self, hass, listen_port: int = 3001):
+    def __init__(self, hass: HomeAssistant, listen_port: int = 3001) -> None:
+        """Konstruktor vom Reverse-Proxy."""
         self.hass = hass
         self.listen_port = listen_port
         self.runner: web.AppRunner | None = None
-        self.site: Optional[web.TCPSite] = None
+        self.site: web.TCPSite | None = None
         self._device_config_cache: dict[str, dict] = {}  # Cache pro deviceId
-        self._store: Optional[Store] = None
+        self._store: Store | None = None
         self._dispatcher_unsub: dict[str, Callable[[], None]] = {}
 
     async def _init_storage(self):
@@ -152,6 +154,8 @@ class MaxxiProxyServer:
             self._device_config_cache = {}
 
     async def fetch_cloud_config(self, device_id: str):
+        """Holt die Konfiguration direkt von der Cloud."""
+
         ip = await self.resolve_external("maxxisun.app")
         cloud_url = f"http://{ip}:3001/config?deviceId={device_id}"
         try:
@@ -258,13 +262,13 @@ class MaxxiProxyServer:
         forwarded = False
 
         if enable_forward:
-            _LOGGER.warning("Leite an Cloud (%s)", data)
+            _LOGGER.debug("Leite an Cloud (%s)", data)
 
             try:
                 ip = await self.resolve_external(MAXXISUN_CLOUD_URL)
                 url = f"http://{ip}:3001/text"
 
-                _LOGGER.warning("Sende Daten an maxxisun.app (%s)", ip)
+                _LOGGER.debug("Sende Daten an maxxisun.app (%s)", ip)
 
                 headers = {
                     "Host": MAXXISUN_CLOUD_URL,  # wichtig für SNI und TLS
@@ -294,6 +298,8 @@ class MaxxiProxyServer:
         return forwarded
 
     async def start(self):
+        """Startet den Reverse-Proxy."""
+
         await self._init_storage()
         app = web.Application()
         app["hass"] = self.hass
@@ -307,7 +313,7 @@ class MaxxiProxyServer:
         _LOGGER.info("Maxxi-Proxy-Server gestartet auf Port %s", self.listen_port)
 
     async def stop(self):
-        """Stoppt den Proxy-Server"""
+        """Stoppt den Proxy-Server."""
         for unsub in self._dispatcher_unsub.values():
             unsub()
         self._dispatcher_unsub.clear()
@@ -322,6 +328,8 @@ class MaxxiProxyServer:
     async def resolve_external(
         self, domain: str, nameservers: list[str] | None = None
     ) -> str:
+        """Ermittelt die IP der Cloud über einen externen Nameserver."""
+
         if nameservers is None:
             nameservers = ["8.8.8.8", "1.1.1.1"]
         loop = asyncio.get_running_loop()
@@ -334,6 +342,8 @@ class MaxxiProxyServer:
         return await loop.run_in_executor(None, blocking_resolve)
 
     def register_entry(self, entry):
+        """Registriert einen Entry für den Proxy-Server."""
+
         webhook_id = entry.data.get(CONF_WEBHOOK_ID)
         if webhook_id and webhook_id not in self._dispatcher_unsub:
             signal = f"{DOMAIN}_{webhook_id}_update_sensor"
@@ -344,6 +354,8 @@ class MaxxiProxyServer:
             _LOGGER.info("Proxy hört auf Webhook: %s", webhook_id)
 
     def unregister_entry(self, entry):
+        """Dregistriert einen Entry für den Proxy-Server."""
+
         webhook_id = entry.data.get(CONF_WEBHOOK_ID)
         unsub = self._dispatcher_unsub.pop(webhook_id, None)
         if unsub:

@@ -2,37 +2,132 @@
 Reverse-Proxy für MaxxiChargeConnect.
 
 Der Proxy fängt Daten ab, die das Maxxi-Gerät an maxxisun.app sendet,
-und gibt sie an die Integration weiter. Optional werden die Daten
-auch an die originale Cloud weitergeleitet.
+oder als Webhook von Home Assistant, und gibt sie an die Integration weiter.
+Optional werden die Daten auch an die originale Cloud weitergeleitet.
 """
 
-import logging
 import asyncio
 import json
-from typing import List, Optional, Callable
+import logging
+import time
+from typing import Callable, Optional
+
+from aiohttp import ClientSession, web
 import dns.resolver
-from aiohttp import web, ClientSession, ClientError
+
+from homeassistant.const import CONF_IP_ADDRESS, CONF_WEBHOOK_ID
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.storage import Store
 
 from ..const import (
-    PROXY_ERROR_EVENTNAME,
-    PROXY_ERROR_DEVICE_ID,
+    CONF_DEVICE_ID,
+    CONF_ENABLE_FORWARD_TO_CLOUD,
+    CONF_REFRESH_CONFIG_FROM_CLOUD,
+    DEFAULT_ENABLE_FORWARD_TO_CLOUD,
+    DOMAIN,
+    MAXXISUN_CLOUD_URL,
+    PROXY_ERROR_CCU,
     PROXY_ERROR_CODE,
+    PROXY_ERROR_DEVICE_ID,
+    PROXY_ERROR_EVENTNAME,
+    PROXY_ERROR_IP,
     PROXY_ERROR_MESSAGE,
     PROXY_ERROR_TOTAL,
-    PROXY_ERROR_CCU,
-    PROXY_ERROR_IP,
     PROXY_FORWARDED,
     PROXY_PAYLOAD,
-    CONF_REFRESH_CONFIG_FROM_CLOUD,
-    CONF_ENABLE_FORWARD_TO_CLOUD,
-    CONF_DEVICE_ID,
-    DOMAIN,
-    DEFAULT_ENABLE_FORWARD_TO_CLOUD,
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+# Interner Zähler für sendCount pro Gerät
+_send_counters = {}
+
+
+def webhook_to_cloud_format(webhook_data: dict, ip_addr: str) -> dict:
+    device_id = webhook_data.get("deviceId")
+    if not device_id:
+        raise ValueError("deviceId fehlt im Webhook")
+
+    # sendCount hochzählen
+    count = _send_counters.get(device_id, 0) + 1
+    _send_counters[device_id] = count
+
+    # Standardwerte für converter/box
+    converters_info = [
+        {
+            "ccuTemperature": 29,
+            "ccuVoltage": 0,
+            "ccuCurrent": 0,
+            "ccuPower": 0,
+            "version": "106",
+            "command": "81 10 0 0 0 2 4 11 94 0 0 1e bd",
+        },
+        {
+            "ccuTemperature": 29,
+            "ccuVoltage": 0,
+            "ccuCurrent": 0,
+            "ccuPower": 0,
+            "version": "106",
+            "command": "82 10 0 0 0 2 4 11 94 0 0 11 f9",
+        },
+    ]
+
+    # BatteriesInfo berechnen
+    batteries_info = []
+    for b in webhook_data.get("batteriesInfo", []):
+        voltage = b.get("batteryVoltage", 0)
+        current = b.get("batteryCurrent", 0)
+        power = (voltage * current) / 1000 if voltage and current else 0
+        soc = b.get("batterySOC", webhook_data.get("SOC", 0))
+        nominal_capacity = b.get("batteryNominalCapacity", b.get("batteryCapacity", 0))
+        batteries_info.append(
+            {
+                "batteryVoltage": voltage,
+                "batteryCurrent": current,
+                "batteryPower": power,
+                "batterySOC": soc,
+                "batteryNominalCapacity": nominal_capacity,
+                "batteryCapacity": b.get("batteryCapacity", 0),
+                "pvVoltage": b.get("pvVoltage", 0),
+                "pvCurrent": b.get("pvCurrent", 0),
+                "pvPower": (b.get("pvVoltage", 0) * b.get("pvCurrent", 0)) / 1000
+                if b.get("pvVoltage") and b.get("pvCurrent")
+                else 0,
+                "mpptVoltage": b.get("mpptVoltage", 0),
+                "mpptCurrent": b.get("mpptCurrent", 0),
+                "mpptPower": (b.get("mpptVoltage", 0) * b.get("mpptCurrent", 0)) / 1000
+                if b.get("mpptVoltage") and b.get("mpptCurrent")
+                else 0,
+            }
+        )
+
+    # Startzeit für uptime speichern
+    if f"{device_id}_start_time" not in _send_counters:
+        _send_counters[f"{device_id}_start_time"] = time.time()
+    uptime = int(time.time() - _send_counters[f"{device_id}_start_time"])
+
+    return {
+        "deviceId": device_id,
+        "ip_addr": ip_addr,
+        "wifiStrength": webhook_data.get("wifiStrength", -50),
+        "meterWifiStrength": webhook_data.get("meterWifiStrength", -50),
+        "sendCount": count,
+        "Pr": webhook_data.get("Pr", 0),
+        "meterReading": "",
+        "PV_power_total": webhook_data.get("PV_power_total", 0),
+        "SOC": webhook_data.get("SOC", 0),
+        "batteriesInfo": batteries_info,
+        "v_ccu": 0,
+        "i_ccu": 0,
+        "ccuTotalPower": 0,
+        "microCurve": 99,
+        "convertersInfo": converters_info,
+        "Pccu": webhook_data.get("Pccu", 0),
+        "error": 0,
+        "firmwareVersion": webhook_data.get("firmwareVersion", 0),
+        "box_id": "U2hlbGx5IFBybw",
+        "uptime": uptime,
+    }
 
 
 class MaxxiProxyServer:
@@ -41,12 +136,10 @@ class MaxxiProxyServer:
     def __init__(self, hass, listen_port: int = 3001):
         self.hass = hass
         self.listen_port = listen_port
-        self.runner: Optional[web.AppRunner] = None
+        self.runner: web.AppRunner | None = None
         self.site: Optional[web.TCPSite] = None
         self._device_config_cache: dict[str, dict] = {}  # Cache pro deviceId
         self._store: Optional[Store] = None
-
-        # Dispatcher-Unsubscribe für jeden Webhook
         self._dispatcher_unsub: dict[str, Callable[[], None]] = {}
 
     async def _init_storage(self):
@@ -135,10 +228,13 @@ class MaxxiProxyServer:
             _LOGGER.error("Ungültige JSON-Daten empfangen: %s", e)
             return web.Response(status=400, text="Invalid JSON")
 
-        _LOGGER.warning("Proxy-Daten empfangen: %s", data)
         device_id = data.get(CONF_DEVICE_ID)
+        _LOGGER.warning("Proxy-Daten empfangen: %s", data)
+
+        # Entscheiden, ob Transformation nötig ist
 
         entry = None
+        ip_addr = ""
         enable_forward = False
         for e in self.hass.config_entries.async_entries(DOMAIN):
             if e.data.get(CONF_DEVICE_ID) == device_id:
@@ -146,21 +242,53 @@ class MaxxiProxyServer:
                 enable_forward = e.data.get(
                     CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
                 )
+                ip_addr = entry.data.get(CONF_IP_ADDRESS, "") if entry else ""
                 break
 
-        forwarded = await self._forward_to_cloud(data, enable_forward)
-        await self._on_reverse_proxy_message(data, forwarded)
+        if "ip_addr" not in data:
+            cloud_data = webhook_to_cloud_format(data, ip_addr)
+        else:
+            cloud_data = data
+
+        forwarded = await self._forward_to_cloud(cloud_data, enable_forward)
+        await self._on_reverse_proxy_message(cloud_data, forwarded)
         return web.Response(status=200, text="OK")
 
     async def _forward_to_cloud(self, data, enable_forward: bool) -> bool:
         forwarded = False
+
         if enable_forward:
+            _LOGGER.warning("Leite an Cloud (%s)", data)
+
             try:
-                ip = await self.resolve_external("maxxisun.app")
+                ip = await self.resolve_external(MAXXISUN_CLOUD_URL)
+                url = f"http://{ip}:3001/text"
+
+                _LOGGER.warning("Sende Daten an maxxisun.app (%s)", ip)
+
+                headers = {
+                    "Host": MAXXISUN_CLOUD_URL,  # wichtig für SNI und TLS
+                    "Content-Type": "application/json",
+                }
+
+                # 3. POST absenden
                 async with ClientSession() as session:
-                    async with session.post(f"http://{ip}", json=data) as resp:
-                        await resp.text()
-                forwarded = True
+                    async with session.post(url, headers=headers, json=data) as resp:
+                        text = await resp.text()
+
+                        if resp.status == 200:
+                            forwarded = True
+                            _LOGGER.debug(
+                                "Daten erfolgreich an Cloud verschickt - (%s): %s",
+                                resp.status,
+                                text,
+                            )
+                        else:
+                            _LOGGER.error(
+                                "Daten konnte nicht an die Cloud geschickt werden: %s - %s",
+                                resp.status,
+                                text,
+                            )
             except Exception as e:
                 _LOGGER.error("Cloud-Forwarding Fehler: %s", e)
         return forwarded
@@ -179,6 +307,7 @@ class MaxxiProxyServer:
         _LOGGER.info("Maxxi-Proxy-Server gestartet auf Port %s", self.listen_port)
 
     async def stop(self):
+        """Stoppt den Proxy-Server"""
         for unsub in self._dispatcher_unsub.values():
             unsub()
         self._dispatcher_unsub.clear()
@@ -191,7 +320,7 @@ class MaxxiProxyServer:
         _LOGGER.info("Maxxi-Proxy-Server gestoppt")
 
     async def resolve_external(
-        self, domain: str, nameservers: Optional[List[str]] = None
+        self, domain: str, nameservers: list[str] | None = None
     ) -> str:
         if nameservers is None:
             nameservers = ["8.8.8.8", "1.1.1.1"]
@@ -205,7 +334,7 @@ class MaxxiProxyServer:
         return await loop.run_in_executor(None, blocking_resolve)
 
     def register_entry(self, entry):
-        webhook_id = entry.data.get("webhook_id")
+        webhook_id = entry.data.get(CONF_WEBHOOK_ID)
         if webhook_id and webhook_id not in self._dispatcher_unsub:
             signal = f"{DOMAIN}_{webhook_id}_update_sensor"
             unsub = async_dispatcher_connect(
@@ -215,7 +344,7 @@ class MaxxiProxyServer:
             _LOGGER.info("Proxy hört auf Webhook: %s", webhook_id)
 
     def unregister_entry(self, entry):
-        webhook_id = entry.data.get("webhook_id")
+        webhook_id = entry.data.get(CONF_WEBHOOK_ID)
         unsub = self._dispatcher_unsub.pop(webhook_id, None)
         if unsub:
             unsub()
@@ -233,6 +362,7 @@ class MaxxiProxyServer:
             ),
             None,
         )
+
         enable_forward = (
             entry.data.get(
                 CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
@@ -240,16 +370,15 @@ class MaxxiProxyServer:
             if entry
             else False
         )
-        if enable_forward:
-            _LOGGER.debug("Proxy - Gerät (%s) Daten an Cloud weiterleiten", device_id)
-        else:
-            _LOGGER.debug(
-                "Proxy - Gerät (%s) Daten werden nicht weitergeben an Cloud weitergegeben",
-                device_id,
-            )
 
-        # forwarded = await self._forward_to_cloud(data, enable_forward)
-        # await self._on_reverse_proxy_message(data, forwarded)
+        if "ip_addr" not in data:
+            ip_addr = entry.data.get(CONF_IP_ADDRESS, "") if entry else ""
+            cloud_data = webhook_to_cloud_format(data, ip_addr)
+        else:
+            cloud_data = data
+
+        forwarded = await self._forward_to_cloud(cloud_data, enable_forward)
+        # await self._on_reverse_proxy_message(cloud_data, forwarded)
 
     async def _on_reverse_proxy_message(self, json_data: dict, forwarded: bool):
         self.hass.bus.async_fire(

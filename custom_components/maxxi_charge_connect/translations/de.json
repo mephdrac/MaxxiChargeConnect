@@ -2,32 +2,33 @@
   "config": {
     "step": {
       "user": {
-        "title": "MaxxiCharge verbinden",
-        "description": "Richte deine MaxxiCharge-Verbindung ein.",
+        "title": "Gerät einrichten",
+        "description": "Grunddaten für dein MaxxiCharge-Gerät",
         "data": {
-          "only_accept_one_ip": "Webhook-Zugriff einschränken?",
           "webhook_id": "Webhook-ID",
           "name": "Name des Gerätes",
-          "ip_address": "IP-Adresse der MaxxiCharge",
-          "notify_migration": "Migrations-Sensoren erkennen?",
-          "conf_enable_forward_to_cloud": "Weiterleiten an Maxxi-Cloud?",
-          "enable_local_cloud_proxy": "Reverse-Proxy starten?",
-          "CONF_DEVICE_ID": "Geräte-ID, (z.B. Maxxi-xxxxxxx-xxx)"
+          "CONF_DEVICE_ID": "Geräte-ID (z.B. Maxxi-xxxxxxx-xxx)"
         }
       },
-      "reconfigure": {
-        "title": "MaxxiCharge neu konfigurieren",
-        "description": "Rekonfguriere deine MaxxiCharge-Verbindung.",
+      "optional": {
+        "title": "Netzwerk & Funktionen",
+        "description": "Optionen, um den Zugriff und die Datenverarbeitung zu steuern.",
         "data": {
-          "only_accept_one_ip": "Webhook-Zugriff einschränken?",
-          "webhook_id": "Webhook-ID",
+          "only_accept_one_ip": "Zugriff nur von dieser IP erlauben?",
           "ip_address": "IP-Adresse der MaxxiCharge",
           "notify_migration": "Migrations-Sensoren erkennen?",
-          "conf_enable_forward_to_cloud": "Weiterleiten an Maxxi-Cloud?",
-          "enable_local_cloud_proxy": "Reverse-Proxy starten?",
-          "CONF_DEVICE_ID": "Geräte-ID, (z.B. Maxxi-xxxxxxx-xxx)"
+          "enable_local_cloud_proxy": "Home Assistant übernimmt die Cloud-Funktion?"
         }
-      }      
+      },
+      "proxy_options": {
+        "title": "Daten teilen & abrufen“",
+        "description": "Steuert, welche Daten zur Cloud gehen oder von dort abgerufen werden.",
+        "data": {
+          "conf_enable_forward_to_cloud": "Messdaten an die Maxxisun-Cloud senden?",
+          "CONF_ENABLE_CLOUD_DATA": "Messdaten von der Maxxisun-Cloud holen?",
+          "CONF_REFRESH_CONFIG_FROM_CLOUD": "Konfiguration einmalig aus der Cloud holen?"
+        }
+      }
     }
   },
   "issue": {

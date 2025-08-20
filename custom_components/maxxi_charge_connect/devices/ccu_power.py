@@ -23,7 +23,7 @@ from ..const import (
     DEVICE_INFO,
     DOMAIN,
     CONF_ENABLE_CLOUD_DATA,
-    PROXY_ERROR_EVENTNAME,
+    PROXY_STATUS_EVENTNAME,
     CONF_DEVICE_ID,
     PROXY_ERROR_DEVICE_ID,
 )  # noqa: TID252
@@ -71,7 +71,7 @@ class CcuPower(SensorEntity):
         if self._enable_cloud_data:
             _LOGGER.info("Daten kommen vom Proxy")
             self.hass.bus.async_listen(
-                PROXY_ERROR_EVENTNAME, self.async_update_from_event
+                PROXY_STATUS_EVENTNAME, self.async_update_from_event
             )
         else:
             _LOGGER.info("Daten kommen vom Webhook")

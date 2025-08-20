@@ -223,7 +223,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     #         if sensor.hass:  # <-- verhindert RuntimeError
     #             sensor.async_write_ha_state()
 
-    # hass.bus.async_listen(PROXY_ERROR_EVENTNAME, handle_proxy_event)
+    # hass.bus.async_listen(PROXY_STATUS_EVENTNAME, handle_proxy_event)
 
     # --
 

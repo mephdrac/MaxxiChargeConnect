@@ -6,9 +6,7 @@ um sie als Sensordaten in Home Assistant bereitzustellen.
 """
 
 import logging
-from datetime import timedelta
-
-# import asyncio
+from datetime import timedelta, datetime, timezone
 import aiohttp
 import async_timeout
 from bs4 import BeautifulSoup
@@ -16,7 +14,9 @@ from homeassistant.const import CONF_IP_ADDRESS
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from ..const import REQUIRED, NEIN
+from ..const import REQUIRED, NEIN, CONF_DEVICE_ID
+
+from ..tools import fire_status_event
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -47,6 +47,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
 
         self._sensor_list = sensor_list
         self.entry = entry
+        self._device_id = entry.data[CONF_DEVICE_ID].strip()
         self._resource = entry.data[CONF_IP_ADDRESS].strip()
 
         if self._resource:
@@ -128,20 +129,73 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
 
                                 data[key] = value
 
+                            json_data = {
+                                "deviceId": str(self._device_id),
+                                "ccu": str(self._device_id),
+                                "ip_addr": str(self._resource),
+                                "integration_state": "OK",
+                                "message": "Http-Scan Sensoren ausgelesen.",
+                                "timestamp": datetime.now(timezone.utc).isoformat(),
+                            }
+                            await fire_status_event(self.hass, json_data, False)
+
                             return data
 
             except aiohttp.ClientError as e:
-                raise UpdateFailed(f"Netzwerkfehler beim Abruf: {e}") from e
+                _LOGGER.error("Netzwerkfehler beim Abruf: %s", e)
+
+                json_data = {
+                    "deviceId": "Errors",
+                    "ccu": str(self._device_id),
+                    "ip_addr": str(self._resource),
+                    "error": "Netzwerk",
+                    "message": "Netzwerkfehler beim Abruf",
+                    "exception": str(e),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+                await fire_status_event(self.hass, json_data, False)
+                return {}
 
             except TimeoutError as e:
-                _LOGGER.exception(
-                    "%s: Zeitüberschreitung beim Abrufen der HTML-Seite", e
+                _LOGGER.error(
+                    "%s: Zeitüberschreitung beim Abrufen von maxxi.local bzw. der IP (%s)",
+                    e,
+                    self._resource,
                 )
+                json_data = {
+                    "deviceId": "Errors",
+                    "ccu": str(self._device_id),
+                    "ip_addr": str(self._resource),
+                    "error": "Timeout",
+                    "message": "Zeitüberschreitung beim Abrufen von maxxi.local bzw. der IP",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+
+                await fire_status_event(self.hass, json_data, False)
                 return {}
 
             except Exception as e:
-                _LOGGER.exception("%s: Unerwarteter Fehler bei der Datenabfrage", e)
-                # raise UpdateFailed(f"Unerwarteter Fehler: {e}") from e
+                _LOGGER.error("%s: Unerwarteter Fehler bei der Datenabfrage", e)
+
+                json_data = {
+                    "deviceId": "Errors",
+                    "ccu": str(self._device_id),
+                    "ip_addr": str(self._resource),
+                    "error": "Unerwartet",
+                    "message": "Unerwarteter Fehler bei der Datenabfrage",
+                    "exception": str(e),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+                await fire_status_event(self.hass, json_data, False)
                 return {}
         else:
+            json_data = {
+                "deviceId": str(self._device_id),
+                "ccu": str(self._device_id),
+                "ip_addr": str(self._resource),
+                "integration_state": "OK (ohne IP)",
+                "message": "Es wurde keine IP eingeben, daher sind einige Sensoren auf unbekannt",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+            await fire_status_event(self.hass, json_data, False)
             return {}

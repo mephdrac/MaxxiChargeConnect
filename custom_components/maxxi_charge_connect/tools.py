@@ -16,7 +16,39 @@ Teilen der Anwendung eingebunden werden kann.
 import logging
 import re
 
+from homeassistant.core import HomeAssistant
+
+from .const import (
+    PROXY_ERROR_CCU,
+    PROXY_ERROR_CODE,
+    PROXY_ERROR_DEVICE_ID,
+    PROXY_STATUS_EVENTNAME,
+    PROXY_ERROR_IP,
+    PROXY_ERROR_MESSAGE,
+    PROXY_ERROR_TOTAL,
+    PROXY_FORWARDED,
+    PROXY_PAYLOAD,
+)
+
 _LOGGER = logging.getLogger(__name__)
+
+
+async def fire_status_event(hass: HomeAssistant, json_data: dict, forwarded: bool):
+    """Feuert ein Status-Event zum Anzeigen des Fehlers in der UI."""
+
+    hass.bus.async_fire(
+        PROXY_STATUS_EVENTNAME,
+        {
+            PROXY_ERROR_DEVICE_ID: json_data.get(PROXY_ERROR_DEVICE_ID),
+            PROXY_ERROR_CCU: json_data.get(PROXY_ERROR_CCU),
+            PROXY_ERROR_IP: json_data.get(PROXY_ERROR_IP),
+            PROXY_ERROR_CODE: json_data.get(PROXY_ERROR_CODE),
+            PROXY_ERROR_MESSAGE: json_data.get(PROXY_ERROR_MESSAGE),
+            PROXY_ERROR_TOTAL: json_data.get(PROXY_ERROR_TOTAL),
+            PROXY_PAYLOAD: json_data,
+            PROXY_FORWARDED: forwarded,
+        },
+    )
 
 
 def is_pccu_ok(pccu: float):

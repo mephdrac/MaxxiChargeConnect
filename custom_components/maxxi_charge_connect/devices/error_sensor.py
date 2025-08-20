@@ -10,7 +10,7 @@ from ..const import (
     DEVICE_INFO,
     DOMAIN,
     PROXY_ERROR_CODE,
-    PROXY_ERROR_EVENTNAME,
+    PROXY_STATUS_EVENTNAME,
     PROXY_ERROR_MESSAGE,
     PROXY_ERROR_TOTAL,
     PROXY_ERROR_CCU,
@@ -53,7 +53,7 @@ class ErrorSensor(SensorEntity):
 
         # Event-Listener registrieren
         self.async_on_remove(
-            self.hass.bus.async_listen(PROXY_ERROR_EVENTNAME, self._handle_error_event)
+            self.hass.bus.async_listen(PROXY_STATUS_EVENTNAME, self._handle_error_event)
         )
 
     async def _handle_error_event(self, event):

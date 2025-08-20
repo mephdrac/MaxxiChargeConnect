@@ -13,7 +13,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from ..const import (
     DOMAIN,
-    PROXY_ERROR_EVENTNAME,
+    PROXY_STATUS_EVENTNAME,
     CONF_ENABLE_CLOUD_DATA,
     CONF_DEVICE_ID,
     PROXY_ERROR_DEVICE_ID,
@@ -62,7 +62,7 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
             self.hass.data[DOMAIN][self.entry.entry_id]["listeners"] = []
 
             self.hass.bus.async_listen(
-                PROXY_ERROR_EVENTNAME, self.async_update_from_event
+                PROXY_STATUS_EVENTNAME, self.async_update_from_event
             )
         else:
             _LOGGER.info("Daten kommen vom Webhook")

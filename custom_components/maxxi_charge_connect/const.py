@@ -27,7 +27,7 @@ DEVICE_INFO = {
 NOTIFY_MIGRATION = "notify_migration"
 
 # Fehler die per Reverse-Proxy reinkommen
-PROXY_ERROR_EVENTNAME = "MaxxiChargeErrorEvent"
+PROXY_STATUS_EVENTNAME = "MaxxiChargeStatusEvent"
 PROXY_ERROR_CCU = "ccu"
 PROXY_ERROR_IP = "ip_addr"
 PROXY_ERROR_DEVICE_ID = "deviceId"

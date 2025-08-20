@@ -5,7 +5,7 @@ from homeassistant.core import HomeAssistant, Event
 from homeassistant.config_entries import ConfigEntry
 from ..const import (
     DOMAIN,
-    PROXY_ERROR_EVENTNAME,
+    PROXY_STATUS_EVENTNAME,
     DEVICE_INFO,
     PROXY_ERROR_DEVICE_ID,
     CONF_DEVICE_ID,
@@ -56,7 +56,7 @@ class StatusSensor(SensorEntity):
         Registriert den Sensor für Updates über das Dispatcher-Signal
         bei Hinzufügen zur Home Assistant Instanz.
         """
-        self.hass.bus.async_listen(PROXY_ERROR_EVENTNAME, self.async_update_from_event)
+        self.hass.bus.async_listen(PROXY_STATUS_EVENTNAME, self.async_update_from_event)
 
     def format_uptime(self, seconds: int):
         """Berechnet die Update aus einem integer."""
@@ -81,24 +81,14 @@ class StatusSensor(SensorEntity):
     async def async_update_from_event(self, event: Event):
         """Aktualisiert Sensor von Proxy-Event."""
 
-        # _LOGGER.debug("Event erhalten: %s", self._attr_name)
-
         data = event.data
         json_data = data.get("payload", {})
 
-        # _LOGGER.warning(
-        #     "Json-CCU (%s) = (%s)",
-        #     json_data.get(CCU),
-        #     self._entry.data.get(CONF_DEVICE_ID),
-        # )
-        # _LOGGER.warning("Json-Error (%s)", json_data.get(PROXY_ERROR_DEVICE_ID))
-
         if (
-            json_data.get(CCU)
-            and self._entry.data.get(CONF_DEVICE_ID)
+            json_data.get(CCU) == self._entry.data.get(CONF_DEVICE_ID)
             and json_data.get(PROXY_ERROR_DEVICE_ID) == ERRORS
         ):
-            _LOGGER.warning("1Status - Event erhalten: %s", json_data)
+            _LOGGER.debug("Status - Error - Event erhalten: %s", json_data)
 
             self._state = f"Fehler ({json_data.get(ERROR, 'Unbekannt')})"
             self._attr_extra_state_attributes = data.get("payload", {})
@@ -107,8 +97,8 @@ class StatusSensor(SensorEntity):
         elif json_data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(
             CONF_DEVICE_ID
         ):
-            self._state = "OK"
-            # json_data = data.get("payload", {})
+            _LOGGER.debug("Status - OK - Event erhalten: %s", json_data)
+            self._state = json_data.get("integration_state", "OK")
             self._attr_extra_state_attributes = data.get("payload", {})
             self.async_write_ha_state()
 

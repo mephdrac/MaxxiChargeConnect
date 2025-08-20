@@ -19,6 +19,8 @@ from homeassistant.const import CONF_IP_ADDRESS, CONF_WEBHOOK_ID
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.storage import Store
 
+from ..tools import fire_status_event
+
 from ..const import (
     CONF_DEVICE_ID,
     CONF_ENABLE_FORWARD_TO_CLOUD,
@@ -29,7 +31,7 @@ from ..const import (
     PROXY_ERROR_CCU,
     PROXY_ERROR_CODE,
     PROXY_ERROR_DEVICE_ID,
-    PROXY_ERROR_EVENTNAME,
+    PROXY_STATUS_EVENTNAME,
     PROXY_ERROR_IP,
     PROXY_ERROR_MESSAGE,
     PROXY_ERROR_TOTAL,
@@ -393,16 +395,17 @@ class MaxxiProxyServer:
         # await self._on_reverse_proxy_message(cloud_data, forwarded)
 
     async def _on_reverse_proxy_message(self, json_data: dict, forwarded: bool):
-        self.hass.bus.async_fire(
-            PROXY_ERROR_EVENTNAME,
-            {
-                PROXY_ERROR_DEVICE_ID: json_data.get(PROXY_ERROR_DEVICE_ID),
-                PROXY_ERROR_CCU: json_data.get(PROXY_ERROR_CCU),
-                PROXY_ERROR_IP: json_data.get(PROXY_ERROR_IP),
-                PROXY_ERROR_CODE: json_data.get(PROXY_ERROR_CODE),
-                PROXY_ERROR_MESSAGE: json_data.get(PROXY_ERROR_MESSAGE),
-                PROXY_ERROR_TOTAL: json_data.get(PROXY_ERROR_TOTAL),
-                PROXY_PAYLOAD: json_data,
-                PROXY_FORWARDED: forwarded,
-            },
-        )
+        fire_status_event(self.hass, json_data, forwarded)
+        # self.hass.bus.async_fire(
+        #     PROXY_STATUS_EVENTNAME,
+        #     {
+        #         PROXY_ERROR_DEVICE_ID: json_data.get(PROXY_ERROR_DEVICE_ID),
+        #         PROXY_ERROR_CCU: json_data.get(PROXY_ERROR_CCU),
+        #         PROXY_ERROR_IP: json_data.get(PROXY_ERROR_IP),
+        #         PROXY_ERROR_CODE: json_data.get(PROXY_ERROR_CODE),
+        #         PROXY_ERROR_MESSAGE: json_data.get(PROXY_ERROR_MESSAGE),
+        #         PROXY_ERROR_TOTAL: json_data.get(PROXY_ERROR_TOTAL),
+        #         PROXY_PAYLOAD: json_data,
+        #         PROXY_FORWARDED: forwarded,
+        #     },
+        # )

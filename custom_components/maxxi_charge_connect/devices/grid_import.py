@@ -19,7 +19,7 @@ from homeassistant.core import Event
 from ..const import (
     DEVICE_INFO,
     DOMAIN,
-    PROXY_ERROR_EVENTNAME,
+    PROXY_STATUS_EVENTNAME,
     CONF_ENABLE_CLOUD_DATA,
     CONF_DEVICE_ID,
     PROXY_ERROR_DEVICE_ID,
@@ -68,7 +68,7 @@ class GridImport(SensorEntity):
         if self._enable_cloud_data:
             _LOGGER.info("Daten kommen vom Proxy")
             self.hass.bus.async_listen(
-                PROXY_ERROR_EVENTNAME, self.async_update_from_event
+                PROXY_STATUS_EVENTNAME, self.async_update_from_event
             )
         else:
             _LOGGER.info("Daten kommen vom Webhook")

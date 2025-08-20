@@ -11,6 +11,8 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
+from homeassistant.helpers import entity_registry as er
+
 from homeassistant.helpers.issue_registry import (
     IssueSeverity,
     async_create_issue,
@@ -262,8 +264,30 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             _LOGGER.error("Fehler beim Migrieren der Konfiguration: %s", e)
             return False
 
+    if version == 3 and minor_version == 2:
+        try:
+            registry = er.async_get(hass)
+
+            old_unique_id = f"{config_entry.entry_id}_error_sensor"
+
+            old_entity = registry.async_get(old_unique_id)
+            if old_entity:
+                registry.async_remove(old_unique_id)
+                _LOGGER.info("Alte Error-Sensor Entity entfernt: %s", old_unique_id)
+
+            minor_version = 3
+            hass.config_entries.async_update_entry(
+                config_entry,
+                data=new_data,
+                version=version,
+                minor_version=minor_version,
+            )
+        except Exception as e:
+            _LOGGER.error("Fehler beim Migrieren der Konfiguration: %s", e)
+            return False
+
     _LOGGER.info(
         "MaxxiChargeConnect - config v%s.%s installiert", version, minor_version
     )
     await check_device_id_issue(hass)
-    return version == 3 and minor_version == 2
+    return version == 3 and minor_version == 3

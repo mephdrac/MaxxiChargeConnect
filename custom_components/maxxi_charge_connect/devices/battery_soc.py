@@ -7,7 +7,7 @@ der durch Webhook-Daten aktualisiert wird.
 Der Sensor wird dynamisch in Home Assistant registriert und aktualisiert.
 """
 
-# import logging
+import logging
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -15,11 +15,19 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, PERCENTAGE
+from homeassistant.core import Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
-from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+from ..const import (
+    DEVICE_INFO,
+    DOMAIN,
+    PROXY_STATUS_EVENTNAME,
+    CONF_ENABLE_CLOUD_DATA,
+    CONF_DEVICE_ID,
+    PROXY_ERROR_DEVICE_ID,
+)  # noqa: TID252
 
-# _LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 
 class BatterySoc(SensorEntity):
@@ -47,19 +55,37 @@ class BatterySoc(SensorEntity):
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = PERCENTAGE
 
+        self._enable_cloud_data = self._entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
+
     async def async_added_to_hass(self):
         """Registriert den Sensor beim Dispatcher, wenn die Entity Home Assistant hinzugefügt wird.
 
         Dadurch wird sichergestellt, dass der Sensor automatisch aktualisiert wird,
         sobald neue Daten über den zugehörigen Webhook eintreffen.
         """
+        if self._enable_cloud_data:
+            _LOGGER.info("Daten kommen vom Proxy")
+            self.hass.bus.async_listen(
+                PROXY_STATUS_EVENTNAME, self.async_update_from_event
+            )
+        else:
+            _LOGGER.info("Daten kommen vom Webhook")
+            signal_sensor = (
+                f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
+            )
 
-        signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
+            remove_callback = async_dispatcher_connect(
+                self.hass, signal_sensor, self._handle_update
+            )
+            self.async_on_remove(remove_callback)
 
-        remove_callback = async_dispatcher_connect(
-            self.hass, signal_sensor, self._handle_update
-        )
-        self.async_on_remove(remove_callback)
+    async def async_update_from_event(self, event: Event):
+        """Aktualisiert Sensor von Proxy-Event."""
+
+        json_data = event.data.get("payload", {})
+
+        if json_data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(CONF_DEVICE_ID):
+            await self._handle_update(json_data)
 
     async def _handle_update(self, data):
         """Verarbeitet eingehende Webhook-Daten und aktualisiert den Sensorwert.

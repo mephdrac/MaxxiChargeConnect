@@ -24,7 +24,7 @@ async def async_setup_entry(
     entities = []
 
     # self._attr_unique_id = f"{entry.entry_id}_MaximumBatteryCharge"
-    coordinator = hass.data[DOMAIN]["coordinator"]
+    coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     await coordinator.async_config_entry_first_refresh()
 
     entities.append(

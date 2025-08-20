@@ -56,9 +56,10 @@ from .devices.webhook_id import WebhookId
 from .devices.consumption_energy_today import ConsumptionEnergyToday
 from .devices.consumption_energy_total import ConsumptionEnergyTotal
 
-from .devices.error_sensor import ErrorSensor
-
 from .http_scan.http_scan_text import HttpScanText
+
+from .devices.status_sensor import StatusSensor
+
 from .const import DOMAIN
 
 SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
@@ -108,8 +109,11 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     grid_import = GridImport(entry)
     pv_self_consumption = PvSelfConsumption(entry)
 
-    coordinator = hass.data[DOMAIN]["coordinator"]
+    coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
 
+    status_sensor = StatusSensor(entry)
+
+    # ---Http-Scan----
     http_scan_sensor_list = []
 
     http_scan_sensor_list.append(
@@ -183,7 +187,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
         )
     )
 
-    error_sensor = ErrorSensor(entry)
+    #    error_sensor = ErrorSensor(entry)
 
     async_add_entities(
         [
@@ -204,10 +208,23 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
             grid_import,
             pv_self_consumption,
             *http_scan_sensor_list,
-            error_sensor
+            # error_sensor,
+            status_sensor,
         ]
     )
     await asyncio.sleep(0)
+
+    # # Proxy - Events
+    # async def handle_proxy_event(event: Event):
+    #     for sensor in proxySensors:
+    #         sensor.async_update_from_event(event)
+    #         if sensor.hass:  # <-- verhindert RuntimeError
+    #             sensor.async_write_ha_state()
+
+    # hass.bus.async_listen(PROXY_STATUS_EVENTNAME, handle_proxy_event)
+
+    # --
+
     await coordinator.async_config_entry_first_refresh()
 
     pv_today_energy = PvTodayEnergy(hass, entry, pv_power_sensor.entity_id)

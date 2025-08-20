@@ -4,7 +4,7 @@ NumberConfigEntity-Modul für MaxxiCharge-Integration in Home Assistant.
 Dieses Modul stellt eine beschreibbare `NumberEntity` zur Verfügung, mit der konfigurierbare
 Parameter des MaxxiCharge-Geräts via HTTP-POST gesetzt werden können.
 
-Verwendet wird der DataUpdateCoordinator aus `hass.data[DOMAIN]["coordinator"]`.
+Verwendet wird der DataUpdateCoordinator aus `hass.data[DOMAIN][entry.entry_id]["coordinator"]`.
 
 Abhängigkeiten:
     - aiohttp
@@ -76,7 +76,7 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
         self._entry = entry
         self._hass = hass
         self._ip = entry.data[CONF_IP_ADDRESS].strip()
-        self._coordinator = hass.data[DOMAIN]["coordinator"]
+        self._coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
         self._rest_key = rest_key
         self._value_key = value_key
         self._attr_translation_key = translation_key

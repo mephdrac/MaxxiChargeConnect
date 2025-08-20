@@ -4,12 +4,23 @@ Diese Entität zeigt die aktuelle Firmware-Version an, die über einen Webhook e
 Sie ist als diagnostische Entität kategorisiert.
 """
 
+import logging
 from homeassistant.components.text import TextEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
+from homeassistant.core import Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
-from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+from ..const import (
+    DEVICE_INFO,
+    DOMAIN,
+    PROXY_STATUS_EVENTNAME,
+    CONF_ENABLE_CLOUD_DATA,
+    CONF_DEVICE_ID,
+    PROXY_ERROR_DEVICE_ID,
+)  # noqa: TID252
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class FirmwareVersion(TextEntity):
@@ -32,17 +43,36 @@ class FirmwareVersion(TextEntity):
         self._attr_native_value = None
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
+        self._enable_cloud_data = self._entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
+
     async def async_added_to_hass(self):
         """Wird beim Hinzufügen zur Home Assistant-Instanz aufgerufen.
 
         Registriert sich beim Dispatcher, um auf eingehende Webhook-Daten zu reagieren.
         """
 
-        signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
+        if self._enable_cloud_data:
+            _LOGGER.info("Daten kommen vom Proxy")
+            self.hass.bus.async_listen(
+                PROXY_STATUS_EVENTNAME, self.async_update_from_event
+            )
+        else:
+            _LOGGER.info("Daten kommen vom Webhook")
+            signal_sensor = (
+                f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
+            )
 
-        self.async_on_remove(
-            async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
-        )
+            self.async_on_remove(
+                async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
+            )
+
+    async def async_update_from_event(self, event: Event):
+        """Aktualisiert Sensor von Proxy-Event."""
+
+        json_data = event.data.get("payload", {})
+
+        if json_data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(CONF_DEVICE_ID):
+            await self._handle_update(json_data)
 
     async def _handle_update(self, data):
         """Verarbeitet empfangene Webhook-Daten und aktualisiert die Firmware-Version.

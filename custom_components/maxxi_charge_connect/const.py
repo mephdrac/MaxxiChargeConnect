@@ -27,10 +27,26 @@ DEVICE_INFO = {
 NOTIFY_MIGRATION = "notify_migration"
 
 # Fehler die per Reverse-Proxy reinkommen
-PROXY_ERROR_EVENTNAME = "MaxxiChargeErrorEvent"
+PROXY_STATUS_EVENTNAME = "MaxxiChargeStatusEvent"
 PROXY_ERROR_CCU = "ccu"
 PROXY_ERROR_IP = "ip_addr"
 PROXY_ERROR_DEVICE_ID = "deviceId"
 PROXY_ERROR_CODE = "error"
 PROXY_ERROR_MESSAGE = "message"
 PROXY_ERROR_TOTAL = "totalErrors"
+PROXY_PAYLOAD = "payload"
+PROXY_FORWARDED = "forwarded"
+CONF_ENABLE_CLOUD_DATA = "CONF_ENABLE_CLOUD_DATA"
+CONF_REFRESH_CONFIG_FROM_CLOUD = "CONF_REFRESH_CONFIG_FROM_CLOUD"
+
+
+#
+MAXXISUN_CLOUD_URL = "maxxisun.app"
+CCU = "ccu"
+ERROR = "error"
+ERRORS = "Errors"
+
+
+OPTIONAL = "optional"
+REQUIRED = "required"
+NEIN = "NEIN"

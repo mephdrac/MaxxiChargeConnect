@@ -1,7 +1,9 @@
+"""Sensor - der den aktuellen Zustand des Gerätes bzw. der Integration anzeigt."""
+
 import logging
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import EntityCategory
-from homeassistant.core import HomeAssistant, Event
+from homeassistant.core import Event
 from homeassistant.config_entries import ConfigEntry
 from ..const import (
     DOMAIN,
@@ -16,18 +18,6 @@ from ..const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-# SENSOR_TYPES = {
-#     PROXY_ERROR_DEVICE_ID: "Geräte-ID",
-#     "ccu": "CCU",
-#     "ip": "IP-Adresse",
-#     "error_code": "Fehlercode",
-#     "error_message": "Fehlermeldung",
-#     "total_errors": "Gesamtanzahl Fehler",
-#     "last_payload": "Letzter Payload",
-#     "forwarding": "Cloud-Forwarding Status",
-#     "uptime": "Uptime"
-# }
-
 
 class StatusSensor(SensorEntity):
     """Sensor für MaxxiCloud-Daten vom Proxy."""
@@ -40,13 +30,12 @@ class StatusSensor(SensorEntity):
         self._entry = entry
         self._attr_unique_id = f"{entry.entry_id}_status_sensor"
 
-        self._state = None
+        self._state = str(None)
         self._attr_native_value = None
         self._attr_device_class = None
-        self._attr_icon = "mdi:home-battery"
+        self._attr_icon = "mdi:alert-circle"
 
         self._attr_extra_state_attributes = {}
-        # _LOGGER.warning("SENSOR - INITIALISIERT: %s", name)
 
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
@@ -90,7 +79,7 @@ class StatusSensor(SensorEntity):
         ):
             _LOGGER.debug("Status - Error - Event erhalten: %s", json_data)
 
-            self._state = f"Fehler ({json_data.get(ERROR, 'Unbekannt')})"
+            self._state = f"Fehler ({json_data.get(ERROR, "Unbekannt")})"
             self._attr_extra_state_attributes = data.get("payload", {})
             self.async_write_ha_state()
 

@@ -265,16 +265,21 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             return False
 
     if version == 3 and minor_version == 2:
-        _LOGGER.warning("Migration MaxxiChargeConnect v3.1 → v3.2 gestartet")
+        _LOGGER.warning("Migration MaxxiChargeConnect v3.2 → v3.3 gestartet")
         try:
             registry = er.async_get(hass)
 
             old_unique_id = f"{config_entry.entry_id}_error_sensor"
 
-            old_entity = registry.async_get(old_unique_id)
-            if old_entity:
-                registry.async_remove(old_unique_id)
-                _LOGGER.info("Alte Error-Sensor Entity entfernt: %s", old_unique_id)
+            for entity_id, entry in registry.entities.items():
+                if entry.unique_id == old_unique_id:
+                    registry.async_remove(entity_id)
+                    _LOGGER.info(
+                        "Alte Error-Sensor Entity entfernt:  %s | %s",
+                        entity_id,
+                        old_unique_id,
+                    )
+                    break
 
             minor_version = 3
             hass.config_entries.async_update_entry(

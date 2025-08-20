@@ -259,3 +259,9 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._refresh_cloud_data = entry.data.get(CONF_REFRESH_CONFIG_FROM_CLOUD, False)
 
         return await self.async_step_user(user_input)
+
+    def is_matching(self, entry: config_entries.ConfigEntry) -> bool:
+        """Prüfen, ob dieser Flow zu einem bestehenden Eintrag passt."""
+        # Wir vergleichen über device_id
+        return entry.data.get(CONF_DEVICE_ID) == self._device_id
+    

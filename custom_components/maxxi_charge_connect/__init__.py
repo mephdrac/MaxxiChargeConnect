@@ -59,7 +59,7 @@ async def check_device_id_issue(hass):
     _LOGGER.debug("Device_ID checked.")
 
 
-async def async_setup(hass: HomeAssistant, config: dict) -> bool:
+async def async_setup(hass: HomeAssistant, config: dict) -> bool:  # pylint: disable=unused-argument
     """Wird beim Start von Home Assistant einmalig aufgerufen."""
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN]["proxy"] = None  # Platz für globale Proxy-Instanz
@@ -171,7 +171,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     return unload_ok
 
 
-async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
+async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:  # pylint: disable=too-many-locals,too-many-branches, too-many-statements
     """Migration eines Config-Eintrags auf neuere Versionen."""
     version = config_entry.version or 1
     minor_version = getattr(config_entry, "minor_version", 0)
@@ -239,7 +239,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             hass.config_entries.async_update_entry(
                 config_entry, version=version, minor_version=minor_version
             )
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error("Fehler beim Migrieren der Konfiguration: %s", e)
             return False
 
@@ -260,7 +260,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
                 version=version,
                 minor_version=minor_version,
             )
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error("Fehler beim Migrieren der Konfiguration: %s", e)
             return False
 
@@ -287,7 +287,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
                 version=version,
                 minor_version=minor_version,
             )
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error("Fehler beim Migrieren der Konfiguration: %s", e)
             return False
 

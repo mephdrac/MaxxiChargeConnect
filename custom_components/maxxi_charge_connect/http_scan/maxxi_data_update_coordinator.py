@@ -119,12 +119,12 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                                 elif cmd == NEIN:
                                     try:
                                         value = self.exract_data(soup, label)
-                                    except Exception as e:
+                                    except Exception:  # pylint: disable=broad-exception-caught
                                         value = "Nein"
                                 else:
                                     try:
                                         value = self.exract_data(soup, label)
-                                    except Exception as e:
+                                    except Exception:  # pylint: disable=broad-exception-caught
                                         value = "nicht gesetzt"
 
                                 data[key] = value
@@ -174,7 +174,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                 await fire_status_event(self.hass, json_data, False)
                 return {}
 
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 _LOGGER.error("%s: Unerwarteter Fehler bei der Datenabfrage", e)
 
                 json_data = {

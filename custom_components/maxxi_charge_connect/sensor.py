@@ -16,7 +16,7 @@ import asyncio
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, Event
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .devices.battery_power import BatteryPower
@@ -55,8 +55,6 @@ from .devices.webhook_id import WebhookId
 
 from .devices.consumption_energy_today import ConsumptionEnergyToday
 from .devices.consumption_energy_total import ConsumptionEnergyTotal
-
-from .devices.error_sensor import ErrorSensor
 
 from .http_scan.http_scan_text import HttpScanText
 

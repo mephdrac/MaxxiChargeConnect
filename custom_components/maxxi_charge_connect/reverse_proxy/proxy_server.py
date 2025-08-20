@@ -28,21 +28,14 @@ from ..const import (
     DEFAULT_ENABLE_FORWARD_TO_CLOUD,
     DOMAIN,
     MAXXISUN_CLOUD_URL,
-    PROXY_ERROR_CCU,
-    PROXY_ERROR_CODE,
     PROXY_ERROR_DEVICE_ID,
-    PROXY_STATUS_EVENTNAME,
-    PROXY_ERROR_IP,
-    PROXY_ERROR_MESSAGE,
-    PROXY_ERROR_TOTAL,
-    PROXY_FORWARDED,
-    PROXY_PAYLOAD,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
 # Interner Zähler für sendCount pro Gerät
-_send_counters = {}
+_send_counters: dict[str, int] = {}
+_start_times: dict[str, float] = {}
 
 
 def webhook_to_cloud_format(webhook_data: dict, ip_addr: str) -> dict:
@@ -105,9 +98,9 @@ def webhook_to_cloud_format(webhook_data: dict, ip_addr: str) -> dict:
         )
 
     # Startzeit für uptime speichern
-    if f"{device_id}_start_time" not in _send_counters:
-        _send_counters[f"{device_id}_start_time"] = time.time()
-    uptime = int(time.time() - _send_counters[f"{device_id}_start_time"])
+    if f"{device_id}_start_time" not in _start_times:
+        _start_times[f"{device_id}_start_time"] = time.time()
+    uptime = int(time.time() - _start_times[f"{device_id}_start_time"])
 
     return {
         "deviceId": device_id,
@@ -173,7 +166,7 @@ class MaxxiProxyServer:
                     _LOGGER.error(
                         "Cloud returned %s for device %s", resp.status, device_id
                     )
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error(
                 "Fehler beim Abrufen der Cloud-Daten für %s: %s", device_id, e
             )
@@ -230,7 +223,7 @@ class MaxxiProxyServer:
     async def _handle_text(self, request):
         try:
             data = await request.json()
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error("Ungültige JSON-Daten empfangen: %s", e)
             return web.Response(status=400, text="Invalid JSON")
 
@@ -239,26 +232,31 @@ class MaxxiProxyServer:
 
         # Entscheiden, ob Transformation nötig ist
 
-        entry = None
-        ip_addr = ""
-        enable_forward = False
-        for e in self.hass.config_entries.async_entries(DOMAIN):
-            if e.data.get(CONF_DEVICE_ID) == device_id:
-                entry = e
-                enable_forward = e.data.get(
-                    CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
-                )
-                ip_addr = entry.data.get(CONF_IP_ADDRESS, "") if entry else ""
-                break
+        try:
+            entry = None
+            ip_addr = ""
+            enable_forward = False
 
-        if "ip_addr" not in data:
-            cloud_data = webhook_to_cloud_format(data, ip_addr)
-        else:
-            cloud_data = data
+            for cur_entry in self.hass.config_entries.async_entries(DOMAIN):
+                if cur_entry.data.get(CONF_DEVICE_ID) == device_id:
+                    entry = cur_entry
+                    enable_forward = cur_entry.data.get(
+                        CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
+                    )
+                    ip_addr = entry.data.get(CONF_IP_ADDRESS, "") if entry else ""
+                    break
 
-        forwarded = await self._forward_to_cloud(cloud_data, enable_forward)
-        await self._on_reverse_proxy_message(cloud_data, forwarded)
-        return web.Response(status=200, text="OK")
+            if "ip_addr" not in data:
+                cloud_data = webhook_to_cloud_format(data, ip_addr)
+            else:
+                cloud_data = data
+
+            forwarded = await self._forward_to_cloud(cloud_data, enable_forward)
+            await self._on_reverse_proxy_message(cloud_data, forwarded)
+            return web.Response(status=200, text="OK")
+
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            return web.Response(status=400, text=e)
 
     async def _forward_to_cloud(self, data, enable_forward: bool) -> bool:
         forwarded = False
@@ -295,7 +293,7 @@ class MaxxiProxyServer:
                                 resp.status,
                                 text,
                             )
-            except Exception as e:
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 _LOGGER.error("Cloud-Forwarding Fehler: %s", e)
         return forwarded
 
@@ -391,11 +389,11 @@ class MaxxiProxyServer:
         else:
             cloud_data = data
 
-        forwarded = await self._forward_to_cloud(cloud_data, enable_forward)
+        await self._forward_to_cloud(cloud_data, enable_forward)
         # await self._on_reverse_proxy_message(cloud_data, forwarded)
 
     async def _on_reverse_proxy_message(self, json_data: dict, forwarded: bool):
-        fire_status_event(self.hass, json_data, forwarded)
+        await fire_status_event(self.hass, json_data, forwarded)
         # self.hass.bus.async_fire(
         #     PROXY_STATUS_EVENTNAME,
         #     {

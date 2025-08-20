@@ -43,10 +43,9 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     _entry: config_entries.ConfigEntry | None = None  # nur beim Reconfigure
 
-    # ----------------------------------------
-    # Step 1: Pflichtfelder
-    # ----------------------------------------
     async def async_step_user(self, user_input=None):
+        """Step 1: Pflichtfelder."""
+
         errors = {}
         defaults = self._get_defaults_for_user_step()
 
@@ -83,10 +82,9 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="user", data_schema=self._schema_user(defaults)
         )
 
-    # ----------------------------------------
-    # Step 2: optionale Felder + Proxy aktivieren
-    # ----------------------------------------
     async def async_step_optional(self, user_input=None):
+        """Step 2: optionale Felder + Proxy aktivieren."""
+
         defaults = self._get_defaults_for_optional_step()
 
         if user_input:
@@ -106,10 +104,9 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             step_id="optional", data_schema=self._schema_optional(defaults)
         )
 
-    # ----------------------------------------
-    # Step 3: Proxy-Optionen
-    # ----------------------------------------
     async def async_step_proxy_options(self, user_input=None):
+        """Step 3: Proxy-Optionen."""
+
         defaults = self._get_defaults_for_proxy_step()
 
         if user_input:
@@ -233,10 +230,9 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_REFRESH_CONFIG_FROM_CLOUD: self._refresh_cloud_data,
         }
 
-    # ----------------------------------------
-    # Reconfigure
-    # ----------------------------------------
     async def async_step_reconfigure(self, user_input=None):
+        """Reconfigure."""
+
         entry = self._get_reconfigure_entry()
         if not entry:
             return self.async_abort(reason="entry_not_found")
@@ -260,8 +256,5 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return await self.async_step_user(user_input)
 
-    def is_matching(self, entry: config_entries.ConfigEntry) -> bool:
-        """Prüfen, ob dieser Flow zu einem bestehenden Eintrag passt."""
-        # Wir vergleichen über device_id
-        return entry.data.get(CONF_DEVICE_ID) == self._device_id
-    
+    def is_matching(self, other_flow: config_entries.ConfigFlow) -> bool:
+        return isinstance(other_flow, MaxxiChargeConnectConfigFlow) and self._webhook_id == other_flow._webhook_id and self._device_id == other_flow._device_id  # pylint: disable=protected-access

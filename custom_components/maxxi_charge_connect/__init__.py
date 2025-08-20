@@ -265,7 +265,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             return False
 
     if version == 3 and minor_version == 2:
-        _LOGGER.warning("Migration MaxxiChargeConnect v3.2 → v3.3 gestartet")
+        _LOGGER.info("Migration MaxxiChargeConnect v3.2 → v3.3 gestartet")
         try:
             registry = er.async_get(hass)
 

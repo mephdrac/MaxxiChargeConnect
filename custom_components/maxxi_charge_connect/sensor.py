@@ -189,7 +189,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
         )
     )
 
-    error_sensor = ErrorSensor(entry)
+    #    error_sensor = ErrorSensor(entry)
 
     async_add_entities(
         [
@@ -210,7 +210,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
             grid_import,
             pv_self_consumption,
             *http_scan_sensor_list,
-            error_sensor,
+            # error_sensor,
             status_sensor,
         ]
     )

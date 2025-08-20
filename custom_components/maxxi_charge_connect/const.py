@@ -42,6 +42,9 @@ CONF_REFRESH_CONFIG_FROM_CLOUD = "CONF_REFRESH_CONFIG_FROM_CLOUD"
 
 #
 MAXXISUN_CLOUD_URL = "maxxisun.app"
+CCU = "ccu"
+ERROR = "error"
+ERRORS = "Errors"
 
 
 OPTIONAL = "optional"

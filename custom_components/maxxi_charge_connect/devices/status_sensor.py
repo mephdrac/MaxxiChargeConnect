@@ -9,6 +9,9 @@ from ..const import (
     DEVICE_INFO,
     PROXY_ERROR_DEVICE_ID,
     CONF_DEVICE_ID,
+    CCU,
+    ERROR,
+    ERRORS,
 )  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
@@ -53,10 +56,11 @@ class StatusSensor(SensorEntity):
         Registriert den Sensor für Updates über das Dispatcher-Signal
         bei Hinzufügen zur Home Assistant Instanz.
         """
-        _LOGGER.info("Listen to Event")
         self.hass.bus.async_listen(PROXY_ERROR_EVENTNAME, self.async_update_from_event)
 
     def format_uptime(self, seconds: int):
+        """Berechnet die Update aus einem integer."""
+
         days, remainder = divmod(seconds, 86400)  # 86400 Sekunden pro Tag
         hours, remainder = divmod(remainder, 3600)  # 3600 Sekunden pro Stunde
         minutes, seconds = divmod(remainder, 60)
@@ -64,25 +68,50 @@ class StatusSensor(SensorEntity):
 
     @property
     def native_value(self):
+        """Statuswert des Feldes."""
+
         return self._state
 
     @property
     def extra_state_attributes(self):
+        """Weitere Attribute die visualisiert werden."""
+
         return self._attr_extra_state_attributes
 
-    def async_update_from_event(self, event: Event):
+    async def async_update_from_event(self, event: Event):
         """Aktualisiert Sensor von Proxy-Event."""
 
-        _LOGGER.debug("Event erhalten: %s", self._attr_name)
+        # _LOGGER.debug("Event erhalten: %s", self._attr_name)
 
         data = event.data
         json_data = data.get("payload", {})
 
-        if json_data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(CONF_DEVICE_ID):
-            data = event.data
+        # _LOGGER.warning(
+        #     "Json-CCU (%s) = (%s)",
+        #     json_data.get(CCU),
+        #     self._entry.data.get(CONF_DEVICE_ID),
+        # )
+        # _LOGGER.warning("Json-Error (%s)", json_data.get(PROXY_ERROR_DEVICE_ID))
+
+        if (
+            json_data.get(CCU)
+            and self._entry.data.get(CONF_DEVICE_ID)
+            and json_data.get(PROXY_ERROR_DEVICE_ID) == ERRORS
+        ):
+            _LOGGER.warning("1Status - Event erhalten: %s", json_data)
+
+            self._state = f"Fehler ({json_data.get(ERROR, 'Unbekannt')})"
+            self._attr_extra_state_attributes = data.get("payload", {})
+            self.async_write_ha_state()
+
+        elif json_data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(
+            CONF_DEVICE_ID
+        ):
             self._state = "OK"
             # json_data = data.get("payload", {})
             self._attr_extra_state_attributes = data.get("payload", {})
+            self.async_write_ha_state()
+
         # self._state = "TEST"
 
         # if self._key == PROXY_ERROR_DEVICE_ID:

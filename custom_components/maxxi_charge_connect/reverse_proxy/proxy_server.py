@@ -256,6 +256,7 @@ class MaxxiProxyServer:
             return web.Response(status=200, text="OK")
 
         except Exception as e:  # pylint: disable=broad-exception-caught
+            _LOGGER.error("Error (%s)", e)
             return web.Response(status=400, text=e)
 
     async def _forward_to_cloud(self, data, enable_forward: bool) -> bool:

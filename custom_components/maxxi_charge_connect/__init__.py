@@ -244,7 +244,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             return False
 
     if version == 3 and minor_version == 1:
-        _LOGGER.info("Migration MaxxiChargeConnect v3.1 → v3.2 gestartet")
+        _LOGGER.warning("Migration MaxxiChargeConnect v3.1 → v3.2 gestartet")
         try:
             new_data = dict(config_entry.data)
             if CONF_DEVICE_ID not in new_data or not new_data[CONF_DEVICE_ID]:
@@ -265,6 +265,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             return False
 
     if version == 3 and minor_version == 2:
+        _LOGGER.warning("Migration MaxxiChargeConnect v3.1 → v3.2 gestartet")
         try:
             registry = er.async_get(hass)
 
@@ -278,7 +279,6 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             minor_version = 3
             hass.config_entries.async_update_entry(
                 config_entry,
-                data=new_data,
                 version=version,
                 minor_version=minor_version,
             )

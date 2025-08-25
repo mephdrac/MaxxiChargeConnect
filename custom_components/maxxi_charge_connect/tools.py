@@ -35,6 +35,10 @@ _LOGGER = logging.getLogger(__name__)
 
 async def fire_status_event(hass: HomeAssistant, json_data: dict, forwarded: bool):
     """Feuert ein Status-Event zum Anzeigen des Fehlers in der UI."""
+    
+    if not isinstance(json_data, dict):
+        _LOGGER.error("Ungültige Datenstruktur für fire_status_event: %s", json_data)
+        return
 
     hass.bus.async_fire(
         PROXY_STATUS_EVENTNAME,
@@ -153,6 +157,8 @@ def clean_title(title: str) -> str:
         str: Ein bereinigter, slug-artiger String, geeignet z.B. für `entity_id`s.
 
     """
+    if not title:
+        return ""
 
     # alles klein machen
     title = title.lower()
@@ -182,6 +188,9 @@ def as_float(value: str) -> float | None:
 
     """
     number = None
+
+    if not isinstance(value, str):
+        value = str(value)
 
     if value is not None:
         # match = re.search(r"[\d.]+", value)

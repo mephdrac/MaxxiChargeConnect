@@ -64,6 +64,10 @@ def is_pccu_ok(pccu: float):
     """
 
     ok = False
+    if not isinstance(pccu, (int, float)):
+        _LOGGER.error("Ungültiger Typ für PCCU: %s", type(pccu))
+        return ok
+
     if 0 <= pccu <= 3450:  # (2300 * 1.5)
         ok = True
     else:
@@ -88,6 +92,9 @@ def is_pr_ok(pr: float):
     """
 
     ok = False
+    if not isinstance(pr, (int, float)):
+        _LOGGER.error("Ungültiger Typ für PR: %s", type(pr))
+        return ok
 
     if -43600 <= pr <= 43600:
         ok = True
@@ -114,6 +121,13 @@ def is_power_total_ok(power_total: float, batterien: list) -> bool:
     """
 
     ok = False
+    if not isinstance(power_total, (int, float)):
+        _LOGGER.error("Ungültiger Typ für POWER_TOTAL: %s", type(power_total))
+        return ok
+    
+    if not isinstance(batterien, list):
+        batterien = []
+
     anzahl_batterien = len(batterien)
 
     if (0 < anzahl_batterien <= 16) and (
@@ -151,7 +165,7 @@ def clean_title(title: str) -> str:
     return title.strip("_")
 
 
-def as_float(value: str) -> float:
+def as_float(value: str) -> float | None:
     """Extrahiert ein Float aus einem String.
 
     Wenn in einem String nur ein Floatwert und andere Zeichen

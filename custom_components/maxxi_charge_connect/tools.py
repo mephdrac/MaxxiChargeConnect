@@ -67,7 +67,7 @@ def is_pccu_ok(pccu: float):
     if 0 <= pccu <= 2301.5:  # (2300 * 1.5)
         ok = True
     else:
-        _LOGGER.error("Pccu-Wert ist nicht plausibel und wird verworfen")
+        _LOGGER.error("Pccu-Wert(%s) ist nicht plausibel und wird verworfen", pccu)
     return ok
 
 
@@ -92,7 +92,7 @@ def is_pr_ok(pr: float):
     if -43600 <= pr <= 43600:
         ok = True
     else:
-        _LOGGER.error("Pr-Wert ist nicht plausibel und wird verworfen")
+        _LOGGER.error("Pr-Wert(%s) ist nicht plausibel und wird verworfen", pr)
     return ok
 
 
@@ -121,7 +121,7 @@ def is_power_total_ok(power_total: float, batterien: list) -> bool:
     ):
         ok = True
     else:
-        _LOGGER.error("Power_total Wert ist nicht plausibel und wird verworfen")
+        _LOGGER.error("Power_total(%s) - Anzahl-Bat.(%s) Wert ist nicht plausibel und wird verworfen", power_total, anzahl_batterien)
     return ok
 
 

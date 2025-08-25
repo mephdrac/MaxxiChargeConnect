@@ -24,13 +24,12 @@ Dort muss eine API-Route noch vergeben sein. Z.B.:
 ```
 http://**dein_homeassistant**:8123/api/webhook/**webhook_id**
 ```
+- siehe [Konfiguration von maxxi.local](https://github.com/mephdrac/MaxxiChargeConnect/wiki/B.2.1-Maxxi%E2%80%90CCU-(maxxi.local)-%E2%80%90-Konfiguration)
 
 # Einrichten der Integration
 
 Zunächst über HACS installieren (siehe [Installation](# 🛠️ Installation))
 
-Danach ein Gerät hinzufügen und es erscheint folgender Dialog:
+Danach ein Gerät hinzufügen:
+- [Konfiguration von MaxxiChargeConnect](https://github.com/mephdrac/MaxxiChargeConnect/wiki/B.2.2-MaxxiChargeConnect-konfigurieren)
 
-![Konfigurationsdialog](config.png)
-
-[Konfiguration](https://github.com/mephdrac/MaxxiChargeConnect/wiki/B-Konfiguration)

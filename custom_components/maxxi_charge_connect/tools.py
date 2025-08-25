@@ -64,7 +64,7 @@ def is_pccu_ok(pccu: float):
     """
 
     ok = False
-    if 0 <= pccu <= 2301.5:  # (2300 * 1.5)
+    if 0 <= pccu <= 3450:  # (2300 * 1.5)
         ok = True
     else:
         _LOGGER.error("Pccu-Wert(%s) ist nicht plausibel und wird verworfen", pccu)

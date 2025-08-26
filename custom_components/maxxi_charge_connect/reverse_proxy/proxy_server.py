@@ -265,15 +265,15 @@ class MaxxiProxyServer:
 
                     break
 
-            if "ip_addr" not in data:
-                cloud_data = webhook_to_cloud_format(data, ip_addr)
-            else:
-                cloud_data = data
+            # if "ip_addr" not in data:
+            #     cloud_data = webhook_to_cloud_format(data, ip_addr)
+            # else:
+            #     cloud_data = data
 
             forwarded = await self._forward_to_cloud(
-                device_id, enable_cloud_data, cloud_data, enable_forward
+                device_id, enable_cloud_data, data, enable_forward
             )
-            await self._on_reverse_proxy_message(cloud_data, forwarded)
+            await self._on_reverse_proxy_message(data, forwarded)
             return web.Response(status=200, text="OK")
 
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -432,16 +432,16 @@ class MaxxiProxyServer:
             entry.data.get(CONF_ENABLE_CLOUD_DATA, False) if entry else False
         )
 
-        if "ip_addr" not in data:
-            ip_addr = entry.data.get(CONF_IP_ADDRESS, "") if entry else ""
-            cloud_data = webhook_to_cloud_format(data, ip_addr)
-        else:
-            cloud_data = data
+        # if "ip_addr" not in data:
+        #     ip_addr = entry.data.get(CONF_IP_ADDRESS, "") if entry else ""
+        #     cloud_data = webhook_to_cloud_format(data, ip_addr)
+        # else:
+        #     cloud_data = data
 
-        await self._forward_to_cloud(
-            device_id, enable_cloud_data, cloud_data, enable_forward
+        forwarded = await self._forward_to_cloud(
+            device_id, enable_cloud_data, data, enable_forward
         )
-        # await self._on_reverse_proxy_message(cloud_data, forwarded)
+        await self._on_reverse_proxy_message(data, forwarded)
 
     async def _on_reverse_proxy_message(self, json_data: dict, forwarded: bool):
         await fire_status_event(self.hass, json_data, forwarded)

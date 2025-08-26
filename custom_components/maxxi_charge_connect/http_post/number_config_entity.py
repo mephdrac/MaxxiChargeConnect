@@ -105,7 +105,13 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
 
     def set_native_value(self, value: float) -> None:
         """Synchroner Wrapper für async_set_native_value."""
-        self._hass.async_create_task(self.async_set_native_value(value))
+        async def runner():
+            try:
+                await self.async_set_native_value(value)
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                _LOGGER.error("Fehler beim Setzen des Werts(%s): %s",value, e)
+
+        self.hass.create_task(runner())
 
     async def async_set_native_value(self, value: float) -> None:
         """Wert setzen und per REST an das Gerät senden."""

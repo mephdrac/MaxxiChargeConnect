@@ -35,7 +35,7 @@ _LOGGER = logging.getLogger(__name__)
 
 async def fire_status_event(hass: HomeAssistant, json_data: dict, forwarded: bool):
     """Feuert ein Status-Event zum Anzeigen des Fehlers in der UI."""
-    
+
     if not isinstance(json_data, dict):
         _LOGGER.error("Ungültige Datenstruktur für fire_status_event: %s", json_data)
         return
@@ -128,7 +128,7 @@ def is_power_total_ok(power_total: float, batterien: list) -> bool:
     if not isinstance(power_total, (int, float)):
         _LOGGER.error("Ungültiger Typ für POWER_TOTAL: %s", type(power_total))
         return ok
-    
+
     if not isinstance(batterien, list):
         batterien = []
 

@@ -109,7 +109,7 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
             try:
                 await self.async_set_native_value(value)
             except Exception as e:  # pylint: disable=broad-exception-caught
-                _LOGGER.error("Fehler beim Setzen des Werts(%s): %s",value, e)
+                _LOGGER.error("Fehler beim Setzen des Werts(%s): %s", value, e)
 
         self.hass.create_task(runner())
 

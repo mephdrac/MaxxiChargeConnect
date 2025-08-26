@@ -68,6 +68,7 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:  # pylint: dis
     return True
 
 
+# pylint: disable=too-many-locals, too-many-statements, too-many-branches
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Initialisiert eine neue Instanz der Integration beim Hinzufügen über die UI."""
     hass.data.setdefault(DOMAIN, {})

@@ -22,7 +22,7 @@ async def test_tools__pccu_groesser_0_gueltig(caplog):
 async def test_tools__pccu_groesser_0_ungueltig(caplog):
     # 2301.5  == (2300 * 1.5) # Obergrenze
 
-    pccu = 2601.6564
+    pccu = 3450.6564
     assert not is_pccu_ok(pccu)
 
 
@@ -32,10 +32,10 @@ async def test_tools__is_power_total_ok__alle_ok(caplog):
     # 0 <= power_total <= (60 * 138 * anzahl_batterien)
 
     power_total = 2345.456345
-    batterien = {
+    batterien = [
         543.342,
         356.675,
-    }
+    ]
     assert is_power_total_ok(power_total, batterien)
 
 @pytest.mark.asyncio

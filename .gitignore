@@ -408,3 +408,4 @@ FodyWeavers.xsd
 # Meine excludes
 venv
 .venv
+.venv_test

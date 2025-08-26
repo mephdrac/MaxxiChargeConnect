@@ -190,6 +190,12 @@
       },
       "StatusSensor": {
         "name": "State"
+      },
+      "UptimeSensor": {
+        "name": "Uptime"
+      },
+      "LastMessageSensor": {
+        "name": "Data received"
       }
     },
     "number": {

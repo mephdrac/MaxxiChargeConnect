@@ -11,11 +11,11 @@ import json
 import logging
 import time
 
-from aiohttp import ClientSession, web
+from aiohttp import ClientSession, web, ClientTimeout, ClientConnectorError
 import dns.resolver
 
 from homeassistant.core import HomeAssistant
-from homeassistant.const import CONF_IP_ADDRESS, CONF_WEBHOOK_ID
+from homeassistant.const import CONF_WEBHOOK_ID
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.storage import Store
 
@@ -25,6 +25,7 @@ from ..const import (
     CONF_DEVICE_ID,
     CONF_ENABLE_FORWARD_TO_CLOUD,
     CONF_REFRESH_CONFIG_FROM_CLOUD,
+    CONF_ENABLE_CLOUD_DATA,
     DEFAULT_ENABLE_FORWARD_TO_CLOUD,
     DOMAIN,
     MAXXISUN_CLOUD_URL,
@@ -154,7 +155,8 @@ class MaxxiProxyServer:
         ip = await self.resolve_external("maxxisun.app")
         cloud_url = f"http://{ip}:3001/config?deviceId={device_id}"
         try:
-            async with ClientSession() as session:
+            timeout = ClientTimeout(total=10)
+            async with ClientSession(timeout=timeout) as session:
                 async with session.get(cloud_url) as resp:
                     if resp.status == 200:
                         data = await resp.json()
@@ -166,9 +168,22 @@ class MaxxiProxyServer:
                     _LOGGER.error(
                         "Cloud returned %s for device %s", resp.status, device_id
                     )
-        except Exception as e:  # pylint: disable=broad-exception-caught
+        except ClientConnectorError as e:
             _LOGGER.error(
-                "Fehler beim Abrufen der Cloud-Daten für %s: %s", device_id, e
+                "DNS/Verbindungsproblem mit Cloud (%s, %s, %s)", device_id, cloud_url, e
+            )
+        except TimeoutError:
+            _LOGGER.error(
+                "Timeout beim Abholen der Konfigurations aus der Cloud (%s, %s)",
+                device_id,
+                cloud_url,
+            )
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            _LOGGER.exception(
+                "Unerwarteter Fehler beim Abholen der Konfiguration aus der Cloud an (%s, %s, %s)",
+                device_id,
+                cloud_url,
+                e,
             )
         return None
 
@@ -233,43 +248,55 @@ class MaxxiProxyServer:
         # Entscheiden, ob Transformation nötig ist
 
         try:
-            entry = None
-            ip_addr = ""
+            # entry = None
             enable_forward = False
 
             for cur_entry in self.hass.config_entries.async_entries(DOMAIN):
                 if cur_entry.data.get(CONF_DEVICE_ID) == device_id:
-                    entry = cur_entry
+                    # entry = cur_entry
                     enable_forward = cur_entry.data.get(
                         CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
                     )
-                    ip_addr = entry.data.get(CONF_IP_ADDRESS, "") if entry else ""
+                    enable_cloud_data = cur_entry.data.get(
+                        CONF_ENABLE_CLOUD_DATA, False
+                    )
+                    # ip_addr = entry.data.get(CONF_IP_ADDRESS, "") if entry else ""
+
                     break
 
-            if "ip_addr" not in data:
-                cloud_data = webhook_to_cloud_format(data, ip_addr)
-            else:
-                cloud_data = data
+            # if "ip_addr" not in data:
+            #     cloud_data = webhook_to_cloud_format(data, ip_addr)
+            # else:
+            #     cloud_data = data
 
-            forwarded = await self._forward_to_cloud(cloud_data, enable_forward)
-            await self._on_reverse_proxy_message(cloud_data, forwarded)
+            forwarded = await self._forward_to_cloud(
+                device_id, enable_cloud_data, data, enable_forward
+            )
+            await self._on_reverse_proxy_message(data, forwarded)
             return web.Response(status=200, text="OK")
 
         except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error("Error (%s)", e)
             return web.Response(status=400, text="An internal error has occurred")
 
-    async def _forward_to_cloud(self, data, enable_forward: bool) -> bool:
+    async def _forward_to_cloud(
+        self, device_id, enable_cloud_data: bool, data, enable_forward: bool
+    ) -> bool:
         forwarded = False
 
         if enable_forward:
             _LOGGER.debug("Leite an Cloud (%s)", data)
 
             try:
-                ip = await self.resolve_external(MAXXISUN_CLOUD_URL)
-                url = f"http://{ip}:3001/text"
+                if enable_cloud_data:
+                    # Externe Auflösung erzwingen
+                    ip = await self.resolve_external(MAXXISUN_CLOUD_URL)
+                    url = f"http://{ip}:3001/text"
+                else:
+                    # Einfach den Hostnamen nutzen
+                    url = f"http://{MAXXISUN_CLOUD_URL}:3001/text"
 
-                _LOGGER.debug("Sende Daten an maxxisun.app (%s)", ip)
+                _LOGGER.debug("Sende Daten an maxxisun.app (%s)", url)
 
                 headers = {
                     "Host": MAXXISUN_CLOUD_URL,  # wichtig für SNI und TLS
@@ -277,7 +304,8 @@ class MaxxiProxyServer:
                 }
 
                 # 3. POST absenden
-                async with ClientSession() as session:
+                timeout = ClientTimeout(total=10)
+                async with ClientSession(timeout=timeout) as session:
                     async with session.post(url, headers=headers, json=data) as resp:
                         text = await resp.text()
 
@@ -294,8 +322,23 @@ class MaxxiProxyServer:
                                 resp.status,
                                 text,
                             )
+            except ClientConnectorError as e:
+                _LOGGER.error(
+                    "DNS/Verbindungsproblem beim Senden an Cloud (%s, %s, %s)",
+                    device_id,
+                    url,
+                    e,
+                )
+            except TimeoutError:
+                _LOGGER.error("Timeout beim Senden an Cloud(%s, %s)", device_id, url)
             except Exception as e:  # pylint: disable=broad-exception-caught
-                _LOGGER.error("Cloud-Forwarding Fehler: %s", e)
+                _LOGGER.exception(
+                    "Unerwarteter Fehler beim Cloud-Forwarding an (%s, %s, %s)",
+                    device_id,
+                    url,
+                    e,
+                )
+
         return forwarded
 
     async def start(self):
@@ -384,14 +427,22 @@ class MaxxiProxyServer:
             else False
         )
 
-        if "ip_addr" not in data:
-            ip_addr = entry.data.get(CONF_IP_ADDRESS, "") if entry else ""
-            cloud_data = webhook_to_cloud_format(data, ip_addr)
-        else:
-            cloud_data = data
+        enable_cloud_data = (
+            entry.data.get(CONF_ENABLE_CLOUD_DATA, False) if entry else False
+        )
 
-        await self._forward_to_cloud(cloud_data, enable_forward)
-        # await self._on_reverse_proxy_message(cloud_data, forwarded)
+        # if "ip_addr" not in data:
+        #     ip_addr = entry.data.get(CONF_IP_ADDRESS, "") if entry else ""
+        #     cloud_data = webhook_to_cloud_format(data, ip_addr)
+        # else:
+        #     cloud_data = data
+
+        # _LOGGER.warning("Data: %s", data)
+
+        forwarded = await self._forward_to_cloud(
+            device_id, enable_cloud_data, data, enable_forward
+        )
+        await self._on_reverse_proxy_message(data, forwarded)
 
     async def _on_reverse_proxy_message(self, json_data: dict, forwarded: bool):
         await fire_status_event(self.hass, json_data, forwarded)

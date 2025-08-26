@@ -189,6 +189,12 @@
       },
       "StatusSensor": {
         "name": "Status"
+      },
+      "UptimeSensor": {
+        "name": "Betriebsstart"
+      },
+      "LastMessageSensor": {
+        "name": "Messdaten empfangen"
       }
 
     },

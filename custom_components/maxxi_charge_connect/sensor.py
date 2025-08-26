@@ -59,6 +59,8 @@ from .devices.consumption_energy_total import ConsumptionEnergyTotal
 from .http_scan.http_scan_text import HttpScanText
 
 from .devices.status_sensor import StatusSensor
+from .devices.uptime_sensor import UptimeSensor
+
 
 from .const import DOMAIN
 
@@ -108,6 +110,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     grid_export = GridExport(entry)
     grid_import = GridImport(entry)
     pv_self_consumption = PvSelfConsumption(entry)
+    uptime_sensor = UptimeSensor(entry)
 
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
 
@@ -210,6 +213,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
             *http_scan_sensor_list,
             # error_sensor,
             status_sensor,
+            uptime_sensor,
         ]
     )
     await asyncio.sleep(0)

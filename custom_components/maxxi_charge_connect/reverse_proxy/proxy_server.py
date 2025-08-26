@@ -438,6 +438,8 @@ class MaxxiProxyServer:
         # else:
         #     cloud_data = data
 
+        # _LOGGER.warning("Data: %s", data)
+
         forwarded = await self._forward_to_cloud(
             device_id, enable_cloud_data, data, enable_forward
         )

@@ -15,7 +15,7 @@ from aiohttp import ClientSession, web, ClientTimeout, ClientConnectorError
 import dns.resolver
 
 from homeassistant.core import HomeAssistant
-from homeassistant.const import CONF_IP_ADDRESS, CONF_WEBHOOK_ID
+from homeassistant.const import CONF_WEBHOOK_ID
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.storage import Store
 
@@ -248,20 +248,19 @@ class MaxxiProxyServer:
         # Entscheiden, ob Transformation nötig ist
 
         try:
-            entry = None
-            ip_addr = ""
+            # entry = None
             enable_forward = False
 
             for cur_entry in self.hass.config_entries.async_entries(DOMAIN):
                 if cur_entry.data.get(CONF_DEVICE_ID) == device_id:
-                    entry = cur_entry
+                    # entry = cur_entry
                     enable_forward = cur_entry.data.get(
                         CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
                     )
                     enable_cloud_data = cur_entry.data.get(
                         CONF_ENABLE_CLOUD_DATA, False
                     )
-                    ip_addr = entry.data.get(CONF_IP_ADDRESS, "") if entry else ""
+                    # ip_addr = entry.data.get(CONF_IP_ADDRESS, "") if entry else ""
 
                     break
 

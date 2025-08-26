@@ -4,7 +4,7 @@ Die Klasse nutzt Home Assistants Dispatcher-System, um auf neue Sensordaten zu r
 """
 
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -16,13 +16,6 @@ from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
 from homeassistant.core import Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorStateClass,
-)
-from homeassistant.const import UnitOfTime
-
-
 from ..const import (
     DEVICE_INFO,
     DOMAIN,
@@ -31,7 +24,6 @@ from ..const import (
     CONF_DEVICE_ID,
     PROXY_ERROR_DEVICE_ID,
 )  # noqa: TID252
-from ..tools import is_pccu_ok  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
 

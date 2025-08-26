@@ -9,7 +9,6 @@ from datetime import UTC, datetime
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
-    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
@@ -51,7 +50,7 @@ class LastMessageSensor(SensorEntity):
         self._attr_icon = "mdi:update"
         self._attr_native_value = None
         self._attr_device_class = SensorDeviceClass.DATE
-        self._attr_state_class = SensorStateClass.MEASUREMENT
+        # self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
         self._enable_cloud_data = self._entry.data.get(CONF_ENABLE_CLOUD_DATA, False)

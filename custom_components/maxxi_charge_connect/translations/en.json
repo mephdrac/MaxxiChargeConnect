@@ -196,6 +196,9 @@
       },
       "LastMessageSensor": {
         "name": "Data received"
+      },
+      "CCUTemperaturSensor": {
+        "name": "CCU Temperature"
       }
     },
     "number": {

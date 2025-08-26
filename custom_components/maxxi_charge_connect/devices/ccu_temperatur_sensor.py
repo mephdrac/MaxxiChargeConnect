@@ -19,7 +19,6 @@ from ..const import (
     CONF_DEVICE_ID,
     PROXY_ERROR_DEVICE_ID,
 )  # noqa: TID252
-from ..tools import is_power_total_ok  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
 

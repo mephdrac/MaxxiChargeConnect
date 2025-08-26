@@ -169,11 +169,22 @@ class MaxxiProxyServer:
                         "Cloud returned %s for device %s", resp.status, device_id
                     )
         except ClientConnectorError as e:
-            _LOGGER.error("DNS/Verbindungsproblem mit Cloud (%s, %s, %s)", device_id, cloud_url, e)
+            _LOGGER.error(
+                "DNS/Verbindungsproblem mit Cloud (%s, %s, %s)", device_id, cloud_url, e
+            )
         except TimeoutError:
-            _LOGGER.error("Timeout beim Abholen der Konfigurations aus der Cloud (%s, %s)", device_id, cloud_url)
-        except Exception as e: # pylint: disable=broad-exception-caught
-            _LOGGER.exception("Unerwarteter Fehler beim Abholen der Konfiguration aus der Cloud an (%s, %s, %s)", device_id, cloud_url, e)
+            _LOGGER.error(
+                "Timeout beim Abholen der Konfigurations aus der Cloud (%s, %s)",
+                device_id,
+                cloud_url,
+            )
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            _LOGGER.exception(
+                "Unerwarteter Fehler beim Abholen der Konfiguration aus der Cloud an (%s, %s, %s)",
+                device_id,
+                cloud_url,
+                e,
+            )
         return None
 
     async def _handle_config(self, request):
@@ -259,7 +270,9 @@ class MaxxiProxyServer:
             else:
                 cloud_data = data
 
-            forwarded = await self._forward_to_cloud(device_id, enable_cloud_data, cloud_data, enable_forward)
+            forwarded = await self._forward_to_cloud(
+                device_id, enable_cloud_data, cloud_data, enable_forward
+            )
             await self._on_reverse_proxy_message(cloud_data, forwarded)
             return web.Response(status=200, text="OK")
 
@@ -267,7 +280,9 @@ class MaxxiProxyServer:
             _LOGGER.error("Error (%s)", e)
             return web.Response(status=400, text="An internal error has occurred")
 
-    async def _forward_to_cloud(self, device_id, enable_cloud_data: bool, data, enable_forward: bool) -> bool:
+    async def _forward_to_cloud(
+        self, device_id, enable_cloud_data: bool, data, enable_forward: bool
+    ) -> bool:
         forwarded = False
 
         if enable_forward:
@@ -282,7 +297,7 @@ class MaxxiProxyServer:
                     # Einfach den Hostnamen nutzen
                     url = f"http://{MAXXISUN_CLOUD_URL}:3001/text"
 
-                _LOGGER.debug("Sende Daten an maxxisun.app (%s)", ip)
+                _LOGGER.debug("Sende Daten an maxxisun.app (%s)", url)
 
                 headers = {
                     "Host": MAXXISUN_CLOUD_URL,  # wichtig für SNI und TLS
@@ -309,11 +324,21 @@ class MaxxiProxyServer:
                                 text,
                             )
             except ClientConnectorError as e:
-                _LOGGER.error("DNS/Verbindungsproblem beim Senden an Cloud (%s, %s, %s)", device_id, url, e)
+                _LOGGER.error(
+                    "DNS/Verbindungsproblem beim Senden an Cloud (%s, %s, %s)",
+                    device_id,
+                    url,
+                    e,
+                )
             except TimeoutError:
                 _LOGGER.error("Timeout beim Senden an Cloud(%s, %s)", device_id, url)
-            except Exception as e: # pylint: disable=broad-exception-caught
-                _LOGGER.exception("Unerwarteter Fehler beim Cloud-Forwarding an (%s, %s, %s)", device_id, url, e)
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                _LOGGER.exception(
+                    "Unerwarteter Fehler beim Cloud-Forwarding an (%s, %s, %s)",
+                    device_id,
+                    url,
+                    e,
+                )
 
         return forwarded
 
@@ -404,11 +429,7 @@ class MaxxiProxyServer:
         )
 
         enable_cloud_data = (
-            entry.data.get(
-                CONF_ENABLE_CLOUD_DATA, False
-            )
-            if entry
-            else False
+            entry.data.get(CONF_ENABLE_CLOUD_DATA, False) if entry else False
         )
 
         if "ip_addr" not in data:
@@ -417,7 +438,9 @@ class MaxxiProxyServer:
         else:
             cloud_data = data
 
-        await self._forward_to_cloud(device_id, enable_cloud_data, cloud_data, enable_forward)
+        await self._forward_to_cloud(
+            device_id, enable_cloud_data, cloud_data, enable_forward
+        )
         # await self._on_reverse_proxy_message(cloud_data, forwarded)
 
     async def _on_reverse_proxy_message(self, json_data: dict, forwarded: bool):

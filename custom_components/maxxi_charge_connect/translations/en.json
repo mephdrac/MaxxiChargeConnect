@@ -193,6 +193,9 @@
       },
       "UptimeSensor": {
         "name": "Uptime"
+      },
+      "LastMessageSensor": {
+        "name": "Data received"
       }
     },
     "number": {

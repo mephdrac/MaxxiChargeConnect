@@ -191,7 +191,10 @@
         "name": "Status"
       },
       "UptimeSensor": {
-        "name": "Betriebsdauer"
+        "name": "Betriebsstart"
+      },
+      "LastMessageSensor": {
+        "name": "Messdaten empfangen"
       }
 
     },

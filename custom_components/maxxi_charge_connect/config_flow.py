@@ -26,7 +26,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """ConfigFlow für MaxxiChargeConnect mit Duplicate-Prüfung."""
 
     VERSION = 3
-    MINOR_VERSION = 3
+    MINOR_VERSION = 4
 
     reconfigure_supported = True
 
@@ -257,4 +257,8 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return await self.async_step_user(user_input)
 
     def is_matching(self, other_flow: config_entries.ConfigFlow) -> bool:
-        return isinstance(other_flow, MaxxiChargeConnectConfigFlow) and self._webhook_id == other_flow._webhook_id and self._device_id == other_flow._device_id  # pylint: disable=protected-access
+        return (
+            isinstance(other_flow, MaxxiChargeConnectConfigFlow)
+            and self._webhook_id == other_flow._webhook_id
+            and self._device_id == other_flow._device_id
+        )  # pylint: disable=protected-access

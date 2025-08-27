@@ -44,8 +44,9 @@ async def check_device_id_issue(hass):
     for entry in hass.config_entries.async_entries(DOMAIN):
         device_id = entry.data.get(CONF_DEVICE_ID)
         if not device_id:
-
-            _LOGGER.error("Device-ID fehlt für Entry %s (%s)", entry.entry_id, entry.title)
+            _LOGGER.error(
+                "Device-ID fehlt für Entry %s (%s)", entry.entry_id, entry.title
+            )
             async_create_issue(
                 hass,
                 DOMAIN,
@@ -101,7 +102,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     try:
         # Plattformen laden
-        await hass.config_entries.async_forward_entry_setups(entry, ["sensor", "number"])
+        await hass.config_entries.async_forward_entry_setups(
+            entry, ["sensor", "number"]
+        )
     except Exception as e:  # pylint: disable=broad-exception-caught
         _LOGGER.error("Fehler beim Laden der Plattformen: %s", e)
         return False
@@ -119,7 +122,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 raise ValueError("Mappings must be a list of dictionaries.")
             for item in mappings:
                 if "old_name" not in item or "new_name" not in item:
-                    raise ValueError("Each mapping must contain 'old_name' and 'new_name'.")
+                    raise ValueError(
+                        "Each mapping must contain 'old_name' and 'new_name'."
+                    )
         except ValueError as e:
             _LOGGER.error("Invalid mappings provided for migration: %s", e)
             return
@@ -136,6 +141,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Migration-Hinweis
     notify_migration = entry.data.get(NOTIFY_MIGRATION, False)
     if notify_migration:
+
         async def _notify_migration():
             try:
                 await asyncio.sleep(10)  # Warte 10 Sekunden nach Start
@@ -144,7 +150,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 _LOGGER.error("Fehler beim Migration-Hinweis: %s", e)
 
         task = hass.async_create_task(_notify_migration)
-        task.add_done_callback(lambda t: _LOGGER.error("Notify-Migration-Task beendet: %s", t.exception()) if t.exception() else None)
+        task.add_done_callback(
+            lambda t: _LOGGER.error("Notify-Migration-Task beendet: %s", t.exception())
+            if t.exception()
+            else None
+        )
 
     # --- GLOBALEN PROXY starten ---
     proxy_enabled = entry.data.get(
@@ -164,7 +174,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                     hass.data[DOMAIN]["proxy"] = None
 
             task = hass.loop.create_task(_start_proxy())
-            task.add_done_callback(lambda t: _LOGGER.error("Proxy-Task beendet: %s", t.exception()) if t.exception() else None)
+            task.add_done_callback(
+                lambda t: _LOGGER.error("Proxy-Task beendet: %s", t.exception())
+                if t.exception()
+                else None
+            )
 
         else:
             proxy = hass.data[DOMAIN]["proxy"]
@@ -204,7 +218,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Proxy-Entry deregistrieren
     proxy = hass.data[DOMAIN].get("proxy")
     if proxy:
-
         try:
             proxy.unregister_entry(entry)
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -328,6 +341,33 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
 
     if version == 3 and minor_version == 2:
         _LOGGER.info("Migration MaxxiChargeConnect v3.2 → v3.3 gestartet")
+        try:
+            registry = er.async_get(hass)
+
+            old_unique_id = f"{config_entry.entry_id}_error_sensor"
+
+            for entity_id, entry in registry.entities.items():
+                if entry.unique_id == old_unique_id:
+                    registry.async_remove(entity_id)
+                    _LOGGER.info(
+                        "Alte Error-Sensor Entity entfernt:  %s | %s",
+                        entity_id,
+                        old_unique_id,
+                    )
+                    break
+
+            minor_version = 3
+            hass.config_entries.async_update_entry(
+                config_entry,
+                version=version,
+                minor_version=minor_version,
+            )
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            _LOGGER.error("Fehler beim Migrieren der Konfiguration: %s", e)
+            return False
+
+    if version == 3 and minor_version == 3:
+        _LOGGER.info("Migration MaxxiChargeConnect v3.3 → v3.4 gestartet")
         try:
             registry = er.async_get(hass)
 

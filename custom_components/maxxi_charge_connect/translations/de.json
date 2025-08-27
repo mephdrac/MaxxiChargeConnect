@@ -193,11 +193,11 @@
       "UptimeSensor": {
         "name": "Betriebsstart"
       },
-      "LastMessageSensor": {
-        "name": "Messdaten empfangen"
+      "OnlineStatusSensor": {
+        "name": "CCU-Online"
       },
       "CCUTemperaturSensor": {
-        "name": "CCU Temperatur"
+        "name": "CCU-Temperatur"
       }
 
     },

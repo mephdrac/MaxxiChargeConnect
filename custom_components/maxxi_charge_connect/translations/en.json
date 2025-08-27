@@ -194,11 +194,11 @@
       "UptimeSensor": {
         "name": "Uptime"
       },
-      "LastMessageSensor": {
-        "name": "Data received"
+      "OnlineStatusSensor": {
+        "name": "CCU-Online"
       },
       "CCUTemperaturSensor": {
-        "name": "CCU Temperature"
+        "name": "CCU-Temperature"
       }
     },
     "number": {

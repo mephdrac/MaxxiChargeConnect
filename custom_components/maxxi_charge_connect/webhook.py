@@ -39,8 +39,15 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
         None
 
     """
-
     webhook_id = entry.data[CONF_WEBHOOK_ID]
+
+    # Vorherigen Handler entfernen, falls vorhanden
+    try:
+        async_unregister(hass, webhook_id)
+        _LOGGER.warning("Alter Webhook mit ID %s wurde entfernt.", webhook_id)
+    except Exception:  # pylint: disable=broad-exception-caught
+        _LOGGER.debug("Kein bestehender Webhook für ID %s gefunden.", webhook_id)
+
     signal_sensor = f"{DOMAIN}_{webhook_id}_update_sensor"
 
     _LOGGER.info("Registering webhook '%s'", WEBHOOK_NAME)

@@ -55,11 +55,12 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
         um später automatisch neue Sensoren zu erzeugen und Daten zu verarbeiten.
         """
 
+        entry_data = self.hass.data.setdefault(DOMAIN, {}).setdefault(self.entry.entry_id, {})
+        # Listener-Liste nur initialisieren, falls noch nicht vorhanden
+        entry_data.setdefault("listeners", [])
+
         if self._enable_cloud_data:
             _LOGGER.info("Daten kommen vom Proxy")
-
-            self.hass.data.setdefault(DOMAIN, {}).setdefault(self.entry.entry_id, {})
-            self.hass.data[DOMAIN][self.entry.entry_id]["listeners"] = []
 
             self.hass.bus.async_listen(
                 PROXY_STATUS_EVENTNAME, self.async_update_from_event
@@ -67,8 +68,6 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
         else:
             _LOGGER.info("Daten kommen vom Webhook")
             signal = f"{DOMAIN}_{self.entry.data[CONF_WEBHOOK_ID]}_update_sensor"
-            self.hass.data.setdefault(DOMAIN, {}).setdefault(self.entry.entry_id, {})
-            self.hass.data[DOMAIN][self.entry.entry_id]["listeners"] = []
 
             if not self._registered:
                 async_dispatcher_connect(self.hass, signal, self._handle_update)
@@ -84,6 +83,8 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
 
     async def _handle_update(self, data):
         batteries = data.get("batteriesInfo", [])
+
+        # Initialisiere Sensoren, falls noch nicht vorhanden
         if not self.sensors and batteries:
             new_sensors = []
             for i in range(len(batteries)):
@@ -97,5 +98,7 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
                 self.async_add_entities(new_sensors)
 
         # Update alle Sensoren
-        for listener in self.hass.data[DOMAIN][self.entry.entry_id]["listeners"]:
+        # sichere Abfrage der Listener-Liste
+        listeners = self.hass.data.get(DOMAIN, {}).get(self.entry.entry_id, {}).get("listeners", [])
+        for listener in listeners:
             await listener(data)

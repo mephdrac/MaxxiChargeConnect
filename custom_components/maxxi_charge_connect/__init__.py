@@ -142,14 +142,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     notify_migration = entry.data.get(NOTIFY_MIGRATION, False)
     if notify_migration:
 
-        async def _notify_migration():
+        async def sub_notify_migration():
             try:
                 await asyncio.sleep(10)  # Warte 10 Sekunden nach Start
                 await migrator.async_notify_possible_migration()
             except Exception as e:  # pylint: disable=broad-exception-caught
                 _LOGGER.error("Fehler beim Migration-Hinweis: %s", e)
 
-        task = hass.async_create_task(_notify_migration)
+        task = hass.async_create_task(sub_notify_migration())
         task.add_done_callback(
             lambda t: _LOGGER.error("Notify-Migration-Task beendet: %s", t.exception())
             if t.exception()

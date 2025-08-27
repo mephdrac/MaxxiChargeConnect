@@ -51,8 +51,8 @@ class UptimeSensor(SensorEntity):
         self._attr_icon = "mdi:timer-outline"
         self._attr_native_value = None
         self._attr_device_class = SensorDeviceClass.TIMESTAMP
-        # self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
+        self._last_state_update = None
 
         self._enable_cloud_data = self._entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
 
@@ -89,19 +89,22 @@ class UptimeSensor(SensorEntity):
             uptime_ms = int(data.get("uptime", 0))
             now_utc = datetime.now(tz=UTC)
 
-            # Startzeit berechnen
-            start_time_utc = now_utc - timedelta(milliseconds=uptime_ms)
-            self._attr_native_value = start_time_utc
-
-            seconds_total = uptime_ms / 1000
+            # State nur einmal am Tag aktualisieren
+            if (self._last_state_update is None) or (
+                now_utc - self._last_state_update >= timedelta(days=1)
+            ):
+                start_time_utc = now_utc - timedelta(milliseconds=uptime_ms)
+                self._attr_native_value = start_time_utc
+                self._last_state_update = now_utc
 
             # lesbares Format als extra attribute
+            seconds_total = uptime_ms / 1000
             days, remainder = divmod(int(seconds_total), 86400)
             hours, remainder = divmod(remainder, 3600)
             minutes, seconds = divmod(remainder, 60)
 
             self._attr_extra_state_attributes = {
-                "readable": f"{days}d {hours}h {minutes}m {seconds}s",
+                "uptime": f"{days}d {hours}h {minutes}m {seconds}s",
                 "raw_ms": uptime_ms,
             }
             self.async_write_ha_state()

@@ -3,38 +3,41 @@
 Die Klasse nutzt Home Assistants Dispatcher-System, um auf neue Sensordaten zu reagieren.
 """
 
+from datetime import UTC, datetime, timedelta
 import logging
-from datetime import UTC, datetime
 
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntity,
+from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
+    BinarySensorEntity,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
 from homeassistant.core import Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.event import async_track_time_interval
 
 from ..const import (
+    CONF_DEVICE_ID,
+    CONF_ENABLE_CLOUD_DATA,
     DEVICE_INFO,
     DOMAIN,
-    CONF_ENABLE_CLOUD_DATA,
-    PROXY_STATUS_EVENTNAME,
-    CONF_DEVICE_ID,
     PROXY_ERROR_DEVICE_ID,
+    PROXY_STATUS_EVENTNAME,
 )  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
 
+UPDATE_TIMEOUT = timedelta(seconds=5)
 
-class LastMessageSensor(SensorEntity):
+
+class OnlineStatusSensor(BinarySensorEntity):
     """SensorEntity für die aktuelle Uptime (uptime).
 
     Diese Entität zeigt umgerechnet in Tage, Stunden, Minuten und Sekunden an.
     """
 
     _attr_entity_registry_enabled_default = False
-    _attr_translation_key = "LastMessageSensor"
+    _attr_translation_key = "OnlineStatusSensor"
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry) -> None:
@@ -44,16 +47,24 @@ class LastMessageSensor(SensorEntity):
             entry (ConfigEntry): Die Konfigurationseintrag-Instanz für diese Integration.
 
         """
-        self._attr_suggested_display_precision = 2
         self._entry = entry
-        self._attr_unique_id = f"{entry.entry_id}_last_message_sensor"
-        self._attr_icon = "mdi:update"
-        self._attr_native_value = None
-        self._attr_device_class = SensorDeviceClass.DATE
-        # self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_unique_id = f"{entry.entry_id}_online_status_sensor"
+        self._attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
+        self._attr_is_on = False
+        self._last_update = None
 
         self._enable_cloud_data = self._entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
+
+    async def _check_timeout(self, now):  # pylint: disable=unused-argument
+        """Prüft, ob Timeout überschritten wurde."""
+        if (
+            self._last_update
+            and datetime.now(tz=UTC) - self._last_update > UPDATE_TIMEOUT
+        ):
+            if self._attr_is_on:
+                self._attr_is_on = False
+                self.async_write_ha_state()
 
     async def async_added_to_hass(self):
         """Wird beim Hinzufügen zur Home Assistant-Instanz aufgerufen.
@@ -75,6 +86,9 @@ class LastMessageSensor(SensorEntity):
             async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
         )
 
+        # Prüft jede Sekunden, ob Timeout erreicht ist
+        async_track_time_interval(self.hass, self._check_timeout, timedelta(seconds=1))
+
     async def _handle_update(self, data):
         """Verarbeitet neue Webhook-Daten und aktualisiert den Sensorzustand.
 
@@ -90,9 +104,12 @@ class LastMessageSensor(SensorEntity):
 
             now_utc = datetime.now(tz=UTC)
 
+            self._last_update = now_utc
+            self._attr_is_on = True
+
             # Startzeit berechnen
             # start_time_utc = now_utc - timedelta(milliseconds=uptime_ms)
-            self._attr_native_value = now_utc
+            # self._attr_native_value = now_utc
 
             seconds_total = uptime_ms / 1000
 
@@ -102,8 +119,10 @@ class LastMessageSensor(SensorEntity):
             minutes, seconds = divmod(remainder, 60)
 
             self._attr_extra_state_attributes = {
+                "received": now_utc.isoformat(),
                 "uptime": f"{days}d {hours}h {minutes}m {seconds}s",
                 "raw_ms": uptime_ms,
+                "─────────────": "────────────────────────",
                 "data:": data,
             }
             self.async_write_ha_state()

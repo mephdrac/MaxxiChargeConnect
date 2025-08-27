@@ -56,7 +56,7 @@ class OnlineStatusSensor(BinarySensorEntity):
 
         self._enable_cloud_data = self._entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
 
-    async def _check_timeout(self, now):
+    async def _check_timeout(self, now):  # pylint: disable=unused-argument
         """Prüft, ob Timeout überschritten wurde."""
         if (
             self._last_update
@@ -119,9 +119,10 @@ class OnlineStatusSensor(BinarySensorEntity):
             minutes, seconds = divmod(remainder, 60)
 
             self._attr_extra_state_attributes = {
-                "received_utc": now_utc.isoformat(),
+                "received": now_utc.isoformat(),
                 "uptime": f"{days}d {hours}h {minutes}m {seconds}s",
                 "raw_ms": uptime_ms,
+                "─────────────": "────────────────────────",
                 "data:": data,
             }
             self.async_write_ha_state()

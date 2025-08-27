@@ -371,19 +371,19 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         try:
             registry = er.async_get(hass)
 
-            old_unique_id = f"{config_entry.entry_id}_error_sensor"
+            old_unique_id = f"{config_entry.entry_id}_last_message_sensor"
 
             for entity_id, entry in registry.entities.items():
                 if entry.unique_id == old_unique_id:
                     registry.async_remove(entity_id)
                     _LOGGER.info(
-                        "Alte Error-Sensor Entity entfernt:  %s | %s",
+                        "Alte Last-Message-Sensor Entity entfernt:  %s | %s",
                         entity_id,
                         old_unique_id,
                     )
                     break
 
-            minor_version = 3
+            minor_version = 4
             hass.config_entries.async_update_entry(
                 config_entry,
                 version=version,
@@ -397,4 +397,4 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         "MaxxiChargeConnect - config v%s.%s installiert", version, minor_version
     )
     await check_device_id_issue(hass)
-    return version == 3 and minor_version == 3
+    return version == 3 and minor_version == 4

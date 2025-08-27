@@ -259,6 +259,6 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def is_matching(self, other_flow: config_entries.ConfigFlow) -> bool:
         return (
             isinstance(other_flow, MaxxiChargeConnectConfigFlow)
-            and self._webhook_id == other_flow._webhook_id
-            and self._device_id == other_flow._device_id
+            and self._webhook_id == other_flow._webhook_id  # pylint: disable=protected-access
+            and self._device_id == other_flow._device_id  # pylint: disable=protected-access
         )  # pylint: disable=protected-access

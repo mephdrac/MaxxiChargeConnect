@@ -16,6 +16,7 @@
         "data": {
           "only_accept_one_ip": "Zugriff nur von dieser IP erlauben?",
           "ip_address": "IP-Adresse der MaxxiCharge",
+          "CONF_TIMEOUT_RECEIVE": "Timeout für Empfang von Daten (Sekunden >=2)",
           "notify_migration": "Migrations-Sensoren erkennen?",
           "enable_local_cloud_proxy": "Home Assistant übernimmt die Cloud-Funktion?"
         }

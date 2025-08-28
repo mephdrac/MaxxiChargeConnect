@@ -16,6 +16,7 @@
         "data": {
           "only_accept_one_ip": "Allow access from this IP only?",
           "ip_address": "IP address of the MaxxiCharge",
+          "CONF_TIMEOUT_RECEIVE": "Timeout for receiving data (seconds >=2)",
           "notify_migration": "Detect migration sensors?",
           "enable_local_cloud_proxy": "Home Assistant handles the Cloud function?"
         }
@@ -35,7 +36,7 @@
   "issues": {
     "missing_device_id": {
     "title": "Fehlende Geräte-ID",
-    "description": "Die Geräte-ID ist nicht gesetzt. Bitte öffne die Konfiguration und trage eine gültige Geräte-ID ein, damit die Integration korrekt funktioniert.",
+    "description": "The device ID is not set. Please open the configuration and enter a valid device ID to ensure the integration works correctly.",
     "fix_title": "Geräte-ID hinzufügen"
     },
     "unknown_device": {

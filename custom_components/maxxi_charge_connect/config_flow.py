@@ -17,6 +17,8 @@ from .const import (
     CONF_DEVICE_ID,
     CONF_ENABLE_CLOUD_DATA,
     CONF_REFRESH_CONFIG_FROM_CLOUD,
+    CONF_TIMEOUT_RECEIVE,
+    DEFAULT_TIMEOUT_RECEIVE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -32,6 +34,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     _name: str | None = None
     _webhook_id: str | None = None
+    _timeout_receive: int | None = DEFAULT_TIMEOUT_RECEIVE
     _device_id: str | None = None
     _host_ip: str | None = None
     _only_ip: bool = False
@@ -85,15 +88,29 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_optional(self, user_input=None):
         """Step 2: optionale Felder + Proxy aktivieren."""
 
+        errors = {}
         defaults = self._get_defaults_for_optional_step()
 
         if user_input:
             self._host_ip = user_input.get(CONF_IP_ADDRESS)
             self._only_ip = user_input.get(ONLY_ONE_IP, False)
+            self._timeout_receive = user_input.get(CONF_TIMEOUT_RECEIVE, DEFAULT_TIMEOUT_RECEIVE)
             self._notify_migration = user_input.get(NOTIFY_MIGRATION, False)
             self._enable_local_cloud_proxy = user_input.get(
                 CONF_ENABLE_LOCAL_CLOUD_PROXY, False
             )
+
+            # Pflichtfeldprüfung
+            if not self._timeout_receive:
+                errors["timeout_receive"] = "required"
+            # Ende Pflichtfeldprüfung
+
+            if errors:
+                return self.async_show_form(
+                    step_id="optional",
+                    data_schema=self._schema_user(defaults),
+                    errors=errors,
+                )
 
             if self._enable_local_cloud_proxy:
                 return await self.async_step_proxy_options()
@@ -131,6 +148,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_NAME: self._name,
             CONF_DEVICE_ID: self._device_id,
             CONF_WEBHOOK_ID: self._webhook_id,
+            CONF_TIMEOUT_RECEIVE: self._timeout_receive or DEFAULT_TIMEOUT_RECEIVE,
             CONF_IP_ADDRESS: self._host_ip or None,
             ONLY_ONE_IP: self._only_ip,
             NOTIFY_MIGRATION: self._notify_migration,
@@ -175,6 +193,9 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Optional(
                     ONLY_ONE_IP, default=defaults.get(ONLY_ONE_IP, False)
                 ): BooleanSelector(),
+                vol.Required(
+                    CONF_TIMEOUT_RECEIVE, default=defaults.get(CONF_TIMEOUT_RECEIVE, DEFAULT_TIMEOUT_RECEIVE)
+                ): int,
                 vol.Optional(
                     NOTIFY_MIGRATION, default=defaults.get(NOTIFY_MIGRATION, False)
                 ): BooleanSelector(),
@@ -219,6 +240,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return {
             CONF_IP_ADDRESS: self._host_ip,
             ONLY_ONE_IP: self._only_ip,
+            CONF_TIMEOUT_RECEIVE: self._timeout_receive,
             NOTIFY_MIGRATION: self._notify_migration,
             CONF_ENABLE_LOCAL_CLOUD_PROXY: self._enable_local_cloud_proxy,
         }

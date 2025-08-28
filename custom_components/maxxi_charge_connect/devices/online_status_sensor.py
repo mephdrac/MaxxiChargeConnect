@@ -23,11 +23,11 @@ from ..const import (
     DOMAIN,
     PROXY_ERROR_DEVICE_ID,
     PROXY_STATUS_EVENTNAME,
+    CONF_TIMEOUT_RECEIVE,
+    DEFAULT_TIMEOUT_RECEIVE
 )  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
-
-UPDATE_TIMEOUT = timedelta(seconds=5)
 
 
 class OnlineStatusSensor(BinarySensorEntity):
@@ -53,6 +53,11 @@ class OnlineStatusSensor(BinarySensorEntity):
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._attr_is_on = False
         self._last_update = None
+        self._timeout_receive = self._entry.data.get(CONF_TIMEOUT_RECEIVE, DEFAULT_TIMEOUT_RECEIVE)
+
+        if self._timeout_receive <= 1:
+            self._timeout_receive = 2
+            _LOGGER.warning("Timeout zu niedrig, wurde auf 2 Sekunden gesetzt.")
 
         self._enable_cloud_data = self._entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
 
@@ -60,7 +65,7 @@ class OnlineStatusSensor(BinarySensorEntity):
         """Prüft, ob Timeout überschritten wurde."""
         if (
             self._last_update
-            and datetime.now(tz=UTC) - self._last_update > UPDATE_TIMEOUT
+            and datetime.now(tz=UTC) - self._last_update > timedelta(seconds=self._timeout_receive)
         ):
             if self._attr_is_on:
                 self._attr_is_on = False
@@ -87,7 +92,7 @@ class OnlineStatusSensor(BinarySensorEntity):
         )
 
         # Prüft jede Sekunden, ob Timeout erreicht ist
-        async_track_time_interval(self.hass, self._check_timeout, timedelta(seconds=1))
+        async_track_time_interval(self.hass, self._check_timeout, timedelta(seconds=self._timeout_receive-1))
 
     async def _handle_update(self, data):
         """Verarbeitet neue Webhook-Daten und aktualisiert den Sensorzustand.

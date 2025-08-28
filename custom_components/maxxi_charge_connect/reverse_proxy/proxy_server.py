@@ -9,7 +9,6 @@ import asyncio
 from collections.abc import Callable
 import json
 import logging
-import time
 
 from aiohttp import ClientSession, web, ClientTimeout, ClientConnectorError
 import dns.resolver
@@ -33,98 +32,6 @@ from ..const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
-
-# Interner Zähler für sendCount pro Gerät
-_send_counters: dict[str, int] = {}
-_start_times: dict[str, float] = {}
-
-
-def webhook_to_cloud_format(webhook_data: dict, ip_addr: str) -> dict:
-    """Erstellt aus den Webhook-Daten einen Datensatz für die Cloud."""
-    device_id = webhook_data.get("deviceId")
-    if not device_id:
-        raise ValueError("deviceId fehlt im Webhook")
-
-    # sendCount hochzählen
-    count = _send_counters.get(device_id, 0) + 1
-    _send_counters[device_id] = count
-
-    # Standardwerte für converter/box
-    converters_info = [
-        {
-            "ccuTemperature": 29,
-            "ccuVoltage": 0,
-            "ccuCurrent": 0,
-            "ccuPower": 0,
-            "version": "106",
-            "command": "81 10 0 0 0 2 4 11 94 0 0 1e bd",
-        },
-        {
-            "ccuTemperature": 29,
-            "ccuVoltage": 0,
-            "ccuCurrent": 0,
-            "ccuPower": 0,
-            "version": "106",
-            "command": "82 10 0 0 0 2 4 11 94 0 0 11 f9",
-        },
-    ]
-
-    # BatteriesInfo berechnen
-    batteries_info = []
-    for b in webhook_data.get("batteriesInfo", []):
-        voltage = b.get("batteryVoltage", 0)
-        current = b.get("batteryCurrent", 0)
-        power = (voltage * current) / 1000 if voltage and current else 0
-        soc = b.get("batterySOC", webhook_data.get("SOC", 0))
-        nominal_capacity = b.get("batteryNominalCapacity", b.get("batteryCapacity", 0))
-        batteries_info.append(
-            {
-                "batteryVoltage": voltage,
-                "batteryCurrent": current,
-                "batteryPower": power,
-                "batterySOC": soc,
-                "batteryNominalCapacity": nominal_capacity,
-                "batteryCapacity": b.get("batteryCapacity", 0),
-                "pvVoltage": b.get("pvVoltage", 0),
-                "pvCurrent": b.get("pvCurrent", 0),
-                "pvPower": (b.get("pvVoltage", 0) * b.get("pvCurrent", 0)) / 1000
-                if b.get("pvVoltage") and b.get("pvCurrent")
-                else 0,
-                "mpptVoltage": b.get("mpptVoltage", 0),
-                "mpptCurrent": b.get("mpptCurrent", 0),
-                "mpptPower": (b.get("mpptVoltage", 0) * b.get("mpptCurrent", 0)) / 1000
-                if b.get("mpptVoltage") and b.get("mpptCurrent")
-                else 0,
-            }
-        )
-
-    # Startzeit für uptime speichern
-    if f"{device_id}_start_time" not in _start_times:
-        _start_times[f"{device_id}_start_time"] = time.time()
-    uptime = int(time.time() - _start_times[f"{device_id}_start_time"])
-
-    return {
-        "deviceId": device_id,
-        "ip_addr": ip_addr,
-        "wifiStrength": webhook_data.get("wifiStrength", -50),
-        "meterWifiStrength": webhook_data.get("meterWifiStrength", -50),
-        "sendCount": count,
-        "Pr": webhook_data.get("Pr", 0),
-        "meterReading": "",
-        "PV_power_total": webhook_data.get("PV_power_total", 0),
-        "SOC": webhook_data.get("SOC", 0),
-        "batteriesInfo": batteries_info,
-        "v_ccu": 0,
-        "i_ccu": 0,
-        "ccuTotalPower": 0,
-        "microCurve": 99,
-        "convertersInfo": converters_info,
-        "Pccu": webhook_data.get("Pccu", 0),
-        "error": 0,
-        "firmwareVersion": webhook_data.get("firmwareVersion", 0),
-        "box_id": "U2hlbGx5IFBybw",
-        "uptime": uptime,
-    }
 
 
 class MaxxiProxyServer:
@@ -243,7 +150,7 @@ class MaxxiProxyServer:
             return web.Response(status=400, text="Invalid JSON")
 
         device_id = data.get(CONF_DEVICE_ID)
-        _LOGGER.debug("Proxy-Daten empfangen: %s", data)
+        _LOGGER.debug("Gerät(%s) hat Proxy-Daten empfangen: %s", device_id, data)
 
         # Entscheiden, ob Transformation nötig ist
 
@@ -257,17 +164,19 @@ class MaxxiProxyServer:
                     enable_forward = cur_entry.data.get(
                         CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
                     )
+
                     enable_cloud_data = cur_entry.data.get(
                         CONF_ENABLE_CLOUD_DATA, False
                     )
-                    # ip_addr = entry.data.get(CONF_IP_ADDRESS, "") if entry else ""
 
+                    _LOGGER.debug(
+                        "Forward-Check für Device %s: cur_entry=%s, enable_forward=%s, enable_cloud_data=%s",
+                        device_id,
+                        cur_entry.data if cur_entry else None,
+                        enable_forward,
+                        enable_cloud_data,
+                    )
                     break
-
-            # if "ip_addr" not in data:
-            #     cloud_data = webhook_to_cloud_format(data, ip_addr)
-            # else:
-            #     cloud_data = data
 
             forwarded = await self._forward_to_cloud(
                 device_id, enable_cloud_data, data, enable_forward

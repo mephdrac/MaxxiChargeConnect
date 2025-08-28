@@ -51,7 +51,7 @@ async def check_device_id_issue(hass):
                 hass,
                 DOMAIN,
                 f"missing_device_id_{entry.entry_id}",
-                is_fixable=True,
+                is_fixable=False,
                 severity=IssueSeverity.CRITICAL,
                 issue_domain=DOMAIN,
                 translation_key="missing_device_id",

@@ -32,11 +32,19 @@
 
     }
   },
-  "issue": {
+  "issues": {
     "missing_device_id": {
     "title": "Fehlende Geräte-ID",
     "description": "Die Geräte-ID ist nicht gesetzt. Bitte öffne die Konfiguration und trage eine gültige Geräte-ID ein, damit die Integration korrekt funktioniert.",
     "fix_title": "Geräte-ID hinzufügen"
+    },
+    "unknown_device": {
+      "title": "Unknown Device",
+      "description": "A webhook reported an unknown device ID \"{device_id}\". Known IDs: {known_devices}."
+    },
+    "device_mismatch": {
+      "title": "Device ID Does Not Match Webhook",
+      "description": "The webhook \"{webhook_id}\" belongs to a different device. Payload ID: {payload_device_id}, configured ID: {config_device_id}."
     }
   },
   "entity": {

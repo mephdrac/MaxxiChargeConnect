@@ -121,9 +121,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             ):
                 raise ValueError("Mappings must be a list of dictionaries.")
             for item in mappings:
-                if "old_name" not in item or "new_name" not in item:
+                if "old_sensor" not in item or "new_sensor" not in item:
                     raise ValueError(
-                        "Each mapping must contain 'old_name' and 'new_name'."
+                        "Each mapping must contain 'old_sensor' and 'new_sensor'."
                     )
         except ValueError as e:
             _LOGGER.error("Invalid mappings provided for migration: %s", e)

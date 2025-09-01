@@ -100,6 +100,9 @@
       "BatterySoESensor":{
         "name": "Batterie ({index}) Kapazität"
       },
+      "BatterySOCSensor":{
+        "name": "Batterie ({index}) SOC"
+      },
       "APIRoute":{
         "name": "API-Route"
       },

@@ -111,11 +111,18 @@
       {
         "name": "Battery ({index}) PV-Voltage"
       },
+      "BatteryMpptVoltageSensor":
+      {
+        "name": "Battery ({index}) MPPT-Voltage"
+      },
       "BatteryAmpereSensor":{
         "name": "Battery ({index}) Current"
       },
       "BatteryPVAmpereSensor":{
         "name": "Battery ({index}) PV-Current"
+      },
+      "BatteryMpptAmpereSensor":{
+        "name": "Battery ({index}) MPPT-Current"
       },
       "APIRoute":{
         "name": "API-Route"

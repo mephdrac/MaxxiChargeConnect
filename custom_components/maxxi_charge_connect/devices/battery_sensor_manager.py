@@ -7,6 +7,7 @@ initialisiert und anschließend bei jedem Update aktualisiert.
 """
 
 import logging
+from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import CONF_WEBHOOK_ID
 from homeassistant.core import HomeAssistant, Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
@@ -19,6 +20,13 @@ from ..const import (
     PROXY_ERROR_DEVICE_ID,
 )  # noqa: TID252
 from .battery_soe_sensor import BatterySoESensor
+from .battery_soc_sensor import BatterySOCSensor
+from .battery_voltage_sensor import BatteryVoltageSensor
+from .battery_ampere_sensor import BatteryAmpereSensor
+from .battery_pv_voltage_sensor import BatteryPVVoltageSensor
+from .battery_pv_ampere_sensor import BatteryPVAmpereSensor
+from .battery_mppt_voltage_sensor import BatteryMpptVoltageSensor
+from .battery_mppt_ampere_sensor import BatteryMpptAmpereSensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,7 +51,7 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
         self.hass = hass
         self.entry = entry
         self.async_add_entities = async_add_entities
-        self.sensors: dict[str, BatterySoESensor] = {}
+        self.sensors: dict[str, SensorEntity] = {}
         self._registered = False
 
         self._enable_cloud_data = self.entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
@@ -94,6 +102,49 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
                     sensor = BatterySoESensor(self.entry, i)
                     self.sensors[unique_key] = sensor
                     new_sensors.append(sensor)
+
+                unique_key = f"{self.entry.entry_id}_battery_soc_sensor_{i}"
+                if unique_key not in self.sensors:
+                    sensor = BatterySOCSensor(self.entry, i)
+                    self.sensors[unique_key] = sensor
+                    new_sensors.append(sensor)
+
+                unique_key = f"{self.entry.entry_id}_battery_voltage_sensor_{i}"
+                if unique_key not in self.sensors:
+                    sensor = BatteryVoltageSensor(self.entry, i)
+                    self.sensors[unique_key] = sensor
+                    new_sensors.append(sensor)
+
+                unique_key = f"{self.entry.entry_id}_battery_ampere_sensor_{i}"
+                if unique_key not in self.sensors:
+                    sensor = BatteryAmpereSensor(self.entry, i)
+                    self.sensors[unique_key] = sensor
+                    new_sensors.append(sensor)
+
+                unique_key = f"{self.entry.entry_id}_battery_pv_voltage_sensor_{i}"
+                if unique_key not in self.sensors:
+                    sensor = BatteryPVVoltageSensor(self.entry, i)
+                    self.sensors[unique_key] = sensor
+                    new_sensors.append(sensor)
+
+                unique_key = f"{self.entry.entry_id}_battery_pv_ampere_sensor_{i}"
+                if unique_key not in self.sensors:
+                    sensor = BatteryPVAmpereSensor(self.entry, i)
+                    self.sensors[unique_key] = sensor
+                    new_sensors.append(sensor)
+
+                unique_key = f"{self.entry.entry_id}_battery_mppt_voltage_sensor_{i}"
+                if unique_key not in self.sensors:
+                    sensor = BatteryMpptVoltageSensor(self.entry, i)
+                    self.sensors[unique_key] = sensor
+                    new_sensors.append(sensor)
+
+                unique_key = f"{self.entry.entry_id}_battery_mppt_ampere_sensor_{i}"
+                if unique_key not in self.sensors:
+                    sensor = BatteryMpptAmpereSensor(self.entry, i)
+                    self.sensors[unique_key] = sensor
+                    new_sensors.append(sensor)
+
             if new_sensors:
                 self.async_add_entities(new_sensors)
 

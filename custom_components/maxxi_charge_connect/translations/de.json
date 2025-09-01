@@ -100,6 +100,28 @@
       "BatterySoESensor":{
         "name": "Batterie ({index}) Kapazität"
       },
+      "BatterySOCSensor":{
+        "name": "Batterie ({index}) SOC"
+      },
+      "BatteryVoltageSensor":{
+        "name": "Batterie ({index}) Spannung"
+      },
+      "BatteryPVVoltageSensor":{
+        "name": "Batterie ({index}) PV-Spannung"
+      },
+      "BatteryMpptVoltageSensor":
+      {
+        "name": "Batterie ({index}) MPPT-Spannung"
+      },
+      "BatteryAmpereSensor":{
+        "name": "Batterie ({index}) Stromstärke"
+      },
+      "BatteryPVAmpereSensor":{
+        "name": "Batterie ({index}) PV-Stromstärke"
+      },
+      "BatteryMpptAmpereSensor":{
+        "name": "Batterie ({index}) MPPT-Stromstärke"
+      },
       "APIRoute":{
         "name": "API-Route"
       },

@@ -106,8 +106,14 @@
       "BatteryVoltageSensor":{
         "name": "Batterie ({index}) Spannung"
       },
+      "BatteryPVVoltageSensor":{
+        "name": "Batterie ({index}) PV-Spannung"
+      },
       "BatteryAmpereSensor":{
         "name": "Batterie ({index}) Stromstärke"
+      },
+      "BatteryPVAmpereSensor":{
+        "name": "Batterie ({index}) PV-Stromstärke"
       },
       "APIRoute":{
         "name": "API-Route"

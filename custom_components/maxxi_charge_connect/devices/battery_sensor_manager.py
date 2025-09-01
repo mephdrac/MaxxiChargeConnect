@@ -23,6 +23,8 @@ from .battery_soe_sensor import BatterySoESensor
 from .battery_soc_sensor import BatterySOCSensor
 from .battery_voltage_sensor import BatteryVoltageSensor
 from .battery_ampere_sensor import BatteryAmpereSensor
+from .battery_pv_voltage_sensor import BatteryPVVoltageSensor
+from .battery_pv_ampere_sensor import BatteryPVAmpereSensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -114,6 +116,18 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
                 unique_key = f"{self.entry.entry_id}_battery_ampere_sensor_{i}"
                 if unique_key not in self.sensors:
                     sensor = BatteryAmpereSensor(self.entry, i)
+                    self.sensors[unique_key] = sensor
+                    new_sensors.append(sensor)
+
+                unique_key = f"{self.entry.entry_id}_battery_pv_voltage_sensor_{i}"
+                if unique_key not in self.sensors:
+                    sensor = BatteryPVVoltageSensor(self.entry, i)
+                    self.sensors[unique_key] = sensor
+                    new_sensors.append(sensor)
+
+                unique_key = f"{self.entry.entry_id}_battery_pv_ampere_sensor_{i}"
+                if unique_key not in self.sensors:
+                    sensor = BatteryPVAmpereSensor(self.entry, i)
                     self.sensors[unique_key] = sensor
                     new_sensors.append(sensor)
 

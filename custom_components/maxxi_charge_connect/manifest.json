@@ -1,7 +1,7 @@
 {
   "domain": "maxxi_charge_connect",
   "name": "MaxxiChargeConnect",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "documentation": "https://github.com/mephdrac/MaxxiChargeConnect",
   "issue_tracker": "https://github.com/mephdrac/MaxxiChargeConnect/issues",
   "requirements": ["beautifulsoup4==4.12.3", "dnspython"],

@@ -72,6 +72,8 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                         errors["device_id"] = "device_exists"
                         break
 
+            _LOGGER.debug("Defaults in user step: %s", defaults)
+
             if errors:
                 return self.async_show_form(
                     step_id="user",
@@ -146,7 +148,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def _create_entry(self, entry=None):
         data = {
             CONF_NAME: self._name,
-            CONF_DEVICE_ID: self._device_id,
+            CONF_DEVICE_ID: self._device_id or entry.data.get(CONF_DEVICE_ID),
             CONF_WEBHOOK_ID: self._webhook_id,
             CONF_TIMEOUT_RECEIVE: self._timeout_receive or DEFAULT_TIMEOUT_RECEIVE,
             CONF_IP_ADDRESS: self._host_ip or None,
@@ -157,6 +159,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_ENABLE_CLOUD_DATA: self._enable_cloud_data,
             CONF_REFRESH_CONFIG_FROM_CLOUD: self._refresh_cloud_data,
         }
+        _LOGGER.debug("Creating entry with data: %s", data)
 
         if entry is not None:
             self.hass.config_entries.async_update_entry(
@@ -276,6 +279,18 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._enable_cloud_data = entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
         self._refresh_cloud_data = entry.data.get(CONF_REFRESH_CONFIG_FROM_CLOUD, False)
 
+        _LOGGER.debug("Reconfigure internal state: %s", {
+            "name": self._name,
+            "device_id": self._device_id,
+            "webhook_id": self._webhook_id,
+            "host_ip": self._host_ip,
+            "only_ip": self._only_ip,
+            "notify_migration": self._notify_migration,
+            "enable_local_cloud_proxy": self._enable_local_cloud_proxy,
+            "enable_forward_to_cloud": self._enable_forward_to_cloud,
+            "enable_cloud_data": self._enable_cloud_data,
+            "refresh_cloud_data": self._refresh_cloud_data,
+        })
         return await self.async_step_user(user_input)
 
     def is_matching(self, other_flow: config_entries.ConfigFlow) -> bool:

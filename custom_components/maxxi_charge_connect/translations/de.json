@@ -103,6 +103,12 @@
       "BatterySOCSensor":{
         "name": "Batterie ({index}) SOC"
       },
+      "BatteryVoltageSensor":{
+        "name": "Batterie ({index}) Spannung"
+      },
+      "BatteryAmpereSensor":{
+        "name": "Batterie ({index}) Stromstärke"
+      },
       "APIRoute":{
         "name": "API-Route"
       },

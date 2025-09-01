@@ -21,6 +21,8 @@ from ..const import (
 )  # noqa: TID252
 from .battery_soe_sensor import BatterySoESensor
 from .battery_soc_sensor import BatterySOCSensor
+from .battery_voltage_sensor import BatteryVoltageSensor
+from .battery_ampere_sensor import BatteryAmpereSensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -102,6 +104,19 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
                     sensor = BatterySOCSensor(self.entry, i)
                     self.sensors[unique_key] = sensor
                     new_sensors.append(sensor)
+
+                unique_key = f"{self.entry.entry_id}_battery_voltage_sensor_{i}"
+                if unique_key not in self.sensors:
+                    sensor = BatteryVoltageSensor(self.entry, i)
+                    self.sensors[unique_key] = sensor
+                    new_sensors.append(sensor)
+
+                unique_key = f"{self.entry.entry_id}_battery_ampere_sensor_{i}"
+                if unique_key not in self.sensors:
+                    sensor = BatteryAmpereSensor(self.entry, i)
+                    self.sensors[unique_key] = sensor
+                    new_sensors.append(sensor)
+
             if new_sensors:
                 self.async_add_entities(new_sensors)
 

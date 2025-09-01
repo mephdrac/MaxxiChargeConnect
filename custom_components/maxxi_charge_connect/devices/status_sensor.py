@@ -3,8 +3,10 @@
 import logging
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import EntityCategory
+from homeassistant.const import CONF_WEBHOOK_ID
 from homeassistant.core import Event
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from ..const import (
     DOMAIN,
     PROXY_STATUS_EVENTNAME,
@@ -14,6 +16,7 @@ from ..const import (
     CCU,
     ERROR,
     ERRORS,
+    CONF_ENABLE_CLOUD_DATA
 )  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
@@ -30,6 +33,7 @@ class StatusSensor(SensorEntity):
         self._entry = entry
         self._attr_unique_id = f"{entry.entry_id}_status_sensor"
 
+        self._unsub_dispatcher = None
         self._state = str(None)
         self._attr_native_value = None
         self._attr_device_class = None
@@ -38,6 +42,7 @@ class StatusSensor(SensorEntity):
         self._attr_extra_state_attributes = {}
 
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
+        self._enable_cloud_data = self._entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
 
     async def async_added_to_hass(self):
         """Register.
@@ -45,7 +50,31 @@ class StatusSensor(SensorEntity):
         Registriert den Sensor für Updates über das Dispatcher-Signal
         bei Hinzufügen zur Home Assistant Instanz.
         """
-        self.hass.bus.async_listen(PROXY_STATUS_EVENTNAME, self.async_update_from_event)
+
+        # if self._enable_cloud_data:
+        _LOGGER.info("Daten kommen vom Proxy")
+        self.hass.bus.async_listen(
+            PROXY_STATUS_EVENTNAME, self.async_update_from_event
+        )
+        # else:
+        _LOGGER.info("Daten kommen vom Webhook")
+        signal_sensor = (
+            f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
+        )
+
+        self._unsub_dispatcher = async_dispatcher_connect(
+            self.hass, signal_sensor, self._handle_update
+        )
+        self.async_on_remove(self._unsub_dispatcher)
+
+    async def async_will_remove_from_hass(self):
+        """Wird aufgerufen, wenn die Entity aus Home Assistant entfernt wird.
+
+        Hebt die Registrierung beim Dispatcher auf, um Speicherlecks zu vermeiden.
+        """
+        if self._unsub_dispatcher:
+            self._unsub_dispatcher()
+            self._unsub_dispatcher = None
 
     def format_uptime(self, seconds: int):
         """Berechnet die Update aus einem integer."""
@@ -70,25 +99,32 @@ class StatusSensor(SensorEntity):
     async def async_update_from_event(self, event: Event):
         """Aktualisiert Sensor von Proxy-Event."""
 
-        data = event.data
-        json_data = data.get("payload", {})
+        json_data = event.data.get("payload", {})
+
+        # if json_data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(CONF_DEVICE_ID):
+        await self._handle_update(json_data)
+
+    async def _handle_update(self, data):
+        """Wird aufgerufen, beim Empfang neuer Daten vom Dispatcher."""
+
+        _LOGGER.debug("Status - Event erhalten: %s", data)
 
         if (
-            json_data.get(CCU) == self._entry.data.get(CONF_DEVICE_ID)
-            and json_data.get(PROXY_ERROR_DEVICE_ID) == ERRORS
+            data.get(CCU) == self._entry.data.get(CONF_DEVICE_ID)
+            and data.get(PROXY_ERROR_DEVICE_ID) == ERRORS
         ):
-            _LOGGER.debug("Status - Error - Event erhalten: %s", json_data)
+            _LOGGER.warning("Status - Error - Event erhalten: %s", data)
 
-            self._state = f"Fehler ({json_data.get(ERROR, "Unbekannt")})"
-            self._attr_extra_state_attributes = data.get("payload", {})
+            self._state = f"Fehler ({data.get(ERROR, "Unbekannt")})"
+            self._attr_extra_state_attributes = data
             self.async_write_ha_state()
 
-        elif json_data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(
+        elif data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(
             CONF_DEVICE_ID
         ):
-            _LOGGER.debug("Status - OK - Event erhalten: %s", json_data)
-            self._state = json_data.get("integration_state", "OK")
-            self._attr_extra_state_attributes = data.get("payload", {})
+            _LOGGER.info("Status - OK - Event erhalten: %s", data)
+            self._state = data.get("integration_state", "OK")
+            self._attr_extra_state_attributes = data
             self.async_write_ha_state()
 
         # self._state = "TEST"

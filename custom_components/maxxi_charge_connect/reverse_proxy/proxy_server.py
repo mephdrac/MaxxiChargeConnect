@@ -30,6 +30,7 @@ from ..const import (
     DOMAIN,
     MAXXISUN_CLOUD_URL,
     PROXY_ERROR_DEVICE_ID,
+    ERRORS
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -183,7 +184,7 @@ class MaxxiProxyServer:
                     found_entry = True
                     break
 
-            if not found_entry:
+            if not found_entry and device_id != ERRORS:
                 known_devices = [
                     entry.data.get(CONF_DEVICE_ID)
                     for entry in self.hass.config_entries.async_entries(DOMAIN)
@@ -375,7 +376,7 @@ class MaxxiProxyServer:
             )
 
         # Wenn wir jetzt immer noch keinen Entry haben → Issue "unknown_device"
-        if not entry:
+        if not entry and payload_device_id != ERRORS:
             known_devices = [
                 e.data.get(CONF_DEVICE_ID)
                 for e in self.hass.config_entries.async_entries(DOMAIN)
@@ -399,7 +400,7 @@ class MaxxiProxyServer:
         cfg_device_id = entry.data.get(CONF_DEVICE_ID)
 
         # **Mismatch-Check**: Webhook gehört zu Entry X, aber Payload nennt anderes deviceId
-        if payload_device_id and cfg_device_id and payload_device_id != cfg_device_id:
+        if payload_device_id != ERRORS and payload_device_id and cfg_device_id and payload_device_id != cfg_device_id:
             _LOGGER.error(
                 "Geräte-Mismatch für Webhook %s: payload=%s, config=%s (entry_id=%s)",
                 webhook_id, payload_device_id, cfg_device_id, entry.entry_id

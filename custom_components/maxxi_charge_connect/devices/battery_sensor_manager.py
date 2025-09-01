@@ -132,7 +132,7 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
                     sensor = BatteryPVAmpereSensor(self.entry, i)
                     self.sensors[unique_key] = sensor
                     new_sensors.append(sensor)
-                    
+
                 unique_key = f"{self.entry.entry_id}_battery_mppt_voltage_sensor_{i}"
                 if unique_key not in self.sensors:
                     sensor = BatteryMpptVoltageSensor(self.entry, i)

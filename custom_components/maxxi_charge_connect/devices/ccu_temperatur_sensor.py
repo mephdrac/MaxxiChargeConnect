@@ -81,10 +81,15 @@ class CCUTemperaturSensor(SensorEntity):
     async def _handle_update(self, data):
         """Behandelt ccutemperaturn vom Maxxicharge."""
 
-        ccu_temperaturen = [conv["ccuTemperature"] for conv in data["convertersInfo"]]
-        durchschnitt = sum(ccu_temperaturen) / len(ccu_temperaturen)
+        if not data or "convertersInfo" not in data:
+            _LOGGER.debug("Keine Daten für CCU-Temperatur vorhanden")
+            self._attr_native_value = None
+        else:
+            ccu_temperaturen = [conv["ccuTemperature"] for conv in data["convertersInfo"]]
+            durchschnitt = sum(ccu_temperaturen) / len(ccu_temperaturen)
+            self._attr_native_value = durchschnitt
+            _LOGGER.debug("CCU-Temperatur aktualisiert: %s °C", self._attr_native_value)
 
-        self._attr_native_value = durchschnitt
         self.async_write_ha_state()
 
     @property

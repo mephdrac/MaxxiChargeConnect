@@ -54,6 +54,14 @@ Empfang von Daten über einen lokalen Webhook
 
 Icons & Device Class für Home Assistant optimiert
 
+## 🚧 Geplante Features
+
+| Feature                     | Beschreibung                                                                                                                                              | Status                       |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| **🔋 Ladeeffizienz-Sensor** | Berechnet die durchschnittliche Ladeeffizienz der Batterie (Verhältnis von entladener zu geladener Energie) – zeigt, wie effizient der Speicher arbeitet. | 🧠 *In Planung*              |
+| **⚡ Nettoleistungs-Sensor** | Kombiniert Netzeinspeisung und Netzbezug zu einem einzigen Wert. Positiv = Einspeisung, negativ = Bezug. Ideal für Energiebilanz und Dashboard-Anzeige.   | 🧠 *In Planung*          |
+| **🔁 Ladezyklen-Zähler**    | Ermittelt die Gesamtzahl der Batterie-Ladezyklen (inkl. Teilzyklen) und dient als Indikator für die Lebensdauer des Speichers.                            | 🧩 *In Vorbereitung* |
+
 ## 🚫 Haftungsausschluss
 Diese Software wird ohne jegliche Gewährleistung bereitgestellt.
 Die Nutzung erfolgt auf eigene Gefahr. Ich übernehme keine Haftung für:

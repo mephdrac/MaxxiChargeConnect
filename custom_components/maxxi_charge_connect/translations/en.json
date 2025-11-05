@@ -124,6 +124,12 @@
       "BatteryMpptAmpereSensor":{
         "name": "Battery ({index}) MPPT-Current"
       },
+      "BatteryChargeSensor":{
+        "name": "Battery ({index}) Charge Power"
+      },
+      "BatteryDischargeSensor":{
+        "name": "Battery ({index}) Discharge Power"
+      },
       "APIRoute":{
         "name": "API-Route"
       },

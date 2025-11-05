@@ -116,6 +116,12 @@
       "BatteryAmpereSensor":{
         "name": "Batterie ({index}) Stromstärke"
       },
+      "BatteryChargeSensor":{
+        "name": "Batterie ({index}) Ladeleistung"
+      },
+      "BatteryDischargeSensor":{
+        "name": "Batterie ({index}) Entladeleistung"
+      },
       "BatteryPVAmpereSensor":{
         "name": "Batterie ({index}) PV-Stromstärke"
       },

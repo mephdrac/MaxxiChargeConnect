@@ -27,11 +27,13 @@ from .battery_pv_voltage_sensor import BatteryPVVoltageSensor
 from .battery_pv_ampere_sensor import BatteryPVAmpereSensor
 from .battery_mppt_voltage_sensor import BatteryMpptVoltageSensor
 from .battery_mppt_ampere_sensor import BatteryMpptAmpereSensor
+from .battery_charge_sensor import BatteryChargeSensor
+from .battery_discharge_sensor import BatteryDischargeSensor
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class BatterySensorManager:  # pylint: disable=too-few-public-methods
+class BatterySensorManager:  # pylint: disable=too-few-public-methods, too-many-branches, too-many-statements
     """Manager zur dynamischen Erstellung und Verwaltung von BatterySoESensor-Entitäten.
 
     Erzeugt bei Empfang der ersten Daten automatisch eine Entität pro Batteriespeicher.
@@ -142,6 +144,18 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
                 unique_key = f"{self.entry.entry_id}_battery_mppt_ampere_sensor_{i}"
                 if unique_key not in self.sensors:
                     sensor = BatteryMpptAmpereSensor(self.entry, i)
+                    self.sensors[unique_key] = sensor
+                    new_sensors.append(sensor)
+
+                unique_key = f"{self.entry.entry_id}_battery_charge_sensor_{i}"
+                if unique_key not in self.sensors:
+                    sensor = BatteryChargeSensor(self.entry, i)
+                    self.sensors[unique_key] = sensor
+                    new_sensors.append(sensor)
+
+                unique_key = f"{self.entry.entry_id}_battery_discharge_sensor_{i}"
+                if unique_key not in self.sensors:
+                    sensor = BatteryDischargeSensor(self.entry, i)
                     self.sensors[unique_key] = sensor
                     new_sensors.append(sensor)
 

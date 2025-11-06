@@ -8,7 +8,7 @@ initialisiert und anschließend bei jedem Update aktualisiert.
 
 import logging
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.const import CONF_WEBHOOK_ID
+from homeassistant.const import STATE_UNKNOWN
 from homeassistant.core import HomeAssistant, Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
@@ -18,6 +18,8 @@ from ..const import (
     CONF_ENABLE_CLOUD_DATA,
     CONF_DEVICE_ID,
     PROXY_ERROR_DEVICE_ID,
+    WEBHOOK_SIGNAL_UPDATE,
+    WEBHOOK_SIGNAL_STATE,
 )  # noqa: TID252
 from .battery_soe_sensor import BatterySoESensor
 from .battery_soc_sensor import BatterySOCSensor
@@ -55,7 +57,8 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods, too-many-
         self.async_add_entities = async_add_entities
         self.sensors: dict[str, SensorEntity] = {}
         self._registered = False
-
+        self._unsub_update = None
+        self._unsub_stale = None
         self._enable_cloud_data = self.entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
 
     async def setup(self):
@@ -65,7 +68,9 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods, too-many-
         um später automatisch neue Sensoren zu erzeugen und Daten zu verarbeiten.
         """
 
-        entry_data = self.hass.data.setdefault(DOMAIN, {}).setdefault(self.entry.entry_id, {})
+        entry_data = self.hass.data.setdefault(DOMAIN, {}).setdefault(
+            self.entry.entry_id, {}
+        )
         # Listener-Liste nur initialisieren, falls noch nicht vorhanden
         entry_data.setdefault("listeners", [])
 
@@ -77,11 +82,35 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods, too-many-
             )
         else:
             _LOGGER.info("Daten kommen vom Webhook")
-            signal = f"{DOMAIN}_{self.entry.data[CONF_WEBHOOK_ID]}_update_sensor"
+            entry_data = self.hass.data[DOMAIN][self.entry.entry_id]
+            update_signal = entry_data[WEBHOOK_SIGNAL_UPDATE]
+            stale_signal = entry_data[WEBHOOK_SIGNAL_STATE]
 
             if not self._registered:
-                async_dispatcher_connect(self.hass, signal, self._handle_update)
+                self._unsub_update = async_dispatcher_connect(
+                    self.hass, update_signal, self._wrapper_update
+                )
+
+                self._unsub_stale = async_dispatcher_connect(
+                    self.hass, stale_signal, self._wrapper_stale
+                )
                 self._registered = True
+
+    async def _wrapper_update(self, data: dict):
+        """Ablauf bei einem eingehenden Update-Event."""
+        try:
+            await self.handle_update(data)
+            # self._attr_available = True
+            # self.async_write_ha_state()
+        except Exception as err:  # pylint: disable=broad-except
+            _LOGGER.error(
+                "Fehler im Sensor %s beim Update: %s", self.__class__.__name__, err
+            )
+
+    async def _wrapper_stale(self, _):
+        """Ablauf, wenn das Watchdog-Event 'stale' gesendet wird."""
+        await self.handle_stale()
+        # self.async_write_ha_state()
 
     async def async_update_from_event(self, event: Event):
         """Aktualisiert Sensor von Proxy-Event."""
@@ -89,9 +118,20 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods, too-many-
         json_data = event.data.get("payload", {})
 
         if json_data.get(PROXY_ERROR_DEVICE_ID) == self.entry.data.get(CONF_DEVICE_ID):
-            await self._handle_update(json_data)
+            await self.handle_update(json_data)
 
-    async def _handle_update(self, data):
+    async def handle_stale(self):
+        """Setzt alle verwalteten Sensoren auf 'unavailable'."""
+        for sensor in self.sensors.values():
+            sensor._attr_available = False  # pylint: disable=protected-access
+            sensor._attr_state = STATE_UNKNOWN  # pylint: disable=protected-access
+            sensor.async_write_ha_state()
+
+    async def handle_update(self, data):
+        """Behandelt eingehende Batteriedaten von der MaxxiCharge-Station.
+
+        Args: data (dict): Webhook-Daten, typischerweise mit `batteriesInfo`.
+        """
         batteries = data.get("batteriesInfo", [])
 
         # Initialisiere Sensoren, falls noch nicht vorhanden
@@ -164,6 +204,10 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods, too-many-
 
         # Update alle Sensoren
         # sichere Abfrage der Listener-Liste
-        listeners = self.hass.data.get(DOMAIN, {}).get(self.entry.entry_id, {}).get("listeners", [])
+        listeners = (
+            self.hass.data.get(DOMAIN, {})
+            .get(self.entry.entry_id, {})
+            .get("listeners", [])
+        )
         for listener in listeners:
             await listener(data)

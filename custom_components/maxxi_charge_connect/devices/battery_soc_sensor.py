@@ -71,9 +71,8 @@ class BatterySOCSensor(SensorEntity):
 
         """
         try:
-            self._attr_native_value = data["batteriesInfo"][self._index][
-                "batterySOC"
-            ]
+            self._attr_native_value = data["batteriesInfo"][self._index]["batterySOC"]
+            self._attr_available = True
             self.async_write_ha_state()
         except (IndexError, KeyError):
             pass

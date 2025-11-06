@@ -71,16 +71,16 @@ class BatteryDischargeSensor(SensorEntity):
 
         """
         try:
-
-            batterie_leistung = float(data["batteriesInfo"][self._index][
-                "batteryPower"
-            ])
+            batterie_leistung = float(
+                data["batteriesInfo"][self._index]["batteryPower"]
+            )
 
             if batterie_leistung <= 0:
                 self._attr_native_value = -1 * batterie_leistung
             else:
                 self._attr_native_value = 0
 
+            self._attr_available = True
             self.async_write_ha_state()
 
         except (IndexError, KeyError):

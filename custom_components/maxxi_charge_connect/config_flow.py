@@ -96,7 +96,9 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input:
             self._host_ip = user_input.get(CONF_IP_ADDRESS)
             self._only_ip = user_input.get(ONLY_ONE_IP, False)
-            self._timeout_receive = user_input.get(CONF_TIMEOUT_RECEIVE, DEFAULT_TIMEOUT_RECEIVE)
+            self._timeout_receive = user_input.get(
+                CONF_TIMEOUT_RECEIVE, DEFAULT_TIMEOUT_RECEIVE
+            )
             self._notify_migration = user_input.get(NOTIFY_MIGRATION, False)
             self._enable_local_cloud_proxy = user_input.get(
                 CONF_ENABLE_LOCAL_CLOUD_PROXY, False
@@ -197,7 +199,8 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     ONLY_ONE_IP, default=defaults.get(ONLY_ONE_IP, False)
                 ): BooleanSelector(),
                 vol.Required(
-                    CONF_TIMEOUT_RECEIVE, default=defaults.get(CONF_TIMEOUT_RECEIVE, DEFAULT_TIMEOUT_RECEIVE)
+                    CONF_TIMEOUT_RECEIVE,
+                    default=defaults.get(CONF_TIMEOUT_RECEIVE, DEFAULT_TIMEOUT_RECEIVE),
                 ): int,
                 vol.Optional(
                     NOTIFY_MIGRATION, default=defaults.get(NOTIFY_MIGRATION, False)
@@ -267,6 +270,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._name = entry.data.get(CONF_NAME)
         self._device_id = entry.data.get(CONF_DEVICE_ID)
         self._webhook_id = entry.data.get(CONF_WEBHOOK_ID)
+        self._timeout_receive = entry.data.get(CONF_TIMEOUT_RECEIVE)
         self._host_ip = entry.data.get(CONF_IP_ADDRESS)
         self._only_ip = entry.data.get(ONLY_ONE_IP, False)
         self._notify_migration = entry.data.get(NOTIFY_MIGRATION, False)
@@ -279,18 +283,22 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._enable_cloud_data = entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
         self._refresh_cloud_data = entry.data.get(CONF_REFRESH_CONFIG_FROM_CLOUD, False)
 
-        _LOGGER.debug("Reconfigure internal state: %s", {
-            "name": self._name,
-            "device_id": self._device_id,
-            "webhook_id": self._webhook_id,
-            "host_ip": self._host_ip,
-            "only_ip": self._only_ip,
-            "notify_migration": self._notify_migration,
-            "enable_local_cloud_proxy": self._enable_local_cloud_proxy,
-            "enable_forward_to_cloud": self._enable_forward_to_cloud,
-            "enable_cloud_data": self._enable_cloud_data,
-            "refresh_cloud_data": self._refresh_cloud_data,
-        })
+        _LOGGER.debug(
+            "Reconfigure internal state: %s",
+            {
+                "name": self._name,
+                "device_id": self._device_id,
+                "webhook_id": self._webhook_id,
+                "host_ip": self._host_ip,
+                "only_ip": self._only_ip,
+                "notify_migration": self._notify_migration,
+                "enable_local_cloud_proxy": self._enable_local_cloud_proxy,
+                "enable_forward_to_cloud": self._enable_forward_to_cloud,
+                "enable_cloud_data": self._enable_cloud_data,
+                "refresh_cloud_data": self._refresh_cloud_data,
+                "timeout_receive": self._timeout_receive,
+            },
+        )
         return await self.async_step_user(user_input)
 
     def is_matching(self, other_flow: config_entries.ConfigFlow) -> bool:

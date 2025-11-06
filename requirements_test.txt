@@ -3,11 +3,15 @@ pytest-asyncio
 pytest-mock
 pytest-cov
 pytest-homeassistant-custom-component
+#homeassistant>=2025.10.0,<2026.0.0
+
+pylint
 pylint-per-file-ignores
-# homeassistant>=2025.1.0
 
 beautifulsoup4==4.12.3
-dnspython
+dnspython>=2.4
+#pydantic==1.10.5
+
 
 # Sicherheitsfixes erzwingen:
 cryptography>=44.0.1

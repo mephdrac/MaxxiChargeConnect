@@ -4,31 +4,19 @@ Uptime wird in Milliesekunden angegeben.
 Die Klasse nutzt Home Assistants Dispatcher-System, um auf neue Sensordaten zu reagieren.
 """
 
-import logging
 from datetime import UTC, datetime, timedelta
+import logging
 
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntity,
-)
+from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
-from homeassistant.core import Event
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.const import EntityCategory
 
-from ..const import (
-    DEVICE_INFO,
-    DOMAIN,
-    CONF_ENABLE_CLOUD_DATA,
-    PROXY_STATUS_EVENTNAME,
-    CONF_DEVICE_ID,
-    PROXY_ERROR_DEVICE_ID,
-)  # noqa: TID252
+from .base_webhook_sensor import BaseWebhookSensor
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class UptimeSensor(SensorEntity):
+class UptimeSensor(BaseWebhookSensor):
     """SensorEntity für die aktuelle Uptime (uptime).
 
     Diese Entität zeigt umgerechnet in Tage, Stunden, Minuten und Sekunden an.
@@ -45,8 +33,8 @@ class UptimeSensor(SensorEntity):
             entry (ConfigEntry): Die Konfigurationseintrag-Instanz für diese Integration.
 
         """
+        super().__init__(entry)
         self._attr_suggested_display_precision = 2
-        self._entry = entry
         self._attr_unique_id = f"{entry.entry_id}_uptime_sensor"
         self._attr_icon = "mdi:timer-outline"
         self._attr_native_value = None
@@ -54,29 +42,7 @@ class UptimeSensor(SensorEntity):
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
         self._last_state_update = None
 
-        self._enable_cloud_data = self._entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
-
-    async def async_added_to_hass(self):
-        """Wird beim Hinzufügen zur Home Assistant-Instanz aufgerufen.
-
-        Verbindet den Sensor mit dem Dispatcher-Signal zur Aktualisierung
-        der Messwerte per Webhook.
-        """
-
-        if self._enable_cloud_data:
-            _LOGGER.info("Daten kommen vom Proxy")
-            self.hass.bus.async_listen(
-                PROXY_STATUS_EVENTNAME, self.async_update_from_event
-            )
-        else:
-            _LOGGER.info("Daten kommen vom Webhook")
-        signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
-
-        self.async_on_remove(
-            async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
-        )
-
-    async def _handle_update(self, data):
+    async def handle_update(self, data):
         """Verarbeitet neue Webhook-Daten und aktualisiert den Sensorzustand.
 
         Und prüft auf Plausibilität.
@@ -111,31 +77,3 @@ class UptimeSensor(SensorEntity):
 
         except ValueError as e:
             _LOGGER.warning("Uptime-Wert ungültig: %s", e)
-
-    async def async_update_from_event(self, event: Event):
-        """Aktualisiert Sensor von Proxy-Event."""
-
-        json_data = event.data.get("payload", {})
-
-        if json_data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(CONF_DEVICE_ID):
-            await self._handle_update(json_data)
-
-    @property
-    def device_info(self):
-        """Liefert die Geräteinformationen für diese Sensor-Entity.
-
-        Returns:
-            dict: Ein Dictionary mit Informationen zur Identifikation
-                  des Geräts in Home Assistant, einschließlich:
-                  - identifiers: Eindeutige Identifikatoren (Domain und Entry ID)
-                  - name: Anzeigename des Geräts
-                  - manufacturer: Herstellername
-                  - model: Modellbezeichnung
-
-        """
-
-        return {
-            "identifiers": {(DOMAIN, self._entry.entry_id)},
-            "name": self._entry.title,
-            **DEVICE_INFO,
-        }

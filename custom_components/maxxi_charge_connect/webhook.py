@@ -7,11 +7,11 @@ Die Webhooks empfangen JSON-Daten, validieren optional die IP-Adresse des Anrufe
 und senden empfangene Daten über den Dispatcher an registrierte Sensoren weiter.
 """
 
-import json
 import asyncio
+from datetime import UTC, datetime
+import json
 import logging
 
-from datetime import UTC, datetime
 from aiohttp import web
 
 from homeassistant.components.webhook import async_register, async_unregister
@@ -21,12 +21,14 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
 from .const import (
+    CONF_TIMEOUT_RECEIVE,
+    DEFAULT_TIMEOUT_RECEIVE,
     DOMAIN,
     ONLY_ONE_IP,
+    WEBHOOK_LAST_UPDATE,
     WEBHOOK_NAME,
     WEBHOOK_SIGNAL_STATE,
     WEBHOOK_SIGNAL_UPDATE,
-    WEBHOOK_LAST_UPDATE,
     WEBHOOK_WATCHDOG_TASK,
 )
 
@@ -41,6 +43,7 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
 
     Die empfangenen Daten werden über den Dispatcher an verbundene Sensoren weitergeleitet.
 
+
     Args:
         hass (HomeAssistant): Die Home Assistant Instanz.
         entry (ConfigEntry): Die Konfigurationseintrag, für den der Webhook registriert wird.
@@ -54,9 +57,9 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
     # Vorherigen Handler entfernen, falls vorhanden
     try:
         async_unregister(hass, webhook_id)
-        _LOGGER.warning("Alter Webhook mit ID %s wurde entfernt.", webhook_id)
+        _LOGGER.warning("Alter Webhook mit ID %s wurde entfernt", webhook_id)
     except Exception:  # pylint: disable=broad-exception-caught
-        _LOGGER.debug("Kein bestehender Webhook für ID %s gefunden.", webhook_id)
+        _LOGGER.debug("Kein bestehender Webhook für ID %s gefunden", webhook_id)
 
     signal_sensor = f"{DOMAIN}_{webhook_id}_update_sensor"
     signal_stale = f"{DOMAIN}_{webhook_id}_sensor_stale"
@@ -105,9 +108,12 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
             _LOGGER.debug("Letzte Webhook-Aktualisierung: %s", zeitstempel)
             async_dispatcher_send(hass, signal_sensor, data)
 
-            # Watchdog starten
-            task = hass.loop.create_task(_webhook_timeout_watcher(hass, entry))
-            hass.data[DOMAIN][entry.entry_id][WEBHOOK_WATCHDOG_TASK] = task
+            # Watchdog nur einmal starten
+            if hass.data[DOMAIN][entry.entry_id].get(WEBHOOK_WATCHDOG_TASK) is None:
+                task = hass.loop.create_task(_webhook_timeout_watcher(hass, entry))
+                hass.data[DOMAIN][entry.entry_id][WEBHOOK_WATCHDOG_TASK] = task
+            else:
+                _LOGGER.debug("Watchdog läuft bereits – wird nicht erneut gestartet")
 
         except json.JSONDecodeError as e:
             _LOGGER.error("Ungültige JSON-Daten empfangen: %s", e)
@@ -128,31 +134,40 @@ async def async_unregister_webhook(
     hass: HomeAssistant, entry: ConfigEntry, old_webhook_id: str | None = None
 ):
     """Meldet den Webhook für den angegebenen ConfigEntry ab."""
+
+    task = hass.data[DOMAIN][entry.entry_id].get(WEBHOOK_WATCHDOG_TASK)
+    if task:
+        task.cancel()
+        hass.data[DOMAIN][entry.entry_id][WEBHOOK_WATCHDOG_TASK] = None
+
     webhook_id = old_webhook_id or entry.data[CONF_WEBHOOK_ID]
     _LOGGER.info("Unregistering webhook with ID: %s", webhook_id)
 
     async_unregister(hass, webhook_id)
 
 
-async def _webhook_timeout_watcher(hass, entry, timeout=5):
+async def _webhook_timeout_watcher(hass, entry):
     """Setzt Sensoren nach Timeout auf 'stale'."""
 
     entry_data = hass.data[DOMAIN][entry.entry_id]
     signal_stale = entry_data[WEBHOOK_SIGNAL_STATE]
 
     while True:
-        await asyncio.sleep(5)
+        await asyncio.sleep(4)
         last = entry_data.get(WEBHOOK_LAST_UPDATE)
 
         if last is None:
             continue
 
+        timeout_receive = entry.data.get(CONF_TIMEOUT_RECEIVE, DEFAULT_TIMEOUT_RECEIVE)
+        timeout_receive = max(timeout_receive, 5)
+
         delta = datetime.now(tz=UTC) - last
 
-        if delta.total_seconds() > timeout:
+        if delta.total_seconds() > timeout_receive:
             # Zu lange her → alle Sensoren stale setzen
             async_dispatcher_send(hass, signal_stale, None)
             _LOGGER.warning(
-                "Webhook-Timeout überschritten (%s Sekunden). Sensoren auf 'stale' gesetzt.",
-                timeout,
+                "Webhook-Timeout überschritten (%s Sekunden). Sensoren auf 'stale' gesetzt",
+                timeout_receive,
             )

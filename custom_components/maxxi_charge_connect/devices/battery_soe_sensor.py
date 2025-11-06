@@ -67,7 +67,6 @@ class BatterySoESensor(SensorEntity):
             self._attr_native_value = data["batteriesInfo"][self._index][
                 "batteryCapacity"
             ]
-            self._attr_available = True
             self.async_write_ha_state()
         except (IndexError, KeyError):
             pass

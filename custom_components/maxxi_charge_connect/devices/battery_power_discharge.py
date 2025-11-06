@@ -124,7 +124,6 @@ class BatteryPowerDischarge(SensorEntity):
                 else:
                     self._attr_native_value = 0
 
-                self._attr_available = True
                 self.async_write_ha_state()
 
     @property

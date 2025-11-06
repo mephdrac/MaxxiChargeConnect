@@ -71,10 +71,9 @@ class BatteryAmpereSensor(SensorEntity):
 
         """
         try:
-            self._attr_native_value = (
-                float(data["batteriesInfo"][self._index]["batteryCurrent"]) / 1000.0
-            )
-            self._attr_available = True
+            self._attr_native_value = float(data["batteriesInfo"][self._index][
+                "batteryCurrent"
+            ]) / 1000.0
             self.async_write_ha_state()
         except (IndexError, KeyError):
             pass

@@ -52,16 +52,3 @@ ERRORS = "Errors"
 OPTIONAL = "optional"
 REQUIRED = "required"
 NEIN = "NEIN"
-
-
-# Webhook Event Names
-WEBHOOK_EVENT_STATUS = "MaxxiChargeStatusEvent"
-WEBHOOK_EVENT_ERROR = "MaxxiChargeErrorEvent"
-WEBHOOK_EVENT_CHARGING = "MaxxiChargeChargingEvent"
-
-# Webhook Signals
-WEBHOOK_SIGNAL_UPDATE = "signal_update"
-WEBHOOK_SIGNAL_STATE = "signal_state"
-
-WEBHOOK_LAST_UPDATE = "webhook_last_update"
-WEBHOOK_WATCHDOG_TASK = "webhook_watchdog_task"

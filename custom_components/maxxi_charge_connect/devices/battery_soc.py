@@ -8,29 +8,17 @@ Der Sensor wird dynamisch in Home Assistant registriert und aktualisiert.
 """
 
 import logging
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntity,
-    SensorStateClass,
-)
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_WEBHOOK_ID, PERCENTAGE
-from homeassistant.core import Event
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
-from ..const import (
-    DEVICE_INFO,
-    DOMAIN,
-    PROXY_STATUS_EVENTNAME,
-    CONF_ENABLE_CLOUD_DATA,
-    CONF_DEVICE_ID,
-    PROXY_ERROR_DEVICE_ID,
-)  # noqa: TID252
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import PERCENTAGE
+
+from .base_webhook_sensor import BaseWebhookSensor
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class BatterySoc(SensorEntity):
+class BatterySoc(BaseWebhookSensor):
     """SensorEntity zur Darstellung des Ladezustands (SOC) einer Batterie in Prozent.
 
     Der Sensor verwendet Dispatcher-Signale, um sich automatisch zu aktualisieren,
@@ -47,47 +35,14 @@ class BatterySoc(SensorEntity):
             entry (ConfigEntry): Die Konfigurationsdaten aus dem Home Assistant ConfigEntry.
 
         """
-        self._entry = entry
-        # self._attr_name = "Battery SOC"
+        super().__init__(entry)
         self._attr_unique_id = f"{entry.entry_id}_battery_soc"
         self._attr_native_value = None
         self._attr_device_class = SensorDeviceClass.BATTERY
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = PERCENTAGE
 
-        self._enable_cloud_data = self._entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
-
-    async def async_added_to_hass(self):
-        """Registriert den Sensor beim Dispatcher, wenn die Entity Home Assistant hinzugefügt wird.
-
-        Dadurch wird sichergestellt, dass der Sensor automatisch aktualisiert wird,
-        sobald neue Daten über den zugehörigen Webhook eintreffen.
-        """
-        if self._enable_cloud_data:
-            _LOGGER.info("Daten kommen vom Proxy")
-            self.hass.bus.async_listen(
-                PROXY_STATUS_EVENTNAME, self.async_update_from_event
-            )
-        else:
-            _LOGGER.info("Daten kommen vom Webhook")
-            signal_sensor = (
-                f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
-            )
-
-            remove_callback = async_dispatcher_connect(
-                self.hass, signal_sensor, self._handle_update
-            )
-            self.async_on_remove(remove_callback)
-
-    async def async_update_from_event(self, event: Event):
-        """Aktualisiert Sensor von Proxy-Event."""
-
-        json_data = event.data.get("payload", {})
-
-        if json_data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(CONF_DEVICE_ID):
-            await self._handle_update(json_data)
-
-    async def _handle_update(self, data):
+    async def handle_update(self, data):
         """Verarbeitet eingehende Webhook-Daten und aktualisiert den Sensorwert.
 
         Args:
@@ -95,6 +50,7 @@ class BatterySoc(SensorEntity):
 
         """
         self._attr_native_value = data.get("SOC", 0)
+        self._attr_available = True
         self.async_write_ha_state()
 
     @property
@@ -118,22 +74,3 @@ class BatterySoc(SensorEntity):
             else:
                 result = f"mdi:battery-{level}"
         return result
-
-    @property
-    def device_info(self):
-        """Liefert die Geräteinformationen für diese Sensor-Entity.
-
-        Returns:
-            dict: Ein Dictionary mit Informationen zur Identifikation
-                  des Geräts in Home Assistant, einschließlich:
-                  - identifiers: Eindeutige Identifikatoren (Domain und Entry ID)
-                  - name: Anzeigename des Geräts
-                  - manufacturer: Herstellername
-                  - model: Modellbezeichnung
-
-        """
-        return {
-            "identifiers": {(DOMAIN, self._entry.entry_id)},
-            "name": self._entry.title,
-            **DEVICE_INFO,
-        }

@@ -20,7 +20,15 @@ from homeassistant.const import CONF_IP_ADDRESS, CONF_WEBHOOK_ID
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
-from .const import DOMAIN, ONLY_ONE_IP, WEBHOOK_NAME, WEBHOOK_SIGNAL_STATE, WEBHOOK_SIGNAL_UPDATE, WEBHOOK_LAST_UPDATE, WEBHOOK_WATCHDOG_TASK
+from .const import (
+    DOMAIN,
+    ONLY_ONE_IP,
+    WEBHOOK_NAME,
+    WEBHOOK_SIGNAL_STATE,
+    WEBHOOK_SIGNAL_UPDATE,
+    WEBHOOK_LAST_UPDATE,
+    WEBHOOK_WATCHDOG_TASK,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -90,8 +98,8 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
             data = await request.json()
             _LOGGER.debug("Webhook [%s] received data: %s", webhook_id, data)
 
-            # Letzte Aktualisierungszeit speichern     
-            zeitstempel = datetime.now(tz=UTC)       
+            # Letzte Aktualisierungszeit speichern
+            zeitstempel = datetime.now(tz=UTC)
             hass.data[DOMAIN][entry.entry_id][WEBHOOK_LAST_UPDATE] = zeitstempel
 
             _LOGGER.debug("Letzte Webhook-Aktualisierung: %s", zeitstempel)
@@ -126,7 +134,7 @@ async def async_unregister_webhook(
     async_unregister(hass, webhook_id)
 
 
-async def _webhook_timeout_watcher(hass, entry, timeout=20):
+async def _webhook_timeout_watcher(hass, entry, timeout=5):
     """Setzt Sensoren nach Timeout auf 'stale'."""
 
     entry_data = hass.data[DOMAIN][entry.entry_id]

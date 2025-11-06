@@ -150,15 +150,6 @@ class TotalIntegralSensor(IntegrationSensor):
         return self.my_icon
 
     @property
-    def available(self) -> bool:
-        """Der Energiesensor bleibt verfügbar, auch wenn der Quellsensor 'unavailable' ist.
-
-        Er zeigt dann einfach den letzten gespeicherten Wert an.
-        """
-
-        return True
-
-    @property
     def device_info(self):
         """Liefert die Geräteinformationen für diese Sensor-Entity.
 

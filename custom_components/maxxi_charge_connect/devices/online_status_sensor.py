@@ -11,7 +11,7 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN, EntityCategory
+from homeassistant.const import EntityCategory
 from homeassistant.core import Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
@@ -110,7 +110,7 @@ class OnlineStatusSensor(BinarySensorEntity):
             self._attr_available = True
             self._attr_is_on = True
             self.async_write_ha_state()
-        except Exception as err:
+        except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error(
                 "Fehler im Sensor %s beim Update: %s", self.__class__.__name__, err
             )
@@ -166,7 +166,7 @@ class OnlineStatusSensor(BinarySensorEntity):
         json_data = event.data.get("payload", {})
 
         if json_data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(CONF_DEVICE_ID):
-            await self._handle_update(json_data)
+            await self.handle_update(json_data)
 
     @property
     def device_info(self):

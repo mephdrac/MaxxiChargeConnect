@@ -3,22 +3,10 @@
 import logging
 from homeassistant.components.sensor import (
     SensorDeviceClass,
-    SensorEntity,
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_WEBHOOK_ID, UnitOfTemperature, EntityCategory
-from homeassistant.core import Event
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
-
-from ..const import (
-    DEVICE_INFO,
-    DOMAIN,
-    PROXY_STATUS_EVENTNAME,
-    CONF_ENABLE_CLOUD_DATA,
-    CONF_DEVICE_ID,
-    PROXY_ERROR_DEVICE_ID,
-)  # noqa: TID252
+from homeassistant.const import UnitOfTemperature, EntityCategory
 
 from .base_webhook_sensor import BaseWebhookSensor
 

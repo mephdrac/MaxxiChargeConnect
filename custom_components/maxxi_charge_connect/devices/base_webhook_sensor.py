@@ -102,7 +102,7 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
             try:
                 self._attr_native_value = float(old_state.state)
                 self._attr_available = True
-            except Exception:
+            except Exception:  # pylint: disable=broad-except
                 pass
 
     async def async_will_remove_from_hass(self):
@@ -130,7 +130,7 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
             await self.handle_update(data)
             self._attr_available = True
             self.async_write_ha_state()
-        except Exception as err:
+        except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error(
                 "Fehler im Sensor %s beim Update: %s", self.__class__.__name__, err
             )

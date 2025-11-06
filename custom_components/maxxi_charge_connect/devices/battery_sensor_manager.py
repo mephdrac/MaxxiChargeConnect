@@ -102,7 +102,7 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods, too-many-
             await self.handle_update(data)
             # self._attr_available = True
             # self.async_write_ha_state()
-        except Exception as err:
+        except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error(
                 "Fehler im Sensor %s beim Update: %s", self.__class__.__name__, err
             )
@@ -118,7 +118,7 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods, too-many-
         json_data = event.data.get("payload", {})
 
         if json_data.get(PROXY_ERROR_DEVICE_ID) == self.entry.data.get(CONF_DEVICE_ID):
-            await self._handle_update(json_data)
+            await self.handle_update(json_data)
 
     async def handle_stale(self):
         """Setzt alle verwalteten Sensoren auf 'unavailable'."""

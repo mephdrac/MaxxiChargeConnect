@@ -17,6 +17,8 @@ Evt. wäre es möglich, wenn ich meinen Integration breiter mache, d.h. nicht nu
 
 Es ist schade und ich verstehe auch nicht - warum HA sich da so anstellt.
 
+**mittlerweile habe ich die Erlaubnis von Maxxisun ihr Logo zu verwenden. Also demnächst gibt es auch ein Logo.**
+
 ## Update - Hiweis für Version 1.2.0
 
 **ACHTUNG:** beim Wechsel auf Version 1.2.0 von einer früheren Version kann es u.U. zu Datenverlusten kommen. Beim Betrieb der Version 1.2.0 kommt es selbstverständlich nicht mehr zu Datenverlusten. Bitte vorher Backup machen - und mir Bescheid geben - wenn es ein Problem gab.
@@ -24,10 +26,10 @@ Es ist schade und ich verstehe auch nicht - warum HA sich da so anstellt.
 
 ## ⚠️ Limitationen:
 
-Die Integration unterstützt zur Zeit die CCUv1 Version .44 und .45
+Die Integration unterstützt zur Zeit die CCUv1 Version .44, .45 und .46
 Die **Version .41 nur bedingt.** Der Webhook teil funktioniert. Die weiteren Informationen, die auf maxxi.local erscheinen, bleiben auf **unbekannt**. **(Falls hier eine Unterstützung gewünscht ist. Bitte hier als ISSUE (#77) melden.** 
 
-Die Versionen < .41 werden nicht unterstützt. Da es hier auch noch kein maxxi.local gibt, soweit mir bekannt ist.
+Die Versionen < .41 werden nicht direkt unterstützt, dennoch ist es machbar (Wer das braucht, einfach bei mir melden.). Da es hier auch noch kein maxxi.local gibt, soweit mir bekannt ist.
 
 Für folgende Sensoren gilt:
 - Hausverbrauch

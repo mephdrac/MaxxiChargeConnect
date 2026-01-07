@@ -65,3 +65,6 @@ WEBHOOK_SIGNAL_STATE = "signal_state"
 
 WEBHOOK_LAST_UPDATE = "webhook_last_update"
 WEBHOOK_WATCHDOG_TASK = "webhook_watchdog_task"
+
+# Winterbetrieb related constants
+WINTER_MODE = "winter_mode"

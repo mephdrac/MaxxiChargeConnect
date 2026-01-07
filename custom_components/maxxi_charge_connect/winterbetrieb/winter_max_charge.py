@@ -2,32 +2,25 @@ import logging
 from homeassistant.components.number import NumberEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory, PERCENTAGE
-from homeassistant.helpers.event import async_track_state_change_event, async_call_later
-
-from ..http_post.number_config_entity import (
-    NumberConfigEntity,
-) 
-
-# from homeassistant.core import Event
-# from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.core import callback
 
 from ..const import (
     DEVICE_INFO,
     DOMAIN,
+    WINTER_MODE
 )  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
 
-
 class WinterMaxCharge(NumberEntity):
-    """NumberEntity für die Anzeige der minimalen Entladeleistung im Winterbetrieb."""
 
     _attr_translation_key = "winter_max_charge"
     _attr_has_entity_name = True
 
-    def __init__(self, entry: ConfigEntry) -> None:
+    def __init__(self, entry: ConfigEntry) -> None:        
         self._entry = entry
         self._attr_unique_id = f"{entry.entry_id}_winter_max_charge"
+        self._remove_listener = None
         
         # self._attr_icon = "mdi:identifier"
         self._attr_native_value = None
@@ -37,6 +30,32 @@ class WinterMaxCharge(NumberEntity):
         self._attr_native_max_value = 100
         self._attr_native_step = 1
         self.set_value(60)
+        
+    @property
+    def available(self) -> bool:
+        _LOGGER.warning("WinterMaxCharge available abgefragt: %s", not self.hass.data[DOMAIN].get(WINTER_MODE, False))
+        return self.hass.data[DOMAIN].get(WINTER_MODE, False)
+
+    async def async_added_to_hass(self):
+        """Registriert den Listener, wenn die Entität hinzugefügt wird."""
+        self._remove_listener = self.hass.bus.async_listen(
+            f"{DOMAIN}_winter_mode_changed",
+            self._handle_winter_mode_changed,
+        )
+
+    async def async_will_remove_from_hass(self):
+        """Entfernt den Listener, wenn die Entität entfernt wird."""
+        if self._remove_listener:
+            self._remove_listener()
+
+    @callback
+    def _handle_winter_mode_changed(self, event):  # Pylint: disable=unused-argument
+        """Handle winter mode changed event."""
+        self.async_write_ha_state()
+
+
+
+
         
 #    async def async_update(self):        
  #       self._attr_available = False

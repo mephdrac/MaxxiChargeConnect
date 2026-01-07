@@ -1,14 +1,14 @@
-# import logging
+import logging
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 
-
 from ..const import (
     DEVICE_INFO,
-    DOMAIN,
+    DOMAIN, 
+    WINTER_MODE
 )
-# _LOGGER = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 
 class Winterbetrieb(SwitchEntity):
@@ -22,34 +22,44 @@ class Winterbetrieb(SwitchEntity):
 
         self._entry = entry
         self._attr_unique_id = f"{entry.entry_id}_winterbetrieb"
-
         self._state: bool = False
         # self._attr_icon = "mdi:identifier"
         self._attr_entity_category = EntityCategory.CONFIG
+        
+    async def async_added_to_hass(self):
+        """Wird aufgerufen, sobald die Entität registriert ist."""
+        # Sicherstellen, dass der Switch initialen Wert korrekt anzeigt
+        self._state = self.hass.data[DOMAIN].get(WINTER_MODE, False)
+        self.async_write_ha_state()
 
     @property
     def is_on(self) -> bool:
         # MUSS boolean zurückgeben, nicht None
         return bool(self._state)
 
-    async def async_added_to_hass(self):
-        """Wird aufgerufen, sobald die Entität registriert ist."""
-        # Sicherstellen, dass der Switch initialen Wert korrekt anzeigt
-        self.async_write_ha_state()
-
     async def async_turn_on(self, **kwargs):
         """Schaltet den Winterbetrieb ein und aktiviert ggf. abhängige Sensoren."""
-        self._state = True
+        self._state = True        
+        self.hass.data[DOMAIN][WINTER_MODE] = True
+        _LOGGER.warning("Winterbetrieb aktiviert")
+        self._notify_dependents()        
         self.async_write_ha_state()
-        # Optional: andere Sensoren aktivieren
-        # await self._update_dependent_sensors()
 
     async def async_turn_off(self, **kwargs):
         """Schaltet den Winterbetrieb aus und deaktiviert ggf. abhängige Sensoren."""
         self._state = False
+        self.hass.data[DOMAIN][WINTER_MODE] = False
+        _LOGGER.warning("Winterbetrieb deaktiviert")
+        self._notify_dependents()        
         self.async_write_ha_state()
-        # Optional: andere Sensoren deaktivieren
-        # await self._update_dependent_sensors()
+
+    def _notify_dependents(self):
+        """Benachrichtigt abhängige Entitäten über den Wechsel des Winterbetriebs."""
+        self.hass.bus.async_fire(
+            f"{DOMAIN}_winter_mode_changed",
+            {"enabled": True},
+        )
+
 
     @property
     def device_info(self):

@@ -103,7 +103,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     try:
         # Plattformen laden
         await hass.config_entries.async_forward_entry_setups(
-            entry, ["sensor", "number"]
+            entry, ["sensor", "number", "switch"]
         )
     except Exception as e:  # pylint: disable=broad-exception-caught
         _LOGGER.error("Fehler beim Laden der Plattformen: %s", e)
@@ -210,7 +210,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await asyncio.gather(
             *[
                 hass.config_entries.async_forward_entry_unload(entry, platform)
-                for platform in ("sensor", "number")
+                for platform in ("sensor", "number", "switch")
             ]
         )
     )

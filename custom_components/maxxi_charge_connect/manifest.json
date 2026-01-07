@@ -9,7 +9,7 @@
   "config_flow": true,
   "reconfigure_flow": true,
   "integration_type": "device",
-  "platforms": ["sensor"],
+  "platforms": ["sensor", "number", "switch"],
   "iot_class": "local_push",
   "license": "MIT"
 }

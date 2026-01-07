@@ -19,20 +19,16 @@ from ..const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-class MinDischarge(NumberEntity):
+class WinterMinCharge(NumberEntity):
     """NumberEntity für die Anzeige der minimalen Entladeleistung im Winterbetrieb."""
 
-    _attr_translation_key = "winterbetrieb_min_discharge"
+    _attr_translation_key = "winter_min_charge"
     _attr_has_entity_name = True
 
-    def __init__(self, entry: ConfigEntry, min_soc: NumberConfigEntity) -> None:
+    def __init__(self, entry: ConfigEntry) -> None:
         self._entry = entry
-
-        self._battery_soc_entity_id = f"{DOMAIN}.{entry.entry_id}_battery_soc"
-        self._min_soc_entity = min_soc
-
-        # self._attr_name = "Device ID"
-        self._attr_unique_id = f"{entry.entry_id}_winterbetrieb_min_discharge"
+        self._attr_unique_id = f"{entry.entry_id}_winter_min_charge"
+        
         # self._attr_icon = "mdi:identifier"
         self._attr_native_value = None
         self._attr_entity_category = EntityCategory.CONFIG
@@ -41,10 +37,13 @@ class MinDischarge(NumberEntity):
         self._attr_native_max_value = 100
         self._attr_native_step = 1
         self.set_value(20)
-
-    async def async_update(self):
         
-        self._attr_available = False
+#    async def async_update(self):        
+ #       self._attr_available = False
+        
+
+        
+    
         
 
     #        self._attr_extra_state_attributes = {"reason": "Winterbetrieb deaktiviert"}

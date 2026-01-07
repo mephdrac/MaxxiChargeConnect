@@ -235,8 +235,12 @@
       },
       "CCUTemperaturSensor": {
         "name": "CCU-Temperatur"
+      }      
+    },
+    "switch": {
+      "Winterbetrieb": {
+        "name": "Winterbetrieb"
       }
-
     },
     "number": {
       "maxOutputPower": {
@@ -256,6 +260,12 @@
       },
       "threshold":{
         "name": "Reaktionstoleranz"
+      },
+      "winter_min_charge": {
+        "name": "W.-betr: Min. Ladung"
+      },
+      "winter_max_charge": {
+        "name": "W.-betr: Max. Ladung"
       }
     }
   }

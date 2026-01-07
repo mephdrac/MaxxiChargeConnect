@@ -11,7 +11,8 @@ from .http_post.number_config_entity import (
 
 from .const import DOMAIN
 
-from .winterbetrieb.min_discharge import MinDischarge
+from .winterbetrieb.winter_min_charge import WinterMinCharge
+from .winterbetrieb.winter_max_charge import WinterMaxCharge
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -24,7 +25,6 @@ async def async_setup_entry(
     """Richte Number-Entities für MaxxiChargeConnect ein."""
 
     entities = []
-    entities2 = []
 
     # self._attr_unique_id = f"{entry.entry_id}_MaximumBatteryCharge"
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
@@ -110,10 +110,10 @@ async def async_setup_entry(
             UnitOfPower.WATT,
         )
     )
-    
-    min_discharge_entity = MinDischarge(entry, min_soc_entity)
 
     async_add_entities(entities)
-    
-    entities2.append(min_discharge_entity)
-    async_add_entities(entities2)
+
+    winter_min_charge = WinterMinCharge(entry)
+    winter_max_charge = WinterMaxCharge(entry)
+
+    async_add_entities([winter_min_charge, winter_max_charge])

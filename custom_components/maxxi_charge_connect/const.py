@@ -67,4 +67,14 @@ WEBHOOK_LAST_UPDATE = "webhook_last_update"
 WEBHOOK_WATCHDOG_TASK = "webhook_watchdog_task"
 
 # Winterbetrieb related constants
-WINTER_MODE = "winter_mode"
+CONF_WINTER_MODE = "winter_mode"
+CONF_WINTER_MIN_CHARGE = "winter_min_charge"
+CONF_WINTER_MAX_CHARGE = "winter_max_charge"
+
+DEFAULT_WINTER_MIN_CHARGE = 20  # %
+DEFAULT_WINTER_MAX_CHARGE = 60  # %
+DEFAULT_WINTER_MODE = False
+
+WINTER_MODE_CHANGED_EVENT = f"{DOMAIN}_winter_mode_changed"
+WINTER_MIN_CHARGE_CHANGED_EVENT = f"{DOMAIN}_winter_min_charge_changed"
+WINTER_MAX_CHARGE_CHANGED_EVENT = f"{DOMAIN}_winter_max_charge_changed"

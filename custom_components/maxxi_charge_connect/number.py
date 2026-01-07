@@ -9,7 +9,13 @@ from .http_post.number_config_entity import (
     NumberConfigEntity,
 )  # Importiere deine Entity-Klasse
 
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    CONF_WINTER_MAX_CHARGE,
+    CONF_WINTER_MIN_CHARGE,
+    DEFAULT_WINTER_MAX_CHARGE,
+    DEFAULT_WINTER_MIN_CHARGE    
+)
 
 from .winterbetrieb.winter_min_charge import WinterMinCharge
 from .winterbetrieb.winter_max_charge import WinterMaxCharge
@@ -112,6 +118,20 @@ async def async_setup_entry(
     )
 
     async_add_entities(entities)
+
+    winter_max = entry.options.get(
+        CONF_WINTER_MAX_CHARGE,
+        DEFAULT_WINTER_MAX_CHARGE
+    )
+
+    winter_min = entry.options.get(
+        CONF_WINTER_MIN_CHARGE,
+        DEFAULT_WINTER_MIN_CHARGE
+    )
+
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN][CONF_WINTER_MIN_CHARGE] = winter_min
+    hass.data[DOMAIN][CONF_WINTER_MAX_CHARGE] = winter_max
 
     winter_min_charge = WinterMinCharge(entry)
     winter_max_charge = WinterMaxCharge(entry)

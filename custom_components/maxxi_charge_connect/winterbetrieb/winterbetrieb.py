@@ -6,7 +6,8 @@ from homeassistant.const import EntityCategory
 from ..const import (
     DEVICE_INFO,
     DOMAIN, 
-    WINTER_MODE
+    CONF_WINTER_MODE,
+    WINTER_MODE_CHANGED_EVENT
 )
 _LOGGER = logging.getLogger(__name__)
 
@@ -25,11 +26,11 @@ class Winterbetrieb(SwitchEntity):
         self._state: bool = False
         # self._attr_icon = "mdi:identifier"
         self._attr_entity_category = EntityCategory.CONFIG
-        
+
     async def async_added_to_hass(self):
         """Wird aufgerufen, sobald die Entität registriert ist."""
         # Sicherstellen, dass der Switch initialen Wert korrekt anzeigt
-        self._state = self.hass.data[DOMAIN].get(WINTER_MODE, False)
+        self._state = self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False)
         self.async_write_ha_state()
 
     @property
@@ -39,27 +40,35 @@ class Winterbetrieb(SwitchEntity):
 
     async def async_turn_on(self, **kwargs):
         """Schaltet den Winterbetrieb ein und aktiviert ggf. abhängige Sensoren."""
-        self._state = True        
-        self.hass.data[DOMAIN][WINTER_MODE] = True
-        _LOGGER.warning("Winterbetrieb aktiviert")
-        self._notify_dependents()        
-        self.async_write_ha_state()
+        _LOGGER.debug("Winterbetrieb aktiviert")
+        await self._save_state(True)
 
     async def async_turn_off(self, **kwargs):
         """Schaltet den Winterbetrieb aus und deaktiviert ggf. abhängige Sensoren."""
-        self._state = False
-        self.hass.data[DOMAIN][WINTER_MODE] = False
-        _LOGGER.warning("Winterbetrieb deaktiviert")
-        self._notify_dependents()        
+        _LOGGER.debug("Winterbetrieb deaktiviert")
+        await self._save_state(False)
+
+    async def _save_state(self, value: bool):
+        """Speichert den aktuellen Zustand des Winterbetriebs in den Eintragsoptionen."""
+        self._state = value
+        self.hass.data[DOMAIN][CONF_WINTER_MODE] = value
+
+        self.hass.config_entries.async_update_entry(
+            self._entry,
+            options={
+                **self._entry.options,
+                CONF_WINTER_MODE: value,
+            },
+        )
+        self._notify_dependents()
         self.async_write_ha_state()
 
     def _notify_dependents(self):
         """Benachrichtigt abhängige Entitäten über den Wechsel des Winterbetriebs."""
         self.hass.bus.async_fire(
-            f"{DOMAIN}_winter_mode_changed",
+            WINTER_MODE_CHANGED_EVENT,
             {"enabled": True},
         )
-
 
     @property
     def device_info(self):

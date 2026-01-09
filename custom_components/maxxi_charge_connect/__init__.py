@@ -30,7 +30,9 @@ from .const import (
     REQUIRED,
     NEIN,
     DEFAULT_WINTER_MODE,
-    CONF_WINTER_MODE
+    CONF_WINTER_MODE,
+    CONF_SUMMER_MIN_CHARGE,
+    DEFAULT_SUMMER_MIN_CHARGE,
 )
 from .http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
 from .migration.migration_from_yaml import MigrateFromYaml
@@ -201,12 +203,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     except Exception as e:  # pylint: disable=broad-exception-caught
         _LOGGER.error("Fehler beim Prüfen der Device ID: %s", e)
 
+    # Initiale Werte für Winter- und Sommerbetrieb setzen
     winter_mode = entry.options.get(
         CONF_WINTER_MODE,
         DEFAULT_WINTER_MODE,
     )
 
+    summer_min_discharge = entry.options.get(
+        CONF_SUMMER_MIN_CHARGE, DEFAULT_SUMMER_MIN_CHARGE
+    )
+
     hass.data[DOMAIN][CONF_WINTER_MODE] = winter_mode
+    hass.data[DOMAIN][CONF_SUMMER_MIN_CHARGE] = summer_min_discharge
 
     return True
 

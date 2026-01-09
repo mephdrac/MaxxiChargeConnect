@@ -78,3 +78,7 @@ DEFAULT_WINTER_MODE = False
 WINTER_MODE_CHANGED_EVENT = f"{DOMAIN}_winter_mode_changed"
 WINTER_MIN_CHARGE_CHANGED_EVENT = f"{DOMAIN}_winter_min_charge_changed"
 WINTER_MAX_CHARGE_CHANGED_EVENT = f"{DOMAIN}_winter_max_charge_changed"
+
+# Sommerbetrieb related constants
+CONF_SUMMER_MIN_CHARGE = "summer_min_charge"
+DEFAULT_SUMMER_MIN_CHARGE = 0  # %

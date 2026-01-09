@@ -12,7 +12,7 @@ from ..const import (
     WINTER_MODE_CHANGED_EVENT
 )
 
-from ..tools import get_number_entity_id
+from ..tools import get_entity_id
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -87,6 +87,7 @@ class Winterbetrieb(SwitchEntity):
     async def async_enable_winter_mode(self):
         # aktuellen Wert holen
 
+        entity_id = get_entity_id(self.hass, "sensor", f"{self._entry.entry_id}_min_soc")
         state = self.hass.states.get("sensor.maxxitest_minimale_entladung_der_batterie")
 
         _LOGGER.warning("Aktueller Zustand der Entität: %s", state)

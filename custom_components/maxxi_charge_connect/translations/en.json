@@ -271,7 +271,10 @@
       },
       "winter_max_charge":{
         "name": "Winter Maximum Charge"
-      }          
+      },
+      "summer_min_charge":{
+        "name": "Summer Minimum Charge"
+      }
     }
   }
 }

@@ -19,6 +19,7 @@ from .const import (
 
 from .winterbetrieb.winter_min_charge import WinterMinCharge
 from .winterbetrieb.winter_max_charge import WinterMaxCharge
+from .winterbetrieb.summer_min_charge import SummerMinCharge
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -134,6 +135,10 @@ async def async_setup_entry(
 
     winter_min_charge = WinterMinCharge(entry)
     winter_max_charge = WinterMaxCharge(entry)
+    sommer_min_charge = SummerMinCharge(entry)
 
     async_add_entities(entities)
-    async_add_entities([winter_min_charge, winter_max_charge])
+    async_add_entities(
+        [winter_min_charge,
+         winter_max_charge,
+         sommer_min_charge])

@@ -266,6 +266,9 @@
       },
       "winter_max_charge": {
         "name": "W.-betr: Max. Ladung"
+      },
+      "summer_min_charge": {
+        "name": "S.-betr: Min. Ladung"
       }
     }
   }

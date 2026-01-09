@@ -5,15 +5,17 @@ import logging
 from homeassistant.components.number import NumberEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory, PERCENTAGE
+from homeassistant.core import callback
 
 # from homeassistant.core import callback
 
 from ..const import (
         DEVICE_INFO,
-        DOMAIN,
-        CONF_WINTER_MODE,
+        DOMAIN,        
+        WINTER_MODE_CHANGED_EVENT,
         CONF_SUMMER_MIN_CHARGE,
-        DEFAULT_SUMMER_MIN_CHARGE
+        DEFAULT_SUMMER_MIN_CHARGE,
+        EVENT_SUMMER_MIN_CHARGE_CHANGED
     )
 
 _LOGGER = logging.getLogger(__name__)
@@ -61,12 +63,42 @@ class SummerMinCharge(NumberEntity):
             },
         )
         # UI sofort aktualisieren
-        self.async_write_ha_state()
+        self.async_write_ha_state()   
+        self._notify_dependents()
 
-    # @property
-    # def available(self) -> bool:
-    #     _LOGGER.debug("WinterMinCharge available abgefragt: %s", not self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False))
-    #     return self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False)
+    async def async_added_to_hass(self):
+        """Registriert den Listener, wenn die Entität hinzugefügt wird."""
+
+        self._remove_listener = self.hass.bus.async_listen(
+            WINTER_MODE_CHANGED_EVENT,
+            self._handle_winter_mode_changed
+            )
+
+    async def async_will_remove_from_hass(self):
+        """Entfernt den Listener, wenn die Entität entfernt wird."""
+        if self._remove_listener:
+            self._remove_listener()
+
+    def _notify_dependents(self):
+        """Benachrichtigt abhängige Entitäten über den Wechsel des Sommerbetriebs."""
+
+        if self._attr_native_value is None:
+            return
+
+        self.hass.bus.async_fire(
+            EVENT_SUMMER_MIN_CHARGE_CHANGED,
+            {"value": self._attr_native_value},
+        )
+
+    @callback
+    def _handle_winter_mode_changed(self, event):  # Pylint: disable=unused-argument
+        """Handle winter mode changed event."""
+        winter_enabled = event.data.get("enabled", False)
+
+        if not winter_enabled:
+            self._notify_dependents()
+
+        self.async_write_ha_state()
 
     @property
     def device_info(self):

@@ -82,3 +82,4 @@ WINTER_MAX_CHARGE_CHANGED_EVENT = f"{DOMAIN}_winter_max_charge_changed"
 # Sommerbetrieb related constants
 CONF_SUMMER_MIN_CHARGE = "summer_min_charge"
 DEFAULT_SUMMER_MIN_CHARGE = 0  # %
+EVENT_SUMMER_MIN_CHARGE_CHANGED = f"{DOMAIN}_summer_min_charge_changed"

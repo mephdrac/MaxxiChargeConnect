@@ -121,7 +121,7 @@ class WinterMinCharge(NumberEntity):
             await self.async_set_native_value(value_float)
 
         self._attr_native_max_value = value_float
-        self.async_write_ha_state()        
+        self.async_write_ha_state()
 
     @property
     def device_info(self):

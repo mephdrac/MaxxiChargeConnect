@@ -21,9 +21,16 @@ from homeassistant.core import HomeAssistant
 from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_IP_ADDRESS, EntityCategory
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.core import callback
+from homeassistant.exceptions import ServiceValidationError
 
-from ..const import DEVICE_INFO, DOMAIN  # pylint: disable=relative-beyond-top-level
+from ..const import (
+    DEVICE_INFO,
+    DOMAIN,
+    CONF_WINTER_MODE,
+    WINTER_MODE_CHANGED_EVENT
+)  # pylint: disable=relative-beyond-top-level
+
 from ..tools import as_float  # pylint: disable=relative-beyond-top-level
 
 _LOGGER = logging.getLogger(__name__)
@@ -56,6 +63,7 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
         max_value: float,
         step: float,
         unit: str,
+        depends_on_winter_mode: bool = False,
     ) -> None:
         """Initialisiert die NumberConfigEntity.
 
@@ -75,6 +83,7 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
         self._attr_mode = NumberMode.BOX
         self._entry = entry
         self._hass = hass
+        self._depends_on_winter_mode = depends_on_winter_mode
         self._ip = entry.data[CONF_IP_ADDRESS].strip()
         self._coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
         self._rest_key = rest_key
@@ -87,6 +96,7 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
         self._attr_native_unit_of_measurement = unit
         self._attr_native_value = None  # Initial leer
         self._attr_entity_category = EntityCategory.CONFIG
+        self._remove_listener = None
 
         _LOGGER.debug("Wert: %s", as_float(self._coordinator.data.get(self._value_key)))
 
@@ -103,6 +113,16 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
             self._coordinator.async_add_listener(self.async_write_ha_state)
         )
 
+        self._remove_listener = self.hass.bus.async_listen(
+            WINTER_MODE_CHANGED_EVENT,
+            self._handle_winter_mode_changed,
+        )
+
+    async def async_will_remove_from_hass(self):
+        """Entfernt den Listener, wenn die Entität entfernt wird."""
+        if self._remove_listener:
+            self._remove_listener()
+
     def set_native_value(self, value: float) -> None:
         """Synchroner Wrapper für async_set_native_value."""
         async def runner():
@@ -115,6 +135,13 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
 
     async def async_set_native_value(self, value: float) -> None:
         """Wert setzen und per REST an das Gerät senden."""
+
+        if self._depends_on_winter_mode:
+            if self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False):
+                raise ServiceValidationError(
+                    "Wert kann im Winterbetrieb nicht geändert werden"
+                )
+
         self._attr_native_value = value
         await self._send_config_to_device(value)
 
@@ -180,9 +207,23 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
             else None
         )
 
+    @callback
+    def _handle_winter_mode_changed(self, event):  # Pylint: disable=unused-argument
+        """Handle winter mode changed event."""
+        self.async_write_ha_state()
+
     @property
-    def device_info(self) -> DeviceInfo:
-        """Gibt die Geräteinformationen zurück."""
+    def device_info(self):
+        """Liefert die Geräteinformationen für diese  Entity.
+
+        Returns:
+            dict: Ein Dictionary mit Informationen zur Identifikation
+                  des Geräts in Home Assistant, einschließlich:
+                  - identifiers: Eindeutige Identifikatoren (Domain und Entry ID)
+                  - name: Anzeigename des Geräts
+                  - manufacturer: Herstellername
+                  - model: Modellbezeichnung
+        """
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,

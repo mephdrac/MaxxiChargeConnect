@@ -14,7 +14,7 @@ from .const import (
     CONF_WINTER_MAX_CHARGE,
     CONF_WINTER_MIN_CHARGE,
     DEFAULT_WINTER_MAX_CHARGE,
-    DEFAULT_WINTER_MIN_CHARGE    
+    DEFAULT_WINTER_MIN_CHARGE
 )
 
 from .winterbetrieb.winter_min_charge import WinterMinCharge
@@ -35,7 +35,7 @@ async def async_setup_entry(
     # self._attr_unique_id = f"{entry.entry_id}_MaximumBatteryCharge"
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     await coordinator.async_config_entry_first_refresh()
-    
+
     min_soc_entity = NumberConfigEntity(
             hass,
             entry,
@@ -46,6 +46,7 @@ async def async_setup_entry(
             100,
             1,
             PERCENTAGE,
+            depends_on_winter_mode=True
         )
 
     entities.append(
@@ -117,8 +118,6 @@ async def async_setup_entry(
         )
     )
 
-    async_add_entities(entities)
-
     winter_max = entry.options.get(
         CONF_WINTER_MAX_CHARGE,
         DEFAULT_WINTER_MAX_CHARGE
@@ -136,4 +135,5 @@ async def async_setup_entry(
     winter_min_charge = WinterMinCharge(entry)
     winter_max_charge = WinterMaxCharge(entry)
 
+    async_add_entities(entities)
     async_add_entities([winter_min_charge, winter_max_charge])

@@ -17,6 +17,7 @@ import logging
 import re
 
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 
 from .const import (
     PROXY_ERROR_CCU,
@@ -28,6 +29,7 @@ from .const import (
     PROXY_ERROR_TOTAL,
     PROXY_FORWARDED,
     PROXY_PAYLOAD,
+    DOMAIN
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -200,3 +202,22 @@ def as_float(value: str) -> float | None:
             number = float(match.group())
 
     return number
+
+
+def get_entity_id(hass: HomeAssistant, plattform: str, unique_id: str) -> str | None:
+    """Liefert die entity_id einer Entity anhand der unique_id.
+    Args:
+        hass (HomeAssistant): Die Home Assistant Instanz
+        plattform (str): Die Plattform der Entity, z.B. "number"
+        unique_id (str): Die unique_id der Entity
+    Returns:
+        str | None: Die entity_id der Entity oder None, wenn nicht gefunden
+    """
+    registry = er.async_get(hass)
+
+    entry_id = registry.async_get_entity_id(
+        platform=plattform,
+        domain=DOMAIN,
+        unique_id=unique_id
+    )
+    return entry_id

@@ -29,6 +29,8 @@ from .const import (
     OPTIONAL,
     REQUIRED,
     NEIN,
+    DEFAULT_WINTER_MODE,
+    CONF_WINTER_MODE
 )
 from .http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
 from .migration.migration_from_yaml import MigrateFromYaml
@@ -198,6 +200,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await check_device_id_issue(hass)
     except Exception as e:  # pylint: disable=broad-exception-caught
         _LOGGER.error("Fehler beim Prüfen der Device ID: %s", e)
+
+    winter_mode = entry.options.get(
+        CONF_WINTER_MODE,
+        DEFAULT_WINTER_MODE,
+    )
+
+    hass.data[DOMAIN][CONF_WINTER_MODE] = winter_mode
 
     return True
 

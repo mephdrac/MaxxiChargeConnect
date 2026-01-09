@@ -55,7 +55,7 @@ class Winterbetrieb(SwitchEntity):
     async def async_turn_on(self, **kwargs):
         """Schaltet den Winterbetrieb ein und aktiviert ggf. abhängige Sensoren."""
         _LOGGER.debug("Winterbetrieb aktiviert")
-        await self.async_enable_winter_mode()
+        await self._save_state(True)
 
     async def async_turn_off(self, **kwargs):
         """Schaltet den Winterbetrieb aus und deaktiviert ggf. abhängige Sensoren."""
@@ -83,38 +83,6 @@ class Winterbetrieb(SwitchEntity):
             WINTER_MODE_CHANGED_EVENT,
             {"enabled": self._state},
         )
-
-    async def async_enable_winter_mode(self):
-        # aktuellen Wert holen
-
-        # entity_id = get_entity_id(self.hass, "sensor", f"{self._entry.entry_id}_min_soc")
-        # state = self.hass.states.get("sensor.maxxitest_minimale_entladung_der_batterie")
-
-        # _LOGGER.warning("Aktueller Zustand der Entität: %s", state)
-
-        # if state is None:
-        #     _LOGGER.warning("Entity nicht gefunden")
-        #     return
-
-        # current_value = float(state.state)
-
-        # # im ConfigEntry merken
-        # data = dict(self._entry.data)
-        # data["value_before_winter"] = current_value
-
-        # self.hass.config_entries.async_update_entry(
-        #     self._entry,
-        #     data=data,
-        # )
-
-        await self._save_state(True)
-
-        # _LOGGER.debug(
-        #     "Winterbetrieb aktiviert – Wert gemerkt: %s",
-        #     current_value,
-        # )
-        
-        
 
     @property
     def device_info(self):

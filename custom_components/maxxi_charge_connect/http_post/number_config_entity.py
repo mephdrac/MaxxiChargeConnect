@@ -28,7 +28,8 @@ from ..const import (
     DEVICE_INFO,
     DOMAIN,
     CONF_WINTER_MODE,
-    WINTER_MODE_CHANGED_EVENT
+    WINTER_MODE_CHANGED_EVENT,
+    EVENT_SUMMER_MIN_CHARGE_CHANGED
 )  # pylint: disable=relative-beyond-top-level
 
 from ..tools import as_float  # pylint: disable=relative-beyond-top-level
@@ -97,6 +98,7 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
         self._attr_native_value = None  # Initial leer
         self._attr_entity_category = EntityCategory.CONFIG
         self._remove_listener = None
+        self._remove_summer_listener = None
 
         _LOGGER.debug("Wert: %s", as_float(self._coordinator.data.get(self._value_key)))
 
@@ -118,10 +120,18 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
             self._handle_winter_mode_changed,
         )
 
+        self._remove_summer_listener = self.hass.bus.async_listen(
+            EVENT_SUMMER_MIN_CHARGE_CHANGED,
+            self._handle_summer_charge_changed,
+        )
+
     async def async_will_remove_from_hass(self):
         """Entfernt den Listener, wenn die Entität entfernt wird."""
         if self._remove_listener:
             self._remove_listener()
+
+        if self._remove_summer_listener:
+            self._remove_summer_listener()
 
     def set_native_value(self, value: float) -> None:
         """Synchroner Wrapper für async_set_native_value."""
@@ -206,6 +216,28 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
             if self._coordinator.data
             else None
         )
+
+    @callback
+    def _handle_summer_charge_changed(self, event):
+        """Handle summer min charge changed event."""
+
+        if self._depends_on_winter_mode:
+            value = event.data.get("value")
+
+            _LOGGER.warning("SummerMinCharge received summer min charge changed event: %s", value)
+
+            if value is None:
+                return
+
+            try:
+                value_float = float(value)
+            except (ValueError, TypeError):
+                _LOGGER.error("Konnte Wert nicht in float umwandeln: %s", value)
+                return
+
+            self.set_native_value(value_float)
+            _LOGGER.warning("SummerMinCharge set new value: %s", value_float)
+            self.async_write_ha_state()
 
     @callback
     def _handle_winter_mode_changed(self, event):  # Pylint: disable=unused-argument

@@ -7,15 +7,14 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory, PERCENTAGE
 from homeassistant.core import callback
 
-# from homeassistant.core import callback
-
 from ..const import (
         DEVICE_INFO,
         DOMAIN,        
         WINTER_MODE_CHANGED_EVENT,
         CONF_SUMMER_MIN_CHARGE,
         DEFAULT_SUMMER_MIN_CHARGE,
-        EVENT_SUMMER_MIN_CHARGE_CHANGED
+        EVENT_SUMMER_MIN_CHARGE_CHANGED,
+        CONF_WINTER_MODE
     )
 
 _LOGGER = logging.getLogger(__name__)
@@ -74,6 +73,8 @@ class SummerMinCharge(NumberEntity):
             self._handle_winter_mode_changed
             )
 
+        self.async_write_ha_state()
+
     async def async_will_remove_from_hass(self):
         """Entfernt den Listener, wenn die Entität entfernt wird."""
         if self._remove_listener:
@@ -89,6 +90,11 @@ class SummerMinCharge(NumberEntity):
             EVENT_SUMMER_MIN_CHARGE_CHANGED,
             {"value": self._attr_native_value},
         )
+
+    @property
+    def available(self) -> bool:
+        _LOGGER.debug("WinterMinCharge available abgefragt: %s", self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False))
+        return not self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False)
 
     @callback
     def _handle_winter_mode_changed(self, event):  # Pylint: disable=unused-argument

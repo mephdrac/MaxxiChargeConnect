@@ -54,6 +54,8 @@ Empfang von Daten über einen lokalen Webhook
 - Ladeleistung (CCU, PV, Batterie)
 - Ladezustand in Wh und %
 
+- Winterbetrieb (am Stück aufladen) ab Version 2.7.0
+
 Icons & Device Class für Home Assistant optimiert
 
 ## 🚧 Geplante Features

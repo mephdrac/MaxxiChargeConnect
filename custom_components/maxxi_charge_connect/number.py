@@ -9,7 +9,17 @@ from .http_post.number_config_entity import (
     NumberConfigEntity,
 )  # Importiere deine Entity-Klasse
 
-from .const import DOMAIN
+from .const import (
+    DOMAIN,
+    CONF_WINTER_MAX_CHARGE,
+    CONF_WINTER_MIN_CHARGE,
+    DEFAULT_WINTER_MAX_CHARGE,
+    DEFAULT_WINTER_MIN_CHARGE
+)
+
+from .winterbetrieb.winter_min_charge import WinterMinCharge
+from .winterbetrieb.winter_max_charge import WinterMaxCharge
+from .winterbetrieb.summer_min_charge import SummerMinCharge
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,6 +36,19 @@ async def async_setup_entry(
     # self._attr_unique_id = f"{entry.entry_id}_MaximumBatteryCharge"
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     await coordinator.async_config_entry_first_refresh()
+
+    min_soc_entity = NumberConfigEntity(
+            hass,
+            entry,
+            "min_soc",
+            "minSOC",
+            "MinimumBatteryDischarge",
+            0,
+            100,
+            1,
+            PERCENTAGE,
+            depends_on_winter_mode=True
+        )
 
     entities.append(
         NumberConfigEntity(
@@ -67,17 +90,7 @@ async def async_setup_entry(
         )
     )
     entities.append(
-        NumberConfigEntity(
-            hass,
-            entry,
-            "min_soc",
-            "minSOC",
-            "MinimumBatteryDischarge",
-            0,
-            100,
-            1,
-            PERCENTAGE,
-        )
+        min_soc_entity
     )
     entities.append(
         NumberConfigEntity(
@@ -106,4 +119,26 @@ async def async_setup_entry(
         )
     )
 
+    winter_max = entry.options.get(
+        CONF_WINTER_MAX_CHARGE,
+        DEFAULT_WINTER_MAX_CHARGE
+    )
+
+    winter_min = entry.options.get(
+        CONF_WINTER_MIN_CHARGE,
+        DEFAULT_WINTER_MIN_CHARGE
+    )
+
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN][CONF_WINTER_MIN_CHARGE] = winter_min
+    hass.data[DOMAIN][CONF_WINTER_MAX_CHARGE] = winter_max
+
+    winter_min_charge = WinterMinCharge(entry)
+    winter_max_charge = WinterMaxCharge(entry)
+    sommer_min_charge = SummerMinCharge(entry)
+
     async_add_entities(entities)
+    async_add_entities(
+        [winter_min_charge,
+         winter_max_charge,
+         sommer_min_charge])

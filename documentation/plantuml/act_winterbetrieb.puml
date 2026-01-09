@@ -1,0 +1,25 @@
+@startuml
+
+start
+:Empfange state_change von Battery (SOC);
+
+if (Winterbetrieb aktiv?) then (ja)
+    -[#blue,bold]->
+    if (SOC <= WinterMinCharge) then (ja)        
+        -[#blue,bold]->
+        :Setze "Minimale Entladung\nder Batterie" auf WinterMaxCharge;
+        -[#blue,bold]->
+    end if
+    -[#green,bold]->
+    if (SOC >= WinterMaxCharge) then (ja)        
+        -[#green,bold]->
+        :Setze "Minimale Entladung\nder Batterie" auf WinterMinCharge;
+        -[#green,bold]->
+    end if    
+endif
+
+:Beende Verarbeitung;
+
+stop
+
+@enduml

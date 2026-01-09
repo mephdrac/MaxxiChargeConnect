@@ -1,3 +1,5 @@
+"""NumberEntity für die maximale Ladung im Winterbetrieb."""
+
 import logging
 from homeassistant.components.number import NumberEntity
 from homeassistant.config_entries import ConfigEntry
@@ -19,13 +21,14 @@ from ..const import (
 _LOGGER = logging.getLogger(__name__)
 
 
+# pylint: disable=abstract-method
 class WinterMaxCharge(NumberEntity):
     """NumberEntity für die Anzeige der maximalen Ladung im Winterbetrieb."""
 
     _attr_translation_key = "winter_max_charge"
     _attr_has_entity_name = True
 
-    def __init__(self, entry: ConfigEntry) -> None:        
+    def __init__(self, entry: ConfigEntry) -> None:
         self._entry = entry
         self._attr_unique_id = f"{entry.entry_id}_winter_max_charge"
 
@@ -48,6 +51,9 @@ class WinterMaxCharge(NumberEntity):
         )
 
         self._remove_listener = None
+
+    def set_native_value(self, value):
+        return self.async_set_native_value(value)
 
     async def async_set_native_value(self, value: float) -> None:
         """Wird aufgerufen, wenn der User den Wert ändert."""
@@ -95,7 +101,7 @@ class WinterMaxCharge(NumberEntity):
             self._remove_listener()
 
     @callback
-    def _handle_winter_mode_changed(self, event):  # Pylint: disable=unused-argument
+    def _handle_winter_mode_changed(self, event):  # pylint: disable=unused-argument
         """Handle winter mode changed event."""
         self.async_write_ha_state()
 

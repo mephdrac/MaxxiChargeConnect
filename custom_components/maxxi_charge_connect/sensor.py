@@ -293,7 +293,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
             pv_self_consumption_today,
             pv_self_consumption_total,
             consumption_energy_today,
-            consumption_energy_total            
+            consumption_energy_total
         ]
     )
     await asyncio.sleep(0)

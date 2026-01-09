@@ -38,7 +38,7 @@ from ..tools import as_float  # pylint: disable=relative-beyond-top-level
 _LOGGER = logging.getLogger(__name__)
 
 
-class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
+class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-many-instance-attributes
     """Konfigurierbare NumberEntity für MaxxiCharge-Geräteeinstellungen.
 
     Diese Entität ermöglicht die Anzeige und Änderung eines konfigurierbaren Parameters
@@ -253,7 +253,7 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
             self.async_write_ha_state()
 
     @callback
-    def _handle_winter_mode_changed(self, event):  # Pylint: disable=unused-argument
+    def _handle_winter_mode_changed(self, event):  # pylint: disable=unused-argument
         """Handle winter mode changed event."""
         self.async_write_ha_state()
 
@@ -261,7 +261,7 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
     async def _handle_winter_min_charge_change(self, event):
         """Handle winter min charge changed event."""
 
-        value = event.data.get("value")        
+        value = event.data.get("value")
         _LOGGER.warning("WinterMinCharge received winter min charge changed event. New(%s), Current(%s)", value, self._attr_native_value)
 
         if value is None:
@@ -280,7 +280,7 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method
                 self._attr_native_value = value
                 _LOGGER.warning("WinterMinCharge set new value: %s", value_float)
             else:
-                _LOGGER.error("WinterMinCharge konnte neuen Wert nicht setzen: %s", value_float)    
+                _LOGGER.error("WinterMinCharge konnte neuen Wert nicht setzen: %s", value_float)
 
         self.async_write_ha_state()
 

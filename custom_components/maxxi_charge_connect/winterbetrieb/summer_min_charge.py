@@ -9,7 +9,7 @@ from homeassistant.core import callback
 
 from ..const import (
         DEVICE_INFO,
-        DOMAIN,        
+        DOMAIN,
         WINTER_MODE_CHANGED_EVENT,
         CONF_SUMMER_MIN_CHARGE,
         DEFAULT_SUMMER_MIN_CHARGE,
@@ -20,6 +20,7 @@ from ..const import (
 _LOGGER = logging.getLogger(__name__)
 
 
+# pylint: disable=abstract-method
 class SummerMinCharge(NumberEntity):
     """NumberEntity für die Anzeige der minimales Ladung im Sommerbetrieb."""
 
@@ -44,6 +45,9 @@ class SummerMinCharge(NumberEntity):
         self._remove_listener = None
         self._remove_listener_max_charge = None
 
+    def set_native_value(self, value):
+        return self.async_set_native_value(value)
+
     async def async_set_native_value(self, value: float) -> None:
         """Wird aufgerufen, wenn der User den Wert ändert."""
 
@@ -62,7 +66,7 @@ class SummerMinCharge(NumberEntity):
             },
         )
         # UI sofort aktualisieren
-        self.async_write_ha_state()   
+        self.async_write_ha_state()
         self._notify_dependents()
 
     async def async_added_to_hass(self):

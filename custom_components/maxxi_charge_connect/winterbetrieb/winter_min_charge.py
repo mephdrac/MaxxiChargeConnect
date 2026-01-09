@@ -22,6 +22,7 @@ from ..const import (
 _LOGGER = logging.getLogger(__name__)
 
 
+# pylint: disable=abstract-method
 class WinterMinCharge(NumberEntity):
     """NumberEntity für die Anzeige der minimalen Entladeleistung im Winterbetrieb."""
 
@@ -50,6 +51,9 @@ class WinterMinCharge(NumberEntity):
         )
         self._remove_listener = None
         self._remove_listener_max_charge = None
+
+    def set_native_value(self, value):
+        return self.async_set_native_value(value)
 
     async def async_set_native_value(self, value: float) -> None:
         """Wird aufgerufen, wenn der User den Wert ändert."""
@@ -97,7 +101,7 @@ class WinterMinCharge(NumberEntity):
             self._remove_listener()
 
     @callback
-    def _handle_winter_mode_changed(self, event):  # Pylint: disable=unused-argument
+    def _handle_winter_mode_changed(self, event):  # pylint: disable=unused-argument
         """Handle winter mode changed event."""
         self.async_write_ha_state()
 

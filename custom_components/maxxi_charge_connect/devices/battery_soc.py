@@ -11,9 +11,8 @@ import logging
 
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_WEBHOOK_ID, PERCENTAGE
+from homeassistant.const import PERCENTAGE
 from homeassistant.core import callback
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from .base_webhook_sensor import BaseWebhookSensor
 
@@ -21,7 +20,6 @@ from ..const import (
         DOMAIN,
         CONF_WINTER_MODE,
         WINTER_MODE_CHANGED_EVENT,
-        PROXY_STATUS_EVENTNAME,
         EVENT_WINTER_MIN_CHARGE_CHANGED,
         CONF_WINTER_MIN_CHARGE,
         CONF_WINTER_MAX_CHARGE,
@@ -57,20 +55,7 @@ class BatterySoc(BaseWebhookSensor):
 
     async def async_added_to_hass(self):
         """Registriert den Listener, wenn die Entität hinzugefügt wird."""
-        
-        if self._enable_cloud_data:
-            _LOGGER.info("Daten kommen vom Proxy")
-            self.hass.bus.async_listen(
-                PROXY_STATUS_EVENTNAME, self.async_update_from_event
-            )
-        else:
-            _LOGGER.info("Daten kommen vom Webhook")
-        
-        signal_sensor = f"{DOMAIN}_{self._entry.data[CONF_WEBHOOK_ID]}_update_sensor"
-
-        self.async_on_remove(
-            async_dispatcher_connect(self.hass, signal_sensor, self._handle_update)
-        )
+        await super().async_added_to_hass()
 
         winter_betrieb = self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False)
         _LOGGER.warning("BatterySoc async_added_to_hass: Winterbetrieb=%s", winter_betrieb)
@@ -82,6 +67,8 @@ class BatterySoc(BaseWebhookSensor):
 
     async def async_will_remove_from_hass(self):
         """Entfernt den Listener, wenn die Entität entfernt wird."""
+        await super().async_will_remove_from_hass()
+
         if self._remove_listener:
             self._remove_listener()
 
@@ -98,7 +85,7 @@ class BatterySoc(BaseWebhookSensor):
         _LOGGER.warning("WinterMinCharge received winter mode changed event: %s", winter_mode_enabled)
         self.async_write_ha_state()
 
-    async def _handle_update(self, data):
+    async def handle_update(self, data):
         """Verarbeitet eingehende Webhook-Daten und aktualisiert den Sensorwert.
 
         Args:

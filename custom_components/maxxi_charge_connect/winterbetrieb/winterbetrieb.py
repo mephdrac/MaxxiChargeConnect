@@ -11,9 +11,6 @@ from ..const import (
     CONF_WINTER_MODE,
     WINTER_MODE_CHANGED_EVENT
 )
-
-from ..tools import get_entity_id
-
 _LOGGER = logging.getLogger(__name__)
 
 

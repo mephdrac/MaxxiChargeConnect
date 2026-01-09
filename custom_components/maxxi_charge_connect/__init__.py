@@ -8,6 +8,7 @@ Konfigurations-Flow an die zuständigen Plattformen weiter.
 import asyncio
 import logging
 
+from homeassistant.const import Platform
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
@@ -40,6 +41,12 @@ from .reverse_proxy.proxy_server import MaxxiProxyServer
 from .webhook import async_register_webhook, async_unregister_webhook
 
 _LOGGER = logging.getLogger(__name__)
+
+PLATFORMS: list[Platform] = [
+    Platform.SENSOR,
+    Platform.NUMBER,
+    Platform.SWITCH,
+]
 
 
 async def check_device_id_issue(hass):
@@ -109,10 +116,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data[DOMAIN][CONF_WINTER_MODE] = winter_mode
     hass.data[DOMAIN][CONF_SUMMER_MIN_CHARGE] = summer_min_discharge
-    
+
     coordinator = MaxxiDataUpdateCoordinator(hass, entry, sensor_list)
-    
-    
+
     hass.data[DOMAIN][entry.entry_id]["coordinator"] = coordinator
     await coordinator.async_config_entry_first_refresh()
 
@@ -121,9 +127,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     try:
         # Plattformen laden
-        await hass.config_entries.async_forward_entry_setups(
-            entry, ["sensor", "number", "switch"]
-        )
+        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
     except Exception as e:  # pylint: disable=broad-exception-caught
         _LOGGER.error("Fehler beim Laden der Plattformen: %s", e)
         return False
@@ -218,8 +223,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     except Exception as e:  # pylint: disable=broad-exception-caught
         _LOGGER.error("Fehler beim Prüfen der Device ID: %s", e)
 
-   
-
     return True
 
 
@@ -231,7 +234,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         await asyncio.gather(
             *[
                 hass.config_entries.async_forward_entry_unload(entry, platform)
-                for platform in ("sensor", "number", "switch")
+                for platform in (PLATFORMS)
             ]
         )
     )

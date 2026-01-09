@@ -16,7 +16,7 @@ from ..const import (
     DEFAULT_WINTER_MIN_CHARGE,
     DEFAULT_WINTER_MAX_CHARGE,
     WINTER_MODE_CHANGED_EVENT,
-    WINTER_MAX_CHARGE_CHANGED_EVENT
+    EVENT_WINTER_MAX_CHARGE_CHANGED
 )  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
@@ -87,7 +87,7 @@ class WinterMinCharge(NumberEntity):
         )
 
         self._remove_listener_max_charge = self.hass.bus.async_listen(
-            WINTER_MAX_CHARGE_CHANGED_EVENT,
+            EVENT_WINTER_MAX_CHARGE_CHANGED,
             self._handle_winter_max_charge_changed,
         )
 

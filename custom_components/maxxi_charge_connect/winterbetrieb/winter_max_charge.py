@@ -13,7 +13,7 @@ from ..const import (
     CONF_WINTER_MIN_CHARGE,
     DEFAULT_WINTER_MIN_CHARGE,
     DEFAULT_WINTER_MAX_CHARGE,
-    WINTER_MAX_CHARGE_CHANGED_EVENT
+    EVENT_WINTER_MAX_CHARGE_CHANGED
 )  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
@@ -73,7 +73,7 @@ class WinterMaxCharge(NumberEntity):
     def _notify_dependents(self, value: float):
         _LOGGER.debug("Feuer WinterMaxCharge changed event mit Wert: %s", value)
         self.hass.bus.async_fire(
-            WINTER_MAX_CHARGE_CHANGED_EVENT,
+            EVENT_WINTER_MAX_CHARGE_CHANGED,
             {"value": value}
         )
 

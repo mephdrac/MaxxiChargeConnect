@@ -124,6 +124,9 @@
       "BatteryMpptAmpereSensor":{
         "name": "Battery ({index}) MPPT-Current"
       },
+      "BatteryPVPowerSensor":{
+        "name": "Battery ({index}) PV-Power"
+      },
       "BatteryChargeSensor":{
         "name": "Battery ({index}) Charge Power"
       },

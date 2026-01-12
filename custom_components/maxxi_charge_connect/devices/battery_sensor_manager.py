@@ -27,6 +27,7 @@ from .battery_voltage_sensor import BatteryVoltageSensor
 from .battery_ampere_sensor import BatteryAmpereSensor
 from .battery_pv_voltage_sensor import BatteryPVVoltageSensor
 from .battery_pv_ampere_sensor import BatteryPVAmpereSensor
+from .battery_pv_power_sensor import BatteryPVPowerSensor
 from .battery_mppt_voltage_sensor import BatteryMpptVoltageSensor
 from .battery_mppt_ampere_sensor import BatteryMpptAmpereSensor
 from .battery_charge_sensor import BatteryChargeSensor
@@ -160,6 +161,19 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods, too-many-
                 unique_key = f"{self.entry.entry_id}_battery_ampere_sensor_{i}"
                 if unique_key not in self.sensors:
                     sensor = BatteryAmpereSensor(self.entry, i)
+                    self.sensors[unique_key] = sensor
+                    new_sensors.append(sensor)
+
+                unique_key = f"{self.entry.entry_id}_battery_pv_power_sensor_{i}"
+                _LOGGER.debug(
+                    "Checking for BatteryPVPowerSensor with key: %s",
+                    unique_key,
+                )
+                if unique_key not in self.sensors:
+                    _LOGGER.debug(
+                        "Creating BatteryPVPowerSensor for battery index %d", i
+                    )
+                    sensor = BatteryPVPowerSensor(self.entry, i)
                     self.sensors[unique_key] = sensor
                     new_sensors.append(sensor)
 

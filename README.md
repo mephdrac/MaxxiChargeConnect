@@ -44,6 +44,8 @@ Falls der User diese Sensoren nutzen möchte, so muss er sie selbst aktivieren. 
 sofern nur 1 CCU verwendet wird und keine weiten PV-Anlagen. Denn es kann nicht ermittelt werden, welchen Einfluss weitere PV-Anlagen haben.
 Der User soll selbst entscheiden, ob er diese Sensoren nutzen möchte.
 
+**nur Version .46**
+- die Information der CCU-Temperatur ist nicht mehr in den Daten enthalten, daher erscheint hier ein "nicht verfügbar"
 
 ## ✅ Funktionen
 Empfang von Daten über einen lokalen Webhook

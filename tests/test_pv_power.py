@@ -15,13 +15,13 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).resolve().parents[3]))
 
 from unittest.mock import MagicMock, patch
-from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
-from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+
 import pytest
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 
 from custom_components.maxxi_charge_connect.const import DOMAIN
 from custom_components.maxxi_charge_connect.devices.pv_power import PvPower
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -70,43 +70,25 @@ async def test_pv_power_add_and_handle_update1():
     Erwartet, dass der Sensorwert korrekt auf die empfangene Leistung gesetzt wird.
     """
 
-    mock_entry = MagicMock()
-    mock_entry.entry_id = "abc123"
-    mock_entry.title = "My Device"
-    mock_entry.data = {CONF_WEBHOOK_ID: "webhook456"}
+    mock_obj = MagicMock()
+    mock_obj.entry_id = "abc123"
+    mock_obj.title = "My Device"    
 
-    sensor = PvPower(mock_entry)
+    sensor = PvPower(mock_obj)
     sensor.hass = MagicMock()
-    sensor.async_on_remove = MagicMock()
 
     # async_write_ha_state mocken
     sensor.async_write_ha_state = MagicMock()
 
-    dispatcher_called = {}
-
     with (
-        patch(
-            "custom_components.maxxi_charge_connect.devices.pv_power.async_dispatcher_connect"
-        ) as mock_connect,
         patch(
             "custom_components.maxxi_charge_connect.devices.pv_power.is_power_total_ok"
         ) as mock_is_power_total_ok,
     ):
         mock_is_power_total_ok.return_value = True
 
-        def fake_unsub():
-            dispatcher_called["disconnected"] = True
-
-        mock_connect.return_value = fake_unsub
-
         await sensor.async_added_to_hass()
-
-        signal = f"{DOMAIN}_webhook456_update_sensor"
-        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)
-        # pylint: disable=protected-access
-        sensor.async_on_remove.assert_called_once_with(fake_unsub)
-
-        await sensor._handle_update({"PV_power_total": 234.675})  # pylint: disable=protected-access
+        await sensor.handle_update({"PV_power_total": 234.675})  # pylint: disable=protected-access
         assert sensor.native_value == 234.675
 
 
@@ -117,43 +99,27 @@ async def test_pv_power_add_and_handle_update2():
     Erwartet, dass der Sensorwert in diesem Fall nicht gesetzt wird (None).
     """
 
-    mock_entry = MagicMock()
-    mock_entry.entry_id = "abc123"
-    mock_entry.title = "My Device"
-    mock_entry.data = {CONF_WEBHOOK_ID: "webhook456"}
+    mock_obj = MagicMock()
+    mock_obj.entry_id = "abc123"
+    mock_obj.title = "My Device"
 
-    sensor = PvPower(mock_entry)
+    sensor = PvPower(mock_obj)
     sensor.hass = MagicMock()
     sensor.async_on_remove = MagicMock()
 
     # async_write_ha_state mocken
     sensor.async_write_ha_state = MagicMock()
 
-    dispatcher_called = {}
-
-    with (
-        patch(
-            "custom_components.maxxi_charge_connect.devices.pv_power.async_dispatcher_connect"
-        ) as mock_connect,
+    with (        
         patch(
             "custom_components.maxxi_charge_connect.devices.pv_power.is_power_total_ok"
         ) as mock_is_power_total_ok,
     ):
         mock_is_power_total_ok.return_value = False
-
-        def fake_unsub():
-            dispatcher_called["disconnected"] = True
-
-        mock_connect.return_value = fake_unsub
-
+        
         await sensor.async_added_to_hass()
 
-        signal = f"{DOMAIN}_webhook456_update_sensor"
-        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)
-        # pylint: disable=protected-access
-        sensor.async_on_remove.assert_called_once_with(fake_unsub)
-
-        await sensor._handle_update({"PV_power_total": 234})  # pylint: disable=protected-access
+        await sensor.handle_update({"PV_power_total": 234})  # pylint: disable=protected-access
         assert sensor.native_value is None
 
 

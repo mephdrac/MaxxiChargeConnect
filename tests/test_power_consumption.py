@@ -47,7 +47,7 @@ def sensor():
     sensor_obj.async_on_remove = MagicMock()
 
     # # async_write_ha_state mocken
-    sensor.async_write_ha_state = MagicMock()
+    sensor_obj.async_write_ha_state = MagicMock()
     return sensor_obj
 
 
@@ -85,6 +85,7 @@ async def test_power_consumption_add_and_handle_update1(sensor):  # pylint: disa
             "custom_components.maxxi_charge_connect.devices.power_consumption.is_pr_ok"
         ) as mock_is_pr_ok,
     ):
+
         mock_is_pccu_ok.return_value = True
         mock_is_pr_ok.return_value = True
 

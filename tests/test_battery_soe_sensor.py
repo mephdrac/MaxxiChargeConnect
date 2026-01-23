@@ -1,14 +1,18 @@
+"""Tests für die BatterySoESensor Entity im MaxxiChargeConnect Integration."""
+
 from unittest.mock import MagicMock, patch
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfEnergy
 import pytest
-from custom_components.maxxi_charge_connect.const import DOMAIN
+
 from custom_components.maxxi_charge_connect.devices.battery_soe_sensor import (
     BatterySoESensor,
 )
 
+
 @pytest.mark.asyncio
-async def test_battery_soe_sensor__init(caplog):
-    
+async def test_battery_soe_sensor__init():
+    """ Initialisierung der BatterySoESensor Entity testen."""
+
     dummy_config_entry = MagicMock()
     dummy_config_entry.entry_id = "1234abcd"
     dummy_config_entry.title = "Test Entry"
@@ -17,21 +21,23 @@ async def test_battery_soe_sensor__init(caplog):
     sensor = BatterySoESensor(dummy_config_entry, 0)
 
     # Grundlegende Attribute prüfen
-    assert sensor._attr_entity_registry_enabled_default == True
-    assert sensor._attr_translation_key == "BatterySoESensor"
-    assert sensor._attr_has_entity_name == True
-    assert sensor._index == 0
-    assert sensor._attr_translation_placeholders == {"index": str(0 + 1)}
-    assert sensor._entry == dummy_config_entry
-    assert sensor._attr_suggested_display_precision == 2
-    assert sensor._attr_native_unit_of_measurement == UnitOfEnergy.WATT_HOUR
+    assert sensor._attr_entity_registry_enabled_default is True  # pylint: disable=protected-access
+    assert sensor._attr_translation_key == "BatterySoESensor"  # pylint: disable=protected-access
+    assert sensor._attr_has_entity_name is True  # pylint: disable=protected-access
+    assert sensor._index == 0  # pylint: disable=protected-access
+    assert sensor._attr_translation_placeholders == {"index": str(0 + 1)}  # pylint: disable=protected-access
+    assert sensor._entry == dummy_config_entry  # pylint: disable=protected-access
+    assert sensor._attr_suggested_display_precision == 2  # pylint: disable=protected-access
+    assert sensor._attr_native_unit_of_measurement == UnitOfEnergy.WATT_HOUR  # pylint: disable=protected-access
     assert sensor.icon == "mdi:home-battery"
-    assert sensor._attr_unique_id == "1234abcd_battery_soe_0"
-    assert sensor._attr_native_value is None
+    assert sensor._attr_unique_id == "1234abcd_battery_soe_0"  # pylint: disable=protected-access
+    assert sensor._attr_native_value is None  # pylint: disable=protected-access
 
 
 @pytest.mark.asyncio
-async def test_battery_soe_sensor__async_added_to_hass(caplog):
+async def test_battery_soe_sensor__async_added_to_hass():
+    """ Testet die async_added_to_hass Methode der BatterySoESensor Entity."""
+
     hass = MagicMock()
     dummy_config_entry = MagicMock()
     dummy_config_entry.entry_id = "abc123"
@@ -51,33 +57,36 @@ async def test_battery_soe_sensor__async_added_to_hass(caplog):
 
     sensor = BatterySoESensor(dummy_config_entry, 0)
     sensor.hass = hass
-        
+
     await sensor.async_added_to_hass()
 
     # Jetzt kannst du prüfen, ob .append aufgerufen wurde:
-    listeners_mock.append.assert_called_once_with(sensor._handle_update)
+    listeners_mock.append.assert_called_once_with(sensor._handle_update)  # pylint: disable=protected-access
+
 
 @pytest.mark.asyncio
-async def test_battery_soe_sensor__device_info(caplog):
+async def test_battery_soe_sensor__device_info():
+    """ Testet die device_info Eigenschaft der BatterySoESensor Entity."""
 
     dummy_config_entry = MagicMock()
     dummy_config_entry.title = "Test Entry"
 
     sensor = BatterySoESensor(dummy_config_entry, 0)
-        
+
     device_info = sensor.device_info
     assert "identifiers" in device_info
     assert device_info["name"] == dummy_config_entry.title
 
 
 @pytest.mark.asyncio
-async def test_battery_soe_sensor__handle_update_alles_ok(caplog):
-    
+async def test_battery_soe_sensor__handle_update_alles_ok():
+    """ _handle_update Methode der BatterySoESensor Entity testen, wenn alles ok ist."""
+
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
-        
+
     bat = 1187.339966
-    data = {    
+    data = {
         "batteriesInfo": [
             {
                 "batteryCapacity": bat
@@ -89,20 +98,21 @@ async def test_battery_soe_sensor__handle_update_alles_ok(caplog):
 
     with patch("custom_components.maxxi_charge_connect.devices.battery_soe_sensor.BatterySoESensor.async_write_ha_state", new_callable=MagicMock
                ) as mock_write_ha_state:
-        await sensor._handle_update(data)
+        await sensor._handle_update(data)  # pylint: disable=protected-access
         mock_write_ha_state.assert_called_once()
 
-    assert sensor._attr_native_value == bat
+    assert sensor._attr_native_value == bat  # pylint: disable=protected-access
 
 
 @pytest.mark.asyncio
-async def test_battery_soe_sensor__handle_update__index_error(caplog):
-    
+async def test_battery_soe_sensor__handle_update__index_error():
+    """ _handle_update Methode der BatterySoESensor Entity testen, wenn IndexError auftritt."""
+
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
-        
+
     bat = 1187.339966
-    data = {    
+    data = {
         "batteriesInfo": [
             {
                 "batteryCapacity": bat
@@ -114,7 +124,7 @@ async def test_battery_soe_sensor__handle_update__index_error(caplog):
 
     with patch("custom_components.maxxi_charge_connect.devices.battery_soe_sensor.BatterySoESensor.async_write_ha_state", new_callable=MagicMock
                ) as mock_write_ha_state:
-        await sensor._handle_update(data)
+        await sensor._handle_update(data)  # pylint: disable=protected-access
         mock_write_ha_state.assert_not_called()
 
-    assert sensor._attr_native_value is None
+    assert sensor._attr_native_value is None  # pylint: disable=protected-access

@@ -52,11 +52,11 @@ async def test_reset_energy_daily_resets_last_reset_and_writes_state(caplog):
     sensor = BatteryTodayEnergyDischarge(hass, entry, "sensor.pv_power")
     sensor.hass = hass
     sensor.async_write_ha_state = MagicMock()
-    sensor._state = 200
+    sensor._state = 200  # pylint: disable=protected-access
 
     # 🎯 Simuliere "alten" Reset-Zeitpunkt
     yesterday = dt_util.start_of_local_day() - timedelta(days=1)
-    sensor._last_reset = yesterday
+    sensor._last_reset = yesterday  # pylint: disable=protected-access
     old_reset = sensor.last_reset
 
     # 🕛 Simuliere Reset-Zeitpunkt
@@ -64,7 +64,7 @@ async def test_reset_energy_daily_resets_last_reset_and_writes_state(caplog):
     caplog.set_level("INFO")
 
     # 🔁 Reset aufrufen
-    await sensor._reset_energy_daily(fake_now)
+    await sensor._reset_energy_daily(fake_now)  # pylint: disable=protected-access
 
     # ✅ Überprüfungen
     assert sensor.last_reset > old_reset, "last_reset wurde nicht aktualisiert"

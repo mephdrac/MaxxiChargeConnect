@@ -24,24 +24,15 @@ Testfunktionen:
 """
 
 import sys
-from pathlib import Path
-
-sys.path.append(str(Path(__file__).resolve().parents[3]))
-
-import sys
-from pathlib import Path
-
-sys.path.append(str(Path(__file__).resolve().parents[3]))
-
 from unittest.mock import MagicMock, patch
-import pytest
+from pathlib import Path
 from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
-
+import pytest
 from custom_components.maxxi_charge_connect.const import DOMAIN
 from custom_components.maxxi_charge_connect.devices.firmware_version import (
     FirmwareVersion,
 )
-
+sys.path.append(str(Path(__file__).resolve().parents[3]))
 
 # Dummy-Konstanten
 WEBHOOK_ID = "abc123"
@@ -61,16 +52,19 @@ def mock_entry():
     entry.data = {"webhook_id": WEBHOOK_ID}
     return entry
 
+
 @pytest.mark.asyncio
-async def test_device_id__set_value(mock_entry):
-    testText = "HalloText"
+async def test_device_id__set_value(mock_entry):  # pylint: disable=redefined-outer-name
+    """Teste die `set_value`-Methode von `FirmwareVersion`."""
+    test_text = "HalloText"
     sensor = FirmwareVersion(mock_entry)
-    sensor.set_value(testText)
+    sensor.set_value(test_text)
 
-    assert sensor._attr_native_value == testText
+    assert sensor._attr_native_value == test_text  # pylint: disable=protected-access
+
 
 @pytest.mark.asyncio
-async def test_firmware_version_initialization(mock_entry):
+async def test_firmware_version_initialization(mock_entry):  # pylint: disable=redefined-outer-name
     """Testet die Initialisierung des FirmwareVersion Sensors.
 
     Überprüft, ob Attribute wie unique_id, icon, native_value und entity_category
@@ -78,7 +72,7 @@ async def test_firmware_version_initialization(mock_entry):
     """
     sensor = FirmwareVersion(mock_entry)
 
-    assert sensor._attr_unique_id == "test_entry_id_firmware_version"
+    assert sensor._attr_unique_id == "test_entry_id_firmware_version"  # pylint: disable=protected-access
     # pylint: disable=protected-access
     assert sensor._attr_icon == "mdi:information-outline"  # pylint: disable=protected-access
     # pylint: disable=protected-access
@@ -101,12 +95,12 @@ async def test_firmware_version_add_and_handle_update():
     Test, wenn isPrOk(True).
     """
 
-    mock_entry = MagicMock()
-    mock_entry.entry_id = "abc123"
-    mock_entry.title = "My Device"
-    mock_entry.data = {CONF_WEBHOOK_ID: "webhook456"}
+    mock_obj = MagicMock()
+    mock_obj.entry_id = "abc123"
+    mock_obj.title = "My Device"
+    mock_obj.data = {CONF_WEBHOOK_ID: "webhook456"}
 
-    sensor = FirmwareVersion(mock_entry)
+    sensor = FirmwareVersion(mock_obj)
     sensor.hass = MagicMock()
     sensor.async_on_remove = MagicMock()
 
@@ -137,7 +131,7 @@ async def test_firmware_version_add_and_handle_update():
         assert sensor.native_value == firmwareversion
 
 
-def test_device_info(mock_entry):
+def test_device_info(mock_entry):  # pylint: disable=redefined-outer-name
     """Testet die device_info Eigenschaft des FirmwareVersion Sensors.
 
     Validiert, dass Geräte-IDs, Name, Hersteller und Modell korrekt gesetzt sind.

@@ -7,7 +7,6 @@ den internen `last_reset`-Zeitstempel aktualisiert und den Sensorzustand neu sch
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[3]))
 from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime, timedelta, UTC
 from homeassistant.util import dt as dt_util
@@ -16,6 +15,8 @@ import pytest
 from custom_components.maxxi_charge_connect.devices.pv_today_energy import (
     PvTodayEnergy,
 )
+
+sys.path.append(str(Path(__file__).resolve().parents[3]))
 
 
 @pytest.mark.asyncio

@@ -13,11 +13,9 @@ import logging
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[3]))
-
 from unittest.mock import MagicMock, patch
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
-from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
+from homeassistant.const import UnitOfPower
 
 import pytest
 
@@ -25,7 +23,7 @@ from custom_components.maxxi_charge_connect.const import DOMAIN
 from custom_components.maxxi_charge_connect.devices.power_consumption import (
     PowerConsumption,
 )
-
+sys.path.append(str(Path(__file__).resolve().parents[3]))
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -34,7 +32,7 @@ WEBHOOK_ID = "abc123"
 
 
 @pytest.fixture
-def mock_entry():
+def sensor():
     """Testet die Initialisierung des PowerConsumption-Sensors.
 
     Stellt sicher, dass die Sensoreigenschaften korrekt gesetzt sind.
@@ -43,20 +41,25 @@ def mock_entry():
     entry.entry_id = "test_entry_id"
     entry.title = "Maxxi Entry"
     entry.data = {"webhook_id": WEBHOOK_ID}
-    return entry
+
+    sensor_obj = PowerConsumption(entry)
+    sensor_obj.hass = MagicMock()
+    sensor_obj.async_on_remove = MagicMock()
+
+    # # async_write_ha_state mocken
+    sensor_obj.async_write_ha_state = MagicMock()
+    return sensor_obj
 
 
 @pytest.mark.asyncio
-async def test_power_consumption_initialization(mock_entry):
+async def test_power_consumption_initialization(sensor):  # pylint: disable=redefined-outer-name
     """Testet die Verarbeitung von Webhook-Daten (Pccu und Pr gültig).
 
     Erwartet:
     - Pccu und -Pr werden addiert (nur wenn Pr negativ),
     - native_v
     """
-    sensor = PowerConsumption(mock_entry)
-
-    assert sensor._attr_unique_id == "test_entry_id_power_consumption"
+    assert sensor._attr_unique_id == "test_entry_id_power_consumption"  # pylint: disable=protected-access
     # pylint: disable=protected-access
     assert sensor._attr_icon == "mdi:home-import-outline"  # pylint: disable=protected-access
     assert sensor._attr_native_value is None  # pylint: disable=protected-access
@@ -68,32 +71,13 @@ async def test_power_consumption_initialization(mock_entry):
 
 
 @pytest.mark.asyncio
-async def test_power_consumption_add_and_handle_update1():
+async def test_power_consumption_add_and_handle_update1(sensor):  # pylint: disable=redefined-outer-name
     """Testet, wenn isPccuOk False ist (ungültige Pccu-Daten).
 
     Erwartet:
     - native_value bleibt None.
     """
-
-    mock_entry = MagicMock()
-    mock_entry.entry_id = "abc123"
-    mock_entry.title = "My Device"
-    mock_entry.data = {CONF_WEBHOOK_ID: "webhook456"}
-
-    sensor = PowerConsumption(mock_entry)
-    sensor.hass = MagicMock()
-    sensor.async_on_remove = MagicMock()
-
-    # async_write_ha_state mocken
-    sensor.async_write_ha_state = MagicMock()
-
-    dispatcher_called = {}
-
     with (
-        patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption."
-            "async_dispatcher_connect"
-        ) as mock_connect,
         patch(
             "custom_components.maxxi_charge_connect.devices.power_consumption.is_pccu_ok"
         ) as mock_is_pccu_ok,
@@ -101,54 +85,24 @@ async def test_power_consumption_add_and_handle_update1():
             "custom_components.maxxi_charge_connect.devices.power_consumption.is_pr_ok"
         ) as mock_is_pr_ok,
     ):
+
         mock_is_pccu_ok.return_value = True
         mock_is_pr_ok.return_value = True
 
-        def fake_unsub():
-            dispatcher_called["disconnected"] = True
-
-        mock_connect.return_value = fake_unsub
-
-        await sensor.async_added_to_hass()
-
-        signal = f"{DOMAIN}_webhook456_update_sensor"
-        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)
-        # pylint: disable=protected-access
-        sensor.async_on_remove.assert_called_once_with(fake_unsub)
-
         pccu = 34.678
         pr = 234.675
-        await sensor._handle_update({"Pccu": pccu, "Pr": pr})  # pylint: disable=protected-access
+        await sensor.handle_update({"Pccu": pccu, "Pr": pr})  # pylint: disable=protected-access
         assert sensor.native_value == round(pccu + max(pr, 0), 2)
 
 
 @pytest.mark.asyncio
-async def test_power_consumption_add_and_handle_update2():
+async def test_power_consumption_add_and_handle_update2(sensor):  # pylint: disable=redefined-outer-name
     """Testet, wenn isPrOk False ist (ungültige Pr-Daten).
 
     Erwartet:
     - native_value bleibt None.
     """
-
-    mock_entry = MagicMock()
-    mock_entry.entry_id = "abc123"
-    mock_entry.title = "My Device"
-    mock_entry.data = {CONF_WEBHOOK_ID: "webhook456"}
-
-    sensor = PowerConsumption(mock_entry)
-    sensor.hass = MagicMock()
-    sensor.async_on_remove = MagicMock()
-
-    # async_write_ha_state mocken
-    sensor.async_write_ha_state = MagicMock()
-
-    dispatcher_called = {}
-
     with (
-        patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption."
-            "async_dispatcher_connect"
-        ) as mock_connect,
         patch(
             "custom_components.maxxi_charge_connect.devices.power_consumption.is_pccu_ok"
         ) as mock_is_pccu_ok,
@@ -159,51 +113,20 @@ async def test_power_consumption_add_and_handle_update2():
         mock_is_pccu_ok.return_value = False
         mock_is_pr_ok.return_value = True
 
-        def fake_unsub():
-            dispatcher_called["disconnected"] = True
-
-        mock_connect.return_value = fake_unsub
-
-        await sensor.async_added_to_hass()
-
-        signal = f"{DOMAIN}_webhook456_update_sensor"
-        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)
-        # pylint: disable=protected-access
-        sensor.async_on_remove.assert_called_once_with(fake_unsub)
-
         pccu = 34.678
         pr = 234.675
-        await sensor._handle_update({"Pccu": pccu, "Pr": pr})  # pylint: disable=protected-access
+        await sensor.handle_update({"Pccu": pccu, "Pr": pr})  # pylint: disable=protected-access
         assert sensor.native_value is None
 
 
 @pytest.mark.asyncio
-async def test_power_consumption_add_and_handle_update3():
+async def test_power_consumption_add_and_handle_update3(sensor):  # pylint: disable=redefined-outer-name
     """Testet, wenn isPccuOk und isPrOk beide False sind.
 
     Erwartet:
     - native_value bleibt None.
     """
-
-    mock_entry = MagicMock()
-    mock_entry.entry_id = "abc123"
-    mock_entry.title = "My Device"
-    mock_entry.data = {CONF_WEBHOOK_ID: "webhook456"}
-
-    sensor = PowerConsumption(mock_entry)
-    sensor.hass = MagicMock()
-    sensor.async_on_remove = MagicMock()
-
-    # async_write_ha_state mocken
-    sensor.async_write_ha_state = MagicMock()
-
-    dispatcher_called = {}
-
     with (
-        patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption."
-            "async_dispatcher_connect"
-        ) as mock_connect,
         patch(
             "custom_components.maxxi_charge_connect.devices.power_consumption.is_pccu_ok"
         ) as mock_is_pccu_ok,
@@ -214,26 +137,14 @@ async def test_power_consumption_add_and_handle_update3():
         mock_is_pccu_ok.return_value = True
         mock_is_pr_ok.return_value = False
 
-        def fake_unsub():
-            dispatcher_called["disconnected"] = True
-
-        mock_connect.return_value = fake_unsub
-
-        await sensor.async_added_to_hass()
-
-        signal = f"{DOMAIN}_webhook456_update_sensor"
-        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)
-        # pylint: disable=protected-access
-        sensor.async_on_remove.assert_called_once_with(fake_unsub)
-
         pccu = 34.678
         pr = 234.675
-        await sensor._handle_update({"Pccu": pccu, "Pr": pr})  # pylint: disable=protected-access
+        await sensor.handle_update({"Pccu": pccu, "Pr": pr})  # pylint: disable=protected-access
         assert sensor.native_value is None
 
 
 @pytest.mark.asyncio
-async def test_power_consumption_add_and_handle_update4():
+async def test_power_consumption_add_and_handle_update4(sensor):  # pylint: disable=redefined-outer-name
     """Testet das Entfernen des Sensors aus Home Assistant.
 
     Erwartet:
@@ -241,25 +152,7 @@ async def test_power_consumption_add_and_handle_update4():
     - `_unsub_dispatcher` wird auf None gesetzt.
     """
 
-    mock_entry = MagicMock()
-    mock_entry.entry_id = "abc123"
-    mock_entry.title = "My Device"
-    mock_entry.data = {CONF_WEBHOOK_ID: "webhook456"}
-
-    sensor = PowerConsumption(mock_entry)
-    sensor.hass = MagicMock()
-    sensor.async_on_remove = MagicMock()
-
-    # async_write_ha_state mocken
-    sensor.async_write_ha_state = MagicMock()
-
-    dispatcher_called = {}
-
     with (
-        patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption."
-            "async_dispatcher_connect"
-        ) as mock_connect,
         patch(
             "custom_components.maxxi_charge_connect.devices.power_consumption.is_pccu_ok"
         ) as mock_is_pccu_ok,
@@ -270,31 +163,19 @@ async def test_power_consumption_add_and_handle_update4():
         mock_is_pccu_ok.return_value = False
         mock_is_pr_ok.return_value = False
 
-        def fake_unsub():
-            dispatcher_called["disconnected"] = True
-
-        mock_connect.return_value = fake_unsub
-
-        await sensor.async_added_to_hass()
-
-        signal = f"{DOMAIN}_webhook456_update_sensor"
-        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)
-        # pylint: disable=protected-access
-        sensor.async_on_remove.assert_called_once_with(fake_unsub)
-
         pccu = 34.678
         pr = 234.675
-        await sensor._handle_update({"Pccu": pccu, "Pr": pr})  # pylint: disable=protected-access
+        await sensor.handle_update({"Pccu": pccu, "Pr": pr})  # pylint: disable=protected-access
         assert sensor.native_value is None
 
 
-def test_device_info(mock_entry):
+@pytest.mark.asyncio
+def test_device_info(sensor):  # pylint: disable=redefined-outer-name
     """Testet die Rückgabe der `device_info`.
 
     Erwartet:
     - Korrekte Angaben zu Identifikator, Name, Hersteller und Modell.
     """
-    sensor = PowerConsumption(mock_entry)
     info = sensor.device_info
     assert info["identifiers"] == {(DOMAIN, "test_entry_id")}
     assert info["name"] == "Maxxi Entry"

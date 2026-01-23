@@ -17,15 +17,14 @@ Verwendete Bibliotheken:
 
 import sys
 from pathlib import Path
-
-sys.path.append(str(Path(__file__).resolve().parents[3]))
 from unittest.mock import MagicMock, patch
-
+from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
 import pytest
 
-from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
 from custom_components.maxxi_charge_connect.const import DOMAIN
 from custom_components.maxxi_charge_connect.devices.device_id import DeviceId
+
+sys.path.append(str(Path(__file__).resolve().parents[3]))
 
 
 # Dummy-Konstanten
@@ -47,17 +46,20 @@ def mock_entry():
     entry.data = {"webhook_id": WEBHOOK_ID}
     return entry
 
+
 @pytest.mark.asyncio
-async def test_device_id__set_value(mock_entry):
-    testText = "HalloText"
+async def test_device_id__set_value(mock_entry):  # pylint: disable=redefined-outer-name
+    """Teste die `set_value`-Methode von `DeviceId`."""
+
+    test_text = "HalloText"
     sensor = DeviceId(mock_entry)
-    sensor.set_value(testText)
+    sensor.set_value(test_text)
 
-    assert sensor._attr_native_value == testText
+    assert sensor._attr_native_value == test_text  # pylint: disable=protected-access
 
 
 @pytest.mark.asyncio
-async def test_device_id_initialization(mock_entry):
+async def test_device_id_initialization(mock_entry):  # pylint: disable=redefined-outer-name
     """Teste Initialisierung von `DeviceId`.
 
     Überprüft, ob alle Attribute beim Instanziieren korrekt gesetzt sind.
@@ -83,12 +85,12 @@ async def test_device_id_add_and_handle_update():
     - Simuliert ein eingehendes Gerätedaten-Update via `_handle_update`.
     """
 
-    mock_entry = MagicMock()
-    mock_entry.entry_id = "abc123"
-    mock_entry.title = "My Device"
-    mock_entry.data = {CONF_WEBHOOK_ID: "webhook456"}
+    mock_obj = MagicMock()
+    mock_obj.entry_id = "abc123"
+    mock_obj.title = "My Device"
+    mock_obj.data = {CONF_WEBHOOK_ID: "webhook456"}
 
-    sensor = DeviceId(mock_entry)
+    sensor = DeviceId(mock_obj)
     sensor.hass = MagicMock()
     sensor.async_on_remove = MagicMock()
 
@@ -109,7 +111,7 @@ async def test_device_id_add_and_handle_update():
         await sensor.async_added_to_hass()
 
         signal = f"{DOMAIN}_webhook456_update_sensor"
-        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)
+        mock_connect.assert_called_once_with(sensor.hass, signal, sensor._handle_update)  # pylint: disable=protected-access
         # pylint: disable=protected-access
         sensor.async_on_remove.assert_called_once_with(fake_unsub)
 
@@ -118,7 +120,7 @@ async def test_device_id_add_and_handle_update():
         assert sensor.native_value == device_id
 
 
-def test_device_info(mock_entry):
+def test_device_info(mock_entry):  # pylint: disable=redefined-outer-name
     """Teste `device_info`-Eigenschaft.
 
     Stellt sicher, dass die Gerätedaten wie Hersteller, Modell und ID korrekt zurückgegeben werden.

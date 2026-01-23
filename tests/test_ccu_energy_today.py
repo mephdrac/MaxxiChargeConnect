@@ -16,15 +16,16 @@ Verwendete Bibliotheken:
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path(__file__).resolve().parents[3]))
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
 from homeassistant.util import dt as dt_util
-import pytest
 
+import pytest
 from custom_components.maxxi_charge_connect.devices.ccu_energy_today import (
     CcuEnergyToday,
 )
+
+sys.path.append(str(Path(__file__).resolve().parents[3]))
 
 
 @pytest.mark.asyncio
@@ -55,7 +56,7 @@ async def test_reset_energy_daily_resets_last_reset_and_writes_state(caplog):
     sensor = CcuEnergyToday(hass, entry, "sensor.pv_power")
     sensor.hass = hass
     sensor.async_write_ha_state = MagicMock()
-    sensor._state = 200
+    sensor._state = 200  # pylint: disable=protected-access
 
     # 🎯 Simuliere "alten" Reset-Zeitpunkt
     yesterday = dt_util.start_of_local_day() - timedelta(days=1)

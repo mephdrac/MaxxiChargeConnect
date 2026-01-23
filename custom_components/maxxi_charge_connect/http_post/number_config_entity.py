@@ -22,15 +22,12 @@ from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_IP_ADDRESS, EntityCategory
 from homeassistant.core import callback
-from homeassistant.exceptions import ServiceValidationError
 
 from ..const import (
     DEVICE_INFO,
     DOMAIN,
-    CONF_WINTER_MODE,
     WINTER_MODE_CHANGED_EVENT,
     EVENT_SUMMER_MIN_CHARGE_CHANGED,
-    EVENT_WINTER_MIN_CHARGE_CHANGED
 )  # pylint: disable=relative-beyond-top-level
 
 from ..tools import as_float  # pylint: disable=relative-beyond-top-level
@@ -100,7 +97,6 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
         self._attr_entity_category = EntityCategory.CONFIG
         self._remove_listener = None
         self._remove_summer_listener = None
-        self._remove_winter_min_charge_listener = None
 
         _LOGGER.debug("Wert: %s", as_float(self._coordinator.data.get(self._value_key)))
 
@@ -117,7 +113,7 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
             self._coordinator.async_add_listener(self.async_write_ha_state)
         )
 
-        if self._depends_on_winter_mode: # Nur registrieren, wenn abhängig vom Wintermodus
+        if self._depends_on_winter_mode:  # Nur registrieren, wenn abhängig vom Wintermodus
             self._remove_listener = self.hass.bus.async_listen(
                 WINTER_MODE_CHANGED_EVENT,
                 self._handle_winter_mode_changed,
@@ -128,11 +124,6 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
                 self._handle_summer_charge_changed,
             )
 
-            self._remove_winter_min_charge_listener = self.hass.bus.async_listen(
-                EVENT_WINTER_MIN_CHARGE_CHANGED,
-                self._handle_winter_min_charge_change
-            )
-
     async def async_will_remove_from_hass(self):
         """Entfernt den Listener, wenn die Entität entfernt wird."""
         if self._remove_listener:
@@ -140,9 +131,6 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
 
         if self._remove_summer_listener:
             self._remove_summer_listener()
-
-        if self._remove_winter_min_charge_listener:
-            self._remove_winter_min_charge_listener()
 
     def set_native_value(self, value: float) -> None:
         """Synchroner Wrapper für async_set_native_value."""
@@ -157,14 +145,19 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
     async def async_set_native_value(self, value: float) -> None:
         """Wert setzen und per REST an das Gerät senden."""
 
-        if self._depends_on_winter_mode:
-            if self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False):
-                raise ServiceValidationError(
-                    "Wert kann im Winterbetrieb nicht geändert werden"
-                )
+        _LOGGER.debug("Setze neuen Wert für %s: %s", self._rest_key, value)
+
+
+        # if self._depends_on_winter_mode:
+        #     if self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False):
+        #         raise ServiceValidationError(
+        #             "Wert kann im Winterbetrieb nicht geändert werden"
+        #         )
 
         self._attr_native_value = value
+        self.async_write_ha_state()
         await self._send_config_to_device(value)
+        self.async_write_ha_state()
 
     async def _send_config_to_device(self, value: float) -> bool:
         """Sendet den Wert via HTTP-POST an das Gerät."""
@@ -255,33 +248,6 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
     @callback
     def _handle_winter_mode_changed(self, event):  # pylint: disable=unused-argument
         """Handle winter mode changed event."""
-        self.async_write_ha_state()
-
-    @callback
-    async def _handle_winter_min_charge_change(self, event):
-        """Handle winter min charge changed event."""
-
-        value = event.data.get("value")
-        _LOGGER.warning("WinterMinCharge received winter min charge changed event. New(%s), Current(%s)", value, self._attr_native_value)
-
-        if value is None:
-            return
-
-        try:
-            value_float = float(value)
-        except (ValueError, TypeError):
-            _LOGGER.error("Konnte Wert nicht in float umwandeln: %s", value)
-            return
-
-        if value_float != self._attr_native_value:
-
-            ok = await self._send_config_to_device(value)
-            if ok:
-                self._attr_native_value = value
-                _LOGGER.warning("WinterMinCharge set new value: %s", value_float)
-            else:
-                _LOGGER.error("WinterMinCharge konnte neuen Wert nicht setzen: %s", value_float)
-
         self.async_write_ha_state()
 
     @property

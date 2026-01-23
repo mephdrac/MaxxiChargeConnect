@@ -92,9 +92,9 @@ class BatterySoc(BaseWebhookSensor):
         Args:
             data (dict): Die empfangenen Daten, erwartet ein 'SOC'-Feld mit dem Prozentwert.
 
-        """        
+        """
         try:
-            native_value_float = float(str(self._attr_native_value).strip())
+            native_value_float = float(str(data.get("SOC")).strip())
             self._attr_available = True
         except (ValueError, TypeError):
             _LOGGER.error(

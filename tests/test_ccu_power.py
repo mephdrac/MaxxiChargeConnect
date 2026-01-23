@@ -1,7 +1,8 @@
-from unittest.mock import AsyncMock, MagicMock, patch, Mock
+"""Tests für die CcuPower Entity im MaxxiChargeConnect Integration."""
+from unittest.mock import AsyncMock, MagicMock, patch
 from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
 from homeassistant.components.sensor import (
-    SensorDeviceClass,    
+    SensorDeviceClass,
     SensorStateClass,
 )
 import pytest
@@ -10,9 +11,11 @@ from custom_components.maxxi_charge_connect.devices.ccu_power import (
     CcuPower,
 )
 
+
 @pytest.mark.asyncio
-async def test_ccu_power_init(caplog):
-        
+async def test_ccu_power_init():
+    """Testet die Initialisierung der CcuPower Entity."""
+
     # 🧪 Setup
     hass = MagicMock()
     hass.async_add_job = AsyncMock()
@@ -22,29 +25,30 @@ async def test_ccu_power_init(caplog):
     dummy_config_entry.title = "Test Entry"
     dummy_config_entry.data = {}
     dummy_config_entry.options = {}
-    
+
     sensor = CcuPower(dummy_config_entry)
 
     # Grundlegende Attribute prüfen
-    #assert sensor._source_entity == source_entity
-    assert sensor._attr_device_class == SensorDeviceClass.POWER
-    assert sensor._attr_state_class == SensorStateClass.MEASUREMENT
-    assert sensor._attr_native_unit_of_measurement == UnitOfPower.WATT
+    # assert sensor._source_entity == source_entity
+    assert sensor._attr_device_class == SensorDeviceClass.POWER  # pylint: disable=protected-access
+    assert sensor._attr_state_class == SensorStateClass.MEASUREMENT  # pylint: disable=protected-access
+    assert sensor._attr_native_unit_of_measurement == UnitOfPower.WATT  # pylint: disable=protected-access
     assert sensor.icon == "mdi:power-plug-battery-outline"
-    assert sensor._attr_unique_id == "1234abcd_ccu_power"
-    
+    assert sensor._attr_unique_id == "1234abcd_ccu_power"  # pylint: disable=protected-access
+
 
 @pytest.mark.asyncio
-async def test_ccu_power_device_info(caplog):
-    
+async def test_ccu_power_device_info():
+    """ device_info Property der CcuPower Entity testen."""
+
     dummy_config_entry = MagicMock()
     dummy_config_entry.entry_id = "1234abcd"
     dummy_config_entry.title = "Test Entry"
     dummy_config_entry.data = {}
     dummy_config_entry.options = {}
-    
+
     sensor = CcuPower(dummy_config_entry)
-        
+
     # device_info liefert Dict mit erwarteten Keys
     device_info = sensor.device_info
     assert "identifiers" in device_info
@@ -52,29 +56,38 @@ async def test_ccu_power_device_info(caplog):
 
 
 @pytest.mark.asyncio
-async def test_ccu_power__handle_update_pccu_is_ok(caplog):
-    
+async def test_ccu_power__handle_update_pccu_is_ok():
+    """ _handle_update Methode der CcuPower Entity testen, wenn alle Bedingungen erfüllt sind."""
+
     dummy_config_entry = MagicMock()
     dummy_config_entry.entry_id = "1234abcd"
     dummy_config_entry.title = "Test Entry"
     dummy_config_entry.data = {}
     dummy_config_entry.options = {}
-    
+
     data = {
         "Pccu": 10
     }
 
     sensor = CcuPower(dummy_config_entry)
 
-    with patch("custom_components.maxxi_charge_connect.devices.ccu_power.CcuPower.async_write_ha_state", new_callable=MagicMock
-               ) as mock_write_ha_state:
-        await sensor._handle_update(data)
+    with (
+            patch(
+                "custom_components.maxxi_charge_connect.devices.ccu_power."
+                "CcuPower.async_write_ha_state",
+                new_callable=MagicMock,
+            ) as mock_write_ha_state
+    ):
+        await sensor._handle_update(data)  # pylint: disable=protected-access
         mock_write_ha_state.assert_called_once()
 
-    assert sensor._attr_native_value == 10
+        assert sensor._attr_native_value == 10  # pylint: disable=protected-access
+
 
 @pytest.mark.asyncio
-async def test_ccu_power__handle_update_pccu_is_too_high(caplog):
+async def test_ccu_power__handle_update_pccu_is_too_high():
+    """ _handle_update Methode der CcuPower Entity testen, wenn Pccu zu hoch ist."""
+
     hass = MagicMock()
     hass.async_add_job = AsyncMock()
 
@@ -90,15 +103,23 @@ async def test_ccu_power__handle_update_pccu_is_too_high(caplog):
 
     sensor = CcuPower(dummy_config_entry)
 
-    with patch("custom_components.maxxi_charge_connect.devices.ccu_power.CcuPower.async_write_ha_state", new_callable=MagicMock
-               ) as mock_write_ha_state:
-        await sensor._handle_update(data)
+    with (
+            patch(
+                "custom_components.maxxi_charge_connect.devices.ccu_power."
+                "CcuPower.async_write_ha_state",
+                new_callable=MagicMock
+            ) as mock_write_ha_state
+    ):
+        await sensor._handle_update(data)  # pylint: disable=protected-access
         mock_write_ha_state.assert_not_called()
 
-    assert sensor._attr_native_value is None
+        assert sensor._attr_native_value is None  # pylint: disable=protected-access
+
 
 @pytest.mark.asyncio
-async def test_ccu_power__handle_update_pccu_is_too_low(caplog):
+async def test_ccu_power__handle_update_pccu_is_too_low():
+    """ _handle_update Methode der CcuPower Entity testen, wenn Pccu zu niedrig ist."""
+
     hass = MagicMock()
     hass.async_add_job = AsyncMock()
 
@@ -114,17 +135,24 @@ async def test_ccu_power__handle_update_pccu_is_too_low(caplog):
 
     sensor = CcuPower(dummy_config_entry)
 
-    with patch("custom_components.maxxi_charge_connect.devices.ccu_power.CcuPower.async_write_ha_state", new_callable=MagicMock
-               ) as mock_write_ha_state:
-        await sensor._handle_update(data)
+    with (
+            patch(
+                    "custom_components.maxxi_charge_connect.devices."
+                    "ccu_power.CcuPower.async_write_ha_state",
+                    new_callable=MagicMock
+            ) as mock_write_ha_state
+    ):
+        await sensor._handle_update(data)  # pylint: disable=protected-access
         mock_write_ha_state.assert_not_called()
 
-    assert sensor._attr_native_value is None
+        assert sensor._attr_native_value is None  # pylint: disable=protected-access
 
 
 @pytest.mark.asyncio
 @patch("custom_components.maxxi_charge_connect.devices.ccu_power.async_dispatcher_connect")
 async def test_ccu_power__async_added_to_hass(mock_dispatcher_connect):
+    """ async_added_to_hass Methode der CcuPower Entity testen."""
+
     mock_dispatcher_connect.return_value = lambda: None
 
     hass = MagicMock()
@@ -142,11 +170,11 @@ async def test_ccu_power__async_added_to_hass(mock_dispatcher_connect):
 
     sensor = CcuPower(dummy_config_entry)
     sensor.hass = hass
-        
+
     await sensor.async_added_to_hass()
 
     mock_dispatcher_connect.assert_called_once()
-    args, kwargs = mock_dispatcher_connect.call_args
+    args, kwargs = mock_dispatcher_connect.call_args  # pylint: disable=unused-variable
 
     assert args[0] is hass
     assert args[1] == f"{DOMAIN}_{dummy_config_entry.data[CONF_WEBHOOK_ID]}_update_sensor"

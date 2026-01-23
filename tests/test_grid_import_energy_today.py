@@ -6,8 +6,6 @@ des GridImportEnergyToday-Sensors.
 
 import sys
 from pathlib import Path
-
-sys.path.append(str(Path(__file__).resolve().parents[3]))
 from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime, timedelta, UTC
 from homeassistant.util import dt as dt_util
@@ -17,6 +15,8 @@ import pytest
 from custom_components.maxxi_charge_connect.devices.grid_import_energy_today import (
     GridImportEnergyToday,
 )
+
+sys.path.append(str(Path(__file__).resolve().parents[3]))
 
 
 @pytest.mark.asyncio
@@ -44,7 +44,7 @@ async def test_reset_energy_daily_resets_last_reset_and_writes_state(caplog):
     sensor = GridImportEnergyToday(hass, entry, "sensor.pv_power")
     sensor.hass = hass
     sensor.async_write_ha_state = MagicMock()
-    sensor._state = 200
+    sensor._state = 200  # pylint: disable=protected-access
 
     # 🎯 Simuliere "alten" Reset-Zeitpunkt
     yesterday = dt_util.start_of_local_day() - timedelta(days=1)

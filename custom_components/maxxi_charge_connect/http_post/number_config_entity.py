@@ -261,23 +261,25 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
     async def _handle_winter_min_charge_change(self, event):
         """Handle winter min charge changed event."""
 
-        value = event.data.get("value")
+        value = event.data.get("value") # Wert aus dem Event extrahieren - Neuer Wert für minimale Ladung
         _LOGGER.warning("WinterMinCharge received winter min charge changed event. New(%s), Current(%s)", value, self._attr_native_value)
 
         if value is None:
+            _LOGGER.error("WinterMinCharge received None value in event.")
             return
 
         try:
             value_float = float(value)
+            aktual_float = float(self._attr_native_value) if self._attr_native_value is not None else None
         except (ValueError, TypeError):
             _LOGGER.error("Konnte Wert nicht in float umwandeln: %s", value)
             return
 
-        if value_float != self._attr_native_value:
+        if value_float != aktual_float:
 
             ok = await self._send_config_to_device(value)
             if ok:
-                self._attr_native_value = value
+                self._attr_native_value = value_float
                 _LOGGER.warning("WinterMinCharge set new value: %s", value_float)
             else:
                 _LOGGER.error("WinterMinCharge konnte neuen Wert nicht setzen: %s", value_float)

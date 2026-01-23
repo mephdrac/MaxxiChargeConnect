@@ -20,7 +20,6 @@ from ..const import (
         DOMAIN,
         CONF_WINTER_MODE,
         WINTER_MODE_CHANGED_EVENT,
-        EVENT_WINTER_MIN_CHARGE_CHANGED,
         CONF_WINTER_MIN_CHARGE,
         CONF_WINTER_MAX_CHARGE,
     )
@@ -122,8 +121,8 @@ class BatterySoc(BaseWebhookSensor):
 
                 _LOGGER.debug("Prüfe ob minSoc angepasst werden muss: native_value=%s, winter_min_charge=%s", native_value_float, winter_min_charge)
 
-                # Hole minSoc Entity                                
-                coordinator = self.hass.data[DOMAIN][self._entry.entry_id]["coordinator"]                    
+                # Hole minSoc Entity
+                coordinator = self.hass.data[DOMAIN][self._entry.entry_id]["coordinator"]
                 rest_key = "minSOC"
                 unique_id = f"{coordinator.entry.entry_id}_{rest_key}"
 
@@ -133,7 +132,7 @@ class BatterySoc(BaseWebhookSensor):
                         unique_id=unique_id
                     )
 
-                if (min_soc_entity is None):
+                if min_soc_entity is None:
                     _LOGGER.error("min_soc_entity nicht gefunden für unique_id: %s", unique_id)
                     return
 

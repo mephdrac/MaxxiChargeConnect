@@ -30,7 +30,6 @@ from .const import (
     PROXY_ERROR_TOTAL,
     PROXY_FORWARDED,
     PROXY_PAYLOAD,
-    DOMAIN
 )
 
 _LOGGER = logging.getLogger(__name__)

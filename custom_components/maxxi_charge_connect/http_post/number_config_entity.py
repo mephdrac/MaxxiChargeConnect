@@ -22,15 +22,12 @@ from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_IP_ADDRESS, EntityCategory
 from homeassistant.core import callback
-from homeassistant.exceptions import ServiceValidationError
 
 from ..const import (
     DEVICE_INFO,
     DOMAIN,
-    CONF_WINTER_MODE,
     WINTER_MODE_CHANGED_EVENT,
     EVENT_SUMMER_MIN_CHARGE_CHANGED,
-    
 )  # pylint: disable=relative-beyond-top-level
 
 from ..tools import as_float  # pylint: disable=relative-beyond-top-level
@@ -150,13 +147,13 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
 
         _LOGGER.debug("Setze neuen Wert für %s: %s", self._rest_key, value)
 
-        
+
         # if self._depends_on_winter_mode:
         #     if self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False):
         #         raise ServiceValidationError(
         #             "Wert kann im Winterbetrieb nicht geändert werden"
         #         )
-        
+
         self._attr_native_value = value
         self.async_write_ha_state()
         await self._send_config_to_device(value)

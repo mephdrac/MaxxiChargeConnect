@@ -124,9 +124,10 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods, too-many-
     async def handle_stale(self):
         """Setzt alle verwalteten Sensoren auf 'unavailable'."""
         for sensor in self.sensors.values():
-            sensor._attr_available = False  # pylint: disable=protected-access
-            sensor._attr_state = STATE_UNKNOWN  # pylint: disable=protected-access
-            sensor.async_write_ha_state()
+            if sensor is not None and sensor.hass is not None:
+                sensor._attr_available = False  # pylint: disable=protected-access
+                sensor._attr_state = STATE_UNKNOWN  # pylint: disable=protected-access
+                sensor.async_write_ha_state()
 
     async def handle_update(self, data):
         """Behandelt eingehende Batteriedaten von der MaxxiCharge-Station.

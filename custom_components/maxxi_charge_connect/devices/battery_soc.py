@@ -23,6 +23,7 @@ from ..const import (
         EVENT_WINTER_MIN_CHARGE_CHANGED,
         CONF_WINTER_MIN_CHARGE,
         CONF_WINTER_MAX_CHARGE,
+        HYSTERESIS
     )
 
 _LOGGER = logging.getLogger(__name__)
@@ -91,9 +92,18 @@ class BatterySoc(BaseWebhookSensor):
         Args:
             data (dict): Die empfangenen Daten, erwartet ein 'SOC'-Feld mit dem Prozentwert.
 
-        """
-        self._attr_native_value = data.get("SOC", 0)
-        self._attr_available = True
+        """        
+        try:
+            native_value_float = float(str(self._attr_native_value).strip())
+            self._attr_available = True
+        except (ValueError, TypeError):
+            _LOGGER.error(
+                "Ungültiger SOC-Wert empfangen: %r", self._attr_native_value
+            )
+            self._attr_available = False
+            return
+
+        self._attr_native_value = native_value_float
         wintermode = self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False)
         _LOGGER.debug("BatterySoc received webhook update: SOC=%s, Wintermode=%s, updating state.", self._attr_native_value, wintermode)
 
@@ -104,17 +114,16 @@ class BatterySoc(BaseWebhookSensor):
             winter_max_charge = float(self.hass.data[DOMAIN].get(CONF_WINTER_MAX_CHARGE, 60))
 
             if self._attr_native_value is not None:
-                native_value_float = float(self._attr_native_value)
 
                 _LOGGER.debug("Prüfe ob minSoc angepasst werden muss: native_value=%s, winter_min_charge=%s", native_value_float, winter_min_charge)
 
-                if native_value_float <= winter_min_charge:
+                if native_value_float <= winter_min_charge + HYSTERESIS:
                     _LOGGER.debug("Setze minSoc auf WinterMaxCarge: %s", winter_max_charge)
                     self.hass.bus.async_fire(
                         EVENT_WINTER_MIN_CHARGE_CHANGED,
                         {"value": winter_max_charge},
                     )
-                elif native_value_float >= winter_max_charge:
+                elif native_value_float >= winter_max_charge - HYSTERESIS:
                     _LOGGER.debug("Setze minSoc auf WinterMinCharge: %s", winter_min_charge)
                     self.hass.bus.async_fire(
                         EVENT_WINTER_MIN_CHARGE_CHANGED,

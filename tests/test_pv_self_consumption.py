@@ -1,13 +1,12 @@
 """Testet die Initialisierung und Attribute des `PvSelfConsumption` Sensors."""
 
 from unittest.mock import AsyncMock, MagicMock, patch
-from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
+from homeassistant.const import UnitOfPower
 from homeassistant.components.sensor import (
-    SensorDeviceClass,    
+    SensorDeviceClass,
     SensorStateClass,
 )
 import pytest
-from custom_components.maxxi_charge_connect.const import DOMAIN
 from custom_components.maxxi_charge_connect.devices.pv_self_consumption import (
     PvSelfConsumption,
 )
@@ -24,7 +23,7 @@ async def test_pv_self_consumption__init():
     sensor = PvSelfConsumption(dummy_config_entry)
 
     # Grundlegende Attribute prüfen
-    assert sensor._entry == dummy_config_entry
+    assert sensor._entry == dummy_config_entry  # pylint: disable=protected-access
     assert sensor._attr_suggested_display_precision == 2  # pylint: disable=protected-access
     assert sensor._attr_device_class == SensorDeviceClass.POWER  # pylint: disable=protected-access
     assert sensor._attr_state_class == SensorStateClass.MEASUREMENT  # pylint: disable=protected-access
@@ -73,7 +72,7 @@ async def test_pv_self_consumption__handle_update_alles_ok():
     }
 
     sensor = PvSelfConsumption(dummy_config_entry)
-    
+
     with (
             patch(
                 "custom_components.maxxi_charge_connect.devices."
@@ -90,7 +89,7 @@ async def test_pv_self_consumption__handle_update_alles_ok():
 async def test_pv_self_consumption__handle_update_pr_nicht_ok():
     """ _handle_update Methode der PvSelfConsumption Entity testen, wenn PR nicht ok ist."""
 
-    # is_pr_ok(pr) == false 
+    # is_pr_ok(pr) == false
     # is_power_total_ok(pv_power, batteries) == true
 
     dummy_config_entry = MagicMock()
@@ -113,7 +112,7 @@ async def test_pv_self_consumption__handle_update_pr_nicht_ok():
     with (
             patch(
                 "custom_components.maxxi_charge_connect.devices.pv_self_consumption."
-                "PvSelfConsumption.async_write_ha_state", 
+                "PvSelfConsumption.async_write_ha_state",
                 new_callable=MagicMock
             ) as mock_write_ha_state1,
 

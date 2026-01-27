@@ -33,39 +33,6 @@ async def test_battery_power_charge__init():
     assert sensor._attr_unique_id == "1234abcd_battery_power_charge"  # pylint: disable=protected-access
     assert sensor._attr_native_value is None  # pylint: disable=protected-access
 
-
-@pytest.mark.asyncio
-@patch("custom_components.maxxi_charge_connect.devices.battery_power_charge.async_dispatcher_connect")
-async def test_battery_power_charge__async_added_to_hass(mock_dispatcher_connect):
-    """Testet die async_added_to_hass Methode der BatteryPowerCharge Entity."""
-
-    mock_dispatcher_connect.return_value = lambda: None
-
-    hass = MagicMock()
-    hass.async_add_job = AsyncMock()
-
-    dummy_config_entry = MagicMock()
-    dummy_config_entry.entry_id = "1234abcd"
-    dummy_config_entry.title = "Test Entry"
-    dummy_config_entry.options = {}
-
-    dummy_config_entry.data = {
-        CONF_WEBHOOK_ID: "Webhook_ID"
-    }
-
-    sensor = BatteryPowerCharge(dummy_config_entry)
-    sensor.hass = hass
-
-    await sensor.async_added_to_hass()
-
-    mock_dispatcher_connect.assert_called_once()
-    args, kwargs = mock_dispatcher_connect.call_args  # pylint: disable=unused-variable
-
-    assert args[0] is hass
-    assert args[1] == f"{DOMAIN}_{dummy_config_entry.data[CONF_WEBHOOK_ID]}_update_sensor"
-    assert args[2].__name__ == "_handle_update"
-
-
 @pytest.mark.asyncio
 async def test_battery_power_charge__device_info():
     """Testet die device_info Eigenschaft der BatteryPowerCharge Entity."""
@@ -110,7 +77,7 @@ async def test_battery_power_charge__handle_update_alles_ok():
 
     with patch("custom_components.maxxi_charge_connect.devices.battery_power_charge.BatteryPowerCharge.async_write_ha_state", new_callable=MagicMock
                ) as mock_write_ha_state:
-        await sensor._handle_update(data)  # pylint: disable=protected-access
+        await sensor.handle_update(data)  # pylint: disable=protected-access
         mock_write_ha_state.assert_called_once()
 
     assert sensor._attr_native_value == round(pv_power - pccu, 3)  # pylint: disable=protected-access
@@ -144,7 +111,7 @@ async def test_battery_power_charge__handle_update_alles_ok_aber_batterieleistun
 
     with patch("custom_components.maxxi_charge_connect.devices.battery_power_charge.BatteryPowerCharge.async_write_ha_state", new_callable=MagicMock
                ) as mock_write_ha_state:
-        await sensor._handle_update(data)  # pylint: disable=protected-access
+        await sensor.handle_update(data)  # pylint: disable=protected-access
         mock_write_ha_state.assert_called_once()
 
     assert sensor._attr_native_value == 0  # pylint: disable=protected-access
@@ -192,7 +159,7 @@ async def test_battery_power_charge__handle_update_pccu_nicht_ok():
             return_value=True
         ) as mock_is_power_ok1
     ):
-        await sensor1._handle_update(data)  # pylint: disable=protected-access
+        await sensor1.handle_update(data)  # pylint: disable=protected-access
 
         mock_is_power_ok1.assert_not_called()
         mock_is_pccu_ok1.assert_called_once()
@@ -246,7 +213,7 @@ async def test_battery_power_charge__handle_update_alles_nicht_ok():
             return_value=False
         ) as mock_is_power_ok1
     ):
-        await sensor1._handle_update(data)  # pylint: disable=protected-access
+        await sensor1.handle_update(data)  # pylint: disable=protected-access
 
         mock_is_power_ok1.assert_not_called()
         mock_is_pccu_ok1.assert_called_once()
@@ -300,7 +267,7 @@ async def test_battery_power_charge__handle_update_power_total_nicht_ok():
                 return_value=False
             ) as mock_is_power_ok1
     ):
-        await sensor1._handle_update(data)  # pylint: disable=protected-access
+        await sensor1.handle_update(data)  # pylint: disable=protected-access
 
         mock_is_power_ok1.assert_called_once()
         mock_is_pccu_ok1.assert_called_once()

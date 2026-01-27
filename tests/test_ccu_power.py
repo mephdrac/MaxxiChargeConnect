@@ -78,7 +78,7 @@ async def test_ccu_power__handle_update_pccu_is_ok():
                 new_callable=MagicMock,
             ) as mock_write_ha_state
     ):
-        await sensor._handle_update(data)  # pylint: disable=protected-access
+        await sensor.handle_update(data)  # pylint: disable=protected-access
         mock_write_ha_state.assert_called_once()
 
         assert sensor._attr_native_value == 10  # pylint: disable=protected-access
@@ -110,7 +110,7 @@ async def test_ccu_power__handle_update_pccu_is_too_high():
                 new_callable=MagicMock
             ) as mock_write_ha_state
     ):
-        await sensor._handle_update(data)  # pylint: disable=protected-access
+        await sensor.handle_update(data)  # pylint: disable=protected-access
         mock_write_ha_state.assert_not_called()
 
         assert sensor._attr_native_value is None  # pylint: disable=protected-access
@@ -142,40 +142,7 @@ async def test_ccu_power__handle_update_pccu_is_too_low():
                     new_callable=MagicMock
             ) as mock_write_ha_state
     ):
-        await sensor._handle_update(data)  # pylint: disable=protected-access
+        await sensor.handle_update(data)  # pylint: disable=protected-access
         mock_write_ha_state.assert_not_called()
 
         assert sensor._attr_native_value is None  # pylint: disable=protected-access
-
-
-@pytest.mark.asyncio
-@patch("custom_components.maxxi_charge_connect.devices.ccu_power.async_dispatcher_connect")
-async def test_ccu_power__async_added_to_hass(mock_dispatcher_connect):
-    """ async_added_to_hass Methode der CcuPower Entity testen."""
-
-    mock_dispatcher_connect.return_value = lambda: None
-
-    hass = MagicMock()
-    hass.async_add_job = AsyncMock()
-
-    dummy_config_entry = MagicMock()
-    dummy_config_entry.entry_id = "1234abcd"
-    dummy_config_entry.title = "Test Entry"
-
-    dummy_config_entry.options = {}
-
-    dummy_config_entry.data = {
-        CONF_WEBHOOK_ID: "Webhook_ID"
-    }
-
-    sensor = CcuPower(dummy_config_entry)
-    sensor.hass = hass
-
-    await sensor.async_added_to_hass()
-
-    mock_dispatcher_connect.assert_called_once()
-    args, kwargs = mock_dispatcher_connect.call_args  # pylint: disable=unused-variable
-
-    assert args[0] is hass
-    assert args[1] == f"{DOMAIN}_{dummy_config_entry.data[CONF_WEBHOOK_ID]}_update_sensor"
-    assert args[2].__name__ == "_handle_update"

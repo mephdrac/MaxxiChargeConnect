@@ -14,7 +14,9 @@ Abhängigkeiten:
 """
 
 import logging
+import asyncio
 import aiohttp
+
 from aiohttp import ClientConnectorError, ClientError
 
 from homeassistant.core import HomeAssistant
@@ -135,29 +137,48 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
     def set_native_value(self, value: float) -> None:
         """Synchroner Wrapper für async_set_native_value."""
         async def runner():
-            try:
-                await self.async_set_native_value(value)
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                _LOGGER.error("Fehler beim Setzen des Werts(%s): %s", value, e)
+            await self.async_set_native_value(value)
 
         self.hass.create_task(runner())
 
-    async def async_set_native_value(self, value: float) -> None:
-        """Wert setzen und per REST an das Gerät senden."""
+    async def set_change_limitation(self, value, count_retry) -> bool:
+        """_summary_
+
+        Args:
+            value (_type_): _description_
+            count_retry (_type_): _description_
+
+        Returns:
+            bool: _description_
+        """
 
         _LOGGER.debug("Setze neuen Wert für %s: %s", self._rest_key, value)
-
 
         # if self._depends_on_winter_mode:
         #     if self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False):
         #         raise ServiceValidationError(
         #             "Wert kann im Winterbetrieb nicht geändert werden"
         #         )
-
+        result = False
         self._attr_native_value = value
         self.async_write_ha_state()
-        await self._send_config_to_device(value)
-        self.async_write_ha_state()
+
+        try:
+            for _ in range(count_retry):
+                result = await self._send_config_to_device(value)
+                if result:
+                    self.async_write_ha_state()
+                    break
+                await asyncio.sleep(5)
+
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            _LOGGER.error("Fehler beim Setzen des Werts(%s): %s", value, e)
+
+        return result
+
+    async def async_set_native_value(self, value: float) -> None:
+        """Wert setzen und per REST an das Gerät senden."""
+        await self.set_change_limitation(value=value, count_retry=5)
 
     async def _send_config_to_device(self, value: float) -> bool:
         """Sendet den Wert via HTTP-POST an das Gerät."""

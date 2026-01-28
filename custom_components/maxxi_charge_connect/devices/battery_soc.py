@@ -12,14 +12,12 @@ import logging
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE
-from homeassistant.core import callback
 
 from .base_webhook_sensor import BaseWebhookSensor
 
 from ..const import (
         DOMAIN,
         CONF_WINTER_MODE,
-        WINTER_MODE_CHANGED_EVENT,
         CONF_WINTER_MIN_CHARGE,
         CONF_WINTER_MAX_CHARGE,
     )
@@ -58,37 +56,93 @@ class BatterySoc(BaseWebhookSensor):
         self._attr_native_unit_of_measurement = PERCENTAGE
         self._remove_listener = None
 
-    async def async_added_to_hass(self):
-        """Registriert den Listener, wenn die Entität hinzugefügt wird."""
-        await super().async_added_to_hass()
+    async def _check_upper_limit_reached(self, cur_value: float, cur_min_limit: float) -> bool:
+        """Überprüft, ob der SOC den oberen Grenzwert im Wintermodus erreicht hat.
 
-        winter_betrieb = self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False)
-        _LOGGER.warning("BatterySoc async_added_to_hass: Winterbetrieb=%s", winter_betrieb)
+        Returns:
+            bool: True, wenn der SOC den oberen Grenzwert erreicht oder überschritten hat, sonst False.
+        """
+        result = False
 
-        self._remove_listener = self.hass.bus.async_listen(
-            WINTER_MODE_CHANGED_EVENT,
-            self._handle_winter_mode_changed,
-        )
+        _LOGGER.debug("Prüfe ob im Wintermodus der obere Grenzwert erreicht ist.")
+        winter_min_charge = float(self.hass.data[DOMAIN].get(CONF_WINTER_MIN_CHARGE, 20))
+        winter_max_charge = float(self.hass.data[DOMAIN].get(CONF_WINTER_MAX_CHARGE, 60))
 
-    async def async_will_remove_from_hass(self):
-        """Entfernt den Listener, wenn die Entität entfernt wird."""
-        await super().async_will_remove_from_hass()
+        _LOGGER.debug("WinterminCharge: %s, WintermaxCharge: %s, cur_value: %s, cur_min_limit: %s", winter_min_charge, winter_max_charge, cur_value, cur_min_limit)
 
-        if self._remove_listener:
-            self._remove_listener()
+        result = cur_value >= winter_max_charge and cur_min_limit != winter_min_charge
 
-    @callback
-    def _handle_winter_mode_changed(self, event):  # Pylint: disable=unused-argument
-        """Handle winter mode changed event."""
+        _LOGGER.debug("result: %s", result)
 
-        winter_mode_enabled = event.data.get("enabled")
-        _LOGGER.warning("WinterMinCharge received winter mode changed event: %s", winter_mode_enabled)
+        return result
 
-        if winter_mode_enabled is None:
-            winter_mode_enabled = event.data.get("enabled", False)
+    async def _check_lower_limit_reached(self, cur_value: float, cur_min_limit: float) -> bool:
+        """Überprüft, ob der SOC den unteren Grenzwert im Wintermodus erreicht hat.
 
-        _LOGGER.warning("WinterMinCharge received winter mode changed event: %s", winter_mode_enabled)
-        self.async_write_ha_state()
+        Returns:
+            bool: True, wenn der SOC den unteren Grenzwert erreicht oder unterschritten hat, sonst False.
+        """
+        result = False
+
+        _LOGGER.debug("Prüfe ob im Wintermodus der obere Grenzwert erreicht ist.")
+        winter_min_charge = float(self.hass.data[DOMAIN].get(CONF_WINTER_MIN_CHARGE, 20))
+        winter_max_charge = float(self.hass.data[DOMAIN].get(CONF_WINTER_MAX_CHARGE, 60))
+
+        _LOGGER.debug("WinterminCharge: %s, WintermaxCharge: %s, cur_value: %s, cur_min_limit: %s", winter_min_charge, winter_max_charge, cur_value, cur_min_limit)
+
+        result = cur_value <= winter_min_charge and cur_min_limit != winter_max_charge
+
+        _LOGGER.debug("result: %s", result)
+
+        return result
+
+    async def _get_min_soc_entity(self):
+        # Hole minSoc Entity
+        coordinator = self.hass.data[DOMAIN][self._entry.entry_id]["coordinator"]
+        rest_key = "minSOC"
+        unique_id = f"{coordinator.entry.entry_id}_{rest_key}"
+
+        min_soc_entity = get_entity(
+                hass=self.hass,
+                plattform=DOMAIN,
+                unique_id=unique_id
+            )
+
+        cur_state = None
+        if min_soc_entity is None:
+            _LOGGER.error("min_soc_entity nicht gefunden für unique_id: %s", unique_id)
+        else:
+            cur_state = self.hass.states.get(min_soc_entity.entity_id)
+
+            if cur_state is not None and cur_state.state not in ("unknown", "unavailable"):
+                _LOGGER.debug("Current state of min_soc entity %s: %s", min_soc_entity.entity_id, cur_state.state if cur_state else "State not found")
+
+        return min_soc_entity, cur_state
+
+    async def _do_wintermode(self, native_value: float):
+
+        # Im Wintermodus: UI sofort aktualisieren
+        _LOGGER.debug("Wintermodus aktiv - spezielle Prüfung")
+        winter_min_charge = float(self.hass.data[DOMAIN].get(CONF_WINTER_MIN_CHARGE, 20))
+        winter_max_charge = float(self.hass.data[DOMAIN].get(CONF_WINTER_MAX_CHARGE, 60))
+
+        _LOGGER.debug("Prüfe ob minSoc angepasst werden muss: native_value=%s, winter_min_charge=%s", native_value, winter_min_charge)
+        min_soc_entity, cur_state = await self._get_min_soc_entity()
+
+        if min_soc_entity is not None and cur_state is not None:
+
+            cur_state_float = float(cur_state.state)
+
+            if self._check_lower_limit_reached(native_value, cur_state_float):
+                _LOGGER.debug("Setze minSoc auf WinterMaxCarge: %s", winter_max_charge)
+                await min_soc_entity.set_change_limitation(winter_max_charge, 5)
+
+            elif self._check_upper_limit_reached(native_value, cur_state_float):
+                _LOGGER.warning("Setze minSoc auf WinterMinCharge: %s", winter_min_charge)
+                await min_soc_entity.set_change_limitation(winter_min_charge, 5)
+
+            else:
+                _LOGGER.debug("Keine Anpassung des min_soc erforderlich.")
 
     async def handle_update(self, data):
         """Verarbeitet eingehende Webhook-Daten und aktualisiert den Sensorwert.
@@ -112,66 +166,8 @@ class BatterySoc(BaseWebhookSensor):
         _LOGGER.debug("BatterySoc received webhook update: SOC=%s, Wintermode=%s, updating state.", self._attr_native_value, wintermode)
 
         if wintermode:
-            # Im Wintermodus: UI sofort aktualisieren
-            _LOGGER.debug("Wintermodus aktiv - spezielle Prüfung")
-            winter_min_charge = float(self.hass.data[DOMAIN].get(CONF_WINTER_MIN_CHARGE, 20))
-            winter_max_charge = float(self.hass.data[DOMAIN].get(CONF_WINTER_MAX_CHARGE, 60))
-
-            if self._attr_native_value is not None:
-
-                _LOGGER.debug("Prüfe ob minSoc angepasst werden muss: native_value=%s, winter_min_charge=%s", native_value_float, winter_min_charge)
-
-                # Hole minSoc Entity
-                coordinator = self.hass.data[DOMAIN][self._entry.entry_id]["coordinator"]
-                rest_key = "minSOC"
-                unique_id = f"{coordinator.entry.entry_id}_{rest_key}"
-
-                min_soc_entity = get_entity(
-                        hass=self.hass,
-                        plattform=DOMAIN,
-                        unique_id=unique_id
-                    )
-
-                if min_soc_entity is None:
-                    _LOGGER.error("min_soc_entity nicht gefunden für unique_id: %s", unique_id)
-                    return
-
-                cur_state = self.hass.states.get(min_soc_entity.entity_id)
-                _LOGGER.warning("Current state of min_soc entity %s: %s", min_soc_entity.entity_id, cur_state.state if cur_state else "State not found")
-
-                if (cur_state is not None and cur_state.state not in ("unknown", "unavailable")):  # Nur wenn der Zustand bekannt ist
-                    cur_state_float = float(cur_state.state)
-
-                    if native_value_float <= winter_min_charge and cur_state_float != winter_max_charge:
-                        _LOGGER.warning("Setze minSoc auf WinterMaxCarge: %s", winter_max_charge)
-
-                        await self.hass.services.async_call(
-                            "number",
-                            "set_value",
-                            {
-                                "entity_id": min_soc_entity.entity_id,
-                                "value": winter_max_charge,
-                            },
-                            blocking=True,
-                        )
-                    elif native_value_float >= winter_max_charge and cur_state_float != winter_min_charge:
-                        _LOGGER.warning("Setze minSoc auf WinterMinCharge: %s", winter_min_charge)
-
-                        await self.hass.services.async_call(
-                            "number",
-                            "set_value",
-                            {
-                                "entity_id": min_soc_entity.entity_id,
-                                "value": winter_min_charge,
-                            },
-                            blocking=True,
-                        )
-                    else:
-                        _LOGGER.debug("Keine Anpassung des min_soc erforderlich.")
-                else:
-                    _LOGGER.warning("Current state of min_soc entity is None.")
-            else:
-                _LOGGER.debug("Native value ist None im Wintermodus.")
+            _LOGGER.debug("Wintermodus - aktiv")
+            self._do_wintermode(native_value_float)
         else:
             # Im Normalmodus: UI sofort aktualisieren
             _LOGGER.debug("Normalmodus - UI wird aktualisiert")

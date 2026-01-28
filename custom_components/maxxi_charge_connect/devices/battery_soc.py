@@ -138,7 +138,7 @@ class BatterySoc(BaseWebhookSensor):
                 await min_soc_entity.set_change_limitation(winter_max_charge, 5)
 
             elif self._check_upper_limit_reached(native_value, cur_state_float):
-                _LOGGER.warning("Setze minSoc auf WinterMinCharge: %s", winter_min_charge)
+                _LOGGER.debug("Setze minSoc auf WinterMinCharge: %s", winter_min_charge)
                 await min_soc_entity.set_change_limitation(winter_min_charge, 5)
 
             else:

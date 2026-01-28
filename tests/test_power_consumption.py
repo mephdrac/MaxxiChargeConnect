@@ -169,7 +169,6 @@ async def test_power_consumption_add_and_handle_update4(sensor):  # pylint: disa
         assert sensor.native_value is None
 
 
-@pytest.mark.asyncio
 def test_device_info(sensor):  # pylint: disable=redefined-outer-name
     """Testet die Rückgabe der `device_info`.
 

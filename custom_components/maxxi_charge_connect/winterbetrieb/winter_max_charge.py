@@ -15,7 +15,6 @@ from ..const import (
     CONF_WINTER_MIN_CHARGE,
     DEFAULT_WINTER_MIN_CHARGE,
     DEFAULT_WINTER_MAX_CHARGE,
-    EVENT_WINTER_MAX_CHARGE_CHANGED
 )  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
@@ -65,6 +64,7 @@ class WinterMaxCharge(NumberEntity):
 
         # in hass.data spiegeln (für Logik / Availability)
         self.hass.data.setdefault(DOMAIN, {})
+
         self.hass.data[DOMAIN][CONF_WINTER_MAX_CHARGE] = value
 
         # persistent speichern
@@ -75,18 +75,9 @@ class WinterMaxCharge(NumberEntity):
                 CONF_WINTER_MAX_CHARGE: value,
             },
         )
+
         # UI sofort aktualisieren
         self.async_write_ha_state()
-        self._notify_dependents(value)
-
-    # async def _get_min_soc_entity(self):
-
-    def _notify_dependents(self, value: float):
-        _LOGGER.debug("Feuer WinterMaxCharge changed event mit Wert: %s", value)
-        self.hass.bus.async_fire(
-            EVENT_WINTER_MAX_CHARGE_CHANGED,
-            {"value": value}
-        )
 
     @property
     def available(self) -> bool:

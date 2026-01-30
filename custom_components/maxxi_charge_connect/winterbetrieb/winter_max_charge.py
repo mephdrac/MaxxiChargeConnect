@@ -53,7 +53,10 @@ class WinterMaxCharge(NumberEntity):
         self._remove_listener = None
 
     def set_native_value(self, value):
-        return self.async_set_native_value(value)
+        async def runner():
+            await self.async_set_native_value(value)
+
+        self.hass.create_task(runner())
 
     async def async_set_native_value(self, value: float) -> None:
         """Wird aufgerufen, wenn der User den Wert ändert."""
@@ -75,6 +78,8 @@ class WinterMaxCharge(NumberEntity):
         # UI sofort aktualisieren
         self.async_write_ha_state()
         self._notify_dependents(value)
+
+    # async def _get_min_soc_entity(self):
 
     def _notify_dependents(self, value: float):
         _LOGGER.debug("Feuer WinterMaxCharge changed event mit Wert: %s", value)

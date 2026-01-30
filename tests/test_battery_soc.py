@@ -556,7 +556,7 @@ async def test_battery_soc___do_wintermode2():  # pylint: disable=invalid-name
 
     sensor._get_min_soc_entity.assert_awaited_once()   # pylint: disable=protected-access
     sensor._check_lower_limit_reached.assert_called_once_with(cur_value, cur_state)   # pylint: disable=protected-access
-    sensor._check_upper_limit_reached.assert_called_once_with(cur_value, cur_state)   # pylint: disable=protected-access    
+    sensor._check_upper_limit_reached.assert_called_once_with(cur_value, cur_state)   # pylint: disable=protected-access
     mock_entity.set_change_limitation.assert_not_awaited()  # pylint: disable=protected-access
 
 

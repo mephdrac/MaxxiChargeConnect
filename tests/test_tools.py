@@ -1,6 +1,6 @@
 """Testet die Hilfsfunktionen in tools.py des MaxxiChargeConnect Integrations."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock
 import pytest
 
 from custom_components.maxxi_charge_connect.tools import (
@@ -168,11 +168,38 @@ async def test_tools___get_min_soc_entity1():  # pylint: disable=invalid-name
     mock_config_entry = MagicMock()
     mock_config_entry.entry_id = "1234abcd"
 
-    mock_coordinator = AsyncMock()
-    mock_coordinator.entry = mock_config_entry
+    mock_entity = MagicMock()
+    mock_entity.entity_id = "number.my_entity"
 
-    rest_key = "minSOC"
-    unique_id = f"{mock_coordinator.entry.entry_id}_{rest_key}"
+    mock_state = MagicMock()
+    mock_state.state = 42
+
+    mock_hass.data = {
+        DOMAIN: {
+            mock_config_entry.entry_id: {
+                "entities": {
+                    "minSOC": mock_entity
+                }
+            }
+        }
+    }
+
+    mock_hass.states.get.return_value = mock_state
+    min_soc_entity, cur_state = await async_get_min_soc_entity(mock_hass, mock_config_entry.entry_id)
+
+    assert min_soc_entity is not None
+    assert min_soc_entity == mock_entity
+
+    mock_hass.states.get.assert_called_once_with(mock_entity.entity_id)
+    assert cur_state.state == 42
+
+
+@pytest.mark.asyncio
+async def test_battery_soc___get_min_soc_entity2():  # pylint: disable=invalid-name
+    """Testet den Fall die Entity is None."""
+    mock_hass = MagicMock()
+    mock_config_entry = MagicMock()
+    mock_config_entry.entry_id = "1234abcd"
 
     mock_entity = MagicMock()
     mock_entity.entity_id = "number.my_entity"
@@ -180,72 +207,22 @@ async def test_tools___get_min_soc_entity1():  # pylint: disable=invalid-name
     mock_state = MagicMock()
     mock_state.state = 42
 
+    mock_hass.data = {
+        DOMAIN: {
+            mock_config_entry.entry_id: {
+                "entities": {
+                    "minSOC": None
+                }
+            }
+        }
+    }
+
     mock_hass.states.get.return_value = mock_state
+    min_soc_entity, cur_state = await async_get_min_soc_entity(mock_hass, mock_config_entry.entry_id)
 
-    mock_hass.data = {
-        DOMAIN: {
-            mock_config_entry.entry_id: {
-                "coordinator": mock_coordinator
-            }
-        }
-    }
-
-    with patch("custom_components.maxxi_charge_connect.tools.get_entity", return_value=mock_entity) as mock_get_entity:
-
-        min_soc_entity, cur_state = await async_get_min_soc_entity(mock_hass, mock_coordinator.entry.entry_id)
-
-        # Prüfen, dass get_entity aufgerufen wurde
-        mock_get_entity.assert_called_once_with(
-            hass=mock_hass,
-            plattform=DOMAIN,
-            unique_id=unique_id
-        )
-
-        assert min_soc_entity is not None
-        assert min_soc_entity == mock_entity
-
-        mock_hass.states.get.assert_called_once_with(mock_entity.entity_id)
-        assert cur_state.state == 42
-
-
-@pytest.mark.asyncio
-async def test_battery_soc___get_min_soc_entity2():  # pylint: disable=invalid-name
-    """Testet den Fall die Entity wurde nicht gefunden."""
-    mock_hass = MagicMock()
-    mock_config_entry = MagicMock()
-    mock_config_entry.entry_id = "1234abcd"
-
-    mock_coordinator = AsyncMock()
-    mock_coordinator.entry = mock_config_entry
-
-    rest_key = "minSOC"
-    unique_id = f"{mock_coordinator.entry.entry_id}_{rest_key}"
-
-    mock_entity = MagicMock()
-    mock_entity.entity_id = "number.my_entity"
-
-    mock_hass.data = {
-        DOMAIN: {
-            mock_config_entry.entry_id: {
-                "coordinator": mock_coordinator
-            }
-        }
-    }
-
-    with patch("custom_components.maxxi_charge_connect.tools.get_entity", return_value=None) as mock_get_entity:
-
-        min_soc_entity, cur_state = await async_get_min_soc_entity(mock_hass, mock_coordinator.entry.entry_id)
-
-        # Prüfen, dass get_entity aufgerufen wurde
-        mock_get_entity.assert_called_once_with(
-            hass=mock_hass,
-            plattform=DOMAIN,
-            unique_id=unique_id
-        )
-
-        assert min_soc_entity is None
-        mock_hass.states.get.assert_not_called()
-        assert cur_state is None
+    assert min_soc_entity is None
+    mock_hass.states.get.assert_not_called()
+    assert cur_state is None
 
 
 @pytest.mark.asyncio
@@ -255,41 +232,27 @@ async def test_battery_soc___get_min_soc_entity3():  # pylint: disable=invalid-n
     mock_config_entry = MagicMock()
     mock_config_entry.entry_id = "1234abcd"
 
-    mock_coordinator = AsyncMock()
-    mock_coordinator.entry = mock_config_entry
-
-    rest_key = "minSOC"
-    unique_id = f"{mock_coordinator.entry.entry_id}_{rest_key}"
-
     mock_entity = MagicMock()
     mock_entity.entity_id = "number.my_entity"
 
     mock_state = MagicMock()
-    mock_state.state = "unknown"
-
-    mock_hass.states.get.return_value = mock_state
+    mock_state.state = 42
 
     mock_hass.data = {
         DOMAIN: {
             mock_config_entry.entry_id: {
-                "coordinator": mock_coordinator
+                "entities": {
+                    "minSOC": mock_entity
+                }
             }
         }
     }
 
-    with patch("custom_components.maxxi_charge_connect.tools.get_entity", return_value=mock_entity) as mock_get_entity:
+    mock_hass.states.get.return_value = None
+    min_soc_entity, cur_state = await async_get_min_soc_entity(mock_hass, mock_config_entry.entry_id)
 
-        min_soc_entity, cur_state = await async_get_min_soc_entity(mock_hass, mock_coordinator.entry.entry_id)
+    assert min_soc_entity is not None
+    assert min_soc_entity == mock_entity
 
-        # Prüfen, dass get_entity aufgerufen wurde
-        mock_get_entity.assert_called_once_with(
-            hass=mock_hass,
-            plattform=DOMAIN,
-            unique_id=unique_id
-        )
-
-        assert min_soc_entity is not None
-        assert min_soc_entity == mock_entity
-
-        mock_hass.states.get.assert_called_once_with(mock_entity.entity_id)
-        assert cur_state.state == "unknown"
+    mock_hass.states.get.assert_called_once_with(mock_entity.entity_id)
+    assert cur_state is None

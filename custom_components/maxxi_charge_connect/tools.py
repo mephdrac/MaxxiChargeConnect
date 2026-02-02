@@ -226,23 +226,29 @@ def get_entity(hass: HomeAssistant, plattform: str, unique_id: str):
 async def async_get_min_soc_entity(hass: HomeAssistant, entry_id: str):
     """Hole minSoc Entity"""
 
-    coordinator = hass.data[DOMAIN][entry_id]["coordinator"]
-    rest_key = "minSOC"
-    unique_id = f"{coordinator.entry.entry_id}_{rest_key}"
+    entry_data = hass.data.get(DOMAIN, {}).get(entry_id)
+    if not entry_data:
+        return None, None
 
-    min_soc_entity = get_entity(
-            hass=hass,
-            plattform=DOMAIN,
-            unique_id=unique_id
-        )
+    min_soc_entity = entry_data.get("entities", {}).get("minSOC")
+    # min_soc_entity = hass.data[DOMAIN][entry_id]["entities"]["min_soc"]
 
+    # coordinator = hass.data[DOMAIN][entry_id]["coordinator"]
+    # rest_key = "minSOC"
+    # unique_id = f"{coordinator.entry.entry_id}_{rest_key}"
+
+    # min_soc_entity = get_entity(
+    #         hass=hass,
+    #         plattform=DOMAIN,
+    #         unique_id=unique_id
+    #     )
     cur_state = None
-    if min_soc_entity is None:
-        _LOGGER.error("min_soc_entity nicht gefunden für unique_id: %s", unique_id)
-    else:
+    if min_soc_entity is not None:
         cur_state = hass.states.get(min_soc_entity.entity_id)
 
         if cur_state is not None and cur_state.state not in ("unknown", "unavailable"):
             _LOGGER.debug("Current state of min_soc entity %s: %s", min_soc_entity.entity_id, cur_state.state if cur_state else "State not found")
+    else:
+        _LOGGER.error("min_soc_entity is None")
 
     return min_soc_entity, cur_state

@@ -99,6 +99,7 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
         self._attr_entity_category = EntityCategory.CONFIG
         self._remove_listener = None
         self._remove_summer_listener = None
+        self._show_current_value_immediately = False
 
         _LOGGER.debug("Wert: %s", as_float(self._coordinator.data.get(self._value_key)))
 
@@ -126,6 +127,13 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
                 self._handle_summer_charge_changed,
             )
 
+        domain_data = self.hass.data.setdefault(DOMAIN, {})
+        entry_data = domain_data.setdefault(self._entry.entry_id, {})
+        entities = entry_data.setdefault("entities", {})
+
+        _LOGGER.debug("Speichere Intanz(%s,%s)", self._rest_key, self)
+        entities[self._rest_key] = self
+
     async def async_will_remove_from_hass(self):
         """Entfernt den Listener, wenn die Entität entfernt wird."""
         if self._remove_listener:
@@ -152,13 +160,14 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
             bool: _description_
         """
 
-        _LOGGER.debug("Setze neuen Wert für %s: %s", self._rest_key, value)
+        _LOGGER.info("Setze neuen Wert für %s: %s", self._rest_key, value)
 
         # if self._depends_on_winter_mode:
         #     if self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False):
         #         raise ServiceValidationError(
         #             "Wert kann im Winterbetrieb nicht geändert werden"
         #         )
+        self._show_current_value_immediately = True
         result = False
         self._attr_native_value = value
         self.async_write_ha_state()
@@ -170,6 +179,12 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
                     self.async_write_ha_state()
                     break
                 await asyncio.sleep(5)
+
+            if result:
+                _LOGGER.info("MinSoc-Wert wurde auf (%s) gesetzt", value)
+            else:
+                _LOGGER.warning("Nach (%s)-Versuchen-konnten Datenübertragung abgebrochen", count_retry)
+                self._show_current_value_immediately = False
 
         except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error("Fehler beim Setzen des Werts(%s): %s", value, e)
@@ -238,11 +253,14 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
         _LOGGER.debug(
             "Value: %s", as_float(self._coordinator.data.get(self._value_key))
         )
-        return (
-            as_float(self._coordinator.data.get(self._value_key))
-            if self._coordinator.data
-            else None
-        )
+
+        if self._show_current_value_immediately:
+            result = self._attr_native_value
+            self._show_current_value_immediately = False
+        else:
+            result = as_float(self._coordinator.data.get(self._value_key)) if self._coordinator.data else None
+
+        return result
 
     @callback
     def _handle_summer_charge_changed(self, event):

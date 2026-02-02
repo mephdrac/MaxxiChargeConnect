@@ -238,7 +238,10 @@
       },
       "CCUTemperaturSensor": {
         "name": "CCU-Temperatur"
-      }      
+      },
+      "SendCount": {
+        "name": "Telegramme"
+      }
     },
     "switch": {
       "Winterbetrieb": {

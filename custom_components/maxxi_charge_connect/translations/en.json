@@ -243,6 +243,9 @@
       },
       "Winterbetrieb": {
         "name": "Winter Operation"
+      },
+      "SendCount": {
+        "name": "Telegrams"
       }
     },
     "switch": {

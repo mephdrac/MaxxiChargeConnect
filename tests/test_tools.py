@@ -1,8 +1,20 @@
 """Testet die Hilfsfunktionen in tools.py des MaxxiChargeConnect Integrations."""
 
-
+from unittest.mock import MagicMock
 import pytest
-from custom_components.maxxi_charge_connect.tools import is_pccu_ok, is_power_total_ok, is_pr_ok, clean_title, as_float
+
+from custom_components.maxxi_charge_connect.tools import (
+    is_pccu_ok,
+    is_power_total_ok,
+    is_pr_ok,
+    clean_title,
+    as_float,
+    async_get_min_soc_entity
+)
+
+from custom_components.maxxi_charge_connect.const import (
+    DOMAIN
+)
 
 
 @pytest.mark.asyncio
@@ -147,3 +159,100 @@ async def test_tools__as_float__param_ist_none():
 
     value = None
     assert as_float(value) is None
+
+
+@pytest.mark.asyncio
+async def test_tools___get_min_soc_entity1():  # pylint: disable=invalid-name
+    """Testet den Fall für alles OK, d.h. die Entity wurde gefunden."""
+    mock_hass = MagicMock()
+    mock_config_entry = MagicMock()
+    mock_config_entry.entry_id = "1234abcd"
+
+    mock_entity = MagicMock()
+    mock_entity.entity_id = "number.my_entity"
+
+    mock_state = MagicMock()
+    mock_state.state = 42
+
+    mock_hass.data = {
+        DOMAIN: {
+            mock_config_entry.entry_id: {
+                "entities": {
+                    "minSOC": mock_entity
+                }
+            }
+        }
+    }
+
+    mock_hass.states.get.return_value = mock_state
+    min_soc_entity, cur_state = await async_get_min_soc_entity(mock_hass, mock_config_entry.entry_id)
+
+    assert min_soc_entity is not None
+    assert min_soc_entity == mock_entity
+
+    mock_hass.states.get.assert_called_once_with(mock_entity.entity_id)
+    assert cur_state.state == 42
+
+
+@pytest.mark.asyncio
+async def test_battery_soc___get_min_soc_entity2():  # pylint: disable=invalid-name
+    """Testet den Fall die Entity is None."""
+    mock_hass = MagicMock()
+    mock_config_entry = MagicMock()
+    mock_config_entry.entry_id = "1234abcd"
+
+    mock_entity = MagicMock()
+    mock_entity.entity_id = "number.my_entity"
+
+    mock_state = MagicMock()
+    mock_state.state = 42
+
+    mock_hass.data = {
+        DOMAIN: {
+            mock_config_entry.entry_id: {
+                "entities": {
+                    "minSOC": None
+                }
+            }
+        }
+    }
+
+    mock_hass.states.get.return_value = mock_state
+    min_soc_entity, cur_state = await async_get_min_soc_entity(mock_hass, mock_config_entry.entry_id)
+
+    assert min_soc_entity is None
+    mock_hass.states.get.assert_not_called()
+    assert cur_state is None
+
+
+@pytest.mark.asyncio
+async def test_battery_soc___get_min_soc_entity3():  # pylint: disable=invalid-name
+    """Testet den Fall, die Entity wurde gefunden aber mit state unknown."""
+    mock_hass = MagicMock()
+    mock_config_entry = MagicMock()
+    mock_config_entry.entry_id = "1234abcd"
+
+    mock_entity = MagicMock()
+    mock_entity.entity_id = "number.my_entity"
+
+    mock_state = MagicMock()
+    mock_state.state = 42
+
+    mock_hass.data = {
+        DOMAIN: {
+            mock_config_entry.entry_id: {
+                "entities": {
+                    "minSOC": mock_entity
+                }
+            }
+        }
+    }
+
+    mock_hass.states.get.return_value = None
+    min_soc_entity, cur_state = await async_get_min_soc_entity(mock_hass, mock_config_entry.entry_id)
+
+    assert min_soc_entity is not None
+    assert min_soc_entity == mock_entity
+
+    mock_hass.states.get.assert_called_once_with(mock_entity.entity_id)
+    assert cur_state is None

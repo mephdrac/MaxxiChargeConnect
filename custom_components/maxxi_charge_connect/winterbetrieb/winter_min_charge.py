@@ -127,7 +127,7 @@ class WinterMinCharge(NumberEntity):
     async def _handle_winter_max_charge_changed(self, event):
         value = event.data.get("value")
 
-        _LOGGER.debug("WinterMinCharge received max charge changed event: %s", value)
+        _LOGGER.info("WinterMinCharge received max charge changed event: %s", value)
 
         if value is None:
             return
@@ -143,6 +143,7 @@ class WinterMinCharge(NumberEntity):
             await self.async_set_native_value(value_float)
 
         self._attr_native_max_value = value_float
+        _LOGGER.debug("MaxValue(%s)", self._attr_native_max_value)
         self.async_write_ha_state()
 
     @property

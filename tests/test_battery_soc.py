@@ -357,11 +357,11 @@ async def test_battery_soc___do_wintermode1(mock_async_get_min_soc_entity):  # p
 
     mock_async_get_min_soc_entity.return_value = (mock_entity, mock_state)
 
-    sensor._check_lower_limit_reached = MagicMock(    # pylint: disable=protected-access
+    sensor._check_lower_limit_reached = AsyncMock(    # pylint: disable=protected-access
         return_value=True
     )
 
-    sensor._check_upper_limit_reached = MagicMock(    # pylint: disable=protected-access
+    sensor._check_upper_limit_reached = AsyncMock(    # pylint: disable=protected-access
         return_value=False
     )
 
@@ -411,11 +411,11 @@ async def test_battery_soc___do_wintermode2(mock_async_get_min_soc_entity):  # p
 
     mock_async_get_min_soc_entity.return_value = (mock_entity, mock_state)
 
-    sensor._check_lower_limit_reached = MagicMock(    # pylint: disable=protected-access
+    sensor._check_lower_limit_reached = AsyncMock(    # pylint: disable=protected-access
         return_value=False
     )
 
-    sensor._check_upper_limit_reached = MagicMock(    # pylint: disable=protected-access
+    sensor._check_upper_limit_reached = AsyncMock(    # pylint: disable=protected-access
         return_value=False
     )
 
@@ -465,11 +465,11 @@ async def test_battery_soc___do_wintermode3(mock_async_get_min_soc_entity):  # p
 
     mock_async_get_min_soc_entity.return_value = (mock_entity, mock_state)
 
-    sensor._check_lower_limit_reached = MagicMock(    # pylint: disable=protected-access
+    sensor._check_lower_limit_reached = AsyncMock(    # pylint: disable=protected-access
         return_value=False
     )
 
-    sensor._check_upper_limit_reached = MagicMock(    # pylint: disable=protected-access
+    sensor._check_upper_limit_reached = AsyncMock(    # pylint: disable=protected-access
         return_value=True
     )
 

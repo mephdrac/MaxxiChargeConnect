@@ -110,11 +110,11 @@ class BatterySoc(BaseWebhookSensor):
 
             cur_state_float = float(cur_state.state)
 
-            if self._check_lower_limit_reached(native_value, cur_state_float):
+            if await self._check_lower_limit_reached(native_value, cur_state_float):
                 _LOGGER.debug("Setze minSoc auf WinterMaxCarge: %s", winter_max_charge)
                 await min_soc_entity.set_change_limitation(winter_max_charge, 5)
 
-            elif self._check_upper_limit_reached(native_value, cur_state_float):
+            elif await self._check_upper_limit_reached(native_value, cur_state_float):
                 _LOGGER.debug("Setze minSoc auf WinterMinCharge: %s", winter_min_charge)
                 await min_soc_entity.set_change_limitation(winter_min_charge, 5)
 

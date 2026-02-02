@@ -15,6 +15,7 @@ from ..const import (
     CONF_WINTER_MIN_CHARGE,
     DEFAULT_WINTER_MIN_CHARGE,
     DEFAULT_WINTER_MAX_CHARGE,
+    EVENT_WINTER_MAX_CHARGE_CHANGED,
 )  # noqa: TID252
 
 from ..tools import (
@@ -55,6 +56,13 @@ class WinterMaxCharge(NumberEntity):
 
         self._remove_listener = None
 
+    def _notify_dependents(self, value: float):
+        _LOGGER.debug("Feuer WinterMaxCharge changed event mit Wert: %s", value)
+        self.hass.bus.async_fire(
+            EVENT_WINTER_MAX_CHARGE_CHANGED,
+            {"value": value}
+        )
+
     def set_native_value(self, value):
         async def runner():
             await self.async_set_native_value(value)
@@ -89,6 +97,7 @@ class WinterMaxCharge(NumberEntity):
 
                 # UI sofort aktualisieren
                 self.async_write_ha_state()
+                self._notify_dependents(value)
             else:
                 _LOGGER.error("Neuer Wert (%s) für min_soc konnte nicht gesetzt werden.", value)
         else:

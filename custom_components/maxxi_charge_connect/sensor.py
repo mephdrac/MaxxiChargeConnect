@@ -64,6 +64,7 @@ from .devices.online_status_sensor import OnlineStatusSensor
 from .devices.ccu_temperatur_sensor import CCUTemperaturSensor
 
 from .devices.send_count import SendCount
+from .devices.uptime import Uptime
 
 from .const import DOMAIN
 
@@ -279,6 +280,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     )
     
     send_count = SendCount(entry)
+    uptime = Uptime(entry)
 
     async_add_entities(
         [
@@ -298,7 +300,8 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
             pv_self_consumption_total,
             consumption_energy_today,
             consumption_energy_total,
-            send_count
+            send_count,
+            uptime
         ]
     )
     await asyncio.sleep(0)

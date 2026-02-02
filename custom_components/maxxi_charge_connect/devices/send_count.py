@@ -1,10 +1,3 @@
-"""Sensor zur Darstellung der Momentanleistung am Netzanschlusspunkt (PowerMeter).
-
-Dieser Sensor zeigt den aktuell gemessenen Wert von `Pr` an, also die
-Import-/Exportleistung am Netzanschlusspunkt, wie sie vom MaxxiCharge-Gerät
-geliefert wird.
-"""
-
 import logging
 from homeassistant.components.sensor import (
     SensorStateClass,
@@ -31,7 +24,7 @@ class SendCount(BaseWebhookSensor):
         super().__init__(entry)
         self._attr_suggested_display_precision = 0
         self._attr_unique_id = f"{entry.entry_id}_send_count"
-        self._attr_icon = "mdi:gauge"
+        self._attr_icon = "mdi:counter"
         self._attr_native_value = None
         self._attr_device_class = None
         # self._attr_native_unit_of_measurement = "telegrams"
@@ -47,7 +40,7 @@ class SendCount(BaseWebhookSensor):
         """Behandelt eingehende Leistungsdaten und aktualisiert den Sensorwert.
 
         Args:
-            data (dict): Dictionary mit dem Schlüssel `Pr`, der die momentane
+            data (dict): Dictionary mit dem Schlüssel `sendCount`, der die momentane
                          Import-/Exportleistung repräsentiert.
 
         """

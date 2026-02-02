@@ -241,6 +241,9 @@
       },
       "SendCount": {
         "name": "Telegramme"
+      },
+      "Uptime": {
+        "name": "Läuft seit"
       }
     },
     "switch": {

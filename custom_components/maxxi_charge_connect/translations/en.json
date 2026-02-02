@@ -246,6 +246,9 @@
       },
       "SendCount": {
         "name": "Telegrams"
+      },
+      "Uptime": {
+        "name": "Uptime"
       }
     },
     "switch": {

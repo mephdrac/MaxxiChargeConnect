@@ -17,6 +17,10 @@ from ..const import (
     DEFAULT_WINTER_MAX_CHARGE,
 )  # noqa: TID252
 
+from ..tools import (
+    async_get_min_soc_entity
+)
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -60,24 +64,35 @@ class WinterMaxCharge(NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         """Wird aufgerufen, wenn der User den Wert ändert."""
 
-        self._attr_native_value = value
+        min_soc_entity, cur_state = await async_get_min_soc_entity(self.hass, self._entry.entry_id)
 
-        # in hass.data spiegeln (für Logik / Availability)
-        self.hass.data.setdefault(DOMAIN, {})
+        if min_soc_entity is not None and cur_state is not None and cur_state != value:
 
-        self.hass.data[DOMAIN][CONF_WINTER_MAX_CHARGE] = value
+            changed = await min_soc_entity.set_change_limitation(value, 5)
 
-        # persistent speichern
-        self.hass.config_entries.async_update_entry(
-            self._entry,
-            options={
-                **self._entry.options,
-                CONF_WINTER_MAX_CHARGE: value,
-            },
-        )
+            if changed:
+                self._attr_native_value = value
 
-        # UI sofort aktualisieren
-        self.async_write_ha_state()
+                # in hass.data spiegeln (für Logik / Availability)
+                self.hass.data.setdefault(DOMAIN, {})
+
+                self.hass.data[DOMAIN][CONF_WINTER_MAX_CHARGE] = value
+
+                # persistent speichern
+                self.hass.config_entries.async_update_entry(
+                    self._entry,
+                    options={
+                        **self._entry.options,
+                        CONF_WINTER_MAX_CHARGE: value,
+                    },
+                )
+
+                # UI sofort aktualisieren
+                self.async_write_ha_state()
+            else:
+                _LOGGER.error("Neuer Wert (%s) für min_soc konnte nicht gesetzt werden.", value)
+        else:
+            _LOGGER.error("Entität min_soc oder Status is None.")
 
     @property
     def available(self) -> bool:

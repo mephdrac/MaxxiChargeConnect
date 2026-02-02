@@ -1,6 +1,6 @@
 """Tests für die BatterySoc Entity der MaxxiChargeConnect Integration."""
 
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import MagicMock, AsyncMock, patch
 from unittest.mock import call
 from homeassistant.const import EntityCategory, PERCENTAGE
 
@@ -80,27 +80,216 @@ async def test_winter_max_charge__set_native_value():
     sensor.async_set_native_value.assert_awaited_once_with(value)
 
 
+@patch(
+    "custom_components.maxxi_charge_connect.winterbetrieb.winter_max_charge.async_get_min_soc_entity",
+    new_callable=AsyncMock,
+)
 @pytest.mark.asyncio
-async def test_winter_max_charge__async_set_native_value():
+async def test_winter_max_charge__async_set_native_value1(mock_async_get_min_soc_entity):
     """Testet die Methode, ob der Wert richtige gesetzt wird."""
 
+    mock_hass = MagicMock()
     mock_config_entry = MagicMock()
     mock_config_entry.entry_id = "1234abcd"
     mock_config_entry.title = "Test Entry"
 
-    value = 60
+    mock_entity = MagicMock()
+    mock_entity.set_change_limitation = AsyncMock(return_value=True)
+    mock_state = MagicMock()
+
+    new_value = 60
+    cur_state = 20  # Aktueller Status der minSoc-Entität
+    mock_state.state = cur_state
 
     sensor = WinterMaxCharge(mock_config_entry)
+    mock_async_get_min_soc_entity.return_value = (mock_entity, mock_state)
     sensor.async_write_ha_state = MagicMock()
-    sensor.hass = MagicMock()
+    sensor.hass = mock_hass
     sensor.hass.config_entries = MagicMock()
     sensor.hass.config_entries.async_update_entry = MagicMock()
     sensor.hass.data = {}
 
-    await sensor.async_set_native_value(value)  # zu testende Methode
+    await sensor.async_set_native_value(new_value)  # zu testende Methode
 
     # Checks
-    assert sensor._attr_native_value == value  # pylint: disable=protected-access
+    assert sensor._attr_native_value == new_value  # pylint: disable=protected-access
     assert DOMAIN in sensor.hass.data
-    assert sensor.hass.data[DOMAIN][CONF_WINTER_MAX_CHARGE] == value
+    assert sensor.hass.data[DOMAIN][CONF_WINTER_MAX_CHARGE] == new_value
+
     sensor.hass.config_entries.async_update_entry.assert_called_once()
+
+    mock_async_get_min_soc_entity.assert_awaited_once_with(
+        sensor.hass,
+        sensor._entry.entry_id,  # pylint: disable=protected-access
+    )
+    mock_entity.set_change_limitation.assert_awaited_once_with(new_value, 5)   # pylint: disable=protected-access
+
+
+@patch(
+    "custom_components.maxxi_charge_connect.winterbetrieb.winter_max_charge.async_get_min_soc_entity",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_winter_max_charge__async_set_native_value2(mock_async_get_min_soc_entity):
+    """Wert darf nicht gesetzt werden, wenn set_change_limitation False zurückgibt."""
+
+    mock_hass = MagicMock()
+    mock_config_entry = MagicMock()
+    mock_config_entry.entry_id = "1234abcd"
+    mock_config_entry.title = "Test Entry"
+
+    mock_entity = MagicMock()
+    mock_entity.set_change_limitation = AsyncMock(return_value=False)
+    mock_state = MagicMock()
+
+    new_value = 60
+    cur_state = 20  # Aktueller Status der minSoc-Entität
+    mock_state.state = cur_state
+
+    sensor = WinterMaxCharge(mock_config_entry)
+    mock_async_get_min_soc_entity.return_value = (mock_entity, mock_state)
+    sensor.async_write_ha_state = MagicMock()
+    sensor.hass = mock_hass
+    sensor.hass.config_entries = MagicMock()
+    sensor.hass.config_entries.async_update_entry = MagicMock()
+    sensor.hass.data = {}
+
+    await sensor.async_set_native_value(new_value)  # zu testende Methode
+
+    # Checks
+    assert sensor._attr_native_value != new_value  # pylint: disable=protected-access
+    assert DOMAIN not in sensor.hass.data
+
+    sensor.hass.config_entries.async_update_entry.assert_not_called()
+
+    mock_async_get_min_soc_entity.assert_awaited_once_with(
+        sensor.hass,
+        sensor._entry.entry_id,  # pylint: disable=protected-access
+    )
+    mock_entity.set_change_limitation.assert_awaited_once_with(new_value, 5)   # pylint: disable=protected-access
+
+
+@patch(
+    "custom_components.maxxi_charge_connect.winterbetrieb.winter_max_charge.async_get_min_soc_entity",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_winter_max_charge__async_set_native_value3(mock_async_get_min_soc_entity):
+    """min_soc_entity is None, State != None"""
+
+    mock_hass = MagicMock()
+    mock_config_entry = MagicMock()
+    mock_config_entry.entry_id = "1234abcd"
+    mock_config_entry.title = "Test Entry"
+
+    mock_entity = MagicMock()
+    mock_entity.set_change_limitation = AsyncMock(return_value=True)
+    mock_state = MagicMock()
+
+    new_value = 60
+    cur_state = 20  # Aktueller Status der minSoc-Entität
+    mock_state.state = cur_state
+
+    sensor = WinterMaxCharge(mock_config_entry)
+    mock_async_get_min_soc_entity.return_value = (None, mock_state)
+    sensor.async_write_ha_state = MagicMock()
+    sensor.hass = mock_hass
+    sensor.hass.config_entries = MagicMock()
+    sensor.hass.config_entries.async_update_entry = MagicMock()
+    sensor.hass.data = {}
+
+    await sensor.async_set_native_value(new_value)  # zu testende Methode
+
+    # Checks
+    assert sensor._attr_native_value != new_value  # pylint: disable=protected-access
+    assert DOMAIN not in sensor.hass.data
+
+    sensor.hass.config_entries.async_update_entry.assert_not_called()
+
+    mock_async_get_min_soc_entity.assert_awaited_once_with(
+        sensor.hass,
+        sensor._entry.entry_id,  # pylint: disable=protected-access
+    )
+    mock_entity.set_change_limitation.assert_not_awaited()   # pylint: disable=protected-access
+
+
+@patch(
+    "custom_components.maxxi_charge_connect.winterbetrieb.winter_max_charge.async_get_min_soc_entity",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_winter_max_charge__async_set_native_value4(mock_async_get_min_soc_entity):
+    """min_soc_entity != None, State is None"""
+
+    mock_hass = MagicMock()
+    mock_config_entry = MagicMock()
+    mock_config_entry.entry_id = "1234abcd"
+    mock_config_entry.title = "Test Entry"
+
+    mock_entity = MagicMock()
+    mock_entity.set_change_limitation = AsyncMock(return_value=True)
+
+    new_value = 60
+
+    sensor = WinterMaxCharge(mock_config_entry)
+    mock_async_get_min_soc_entity.return_value = (mock_entity, None)
+    sensor.async_write_ha_state = MagicMock()
+    sensor.hass = mock_hass
+    sensor.hass.config_entries = MagicMock()
+    sensor.hass.config_entries.async_update_entry = MagicMock()
+    sensor.hass.data = {}
+
+    await sensor.async_set_native_value(new_value)  # zu testende Methode
+
+    # Checks
+    assert sensor._attr_native_value != new_value  # pylint: disable=protected-access
+    assert DOMAIN not in sensor.hass.data
+
+    sensor.hass.config_entries.async_update_entry.assert_not_called()
+
+    mock_async_get_min_soc_entity.assert_awaited_once_with(
+        sensor.hass,
+        sensor._entry.entry_id,  # pylint: disable=protected-access
+    )
+    mock_entity.set_change_limitation.assert_not_awaited()   # pylint: disable=protected-access
+
+
+@patch(
+    "custom_components.maxxi_charge_connect.winterbetrieb.winter_max_charge.async_get_min_soc_entity",
+    new_callable=AsyncMock,
+)
+@pytest.mark.asyncio
+async def test_winter_max_charge__async_set_native_value5(mock_async_get_min_soc_entity):
+    """min_soc_entity is None, State is None"""
+
+    mock_hass = MagicMock()
+    mock_config_entry = MagicMock()
+    mock_config_entry.entry_id = "1234abcd"
+    mock_config_entry.title = "Test Entry"
+
+    mock_entity = MagicMock()
+    mock_entity.set_change_limitation = AsyncMock(return_value=True)
+
+    new_value = 60
+
+    sensor = WinterMaxCharge(mock_config_entry)
+    mock_async_get_min_soc_entity.return_value = (None, None)
+    sensor.async_write_ha_state = MagicMock()
+    sensor.hass = mock_hass
+    sensor.hass.config_entries = MagicMock()
+    sensor.hass.config_entries.async_update_entry = MagicMock()
+    sensor.hass.data = {}
+
+    await sensor.async_set_native_value(new_value)  # zu testende Methode
+
+    # Checks
+    assert sensor._attr_native_value != new_value  # pylint: disable=protected-access
+    assert DOMAIN not in sensor.hass.data
+
+    sensor.hass.config_entries.async_update_entry.assert_not_called()
+
+    mock_async_get_min_soc_entity.assert_awaited_once_with(
+        sensor.hass,
+        sensor._entry.entry_id,  # pylint: disable=protected-access
+    )
+    mock_entity.set_change_limitation.assert_not_awaited()   # pylint: disable=protected-access

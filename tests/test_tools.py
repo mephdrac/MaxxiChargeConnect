@@ -1,13 +1,13 @@
 """Testet die Hilfsfunktionen in tools.py des MaxxiChargeConnect Integrations."""
 
-
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+import pytest
+
 from custom_components.maxxi_charge_connect.tools import (
-    is_pccu_ok, 
-    is_power_total_ok, 
-    is_pr_ok, 
-    clean_title, 
+    is_pccu_ok,
+    is_power_total_ok,
+    is_pr_ok,
+    clean_title,
     as_float,
     async_get_min_soc_entity
 )
@@ -15,6 +15,7 @@ from custom_components.maxxi_charge_connect.tools import (
 from custom_components.maxxi_charge_connect.const import (
     DOMAIN
 )
+
 
 @pytest.mark.asyncio
 async def test_tools__pccu_kleiner_0():
@@ -159,6 +160,7 @@ async def test_tools__as_float__param_ist_none():
     value = None
     assert as_float(value) is None
 
+
 @pytest.mark.asyncio
 async def test_tools___get_min_soc_entity1():  # pylint: disable=invalid-name
     """Testet den Fall für alles OK, d.h. die Entity wurde gefunden."""
@@ -189,9 +191,9 @@ async def test_tools___get_min_soc_entity1():  # pylint: disable=invalid-name
     }
 
     with patch("custom_components.maxxi_charge_connect.tools.get_entity", return_value=mock_entity) as mock_get_entity:
-        
+
         min_soc_entity, cur_state = await async_get_min_soc_entity(mock_hass, mock_coordinator.entry.entry_id)
-        
+
         # Prüfen, dass get_entity aufgerufen wurde
         mock_get_entity.assert_called_once_with(
             hass=mock_hass,
@@ -229,9 +231,9 @@ async def test_battery_soc___get_min_soc_entity2():  # pylint: disable=invalid-n
             }
         }
     }
-    
+
     with patch("custom_components.maxxi_charge_connect.tools.get_entity", return_value=None) as mock_get_entity:
-        
+
         min_soc_entity, cur_state = await async_get_min_soc_entity(mock_hass, mock_coordinator.entry.entry_id)
 
         # Prüfen, dass get_entity aufgerufen wurde
@@ -291,5 +293,3 @@ async def test_battery_soc___get_min_soc_entity3():  # pylint: disable=invalid-n
 
         mock_hass.states.get.assert_called_once_with(mock_entity.entity_id)
         assert cur_state.state == "unknown"
-
-

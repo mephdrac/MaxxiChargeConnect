@@ -15,7 +15,8 @@ from ..const import (
     CONF_WINTER_MAX_CHARGE,
     DEFAULT_WINTER_MIN_CHARGE,
     DEFAULT_WINTER_MAX_CHARGE,
-    WINTER_MODE_CHANGED_EVENT,
+    EVENT_WINTER_MAX_CHARGE_CHANGED,
+    WINTER_MODE_CHANGED_EVENT
 )  # noqa: TID252
 
 from ..tools import (
@@ -107,6 +108,11 @@ class WinterMinCharge(NumberEntity):
             self._handle_winter_mode_changed,
         )
 
+        self._remove_listener_max_charge = self.hass.bus.async_listen(
+            EVENT_WINTER_MAX_CHARGE_CHANGED,
+            self._handle_winter_max_charge_changed,
+        )
+
     async def async_will_remove_from_hass(self):
         """Entfernt den Listener, wenn die Entität entfernt wird."""
         if self._remove_listener:
@@ -115,6 +121,28 @@ class WinterMinCharge(NumberEntity):
     @callback
     def _handle_winter_mode_changed(self, event):  # pylint: disable=unused-argument
         """Handle winter mode changed event."""
+        self.async_write_ha_state()
+
+    @callback
+    async def _handle_winter_max_charge_changed(self, event):
+        value = event.data.get("value")
+
+        _LOGGER.debug("WinterMinCharge received max charge changed event: %s", value)
+
+        if value is None:
+            return
+
+        try:
+            value_float = float(value)
+        except (ValueError, TypeError):
+            _LOGGER.error("Konnte Wert nicht in float umwandeln: %s", value)
+            return
+
+        # Optional aktuellen Wert clampen
+        if self._attr_native_value > value_float:
+            await self.async_set_native_value(value_float)
+
+        self._attr_native_max_value = value_float
         self.async_write_ha_state()
 
     @property

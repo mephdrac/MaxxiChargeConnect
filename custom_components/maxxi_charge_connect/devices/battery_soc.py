@@ -23,7 +23,7 @@ from ..const import (
     )
 
 from ..tools import (
-    get_entity
+    async_get_min_soc_entity
 )
 
 
@@ -96,29 +96,6 @@ class BatterySoc(BaseWebhookSensor):
 
         return result
 
-    async def _get_min_soc_entity(self):
-        # Hole minSoc Entity
-        coordinator = self.hass.data[DOMAIN][self._entry.entry_id]["coordinator"]
-        rest_key = "minSOC"
-        unique_id = f"{coordinator.entry.entry_id}_{rest_key}"
-
-        min_soc_entity = get_entity(
-                hass=self.hass,
-                plattform=DOMAIN,
-                unique_id=unique_id
-            )
-
-        cur_state = None
-        if min_soc_entity is None:
-            _LOGGER.error("min_soc_entity nicht gefunden für unique_id: %s", unique_id)
-        else:
-            cur_state = self.hass.states.get(min_soc_entity.entity_id)
-
-            if cur_state is not None and cur_state.state not in ("unknown", "unavailable"):
-                _LOGGER.debug("Current state of min_soc entity %s: %s", min_soc_entity.entity_id, cur_state.state if cur_state else "State not found")
-
-        return min_soc_entity, cur_state
-
     async def _do_wintermode(self, native_value: float):
 
         # Im Wintermodus: UI sofort aktualisieren
@@ -127,7 +104,7 @@ class BatterySoc(BaseWebhookSensor):
         winter_max_charge = float(self.hass.data[DOMAIN].get(CONF_WINTER_MAX_CHARGE, 60))
 
         _LOGGER.debug("Prüfe ob minSoc angepasst werden muss: native_value=%s, winter_min_charge=%s", native_value, winter_min_charge)
-        min_soc_entity, cur_state = await self._get_min_soc_entity()
+        min_soc_entity, cur_state = await async_get_min_soc_entity(self.hass, self._entry.entry_id)
 
         if min_soc_entity is not None and cur_state is not None:
 
@@ -167,7 +144,7 @@ class BatterySoc(BaseWebhookSensor):
 
         if wintermode:
             _LOGGER.debug("Wintermodus - aktiv")
-            self._do_wintermode(native_value_float)
+            await self._do_wintermode(native_value_float)
         else:
             # Im Normalmodus: UI sofort aktualisieren
             _LOGGER.debug("Normalmodus - UI wird aktualisiert")

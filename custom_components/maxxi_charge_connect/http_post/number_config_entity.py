@@ -191,9 +191,9 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
 
         return result
 
-    async def async_set_native_value(self, value: float) -> None:
+    async def async_set_native_value(self, value: float) -> bool:
         """Wert setzen und per REST an das Gerät senden."""
-        await self.set_change_limitation(value=value, count_retry=5)
+        return await self.set_change_limitation(value=value, count_retry=5)
 
     async def _send_config_to_device(self, value: float) -> bool:
         """Sendet den Wert via HTTP-POST an das Gerät."""
@@ -221,6 +221,7 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
                             value,
                             text,
                         )
+                        return False
                     text = await response.text()
                     # _LOGGER.warning("Antwort: %s", text)
             _LOGGER.debug("POST fertig")

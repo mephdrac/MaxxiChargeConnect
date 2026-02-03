@@ -65,5 +65,21 @@ class Rssi(BaseWebhookSensor):
 
         """
 
-        self._attr_native_value = data.get("wifiStrength")
-        self.async_write_ha_state()
+        rssi_raw = data.get("wifiStrength")
+
+        if rssi_raw is None:
+            _LOGGER.debug("Rssi: wifiStrength missing, keeping current value")
+            return
+
+        try:
+            rssi = float(rssi_raw)
+        except (TypeError, ValueError) as err:
+            _LOGGER.warning("Rssi: invalid wifiStrength value %s: %s", rssi_raw, err)
+            return
+
+        # Plausibilität: typische RSSI-Werte liegen grob zwischen -120 dBm und 0 dBm
+        if rssi < -120 or rssi > 0:
+            _LOGGER.warning("Rssi: implausible wifiStrength value: %s", rssi)
+            return
+
+        self._attr_native_value = rssi

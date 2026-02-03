@@ -43,9 +43,6 @@ def sensor():
     sensor_obj.hass = MagicMock()
     sensor_obj.async_on_remove = MagicMock()
 
-    # async_write_ha_state mocken
-    sensor_obj.async_write_ha_state = MagicMock()
-
     return sensor_obj
 
 
@@ -127,21 +124,6 @@ async def test_power_meter_invalid_pr_values(sensor):  # pylint: disable=redefin
     # Test mit String
     await sensor.handle_update({"Pr": "invalid"})
     assert sensor.native_value == 100.0  # Sollte unverändert bleiben
-
-
-@pytest.mark.asyncio
-async def test_power_meter_state_update_calls(sensor):  # pylint: disable=redefined-outer-name
-    """Testet, ob async_write_ha_state korrekt aufgerufen wird."""
-    # Bei gültigem Wert
-    await sensor.handle_update({"Pr": 100})
-    sensor.async_write_ha_state.assert_called_once()
-
-    # Reset mock
-    sensor.async_write_ha_state.reset_mock()
-
-    # Bei ungültigem Wert
-    await sensor.handle_update({"Pr": 999999})  # Außerhalb Bereich
-    sensor.async_write_ha_state.assert_not_called()
 
 
 def test_device_info(sensor):  # pylint: disable=redefined-outer-name

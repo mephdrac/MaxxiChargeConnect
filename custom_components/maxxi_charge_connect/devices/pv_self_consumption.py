@@ -53,12 +53,40 @@ class PvSelfConsumption(BaseWebhookSensor):
 
         """
 
-        pv_power = float(data.get("PV_power_total", 0))
+        pv_power_raw = data.get("PV_power_total")
+        pr_raw = data.get("Pr")
         batteries = data.get("batteriesInfo", [])
 
-        if is_power_total_ok(pv_power, batteries):
-            pr = float(data.get("Pr", 0))
+        if not isinstance(batteries, list):
+            _LOGGER.warning(
+                "PvSelfConsumption: Invalid batteriesInfo type: %s", type(batteries)
+            )
+            batteries = []
 
-            if is_pr_ok(pr):
-                self._attr_native_value = pv_power - max(-pr, 0)
-                self.async_write_ha_state()
+        if pv_power_raw is None or pr_raw is None:
+            _LOGGER.debug(
+                "PvSelfConsumption: missing values (PV_power_total=%s, Pr=%s)",
+                pv_power_raw,
+                pr_raw,
+            )
+            return
+
+        try:
+            pv_power = float(pv_power_raw)
+            pr = float(pr_raw)
+        except (TypeError, ValueError) as err:
+            _LOGGER.warning(
+                "PvSelfConsumption: invalid values (PV_power_total=%s, Pr=%s): %s",
+                pv_power_raw,
+                pr_raw,
+                err,
+            )
+            return
+
+        if not is_power_total_ok(pv_power, batteries):
+            return
+
+        if not is_pr_ok(pr):
+            return
+
+        self._attr_native_value = round(pv_power - max(-pr, 0), 2)

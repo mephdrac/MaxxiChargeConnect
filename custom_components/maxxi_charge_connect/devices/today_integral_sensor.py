@@ -82,7 +82,6 @@ class TodayIntegralSensor(IntegrationSensor):
         self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
         self.unit_prefix = "k"
         self._unit_prefix_string = "" if self.unit_prefix is None else self.unit_prefix
-        self._unit_of_measurement: str | None = None
         self._unit_prefix = UNIT_PREFIXES[self.unit_prefix]
         self.unit_time = UnitOfTime.HOURS
         self._unit_time = UNIT_TIME[self.unit_time]

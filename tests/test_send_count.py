@@ -30,7 +30,6 @@ def sensor():
 
     sensor_obj = SendCount(entry)
     sensor_obj.hass = MagicMock()
-    sensor_obj.async_write_ha_state = MagicMock()
 
     return sensor_obj
 
@@ -173,3 +172,14 @@ def test_device_info(sensor):
     info = sensor.device_info
     assert info["identifiers"] == {(DOMAIN, "test_entry_id")}
     assert info["name"] == "Maxxi Entry"
+
+
+@pytest.mark.asyncio
+async def test_send_count_handle_stale(sensor):
+    """Testet, dass stale den Sensor verfügbar lässt und den letzten Wert behält."""
+    sensor._attr_available = True  # pylint: disable=protected-access
+    sensor._attr_native_value = 123  # pylint: disable=protected-access
+    await sensor.handle_stale()
+
+    assert sensor.available is True
+    assert sensor.native_value == 123

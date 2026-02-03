@@ -45,9 +45,6 @@ def sensor():
     sensor_obj = PvPower(entry)
     sensor_obj.hass = MagicMock()
 
-    # async_write_ha_state mocken
-    sensor_obj.async_write_ha_state = MagicMock()
-
     return sensor_obj
 
 

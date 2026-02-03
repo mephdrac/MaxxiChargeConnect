@@ -73,7 +73,6 @@ class SendCount(BaseWebhookSensor):
         if self._last_sendcount is None:
             self._last_sendcount = new_value
             self._attr_native_value = new_value
-            self.async_write_ha_state()
             return
 
         self._attr_native_value = new_value
@@ -90,10 +89,7 @@ class SendCount(BaseWebhookSensor):
 
         self._last_sendcount = new_value
 
-        self.async_write_ha_state()
-
     async def handle_stale(self):
-        """Standardverhalten: Sensor auf 'unavailable' setzen."""
+        """Bei stale verfügbar bleiben und letzten Wert beibehalten."""
         self._attr_available = True
-        self.async_write_ha_state()
 

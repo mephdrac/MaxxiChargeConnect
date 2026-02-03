@@ -33,24 +33,16 @@ async def async_setup_entry(
 
     entities = []
 
-    # self._attr_unique_id = f"{entry.entry_id}_MaximumBatteryCharge"
-    coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
-    await coordinator.async_config_entry_first_refresh()
+    # Coordinator initialisieren mit Fehlerbehandlung
+    try:
+        coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
+        await coordinator.async_config_entry_first_refresh()
+    except Exception as e:
+        _LOGGER.error("Coordinator refresh failed: %s", e)
+        return
 
-    min_soc_entity = NumberConfigEntity(
-            hass,
-            entry,
-            "min_soc",
-            "minSOC",
-            "MinimumBatteryDischarge",
-            0,
-            100,
-            1,
-            PERCENTAGE,
-            depends_on_winter_mode=True
-        )
-
-    entities.append(
+    # Standard Number-Entities
+    entities.extend([
         NumberConfigEntity(
             hass,
             entry,
@@ -61,9 +53,7 @@ async def async_setup_entry(
             3000,
             1,
             UnitOfPower.WATT,
-        )
-    )
-    entities.append(
+        ),
         NumberConfigEntity(
             hass,
             entry,
@@ -74,9 +64,7 @@ async def async_setup_entry(
             3000,
             1,
             UnitOfPower.WATT,
-        )
-    )
-    entities.append(
+        ),
         NumberConfigEntity(
             hass,
             entry,
@@ -87,12 +75,7 @@ async def async_setup_entry(
             100,
             1,
             PERCENTAGE,
-        )
-    )
-    entities.append(
-        min_soc_entity
-    )
-    entities.append(
+        ),
         NumberConfigEntity(
             hass,
             entry,
@@ -103,9 +86,7 @@ async def async_setup_entry(
             1000,
             1,
             UnitOfPower.WATT,
-        )
-    )
-    entities.append(
+        ),
         NumberConfigEntity(
             hass,
             entry,
@@ -116,29 +97,48 @@ async def async_setup_entry(
             1000,
             1,
             UnitOfPower.WATT,
-        )
-    )
+        ),
+    ])
 
+    # min_soc Entity (wintermodus-abhängig)
+    min_soc_entity = NumberConfigEntity(
+        hass,
+        entry,
+        "min_soc",
+        "minSOC",
+        "MinimumBatteryDischarge",
+        0,
+        100,
+        1,
+        PERCENTAGE,
+        depends_on_winter_mode=True
+    )
+    entities.append(min_soc_entity)
+
+    # Winterbetrieb-Konfiguration
     winter_max = entry.options.get(
         CONF_WINTER_MAX_CHARGE,
         DEFAULT_WINTER_MAX_CHARGE
     )
-
     winter_min = entry.options.get(
         CONF_WINTER_MIN_CHARGE,
         DEFAULT_WINTER_MIN_CHARGE
     )
 
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][CONF_WINTER_MIN_CHARGE] = winter_min
-    hass.data[DOMAIN][CONF_WINTER_MAX_CHARGE] = winter_max
+    # Winterbetrieb-Daten zentral speichern
+    winter_data = {
+        CONF_WINTER_MIN_CHARGE: winter_min,
+        CONF_WINTER_MAX_CHARGE: winter_max
+    }
+    hass.data.setdefault(DOMAIN, {}).update(winter_data)
 
-    winter_min_charge = WinterMinCharge(entry)
-    winter_max_charge = WinterMaxCharge(entry)
-    sommer_min_charge = SummerMinCharge(entry)
+    # Winterbetrieb-Entities
+    winter_entities = [
+        WinterMinCharge(entry),
+        WinterMaxCharge(entry),
+        SummerMinCharge(entry)
+    ]
 
+    # Entities hinzufügen
     async_add_entities(entities)
-    async_add_entities(
-        [winter_min_charge,
-         winter_max_charge,
-         sommer_min_charge])
+    async_add_entities(winter_entities)

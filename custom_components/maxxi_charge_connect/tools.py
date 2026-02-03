@@ -15,6 +15,7 @@ Teilen der Anwendung eingebunden werden kann.
 
 import logging
 import re
+from typing import Optional
 
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
@@ -58,6 +59,29 @@ async def fire_status_event(hass: HomeAssistant, json_data: dict, forwarded: boo
     )
 
 
+def validate_numeric_value(value: float, value_name: str, min_val: float, max_val: float) -> bool:
+    """Allgemeine Validierung für numerische Werte.
+
+    Args:
+        value (float): Zu prüfender Wert
+        value_name (str): Name des Werts für Logging
+        min_val (float): Minimal erlaubter Wert
+        max_val (float): Maximal erlaubter Wert
+
+    Returns:
+        bool: True, wenn der Wert im gültigen Bereich liegt
+    """
+    if not isinstance(value, (int, float)):
+        _LOGGER.error("Ungültiger Typ für %s: %s", value_name, type(value))
+        return False
+    
+    if min_val <= value <= max_val:
+        return True
+    
+    _LOGGER.error("%s-Wert(%s) ist nicht plausibel und wird verworfen", value_name, value)
+    return False
+
+
 def is_pccu_ok(pccu: float):
     """Prüft, ob der PCCU-Wert im plausiblen Bereich liegt.
 
@@ -69,17 +93,7 @@ def is_pccu_ok(pccu: float):
               False, wenn der Wert außerhalb liegt. In diesem Fall wird ein Fehler geloggt.
 
     """
-
-    ok = False
-    if not isinstance(pccu, (int, float)):
-        _LOGGER.error("Ungültiger Typ für PCCU: %s", type(pccu))
-        return ok
-
-    if 0 <= pccu <= 3450:  # (2300 * 1.5)
-        ok = True
-    else:
-        _LOGGER.error("Pccu-Wert(%s) ist nicht plausibel und wird verworfen", pccu)
-    return ok
+    return validate_numeric_value(pccu, "pccu", 0, 3450)
 
 
 def is_pr_ok(pr: float):
@@ -97,17 +111,7 @@ def is_pr_ok(pr: float):
               False, wenn der Wert außerhalb liegt. In diesem Fall wird ein Fehler geloggt.
 
     """
-
-    ok = False
-    if not isinstance(pr, (int, float)):
-        _LOGGER.error("Ungültiger Typ für PR: %s", type(pr))
-        return ok
-
-    if -43600 <= pr <= 43600:
-        ok = True
-    else:
-        _LOGGER.error("Pr-Wert(%s) ist nicht plausibel und wird verworfen", pr)
-    return ok
+    return validate_numeric_value(pr, "Pr", -43600, 43600)
 
 
 def is_power_total_ok(power_total: float, batterien: list) -> bool:
@@ -126,11 +130,9 @@ def is_power_total_ok(power_total: float, batterien: list) -> bool:
               False sonst. Bei einem ungültigen Wert wird ein Fehler geloggt.
 
     """
-
-    ok = False
     if not isinstance(power_total, (int, float)):
         _LOGGER.error("Ungültiger Typ für POWER_TOTAL: %s", type(power_total))
-        return ok
+        return False
 
     if not isinstance(batterien, list):
         batterien = []
@@ -140,10 +142,10 @@ def is_power_total_ok(power_total: float, batterien: list) -> bool:
     if (0 < anzahl_batterien <= 16) and (
         0 <= power_total <= (60 * 138 * anzahl_batterien)
     ):
-        ok = True
-    else:
-        _LOGGER.error("Power_total(%s) - Anzahl-Bat.(%s) Wert ist nicht plausibel und wird verworfen", power_total, anzahl_batterien)
-    return ok
+        return True
+    
+    _LOGGER.error("Power_total(%s) - Anzahl-Bat.(%s) Wert ist nicht plausibel und wird verworfen", power_total, anzahl_batterien)
+    return False
 
 
 def clean_title(title: str) -> str:
@@ -174,7 +176,7 @@ def clean_title(title: str) -> str:
     return title.strip("_")
 
 
-def as_float(value: str) -> float | None:
+def as_float(value: str) -> Optional[float]:
     """Extrahiert ein Float aus einem String.
 
     Wenn in einem String nur ein Floatwert und andere Zeichen
@@ -190,8 +192,6 @@ def as_float(value: str) -> float | None:
         float: Die extrahierte Zahl oder None
 
     """
-    number = None
-
     if not isinstance(value, str):
         value = str(value)
 
@@ -200,9 +200,9 @@ def as_float(value: str) -> float | None:
         match = re.search(r"-?\d+(?:\.\d+)?", value)
 
         if match:
-            number = float(match.group())
+            return float(match.group())
 
-    return number
+    return None
 
 
 def get_entity(hass: HomeAssistant, plattform: str, unique_id: str):
@@ -225,30 +225,22 @@ def get_entity(hass: HomeAssistant, plattform: str, unique_id: str):
 
 async def async_get_min_soc_entity(hass: HomeAssistant, entry_id: str):
     """Hole minSoc Entity"""
+    try:
+        entry_data = hass.data.get(DOMAIN, {}).get(entry_id)
+        if not entry_data:
+            return None, None
 
-    entry_data = hass.data.get(DOMAIN, {}).get(entry_id)
-    if not entry_data:
+        min_soc_entity = entry_data.get("entities", {}).get("minSOC")
+        cur_state = None
+        if min_soc_entity is not None:
+            cur_state = hass.states.get(min_soc_entity.entity_id)
+
+            if cur_state is not None and cur_state.state not in ("unknown", "unavailable"):
+                _LOGGER.debug("Current state of min_soc entity %s: %s", min_soc_entity.entity_id, cur_state.state if cur_state else "State not found")
+        else:
+            _LOGGER.error("min_soc_entity is None")
+
+        return min_soc_entity, cur_state
+    except Exception as e:
+        _LOGGER.error("Fehler bei min_soc Entity: %s", e)
         return None, None
-
-    min_soc_entity = entry_data.get("entities", {}).get("minSOC")
-    # min_soc_entity = hass.data[DOMAIN][entry_id]["entities"]["min_soc"]
-
-    # coordinator = hass.data[DOMAIN][entry_id]["coordinator"]
-    # rest_key = "minSOC"
-    # unique_id = f"{coordinator.entry.entry_id}_{rest_key}"
-
-    # min_soc_entity = get_entity(
-    #         hass=hass,
-    #         plattform=DOMAIN,
-    #         unique_id=unique_id
-    #     )
-    cur_state = None
-    if min_soc_entity is not None:
-        cur_state = hass.states.get(min_soc_entity.entity_id)
-
-        if cur_state is not None and cur_state.state not in ("unknown", "unavailable"):
-            _LOGGER.debug("Current state of min_soc entity %s: %s", min_soc_entity.entity_id, cur_state.state if cur_state else "State not found")
-    else:
-        _LOGGER.error("min_soc_entity is None")
-
-    return min_soc_entity, cur_state

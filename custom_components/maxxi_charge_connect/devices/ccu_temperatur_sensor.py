@@ -76,23 +76,21 @@ class CCUTemperaturSensor(BaseWebhookSensor):
 
                 try:
                     temperature = float(temp_raw)
-                    
+
                     # Plausibilitätsprüfung: Temperatur sollte im vernünftigen Bereich liegen
-                    if not (-40 <= temperature <= 85):
+                    if not -40 <= temperature <= 85:
                         _LOGGER.warning(
-                            "Unplausible CCU-Temperatur bei Converter %s: %s°C", 
-                            i, temperature
+                            "Unplausible CCU-Temperatur bei Converter %s: %s°C",
+                            i,
+                            temperature,
                         )
                         continue
-                    
+
                     ccu_temperaturen.append(temperature)
                     valid_converters += 1
-                    
+
                 except (ValueError, TypeError) as err:
-                    _LOGGER.warning(
-                        "Konvertierungsfehler bei Converter %s: %s", 
-                        i, err
-                    )
+                    _LOGGER.warning("Konvertierungsfehler bei Converter %s: %s", i, err)
                     continue
 
             if not ccu_temperaturen:
@@ -102,22 +100,22 @@ class CCUTemperaturSensor(BaseWebhookSensor):
 
             # Durchschnitt berechnen
             durchschnitt = sum(ccu_temperaturen) / len(ccu_temperaturen)
-            
+
             # Plausibilitätsprüfung für Durchschnitt
-            if not (-40 <= durchschnitt <= 85):
+            if not -40 <= durchschnitt <= 85:
                 _LOGGER.warning(
-                    "Unplausible durchschnittliche CCU-Temperatur: %s°C", 
-                    durchschnitt
+                    "Unplausible durchschnittliche CCU-Temperatur: %s°C", durchschnitt
                 )
                 self._attr_native_value = None
                 return
 
             self._attr_native_value = round(durchschnitt, 1)
             _LOGGER.debug(
-                "CCU-Temperatur aktualisiert: %s°C (%s gültige Converter)", 
-                self._attr_native_value, valid_converters
+                "CCU-Temperatur aktualisiert: %s°C (%s gültige Converter)",
+                self._attr_native_value,
+                valid_converters,
             )
-            
-        except Exception as err:
+
+        except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error("Fehler bei der Verarbeitung der CCU-Temperatur: %s", err)
             self._attr_native_value = None

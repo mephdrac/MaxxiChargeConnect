@@ -15,7 +15,6 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfElectricCurrent
 
 from .base_webhook_sensor import BaseWebhookSensor
-from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -53,55 +52,53 @@ class BatteryMpptAmpereSensor(BaseWebhookSensor):
 
     async def handle_update(self, data):
         """Verarbeitet eine Aktualisierung und aktualisiert den Sensorwert.
-
         Args:
             data (dict): Die eingehenden Aktualisierungsdaten mit Batterieinformationen.
-
         """
         try:
             batteries_info = data.get("batteriesInfo", [])
-            
+
             if not batteries_info or self._index >= len(batteries_info):
                 _LOGGER.debug(
-                    "BatteryMpptAmpereSensor[%s]: Keine Batterie-Daten oder Index außerhalb Bereich", 
+                    "BatteryMpptAmpereSensor[%s]: Keine Batterie-Daten oder Index außerhalb Bereich",
                     self._index
                 )
                 return
 
             battery_data = batteries_info[self._index]
             mppt_current = battery_data.get("mpptCurrent")
-            
+
             if mppt_current is None:
                 _LOGGER.debug(
-                    "BatteryMpptAmpereSensor[%s]: mpptCurrent fehlt", 
+                    "BatteryMpptAmpereSensor[%s]: mpptCurrent fehlt",
                     self._index
                 )
                 return
 
             # Konvertiere mA zu A
             mppt_amps = float(mppt_current) / 1000.0
-            
+
             # Plausibilitätsprüfung: MPPT-Strom sollte vernünftig sein
             if abs(mppt_amps) > 100:  # 100A als vernünftige Obergrenze für MPPT
                 _LOGGER.warning(
-                    "BatteryMpptAmpereSensor[%s]: Unplausibler MPPT-Strom: %s A", 
+                    "BatteryMpptAmpereSensor[%s]: Unplausibler MPPT-Strom: %s A",
                     self._index, mppt_amps
                 )
                 return
 
             self._attr_native_value = mppt_amps
             _LOGGER.debug(
-                "BatteryMpptAmpereSensor[%s]: Aktualisiert auf %s A", 
+                "BatteryMpptAmpereSensor[%s]: Aktualisiert auf %s A",
                 self._index, mppt_amps
             )
-            
+
         except (IndexError, KeyError) as err:
             _LOGGER.warning(
-                "BatteryMpptAmpereSensor[%s]: Datenstrukturfehler: %s", 
+                "BatteryMpptAmpereSensor[%s]: Datenstrukturfehler: %s",
                 self._index, err
             )
         except (ValueError, TypeError) as err:
             _LOGGER.warning(
-                "BatteryMpptAmpereSensor[%s]: Konvertierungsfehler: %s", 
+                "BatteryMpptAmpereSensor[%s]: Konvertierungsfehler: %s",
                 self._index, err
             )

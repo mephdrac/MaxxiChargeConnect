@@ -52,74 +52,72 @@ class BatteryDischargeSensor(BaseWebhookSensor):
 
     async def handle_update(self, data):
         """Verarbeitet eine Aktualisierung und aktualisiert den Sensorwert.
-
         Args:
             data (dict): Die eingehenden Aktualisierungsdaten mit Batterieinformationen.
-
         """
         try:
             batteries_info = data.get("batteriesInfo", [])
-            
+
             if not batteries_info or self._index >= len(batteries_info):
                 _LOGGER.debug(
-                    "BatteryDischargeSensor[%s]: Keine Batterie-Daten oder Index außerhalb Bereich", 
+                    "BatteryDischargeSensor[%s]: Keine Batterie-Daten oder Index außerhalb Bereich",
                     self._index
                 )
                 return
 
             battery_data = batteries_info[self._index]
             battery_power = battery_data.get("batteryPower")
-            
+
             if battery_power is None:
                 _LOGGER.debug(
-                    "BatteryDischargeSensor[%s]: batteryPower fehlt", 
+                    "BatteryDischargeSensor[%s]: batteryPower fehlt",
                     self._index
                 )
                 return
 
             # Konvertiere zu float
             discharge_power = float(battery_power)
-            
+
             # Nur negative Werte sind Entladeleistung
             if discharge_power > 0:
                 _LOGGER.debug(
-                    "BatteryDischargeSensor[%s]: Positive Leistung (%s W) - keine Entladeleistung", 
+                    "BatteryDischargeSensor[%s]: Positive Leistung (%s W) - keine Entladeleistung",
                     self._index, discharge_power
                 )
                 return
 
             # Konvertiere negative Werte zu positiver Entladeleistung
             discharge_power = abs(discharge_power)
-            
+
             # 0 Watt ist keine Entladeleistung
             if discharge_power == 0:
                 _LOGGER.debug(
-                    "BatteryDischargeSensor[%s]: Leistung ist 0 W - keine Entladeleistung", 
+                    "BatteryDischargeSensor[%s]: Leistung ist 0 W - keine Entladeleistung",
                     self._index
                 )
                 return
-            
+
             # Plausibilitätsprüfung: Entladeleistung sollte vernünftig sein
             if discharge_power > 20000:  # 20kW als vernünftige Obergrenze
                 _LOGGER.warning(
-                    "BatteryDischargeSensor[%s]: Unplausible Entladeleistung: %s W", 
+                    "BatteryDischargeSensor[%s]: Unplausible Entladeleistung: %s W",
                     self._index, discharge_power
                 )
                 return
 
             self._attr_native_value = discharge_power
             _LOGGER.debug(
-                "BatteryDischargeSensor[%s]: Aktualisiert auf %s W", 
+                "BatteryDischargeSensor[%s]: Aktualisiert auf %s W",
                 self._index, discharge_power
             )
-            
+
         except (IndexError, KeyError) as err:
             _LOGGER.warning(
-                "BatteryDischargeSensor[%s]: Datenstrukturfehler: %s", 
+                "BatteryDischargeSensor[%s]: Datenstrukturfehler: %s",
                 self._index, err
             )
         except (ValueError, TypeError) as err:
             _LOGGER.warning(
-                "BatteryDischargeSensor[%s]: Konvertierungsfehler: %s", 
+                "BatteryDischargeSensor[%s]: Konvertierungsfehler: %s",
                 self._index, err
             )

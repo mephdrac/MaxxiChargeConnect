@@ -38,7 +38,7 @@ class WebhookId(TextEntity):
 
         """
         self._entry = entry
-        
+
         # Sichere Abfrage der Webhook-ID
         webhook_id = entry.data.get(CONF_WEBHOOK_ID)
         if webhook_id is None:
@@ -49,7 +49,7 @@ class WebhookId(TextEntity):
             webhook_id = "leer"
         else:
             _LOGGER.info("WebhookId: Initialisiert mit ID: %s", webhook_id)
-        
+
         self._attr_native_value = webhook_id
         self._attr_unique_id = f"{entry.entry_id}_webhook_id"
         self._attr_icon = "mdi:webhook"
@@ -57,7 +57,9 @@ class WebhookId(TextEntity):
 
     def set_value(self, value):
         """Setzt einen neuen Webhook-ID Wert."""
-        _LOGGER.info("WebhookId: Wert geändert von %s zu %s", self._attr_native_value, value)
+        _LOGGER.info(
+            "WebhookId: Wert geändert von %s zu %s", self._attr_native_value, value
+        )
         self._attr_native_value = value
 
     @property

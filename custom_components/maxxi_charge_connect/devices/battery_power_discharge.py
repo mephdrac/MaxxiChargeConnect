@@ -76,11 +76,13 @@ class BatteryPowerDischarge(BaseWebhookSensor):
             if pccu_raw is None:
                 _LOGGER.debug("BatteryPowerDischarge: Pccu fehlt")
                 return
-            
+
             ccu = float(pccu_raw)
-            
+
             if not is_pccu_ok(ccu):
-                _LOGGER.warning("BatteryPowerDischarge: PCCU-Wert nicht plausibel: %s W", ccu)
+                _LOGGER.warning(
+                    "BatteryPowerDischarge: PCCU-Wert nicht plausibel: %s W", ccu
+                )
                 return
 
             # PV-Leistung sicher abfragen
@@ -88,33 +90,39 @@ class BatteryPowerDischarge(BaseWebhookSensor):
             if pv_power_raw is None:
                 _LOGGER.debug("BatteryPowerDischarge: PV_power_total fehlt")
                 return
-            
+
             pv_power = float(pv_power_raw)
             batteries = data.get("batteriesInfo", [])
 
             if not is_power_total_ok(pv_power, batteries):
-                _LOGGER.warning("BatteryPowerDischarge: PV-Leistung nicht plausibel: %s W", pv_power)
+                _LOGGER.warning(
+                    "BatteryPowerDischarge: PV-Leistung nicht plausibel: %s W", pv_power
+                )
                 return
 
             # Entladeleistung berechnen
             battery_discharge_power = round(pv_power - ccu, 3)
-            
+
             # Nur negative Werte sind Entladeleistung
             if battery_discharge_power < 0:
                 discharge_power = abs(battery_discharge_power)
                 self._attr_native_value = discharge_power
                 _LOGGER.debug(
-                    "BatteryPowerDischarge: Entladeleistung berechnet: %s W (PV: %s W, CCU: %s W)", 
-                    discharge_power, pv_power, ccu
+                    "BatteryPowerDischarge: Entladeleistung berechnet: %s W (PV: %s W, CCU: %s W)",
+                    discharge_power,
+                    pv_power,
+                    ccu,
                 )
             else:
                 _LOGGER.debug(
-                    "BatteryPowerDischarge: Keine Entladeleistung (PV: %s W, CCU: %s W, Differenz: %s W)", 
-                    pv_power, ccu, battery_discharge_power
+                    "BatteryPowerDischarge: Keine Entladeleistung (PV: %s W, CCU: %s W, Differenz: %s W)",
+                    pv_power,
+                    ccu,
+                    battery_discharge_power,
                 )
                 return
-            
+
         except (ValueError, TypeError) as err:
             _LOGGER.warning("BatteryPowerDischarge: Konvertierungsfehler: %s", err)
-        except Exception as err:
+        except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error("BatteryPowerDischarge: Unerwarteter Fehler: %s", err)

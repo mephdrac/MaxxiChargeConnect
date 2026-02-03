@@ -1,6 +1,6 @@
 """TextEntity zur Anzeige der Geräte-ID eines Batteriesystems in Home Assistant.
 
-Diese Entität zeigt die eindeutige Geräte-ID (z. B. Seriennummer) an, die per Webhook
+Diese Entität zeigt die eindeutige Geräte-ID (z.B. Seriennummer) an, die per Webhook
 übermittelt wird. Sie dient primär Diagnosezwecken und ist in der Kategorie
 'diagnostic' einsortiert.
 """
@@ -80,25 +80,27 @@ class DeviceId(BaseWebhookSensor):
         """
         try:
             device_id = data.get("deviceId")
-            
+
             if device_id is None:
                 _LOGGER.debug("DeviceId: deviceId fehlt in den Daten")
                 return
-            
+
             # Plausibilitätsprüfung: deviceId sollte ein nicht-leerer String sein
             if not isinstance(device_id, str) or not device_id.strip():
                 _LOGGER.warning("DeviceId: Ungültige deviceId: %s", device_id)
                 return
-            
+
             # Maximale Länge prüfen (typisch für Geräte-IDs)
             if len(device_id.strip()) > 100:
-                _LOGGER.warning("DeviceId: deviceId zu lang: %s", device_id[:50] + "...")
+                _LOGGER.warning(
+                    "DeviceId: deviceId zu lang: %s", device_id[:50] + "..."
+                )
                 return
 
             self._attr_native_value = device_id.strip()
             _LOGGER.debug("DeviceId: Aktualisiert auf %s", self._attr_native_value)
-            
-        except Exception as err:
+
+        except Exception as err: # pylint: disable=broad-exception-caught
             _LOGGER.error("DeviceId: Fehler bei der Verarbeitung: %s", err)
 
     def set_value(self, value):

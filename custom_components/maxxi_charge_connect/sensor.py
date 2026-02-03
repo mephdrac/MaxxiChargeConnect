@@ -101,7 +101,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     try:
         coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
         await coordinator.async_config_entry_first_refresh()
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         _LOGGER.error("Coordinator refresh failed: %s", e)
         return
 
@@ -132,44 +132,64 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
         HttpScanText(coordinator, "APIRoute", "API - Route", "mdi:link"),
         HttpScanText(coordinator, "LocalServer", "Use Local Server", "mdi:server-off"),
         HttpScanText(coordinator, "Cloudservice", "Cloudservice", "mdi:cloud-outline"),
-        HttpScanText(coordinator, "DC/DC-Algorithmus", "DC/DC algorithm", "mdi:source-branch"),
+        HttpScanText(
+            coordinator, "DC/DC-Algorithmus", "DC/DC algorithm", "mdi:source-branch"
+        ),
         HttpScanText(coordinator, "PowerMeterIp", "Power Meter IP", "mdi:ip"),
         HttpScanText(coordinator, "PowerMeterType", "Power Meter Type", "mdi:chip"),
         HttpScanText(coordinator, "MaximumPower", "Maximum Power", "mdi:flash"),
-        HttpScanText(coordinator, "OfflineOutputPower", "Offline Output Power", "mdi:flash"),
-        HttpScanText(coordinator, "NumberOfBatteries", "Number of Batteries", "mdi:layers"),
+        HttpScanText(
+            coordinator, "OfflineOutputPower", "Offline Output Power", "mdi:flash"
+        ),
+        HttpScanText(
+            coordinator, "NumberOfBatteries", "Number of Batteries", "mdi:layers"
+        ),
         HttpScanText(coordinator, "OutputOffset", "Output Offset", "mdi:flash"),
         HttpScanText(coordinator, "CcuSpeed", "CCU - Speed", "mdi:flash"),
         HttpScanText(coordinator, "Microinverter", "Microinverter", "mdi:current-ac"),
-        HttpScanText(coordinator, "ResponseTolerance", "Response tolerance", "mdi:current-ac"),
-        HttpScanText(coordinator, "MinimumBatteryDischarge", "Minimum Battery Discharge ", "mdi:battery-low"),
-        HttpScanText(coordinator, "MaximumBatteryCharge", "Maximum Battery Charge ", "mdi:battery-high"),
+        HttpScanText(
+            coordinator, "ResponseTolerance", "Response tolerance", "mdi:current-ac"
+        ),
+        HttpScanText(
+            coordinator,
+            "MinimumBatteryDischarge",
+            "Minimum Battery Discharge ",
+            "mdi:battery-low",
+        ),
+        HttpScanText(
+            coordinator,
+            "MaximumBatteryCharge",
+            "Maximum Battery Charge ",
+            "mdi:battery-high",
+        ),
     ]
 
     # Standard Sensoren hinzufügen
-    async_add_entities([
-        sensor,
-        rssi_sensor,
-        ccu_power,
-        pv_power_sensor,
-        battery_power_charge,
-        battery_power_discharge,
-        battery_soc,
-        battery_power,
-        power_meter,
-        firmware_version,
-        battery_soe,
-        webhook_id,
-        power_consumption,
-        grid_export,
-        grid_import,
-        pv_self_consumption,
-        *http_scan_sensor_list,
-        status_sensor,
-        uptime_sensor,
-        online_status_sensor,
-        ccu_temperatur_sensor,
-    ])
+    async_add_entities(
+        [
+            sensor,
+            rssi_sensor,
+            ccu_power,
+            pv_power_sensor,
+            battery_power_charge,
+            battery_power_discharge,
+            battery_soc,
+            battery_power,
+            power_meter,
+            firmware_version,
+            battery_soe,
+            webhook_id,
+            power_consumption,
+            grid_export,
+            grid_import,
+            pv_self_consumption,
+            *http_scan_sensor_list,
+            status_sensor,
+            uptime_sensor,
+            online_status_sensor,
+            ccu_temperatur_sensor,
+        ]
+    )
 
     # Energie-Sensoren erstellen
     pv_today_energy = PvTodayEnergy(hass, entry, pv_power_sensor.entity_id)
@@ -177,22 +197,38 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     ccu_energy_today = CcuEnergyToday(hass, entry, ccu_power.entity_id)
     ccu_energy_total = CcuEnergyTotal(hass, entry, ccu_power.entity_id)
 
-    battery_today_energy_charge = BatteryTodayEnergyCharge(hass, entry, battery_power_charge.entity_id)
-    battery_today_energy_discharge = BatteryTodayEnergyDischarge(hass, entry, battery_power_discharge.entity_id)
-    battery_total_energy_charge = BatteryTotalEnergyCharge(hass, entry, battery_power_charge.entity_id)
-    battery_total_energy_discharge = BatteryTotalEnergyDischarge(hass, entry, battery_power_discharge.entity_id)
+    battery_today_energy_charge = BatteryTodayEnergyCharge(
+        hass, entry, battery_power_charge.entity_id
+    )
+    battery_today_energy_discharge = BatteryTodayEnergyDischarge(
+        hass, entry, battery_power_discharge.entity_id
+    )
+    battery_total_energy_charge = BatteryTotalEnergyCharge(
+        hass, entry, battery_power_charge.entity_id
+    )
+    battery_total_energy_discharge = BatteryTotalEnergyDischarge(
+        hass, entry, battery_power_discharge.entity_id
+    )
 
     grid_export_energy_today = GridExportEnergyToday(hass, entry, grid_export.entity_id)
     grid_export_energy_total = GridExportEnergyTotal(hass, entry, grid_export.entity_id)
     grid_import_energy_today = GridImportEnergyToday(hass, entry, grid_import.entity_id)
     grid_import_energy_total = GridImportEnergyTotal(hass, entry, grid_import.entity_id)
 
-    pv_self_consumption_today = PvSelfConsumptionEnergyToday(hass, entry, pv_self_consumption.entity_id)
-    pv_self_consumption_total = PvSelfConsumptionEnergyTotal(hass, entry, pv_self_consumption.entity_id)
+    pv_self_consumption_today = PvSelfConsumptionEnergyToday(
+        hass, entry, pv_self_consumption.entity_id
+    )
+    pv_self_consumption_total = PvSelfConsumptionEnergyTotal(
+        hass, entry, pv_self_consumption.entity_id
+    )
 
-    consumption_energy_today = ConsumptionEnergyToday(hass, entry, power_consumption.entity_id)
-    consumption_energy_total = ConsumptionEnergyTotal(hass, entry, power_consumption.entity_id)
-    
+    consumption_energy_today = ConsumptionEnergyToday(
+        hass, entry, power_consumption.entity_id
+    )
+    consumption_energy_total = ConsumptionEnergyTotal(
+        hass, entry, power_consumption.entity_id
+    )
+
     send_count = SendCount(entry)
 
     # Energie-Sensoren hinzufügen

@@ -31,7 +31,7 @@ from .const import (
     PROXY_ERROR_TOTAL,
     PROXY_FORWARDED,
     PROXY_PAYLOAD,
-    DOMAIN
+    DOMAIN,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -59,7 +59,9 @@ async def fire_status_event(hass: HomeAssistant, json_data: dict, forwarded: boo
     )
 
 
-def validate_numeric_value(value: float, value_name: str, min_val: float, max_val: float) -> bool:
+def validate_numeric_value(
+    value: float, value_name: str, min_val: float, max_val: float
+) -> bool:
     """Allgemeine Validierung für numerische Werte.
 
     Args:
@@ -74,11 +76,13 @@ def validate_numeric_value(value: float, value_name: str, min_val: float, max_va
     if not isinstance(value, (int, float)):
         _LOGGER.error("Ungültiger Typ für %s: %s", value_name, type(value))
         return False
-    
+
     if min_val <= value <= max_val:
         return True
-    
-    _LOGGER.error("%s-Wert(%s) ist nicht plausibel und wird verworfen", value_name, value)
+
+    _LOGGER.error(
+        "%s-Wert(%s) ist nicht plausibel und wird verworfen", value_name, value
+    )
     return False
 
 
@@ -143,8 +147,12 @@ def is_power_total_ok(power_total: float, batterien: list) -> bool:
         0 <= power_total <= (60 * 138 * anzahl_batterien)
     ):
         return True
-    
-    _LOGGER.error("Power_total(%s) - Anzahl-Bat.(%s) Wert ist nicht plausibel und wird verworfen", power_total, anzahl_batterien)
+
+    _LOGGER.error(
+        "Power_total(%s) - Anzahl-Bat.(%s) Wert ist nicht plausibel und wird verworfen",
+        power_total,
+        anzahl_batterien,
+    )
     return False
 
 
@@ -235,12 +243,19 @@ async def async_get_min_soc_entity(hass: HomeAssistant, entry_id: str):
         if min_soc_entity is not None:
             cur_state = hass.states.get(min_soc_entity.entity_id)
 
-            if cur_state is not None and cur_state.state not in ("unknown", "unavailable"):
-                _LOGGER.debug("Current state of min_soc entity %s: %s", min_soc_entity.entity_id, cur_state.state if cur_state else "State not found")
+            if cur_state is not None and cur_state.state not in (
+                "unknown",
+                "unavailable",
+            ):
+                _LOGGER.debug(
+                    "Current state of min_soc entity %s: %s",
+                    min_soc_entity.entity_id,
+                    cur_state.state if cur_state else "State not found",
+                )
         else:
             _LOGGER.error("min_soc_entity is None")
 
         return min_soc_entity, cur_state
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         _LOGGER.error("Fehler bei min_soc Entity: %s", e)
         return None, None

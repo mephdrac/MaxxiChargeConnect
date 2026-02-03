@@ -43,45 +43,38 @@ class BatterySOCSensor(BaseWebhookSensor):
             batteries_info = data.get("batteriesInfo", [])
             if not batteries_info or self._index >= len(batteries_info):
                 _LOGGER.debug(
-                    "BatterySOCSensor[%s]: batteriesInfo leer oder Index außerhalb des Bereichs", 
-                    self._index
+                    "BatterySOCSensor[%s]: batteriesInfo leer oder Index außerhalb des Bereichs",
+                    self._index,
                 )
                 return
 
             battery_data = batteries_info[self._index]
             soc_raw = battery_data.get("batterySOC")
-            
+
             if soc_raw is None:
-                _LOGGER.debug(
-                    "BatterySOCSensor[%s]: batterySOC fehlt", 
-                    self._index
-                )
+                _LOGGER.debug("BatterySOCSensor[%s]: batterySOC fehlt", self._index)
                 return
 
             # Konvertierung zu float
             soc = float(soc_raw)
-            
+
             # Plausibilitätsprüfung: SOC sollte zwischen 0 und 100% liegen
             if soc < 0 or soc > 100:
                 _LOGGER.warning(
-                    "BatterySOCSensor[%s]: Unplausible SOC: %s%%", 
-                    self._index, soc
+                    "BatterySOCSensor[%s]: Unplausible SOC: %s%%", self._index, soc
                 )
                 return
 
             self._attr_native_value = soc
             _LOGGER.debug(
-                "BatterySOCSensor[%s]: Aktualisiert auf %s%%", 
-                self._index, soc
+                "BatterySOCSensor[%s]: Aktualisiert auf %s%%", self._index, soc
             )
-            
+
         except (IndexError, KeyError) as err:
             _LOGGER.warning(
-                "BatterySOCSensor[%s]: Datenstrukturfehler: %s", 
-                self._index, err
+                "BatterySOCSensor[%s]: Datenstrukturfehler: %s", self._index, err
             )
         except (ValueError, TypeError) as err:
             _LOGGER.warning(
-                "BatterySOCSensor[%s]: Konvertierungsfehler: %s", 
-                self._index, err
+                "BatterySOCSensor[%s]: Konvertierungsfehler: %s", self._index, err
             )

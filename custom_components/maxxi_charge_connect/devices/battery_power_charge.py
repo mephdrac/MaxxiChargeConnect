@@ -89,11 +89,13 @@ class BatteryPowerCharge(BaseWebhookSensor):
             if pccu_raw is None:
                 _LOGGER.debug("BatteryPowerCharge: Pccu fehlt")
                 return
-            
+
             ccu = float(pccu_raw)
-            
+
             if not is_pccu_ok(ccu):
-                _LOGGER.warning("BatteryPowerCharge: PCCU-Wert nicht plausibel: %s W", ccu)
+                _LOGGER.warning(
+                    "BatteryPowerCharge: PCCU-Wert nicht plausibel: %s W", ccu
+                )
                 return
 
             # PV-Leistung sicher abfragen
@@ -101,32 +103,38 @@ class BatteryPowerCharge(BaseWebhookSensor):
             if pv_power_raw is None:
                 _LOGGER.debug("BatteryPowerCharge: PV_power_total fehlt")
                 return
-            
+
             pv_power = float(pv_power_raw)
             batteries = data.get("batteriesInfo", [])
 
             if not is_power_total_ok(pv_power, batteries):
-                _LOGGER.warning("BatteryPowerCharge: PV-Leistung nicht plausibel: %s W", pv_power)
+                _LOGGER.warning(
+                    "BatteryPowerCharge: PV-Leistung nicht plausibel: %s W", pv_power
+                )
                 return
 
             # Ladeleistung berechnen
             battery_charge_power = round(pv_power - ccu, 3)
-            
+
             # Nur positive Werte sind Ladeleistung
             if battery_charge_power > 0:
                 self._attr_native_value = battery_charge_power
                 _LOGGER.debug(
-                    "BatteryPowerCharge: Ladeleistung berechnet: %s W (PV: %s W, CCU: %s W)", 
-                    battery_charge_power, pv_power, ccu
+                    "BatteryPowerCharge: Ladeleistung berechnet: %s W (PV: %s W, CCU: %s W)",
+                    battery_charge_power,
+                    pv_power,
+                    ccu,
                 )
             else:
                 _LOGGER.debug(
-                    "BatteryPowerCharge: Keine Ladeleistung (PV: %s W, CCU: %s W, Differenz: %s W)", 
-                    pv_power, ccu, battery_charge_power
+                    "BatteryPowerCharge: Keine Ladeleistung (PV: %s W, CCU: %s W, Differenz: %s W)",
+                    pv_power,
+                    ccu,
+                    battery_charge_power,
                 )
                 return
-            
+
         except (ValueError, TypeError) as err:
             _LOGGER.warning("BatteryPowerCharge: Konvertierungsfehler: %s", err)
-        except Exception as err:
+        except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error("BatteryPowerCharge: Unerwarteter Fehler: %s", err)

@@ -15,7 +15,6 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfElectricCurrent
 
 from .base_webhook_sensor import BaseWebhookSensor
-from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -60,48 +59,48 @@ class BatteryAmpereSensor(BaseWebhookSensor):
         """
         try:
             batteries_info = data.get("batteriesInfo", [])
-            
+
             if not batteries_info or self._index >= len(batteries_info):
                 _LOGGER.debug(
-                    "BatteryAmpereSensor[%s]: Keine Batterie-Daten oder Index außerhalb Bereich", 
+                    "BatteryAmpereSensor[%s]: Keine Batterie-Daten oder Index außerhalb Bereich",
                     self._index
                 )
                 return
 
             battery_data = batteries_info[self._index]
             battery_current = battery_data.get("batteryCurrent")
-            
+
             if battery_current is None:
                 _LOGGER.debug(
-                    "BatteryAmpereSensor[%s]: batteryCurrent fehlt", 
+                    "BatteryAmpereSensor[%s]: batteryCurrent fehlt",
                     self._index
                 )
                 return
 
             # Konvertiere mA zu A
             current_amps = float(battery_current) / 1000.0
-            
+
             # Plausibilitätsprüfung: Strom sollte nicht extrem sein
             if abs(current_amps) > 200:  # 200A als vernünftige Obergrenze
                 _LOGGER.warning(
-                    "BatteryAmpereSensor[%s]: Unplausibler Stromwert: %s A", 
+                    "BatteryAmpereSensor[%s]: Unplausibler Stromwert: %s A",
                     self._index, current_amps
                 )
                 return
 
             self._attr_native_value = current_amps
             _LOGGER.debug(
-                "BatteryAmpereSensor[%s]: Aktualisiert auf %s A", 
+                "BatteryAmpereSensor[%s]: Aktualisiert auf %s A",
                 self._index, current_amps
             )
-            
+
         except (IndexError, KeyError) as err:
             _LOGGER.warning(
-                "BatteryAmpereSensor[%s]: Datenstrukturfehler: %s", 
+                "BatteryAmpereSensor[%s]: Datenstrukturfehler: %s",
                 self._index, err
             )
         except (ValueError, TypeError) as err:
             _LOGGER.warning(
-                "BatteryAmpereSensor[%s]: Konvertierungsfehler: %s", 
+                "BatteryAmpereSensor[%s]: Konvertierungsfehler: %s",
                 self._index, err
             )

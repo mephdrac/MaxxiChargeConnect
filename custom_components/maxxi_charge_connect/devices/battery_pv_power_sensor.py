@@ -66,53 +66,49 @@ class BatteryPVPowerSensor(BaseWebhookSensor):
             batteries_info = data.get("batteriesInfo", [])
             if not batteries_info or self._index >= len(batteries_info):
                 _LOGGER.debug(
-                    "BatteryPVPowerSensor[%s]: batteriesInfo leer oder Index außerhalb des Bereichs", 
-                    self._index
+                    "BatteryPVPowerSensor[%s]: batteriesInfo leer oder Index außerhalb des Bereichs",
+                    self._index,
                 )
                 return
 
             battery_data = batteries_info[self._index]
             pv_power_raw = battery_data.get("pvPower")
-            
+
             if pv_power_raw is None:
-                _LOGGER.debug(
-                    "BatteryPVPowerSensor[%s]: pvPower fehlt", 
-                    self._index
-                )
+                _LOGGER.debug("BatteryPVPowerSensor[%s]: pvPower fehlt", self._index)
                 return
 
             # Konvertierung zu float
             pv_power = float(pv_power_raw)
-            
+
             # Plausibilitätsprüfung: PV-Leistung sollte nicht negativ sein
             if pv_power < 0:
                 _LOGGER.warning(
-                    "BatteryPVPowerSensor[%s]: Negative PV-Leistung: %s W", 
-                    self._index, pv_power
+                    "BatteryPVPowerSensor[%s]: Negative PV-Leistung: %s W",
+                    self._index,
+                    pv_power,
                 )
                 return
 
             # Plausibilitätsprüfung: Maximale PV-Leistung (z.B. 10kW)
             if pv_power > 10000:
                 _LOGGER.warning(
-                    "BatteryPVPowerSensor[%s]: Unplausible PV-Leistung: %s W", 
-                    self._index, pv_power
+                    "BatteryPVPowerSensor[%s]: Unplausible PV-Leistung: %s W",
+                    self._index,
+                    pv_power,
                 )
                 return
 
             self._attr_native_value = pv_power
             _LOGGER.debug(
-                "BatteryPVPowerSensor[%s]: Aktualisiert auf %s W", 
-                self._index, pv_power
+                "BatteryPVPowerSensor[%s]: Aktualisiert auf %s W", self._index, pv_power
             )
-            
+
         except (IndexError, KeyError) as err:
             _LOGGER.warning(
-                "BatteryPVPowerSensor[%s]: Datenstrukturfehler: %s", 
-                self._index, err
+                "BatteryPVPowerSensor[%s]: Datenstrukturfehler: %s", self._index, err
             )
         except (ValueError, TypeError) as err:
             _LOGGER.warning(
-                "BatteryPVPowerSensor[%s]: Konvertierungsfehler: %s", 
-                self._index, err
+                "BatteryPVPowerSensor[%s]: Konvertierungsfehler: %s", self._index, err
             )

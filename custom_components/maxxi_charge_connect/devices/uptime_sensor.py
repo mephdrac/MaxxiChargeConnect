@@ -52,7 +52,7 @@ class UptimeSensor(BaseWebhookSensor):
 
         """
         uptime_ms = data.get("uptime")
-        
+
         # Wenn uptime fehlt, nichts tun (letzten Wert behalten)
         if uptime_ms is None:
             _LOGGER.debug("UptimeSensor: uptime field missing, keeping current value")

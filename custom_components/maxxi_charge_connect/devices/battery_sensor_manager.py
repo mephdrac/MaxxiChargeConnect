@@ -22,6 +22,7 @@ from ..const import (
     WEBHOOK_SIGNAL_UPDATE,
     WEBHOOK_SIGNAL_STATE,
 )  # noqa: TID252
+from .base_webhook_sensor import BaseWebhookSensor
 from .battery_soe_sensor import BatterySoESensor
 from .battery_soc_sensor import BatterySOCSensor
 from .battery_voltage_sensor import BatteryVoltageSensor
@@ -60,7 +61,9 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
         ("battery_discharge_sensor", BatteryDischargeSensor),
     ]
 
-    def __init__(self, hass: HomeAssistant, entry, async_add_entities: Callable) -> None:
+    def __init__(
+        self, hass: HomeAssistant, entry, async_add_entities: Callable
+    ) -> None:
         """Initialisiert den BatterySensorManager.
 
         Args:
@@ -112,7 +115,7 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
                     )
                     self._registered = True
                     _LOGGER.debug("BatterySensorManager Dispatcher registriert")
-        except Exception as err:
+        except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error("Fehler beim Setup des BatterySensorManager: %s", err)
 
     async def _wrapper_update(self, data: dict):
@@ -120,27 +123,25 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
         try:
             await self.handle_update(data)
         except Exception as err:  # pylint: disable=broad-except
-            _LOGGER.error(
-                "Fehler im BatterySensorManager beim Update: %s", err
-            )
+            _LOGGER.error("Fehler im BatterySensorManager beim Update: %s", err)
 
     async def _wrapper_stale(self, _):
         """Ablauf, wenn das Watchdog-Event 'stale' gesendet wird."""
         try:
             await self.handle_stale()
         except Exception as err:  # pylint: disable=broad-except
-            _LOGGER.error(
-                "Fehler im BatterySensorManager beim Stale-Handling: %s", err
-            )
+            _LOGGER.error("Fehler im BatterySensorManager beim Stale-Handling: %s", err)
 
     async def async_update_from_event(self, event: Event):
         """Aktualisiert Sensor von Proxy-Event."""
         try:
             json_data = event.data.get("payload", {})
 
-            if json_data.get(PROXY_ERROR_DEVICE_ID) == self.entry.data.get(CONF_DEVICE_ID):
+            if json_data.get(PROXY_ERROR_DEVICE_ID) == self.entry.data.get(
+                CONF_DEVICE_ID
+            ):
                 await self.handle_update(json_data)
-        except Exception as err:
+        except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error("Fehler beim Proxy-Update: %s", err)
 
     async def handle_stale(self):
@@ -152,21 +153,22 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
                     sensor._attr_available = False  # pylint: disable=protected-access
                     sensor._attr_state = STATE_UNKNOWN  # pylint: disable=protected-access
                     sensor.async_write_ha_state()
-            except Exception as err:
+            except Exception as err:  # pylint: disable=broad-except
                 _LOGGER.warning(
-                    "Fehler beim Setzen von Sensor %s auf unavailable: %s", 
-                    sensor_key, err
+                    "Fehler beim Setzen von Sensor %s auf unavailable: %s",
+                    sensor_key,
+                    err,
                 )
 
     async def handle_update(self, data: dict):
         """Behandelt eingehende Batteriedaten von der MaxxiCharge-Station.
 
-        Args: 
+        Args:
             data (dict): Webhook-Daten, typischerweise mit `batteriesInfo`.
         """
         try:
             batteries = data.get("batteriesInfo", [])
-            
+
             if not batteries:
                 _LOGGER.debug("Keine Batterie-Informationen im Update")
                 return
@@ -176,55 +178,56 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
                 new_sensors = await self._create_sensors_for_batteries(batteries)
                 if new_sensors:
                     _LOGGER.info(
-                        "Erstelle %d neue Battery-Sensoren für %d Batterien", 
-                        len(new_sensors), len(batteries)
+                        "Erstelle %d neue Battery-Sensoren für %d Batterien",
+                        len(new_sensors),
+                        len(batteries),
                     )
                     await self.async_add_entities(new_sensors)
 
             # Update alle Sensoren über die Listener
             await self._update_all_listeners(data)
-            
-        except Exception as err:
+
+        except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error("Fehler bei der Verarbeitung der Battery-Daten: %s", err)
 
-    async def _create_sensors_for_batteries(self, batteries: List[Dict[str, Any]]) -> List[SensorEntity]:
+    async def _create_sensors_for_batteries(
+        self, batteries: List[Dict[str, Any]]
+    ) -> List["BaseWebhookSensor"]:
         """Erstellt Sensoren für alle Batterien.
-        
         Args:
             batteries: Liste der Batterie-Informationen
-            
         Returns:
             Liste der neu erstellten Sensoren
         """
         new_sensors = []
-        
+
         try:
             for i in range(len(batteries)):
                 for sensor_name, sensor_class in self.SENSOR_CLASSES:
                     unique_key = f"{self.entry.entry_id}_{sensor_name}_{i}"
-                    
+
                     if unique_key not in self.sensors:
                         try:
-                            _LOGGER.debug(
-                                "Erstelle %s für Batterie %d", sensor_name, i
-                            )
+                            _LOGGER.debug("Erstelle %s für Batterie %d", sensor_name, i)
                             sensor = sensor_class(self.entry, i)
                             self.sensors[unique_key] = sensor
                             new_sensors.append(sensor)
-                        except Exception as err:
+                        except Exception as err:  # pylint: disable=broad-except
                             _LOGGER.error(
-                                "Fehler beim Erstellen von %s für Batterie %d: %s", 
-                                sensor_name, i, err
+                                "Fehler beim Erstellen von %s für Batterie %d: %s",
+                                sensor_name,
+                                i,
+                                err,
                             )
-                            
-        except Exception as err:
+
+        except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error("Fehler bei der Sensor-Erstellung: %s", err)
-            
+
         return new_sensors
 
     async def _update_all_listeners(self, data: dict):
         """Aktualisiert alle registrierten Listener.
-        
+
         Args:
             data: Die zu verteilenden Update-Daten
         """
@@ -235,33 +238,29 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
                 .get(self.entry.entry_id, {})
                 .get("listeners", [])
             )
-            
-            _LOGGER.debug(
-                "Verteile Update an %d Listener", len(listeners)
-            )
-            
+
+            _LOGGER.debug("Verteile Update an %d Listener", len(listeners))
+
             for listener in listeners:
                 try:
                     await listener(data)
-                except Exception as err:
-                    _LOGGER.warning(
-                        "Fehler beim Update eines Listeners: %s", err
-                    )
-                    
-        except Exception as err:
+                except Exception as err:  # pylint: disable=broad-except
+                    _LOGGER.warning("Fehler beim Update eines Listeners: %s", err)
+
+        except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error("Fehler beim Verteilen der Updates: %s", err)
 
     def get_sensor_count(self) -> int:
         """Gibt die Anzahl der verwalteten Sensoren zurück.
-        
+
         Returns:
             Anzahl der Sensoren
         """
         return len(self.sensors)
 
-    def get_sensor_info(self) -> Dict[str, str]:
+    def get_sensor_info(self) -> Dict[str, Dict[str, Any]]:
         """Gibt Informationen über die verwalteten Sensoren zurück.
-        
+
         Returns:
             Dictionary mit Sensor-Informationen
         """
@@ -273,6 +272,6 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
                     "available": getattr(sensor, "_attr_available", False),
                     "state": getattr(sensor, "_attr_native_value", None),
                 }
-            except Exception as err:
+            except Exception as err:  # pylint: disable=broad-except
                 info[key] = {"error": str(err)}
         return info

@@ -70,58 +70,75 @@ class BatterySoE(BaseWebhookSensor):
         """
         try:
             batteries_info = data.get("batteriesInfo", [])
-            
+
             if not batteries_info or not isinstance(batteries_info, list):
                 _LOGGER.debug("BatterySoE: batteriesInfo leer oder keine Liste")
                 return
 
             total_capacity = 0.0
             valid_batteries = 0
-            
+
             for i, battery in enumerate(batteries_info):
                 if not isinstance(battery, dict):
                     _LOGGER.debug("BatterySoE: Batterie %s ist kein Dictionary", i)
                     continue
-                    
+
                 capacity_raw = battery.get("batteryCapacity")
                 if capacity_raw is None:
-                    _LOGGER.debug("BatterySoE: batteryCapacity fehlt bei Batterie %s", i)
+                    _LOGGER.debug(
+                        "BatterySoE: batteryCapacity fehlt bei Batterie %s", i
+                    )
                     continue
-                
+
                 try:
                     capacity = float(capacity_raw)
-                    
+
                     # Plausibilitätsprüfung für einzelne Batterie
                     if capacity < 0:
-                        _LOGGER.warning("BatterySoE: Negative Kapazität bei Batterie %s: %s Wh", i, capacity)
+                        _LOGGER.warning(
+                            "BatterySoE: Negative Kapazität bei Batterie %s: %s Wh",
+                            i,
+                            capacity,
+                        )
                         continue
-                    
+
                     if capacity > 100000:  # Max 100 kWh pro Batterie
-                        _LOGGER.warning("BatterySoE: Kapazität zu hoch bei Batterie %s: %s Wh", i, capacity)
+                        _LOGGER.warning(
+                            "BatterySoE: Kapazität zu hoch bei Batterie %s: %s Wh",
+                            i,
+                            capacity,
+                        )
                         continue
-                    
+
                     total_capacity += capacity
                     valid_batteries += 1
-                    
+
                 except (ValueError, TypeError) as err:
-                    _LOGGER.warning("BatterySoE: Konvertierungsfehler bei Batterie %s: %s", i, err)
+                    _LOGGER.warning(
+                        "BatterySoE: Konvertierungsfehler bei Batterie %s: %s", i, err
+                    )
                     continue
 
             # Plausibilitätsprüfung für Gesamtkapazität
             if total_capacity < 0:
-                _LOGGER.warning("BatterySoE: Negative Gesamtkapazität: %s Wh", total_capacity)
+                _LOGGER.warning(
+                    "BatterySoE: Negative Gesamtkapazität: %s Wh", total_capacity
+                )
                 return
-            
+
             if total_capacity > 500000:  # Max 500 kWh für Gesamtsystem
-                _LOGGER.warning("BatterySoE: Gesamtkapazität unrealistisch: %s Wh", total_capacity)
+                _LOGGER.warning(
+                    "BatterySoE: Gesamtkapazität unrealistisch: %s Wh", total_capacity
+                )
                 return
 
             self._attr_native_value = total_capacity
-            
+
             _LOGGER.debug(
-                "BatterySoE: Aktualisiert auf %s Wh (%s gültige Batterien)", 
-                total_capacity, valid_batteries
+                "BatterySoE: Aktualisiert auf %s Wh (%s gültige Batterien)",
+                total_capacity,
+                valid_batteries,
             )
-            
-        except Exception as err:
+
+        except Exception as err:  # pylint: disable=broad-exception-caught
             _LOGGER.error("BatterySoE: Fehler bei der Verarbeitung: %s", err)

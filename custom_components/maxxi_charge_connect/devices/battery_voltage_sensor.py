@@ -64,53 +64,51 @@ class BatteryVoltageSensor(BaseWebhookSensor):
             batteries_info = data.get("batteriesInfo", [])
             if not batteries_info or self._index >= len(batteries_info):
                 _LOGGER.debug(
-                    "BatteryVoltageSensor[%s]: batteriesInfo leer oder Index außerhalb des Bereichs", 
-                    self._index
+                    "BatteryVoltageSensor[%s]: batteriesInfo leer oder Index außerhalb des Bereichs",
+                    self._index,
                 )
                 return
 
             battery_data = batteries_info[self._index]
             voltage_raw = battery_data.get("batteryVoltage")
-            
+
             if voltage_raw is None:
                 _LOGGER.debug(
-                    "BatteryVoltageSensor[%s]: batteryVoltage fehlt", 
-                    self._index
+                    "BatteryVoltageSensor[%s]: batteryVoltage fehlt", self._index
                 )
                 return
 
             # Konvertierung zu float und von mV zu V
             voltage_mv = float(voltage_raw)
             voltage = voltage_mv / 1000.0
-            
+
             # Plausibilitätsprüfung: Spannung sollte im vernünftigen Bereich liegen (0-60V)
             if voltage < 0:
                 _LOGGER.warning(
-                    "BatteryVoltageSensor[%s]: Unplausible Spannung: %s V", 
-                    self._index, voltage
+                    "BatteryVoltageSensor[%s]: Unplausible Spannung: %s V",
+                    self._index,
+                    voltage,
                 )
                 return
 
             if voltage > 60:
                 _LOGGER.warning(
-                    "BatteryVoltageSensor[%s]: Spannung zu hoch: %s V (erwartet <60V)", 
-                    self._index, voltage
+                    "BatteryVoltageSensor[%s]: Spannung zu hoch: %s V (erwartet <60V)",
+                    self._index,
+                    voltage,
                 )
                 return
 
             self._attr_native_value = voltage
             _LOGGER.debug(
-                "BatteryVoltageSensor[%s]: Aktualisiert auf %s V", 
-                self._index, voltage
+                "BatteryVoltageSensor[%s]: Aktualisiert auf %s V", self._index, voltage
             )
-            
+
         except (IndexError, KeyError) as err:
             _LOGGER.warning(
-                "BatteryVoltageSensor[%s]: Datenstrukturfehler: %s", 
-                self._index, err
+                "BatteryVoltageSensor[%s]: Datenstrukturfehler: %s", self._index, err
             )
         except (ValueError, TypeError) as err:
             _LOGGER.warning(
-                "BatteryVoltageSensor[%s]: Konvertierungsfehler: %s", 
-                self._index, err
+                "BatteryVoltageSensor[%s]: Konvertierungsfehler: %s", self._index, err
             )

@@ -11,9 +11,7 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import Event
 
 from ..const import (
-    DEVICE_INFO,
-    DOMAIN,
-    PROXY_STATUS_EVENTNAME,    
+    PROXY_STATUS_EVENTNAME,
     CONF_DEVICE_ID,
     PROXY_ERROR_DEVICE_ID,
 )  # noqa: TID252
@@ -76,24 +74,26 @@ class FirmwareVersion(BaseWebhookSensor):
         """
         try:
             firmware_raw = data.get("firmwareVersion")
-            
+
             if firmware_raw is None:
                 _LOGGER.debug("FirmwareVersion: firmwareVersion fehlt in den Daten")
                 return
-            
+
             # Konvertierung zu String und Bereinigung
             firmware = str(firmware_raw).strip()
-            
+
             # Plausibilitätsprüfung: Firmware-Version sollte nicht leer sein
             if not firmware:
                 _LOGGER.warning("FirmwareVersion: Leere firmwareVersion")
                 return
-            
+
             # Maximale Länge prüfen (typisch für Versions-Strings)
             if len(firmware) > 100:
-                _LOGGER.warning("FirmwareVersion: Versionsstring zu lang: %s", firmware[:50] + "...")
+                _LOGGER.warning(
+                    "FirmwareVersion: Versionsstring zu lang: %s", firmware[:50] + "..."
+                )
                 return
-            
+
             # Prüfen auf offensichtlich ungültige Werte
             invalid_patterns = ["unknown", "null", "undefined", "n/a"]
             if firmware.lower() in invalid_patterns:
@@ -101,9 +101,11 @@ class FirmwareVersion(BaseWebhookSensor):
                 return
 
             self._attr_native_value = firmware
-            _LOGGER.debug("FirmwareVersion: Aktualisiert auf %s", self._attr_native_value)
-            
-        except Exception as err:
+            _LOGGER.debug(
+                "FirmwareVersion: Aktualisiert auf %s", self._attr_native_value
+            )
+
+        except (AttributeError, TypeError, ValueError) as err:
             _LOGGER.error("FirmwareVersion: Fehler bei der Verarbeitung: %s", err)
 
     def set_value(self, value):
@@ -112,18 +114,23 @@ class FirmwareVersion(BaseWebhookSensor):
             cleaned_value = value.strip()
             if len(cleaned_value) <= 100:
                 self._attr_native_value = cleaned_value
-                _LOGGER.debug("FirmwareVersion: Manuell gesetzt auf %s", self._attr_native_value)
+                _LOGGER.debug(
+                    "FirmwareVersion: Manuell gesetzt auf %s", self._attr_native_value
+                )
             else:
-                _LOGGER.warning("FirmwareVersion: Ungültiger manueller Wert (zu lang): %s", value[:50] + "...")
+                _LOGGER.warning(
+                    "FirmwareVersion: Ungültiger manueller Wert (zu lang): %s",
+                    value[:50] + "...",
+                )
         else:
             _LOGGER.warning("FirmwareVersion: Ungültiger manueller Wert: %s", value)
 
     def _restore_state_value(self, state_str: str):
         """Stellt den Zustand für Firmware-Version wieder her.
-        
+
         Args:
             state_str: Der gespeicherte Zustand als String
-            
+
         Returns:
             Der wiederhergestellte Wert im korrekten Typ oder None bei Fehler
         """
@@ -134,6 +141,5 @@ class FirmwareVersion(BaseWebhookSensor):
                 return firmware
         except (ValueError, TypeError):
             pass
-        
+
         return None
-   

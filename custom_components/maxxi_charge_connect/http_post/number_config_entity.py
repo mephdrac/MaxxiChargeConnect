@@ -37,7 +37,9 @@ from ..tools import as_float  # pylint: disable=relative-beyond-top-level
 _LOGGER = logging.getLogger(__name__)
 
 
-class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-many-instance-attributes
+class NumberConfigEntity(
+    NumberEntity
+):  # pylint: disable=abstract-method, too-many-instance-attributes
     """Konfigurierbare NumberEntity für MaxxiCharge-Geräteeinstellungen.
 
     Diese Entität ermöglicht die Anzeige und Änderung eines konfigurierbaren Parameters
@@ -116,7 +118,9 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
             self._coordinator.async_add_listener(self.async_write_ha_state)
         )
 
-        if self._depends_on_winter_mode:  # Nur registrieren, wenn abhängig vom Wintermodus
+        if (
+            self._depends_on_winter_mode
+        ):  # Nur registrieren, wenn abhängig vom Wintermodus
             self._remove_listener = self.hass.bus.async_listen(
                 WINTER_MODE_CHANGED_EVENT,
                 self._handle_winter_mode_changed,
@@ -144,6 +148,7 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
 
     def set_native_value(self, value: float) -> None:
         """Synchroner Wrapper für async_set_native_value."""
+
         async def runner():
             await self.async_set_native_value(value)
 
@@ -183,7 +188,10 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
             if result:
                 _LOGGER.info("MinSoc-Wert wurde auf (%s) gesetzt", value)
             else:
-                _LOGGER.warning("Nach (%s)-Versuchen-konnten Datenübertragung abgebrochen", count_retry)
+                _LOGGER.warning(
+                    "Nach (%s)-Versuchen-konnten Datenübertragung abgebrochen",
+                    count_retry,
+                )
                 self._show_current_value_immediately = False
 
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -259,7 +267,11 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
             result = self._attr_native_value
             self._show_current_value_immediately = False
         else:
-            result = as_float(self._coordinator.data.get(self._value_key)) if self._coordinator.data else None
+            result = (
+                as_float(self._coordinator.data.get(self._value_key))
+                if self._coordinator.data
+                else None
+            )
 
         return result
 
@@ -270,7 +282,9 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
         if self._depends_on_winter_mode:
             value = event.data.get("value")
 
-            _LOGGER.warning("SummerMinCharge received summer min charge changed event: %s", value)
+            _LOGGER.warning(
+                "SummerMinCharge received summer min charge changed event: %s", value
+            )
 
             if value is None:
                 return

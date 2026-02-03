@@ -64,53 +64,53 @@ class BatteryPVVoltageSensor(BaseWebhookSensor):
             batteries_info = data.get("batteriesInfo", [])
             if not batteries_info or self._index >= len(batteries_info):
                 _LOGGER.debug(
-                    "BatteryPVVoltageSensor[%s]: batteriesInfo leer oder Index außerhalb des Bereichs", 
-                    self._index
+                    "BatteryPVVoltageSensor[%s]: batteriesInfo leer oder Index außerhalb des Bereichs",
+                    self._index,
                 )
                 return
 
             battery_data = batteries_info[self._index]
             pv_voltage_raw = battery_data.get("pvVoltage")
-            
+
             if pv_voltage_raw is None:
                 _LOGGER.debug(
-                    "BatteryPVVoltageSensor[%s]: pvVoltage fehlt", 
-                    self._index
+                    "BatteryPVVoltageSensor[%s]: pvVoltage fehlt", self._index
                 )
                 return
 
             # Konvertierung von mV zu V
             pv_voltage = float(pv_voltage_raw) / 1000.0
-            
+
             # Plausibilitätsprüfung: PV-Spannung sollte nicht negativ sein
             if pv_voltage < 0:
                 _LOGGER.warning(
-                    "BatteryPVVoltageSensor[%s]: Negative PV-Spannung: %s V", 
-                    self._index, pv_voltage
+                    "BatteryPVVoltageSensor[%s]: Negative PV-Spannung: %s V",
+                    self._index,
+                    pv_voltage,
                 )
                 return
 
             # Plausibilitätsprüfung: Maximale PV-Spannung (z.B. 100V)
             if pv_voltage > 100:
                 _LOGGER.warning(
-                    "BatteryPVVoltageSensor[%s]: Unplausible PV-Spannung: %s V", 
-                    self._index, pv_voltage
+                    "BatteryPVVoltageSensor[%s]: Unplausible PV-Spannung: %s V",
+                    self._index,
+                    pv_voltage,
                 )
                 return
 
             self._attr_native_value = pv_voltage
             _LOGGER.debug(
-                "BatteryPVVoltageSensor[%s]: Aktualisiert auf %s V", 
-                self._index, pv_voltage
+                "BatteryPVVoltageSensor[%s]: Aktualisiert auf %s V",
+                self._index,
+                pv_voltage,
             )
-            
+
         except (IndexError, KeyError) as err:
             _LOGGER.warning(
-                "BatteryPVVoltageSensor[%s]: Datenstrukturfehler: %s", 
-                self._index, err
+                "BatteryPVVoltageSensor[%s]: Datenstrukturfehler: %s", self._index, err
             )
         except (ValueError, TypeError) as err:
             _LOGGER.warning(
-                "BatteryPVVoltageSensor[%s]: Konvertierungsfehler: %s", 
-                self._index, err
+                "BatteryPVVoltageSensor[%s]: Konvertierungsfehler: %s", self._index, err
             )

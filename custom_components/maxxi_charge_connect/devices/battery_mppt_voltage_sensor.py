@@ -15,7 +15,6 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfElectricPotential
 
 from .base_webhook_sensor import BaseWebhookSensor
-from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -60,48 +59,51 @@ class BatteryMpptVoltageSensor(BaseWebhookSensor):
         """
         try:
             batteries_info = data.get("batteriesInfo", [])
-            
+
             if not batteries_info or self._index >= len(batteries_info):
                 _LOGGER.debug(
-                    "BatteryMpptVoltageSensor[%s]: Keine Batterie-Daten oder Index außerhalb Bereich", 
-                    self._index
+                    "BatteryMpptVoltageSensor[%s]: Keine Batterie-Daten oder Index außerhalb Bereich",
+                    self._index,
                 )
                 return
 
             battery_data = batteries_info[self._index]
             mppt_voltage = battery_data.get("mpptVoltage")
-            
+
             if mppt_voltage is None:
                 _LOGGER.debug(
-                    "BatteryMpptVoltageSensor[%s]: mpptVoltage fehlt", 
-                    self._index
+                    "BatteryMpptVoltageSensor[%s]: mpptVoltage fehlt", self._index
                 )
                 return
 
             # Konvertiere mV zu V
             mppt_volts = float(mppt_voltage) / 1000.0
-            
+
             # Plausibilitätsprüfung: MPPT-Spannung sollte vernünftig sein
             if mppt_volts < 0 or mppt_volts > 100:  # 0-100V als vernünftiger Bereich
                 _LOGGER.warning(
-                    "BatteryMpptVoltageSensor[%s]: Unplausible MPPT-Spannung: %s V", 
-                    self._index, mppt_volts
+                    "BatteryMpptVoltageSensor[%s]: Unplausible MPPT-Spannung: %s V",
+                    self._index,
+                    mppt_volts,
                 )
                 return
 
             self._attr_native_value = mppt_volts
             _LOGGER.debug(
-                "BatteryMpptVoltageSensor[%s]: Aktualisiert auf %s V", 
-                self._index, mppt_volts
+                "BatteryMpptVoltageSensor[%s]: Aktualisiert auf %s V",
+                self._index,
+                mppt_volts,
             )
-            
+
         except (IndexError, KeyError) as err:
             _LOGGER.warning(
-                "BatteryMpptVoltageSensor[%s]: Datenstrukturfehler: %s", 
-                self._index, err
+                "BatteryMpptVoltageSensor[%s]: Datenstrukturfehler: %s",
+                self._index,
+                err,
             )
         except (ValueError, TypeError) as err:
             _LOGGER.warning(
-                "BatteryMpptVoltageSensor[%s]: Konvertierungsfehler: %s", 
-                self._index, err
+                "BatteryMpptVoltageSensor[%s]: Konvertierungsfehler: %s",
+                self._index,
+                err,
             )

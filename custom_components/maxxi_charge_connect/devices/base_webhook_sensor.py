@@ -106,12 +106,12 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
                     self._attr_native_value = restored_value
                     self._attr_available = True
                     _LOGGER.debug(
-                        "Sensor %s: Zustand wiederhergestellt: %s", 
+                        "Sensor %s: Zustand wiederhergestellt: %s",
                         self.__class__.__name__, restored_value
                     )
             except Exception as err:  # pylint: disable=broad-except
                 _LOGGER.warning(
-                    "Sensor %s: Konnte Zustand nicht wiederherstellen: %s", 
+                    "Sensor %s: Konnte Zustand nicht wiederherstellen: %s",
                     self.__class__.__name__, err
                 )
 
@@ -174,10 +174,8 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
 
     def _restore_state_value(self, state_str: str):
         """Stellt den Zustand basierend auf dem Sensortyp wieder her.
-        
         Args:
             state_str: Der gespeicherte Zustand als String
-            
         Returns:
             Der wiederhergestellte Wert im korrekten Typ oder None bei Fehler
         """
@@ -186,7 +184,7 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
             return float(state_str)
         except (ValueError, TypeError):
             pass
-        
+
         # Wenn nichts passt, None zurückgeben
         return None
 

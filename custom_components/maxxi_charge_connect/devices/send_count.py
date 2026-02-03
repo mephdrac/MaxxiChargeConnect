@@ -1,3 +1,13 @@
+"""Sensor zur Überwachung des SendCount-Zählers für MaxxiCharge-Geräte.
+
+Dieser Sensor überwacht den sendCount-Wert, der die Anzahl der gesendeten Telegramme
+vom Gerät repräsentiert. Er erkennt Lücken in der Kommunikation und Resets des Zählers,
+um die Zuverlässigkeit der Datenübertragung zu überwachen.
+
+Der Sensor ist als diagnostische Entität kategorisiert und liefert zusätzliche Attribute
+wie fehlende Pakete, letzte Differenz und Anzahl der Resets.
+"""
+
 import logging
 from homeassistant.components.sensor import (
     SensorStateClass,
@@ -68,7 +78,7 @@ class SendCount(BaseWebhookSensor):
         }
 
     def _process_sendcount(self, new_value):
-        """Prüft Lücken und Resets."""        
+        """Prüft Lücken und Resets."""
 
         if self._last_sendcount is None:
             self._last_sendcount = new_value
@@ -92,4 +102,3 @@ class SendCount(BaseWebhookSensor):
     async def handle_stale(self):
         """Bei stale verfügbar bleiben und letzten Wert beibehalten."""
         self._attr_available = True
-

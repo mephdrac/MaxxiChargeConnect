@@ -37,7 +37,7 @@ async def async_setup_entry(
     try:
         coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
         await coordinator.async_config_entry_first_refresh()
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         _LOGGER.error("Coordinator refresh failed: %s", e)
         return
 

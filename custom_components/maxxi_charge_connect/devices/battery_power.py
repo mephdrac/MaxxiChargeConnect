@@ -88,9 +88,9 @@ class BatteryPower(BaseWebhookSensor):
             if pccu_raw is None:
                 _LOGGER.debug("BatteryPower: Pccu fehlt")
                 return
-            
+
             ccu = float(pccu_raw)
-            
+
             if not is_pccu_ok(ccu):
                 _LOGGER.warning("BatteryPower: PCCU-Wert nicht plausibel: %s W", ccu)
                 return
@@ -100,24 +100,28 @@ class BatteryPower(BaseWebhookSensor):
             if pv_power_raw is None:
                 _LOGGER.debug("BatteryPower: PV_power_total fehlt")
                 return
-            
+
             pv_power = float(pv_power_raw)
             batteries = data.get("batteriesInfo", [])
 
             if not is_power_total_ok(pv_power, batteries):
-                _LOGGER.warning("BatteryPower: PV-Leistung nicht plausibel: %s W", pv_power)
+                _LOGGER.warning(
+                    "BatteryPower: PV-Leistung nicht plausibel: %s W", pv_power
+                )
                 return
 
             # Netto-Batterieleistung berechnen (kann positiv oder negativ sein)
             battery_power = round(pv_power - ccu, 3)
-            
+
             self._attr_native_value = battery_power
             _LOGGER.debug(
-                "BatteryPower: Netto-Batterieleistung berechnet: %s W (PV: %s W, CCU: %s W)", 
-                battery_power, pv_power, ccu
+                "BatteryPower: Netto-Batterieleistung berechnet: %s W (PV: %s W, CCU: %s W)",
+                battery_power,
+                pv_power,
+                ccu,
             )
-            
+
         except (ValueError, TypeError) as err:
             _LOGGER.warning("BatteryPower: Konvertierungsfehler: %s", err)
-        except Exception as err:
+        except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error("BatteryPower: Unerwarteter Fehler: %s", err)

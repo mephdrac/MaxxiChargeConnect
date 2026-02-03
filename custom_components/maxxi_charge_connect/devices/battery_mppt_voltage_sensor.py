@@ -1,24 +1,27 @@
-"""Modul für die BatterySoESensor-Entität der maxxi_charge_connect Integration.
+"""Modul für die BatteryMpptVoltageSensor-Entität der maxxi_charge_connect Integration.
 
-Definiert eine Sensor-Entität, einer einzelnen Batterie darstellt,
-dynamische Aktualisierungen verarbeitet
-und Geräteinformationen für Home Assistant bereitstellt.
+Definiert eine Sensor-Entität, die die MPPT-Spannung einer einzelnen Batterie darstellt,
+dynamische Aktualisierungen verarbeitet und Geräteinformationen für Home Assistant bereitstellt.
 """
+
+import logging
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
-    SensorEntity,
     SensorStateClass,
 )
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfElectricPotential
 
+from .base_webhook_sensor import BaseWebhookSensor
 from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
 
+_LOGGER = logging.getLogger(__name__)
 
-class BatteryMpptVoltageSensor(SensorEntity):
-    """Sensor-Entität zur Darstellung der Spannung der PV einer bestimmten Batterie.
+
+class BatteryMpptVoltageSensor(BaseWebhookSensor):
+    """Sensor-Entität zur Darstellung der MPPT-Spannung einer bestimmten Batterie.
 
     Attribute:
         _entry (ConfigEntry): Konfigurationseintrag für diese Sensor-Instanz.
@@ -38,7 +41,7 @@ class BatteryMpptVoltageSensor(SensorEntity):
             index (int): Index der Batterie, für die der Sensor steht.
 
         """
-        self._entry = entry
+        super().__init__(entry)
         self._index = index
         self._attr_translation_placeholders = {"index": str(index + 1)}
         self._attr_suggested_display_precision = 2
@@ -48,52 +51,57 @@ class BatteryMpptVoltageSensor(SensorEntity):
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
 
-        self._attr_native_value = None
-
-    async def async_added_to_hass(self):
-        """Registriert den Update-Handler dieses Sensors beim Dispatcher.
-
-        Wird aufgerufen, wenn die Entität in Home Assistant hinzugefügt wird.
-        """
-        self.hass.data[DOMAIN][self._entry.entry_id]["listeners"].append(
-            self._handle_update
-        )
-
-    async def _handle_update(self, data):
+    async def handle_update(self, data):
         """Verarbeitet eine Aktualisierung und aktualisiert den Sensorwert.
 
         Args:
             data (dict): Die eingehenden Aktualisierungsdaten mit Batterieinformationen.
 
-        Hinweis:
-            Ignoriert IndexError und KeyError stillschweigend, falls die Batterieinformationen
-            nicht vorhanden oder fehlerhaft sind.
-
         """
         try:
-            self._attr_native_value = (
-                float(data["batteriesInfo"][self._index]["mpptVoltage"]) / 1000.0
+            batteries_info = data.get("batteriesInfo", [])
+            
+            if not batteries_info or self._index >= len(batteries_info):
+                _LOGGER.debug(
+                    "BatteryMpptVoltageSensor[%s]: Keine Batterie-Daten oder Index außerhalb Bereich", 
+                    self._index
+                )
+                return
+
+            battery_data = batteries_info[self._index]
+            mppt_voltage = battery_data.get("mpptVoltage")
+            
+            if mppt_voltage is None:
+                _LOGGER.debug(
+                    "BatteryMpptVoltageSensor[%s]: mpptVoltage fehlt", 
+                    self._index
+                )
+                return
+
+            # Konvertiere mV zu V
+            mppt_volts = float(mppt_voltage) / 1000.0
+            
+            # Plausibilitätsprüfung: MPPT-Spannung sollte vernünftig sein
+            if mppt_volts < 0 or mppt_volts > 100:  # 0-100V als vernünftiger Bereich
+                _LOGGER.warning(
+                    "BatteryMpptVoltageSensor[%s]: Unplausible MPPT-Spannung: %s V", 
+                    self._index, mppt_volts
+                )
+                return
+
+            self._attr_native_value = mppt_volts
+            _LOGGER.debug(
+                "BatteryMpptVoltageSensor[%s]: Aktualisiert auf %s V", 
+                self._index, mppt_volts
             )
-            self._attr_available = True
-            self.async_write_ha_state()
-        except (IndexError, KeyError):
-            pass
-
-    @property
-    def device_info(self):
-        """Liefert die Geräteinformationen für diese Sensor-Entity.
-
-        Returns:
-            dict: Ein Dictionary mit Informationen zur Identifikation
-                  des Geräts in Home Assistant, einschließlich:
-                  - identifiers: Eindeutige Identifikatoren (Domain und Entry ID)
-                  - name: Anzeigename des Geräts
-                  - manufacturer: Herstellername
-                  - model: Modellbezeichnung
-
-        """
-        return {
-            "identifiers": {(DOMAIN, self._entry.entry_id)},
-            "name": self._entry.title,
-            **DEVICE_INFO,
-        }
+            
+        except (IndexError, KeyError) as err:
+            _LOGGER.warning(
+                "BatteryMpptVoltageSensor[%s]: Datenstrukturfehler: %s", 
+                self._index, err
+            )
+        except (ValueError, TypeError) as err:
+            _LOGGER.warning(
+                "BatteryMpptVoltageSensor[%s]: Konvertierungsfehler: %s", 
+                self._index, err
+            )

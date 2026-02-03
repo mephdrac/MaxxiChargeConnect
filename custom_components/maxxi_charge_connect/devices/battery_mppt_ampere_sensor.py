@@ -1,24 +1,27 @@
-"""Modul für die BatterySoESensor-Entität der maxxi_charge_connect Integration.
+"""Modul für die BatteryMpptAmpereSensor-Entität der maxxi_charge_connect Integration.
 
-Definiert eine Sensor-Entität, einer einzelnen Batterie darstellt,
-dynamische Aktualisierungen verarbeitet
-und Geräteinformationen für Home Assistant bereitstellt.
+Definiert eine Sensor-Entität, die den MPPT-Strom einer einzelnen Batterie darstellt,
+dynamische Aktualisierungen verarbeitet und Geräteinformationen für Home Assistant bereitstellt.
 """
+
+import logging
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
-    SensorEntity,
     SensorStateClass,
 )
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfElectricCurrent
 
+from .base_webhook_sensor import BaseWebhookSensor
 from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
 
+_LOGGER = logging.getLogger(__name__)
 
-class BatteryMpptAmpereSensor(SensorEntity):
-    """Sensor-Entität zur Darstellung der Stromstärke einer bestimmten Batterie.
+
+class BatteryMpptAmpereSensor(BaseWebhookSensor):
+    """Sensor-Entität zur Darstellung der MPPT-Stromstärke einer bestimmten Batterie.
 
     Attribute:
         _entry (ConfigEntry): Konfigurationseintrag für diese Sensor-Instanz.
@@ -38,7 +41,7 @@ class BatteryMpptAmpereSensor(SensorEntity):
             index (int): Index der Batterie, für die der Sensor steht.
 
         """
-        self._entry = entry
+        super().__init__(entry)
         self._index = index
         self._attr_translation_placeholders = {"index": str(index + 1)}
         self._attr_suggested_display_precision = 2
@@ -48,52 +51,57 @@ class BatteryMpptAmpereSensor(SensorEntity):
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
 
-        self._attr_native_value = None
-
-    async def async_added_to_hass(self):
-        """Registriert den Update-Handler dieses Sensors beim Dispatcher.
-
-        Wird aufgerufen, wenn die Entität in Home Assistant hinzugefügt wird.
-        """
-        self.hass.data[DOMAIN][self._entry.entry_id]["listeners"].append(
-            self._handle_update
-        )
-
-    async def _handle_update(self, data):
+    async def handle_update(self, data):
         """Verarbeitet eine Aktualisierung und aktualisiert den Sensorwert.
 
         Args:
             data (dict): Die eingehenden Aktualisierungsdaten mit Batterieinformationen.
 
-        Hinweis:
-            Ignoriert IndexError und KeyError stillschweigend, falls die Batterieinformationen
-            nicht vorhanden oder fehlerhaft sind.
-
         """
         try:
-            self._attr_native_value = (
-                float(data["batteriesInfo"][self._index]["mpptCurrent"]) / 1000.0
+            batteries_info = data.get("batteriesInfo", [])
+            
+            if not batteries_info or self._index >= len(batteries_info):
+                _LOGGER.debug(
+                    "BatteryMpptAmpereSensor[%s]: Keine Batterie-Daten oder Index außerhalb Bereich", 
+                    self._index
+                )
+                return
+
+            battery_data = batteries_info[self._index]
+            mppt_current = battery_data.get("mpptCurrent")
+            
+            if mppt_current is None:
+                _LOGGER.debug(
+                    "BatteryMpptAmpereSensor[%s]: mpptCurrent fehlt", 
+                    self._index
+                )
+                return
+
+            # Konvertiere mA zu A
+            mppt_amps = float(mppt_current) / 1000.0
+            
+            # Plausibilitätsprüfung: MPPT-Strom sollte vernünftig sein
+            if abs(mppt_amps) > 100:  # 100A als vernünftige Obergrenze für MPPT
+                _LOGGER.warning(
+                    "BatteryMpptAmpereSensor[%s]: Unplausibler MPPT-Strom: %s A", 
+                    self._index, mppt_amps
+                )
+                return
+
+            self._attr_native_value = mppt_amps
+            _LOGGER.debug(
+                "BatteryMpptAmpereSensor[%s]: Aktualisiert auf %s A", 
+                self._index, mppt_amps
             )
-            self._attr_available = True
-            self.async_write_ha_state()
-        except (IndexError, KeyError):
-            pass
-
-    @property
-    def device_info(self):
-        """Liefert die Geräteinformationen für diese Sensor-Entity.
-
-        Returns:
-            dict: Ein Dictionary mit Informationen zur Identifikation
-                  des Geräts in Home Assistant, einschließlich:
-                  - identifiers: Eindeutige Identifikatoren (Domain und Entry ID)
-                  - name: Anzeigename des Geräts
-                  - manufacturer: Herstellername
-                  - model: Modellbezeichnung
-
-        """
-        return {
-            "identifiers": {(DOMAIN, self._entry.entry_id)},
-            "name": self._entry.title,
-            **DEVICE_INFO,
-        }
+            
+        except (IndexError, KeyError) as err:
+            _LOGGER.warning(
+                "BatteryMpptAmpereSensor[%s]: Datenstrukturfehler: %s", 
+                self._index, err
+            )
+        except (ValueError, TypeError) as err:
+            _LOGGER.warning(
+                "BatteryMpptAmpereSensor[%s]: Konvertierungsfehler: %s", 
+                self._index, err
+            )

@@ -1,23 +1,26 @@
-"""Modul für die BatterySoESensor-Entität der maxxi_charge_connect Integration.
+"""Modul für die BatteryChargeSensor-Entität der maxxi_charge_connect Integration.
 
-Definiert eine Sensor-Entität, einer einzelnen Batterie darstellt,
-dynamische Aktualisierungen verarbeitet
-und Geräteinformationen für Home Assistant bereitstellt.
+Definiert eine Sensor-Entität, die die Ladeleistung einer einzelnen Batterie darstellt,
+dynamische Aktualisierungen verarbeitet und Geräteinformationen für Home Assistant bereitstellt.
 """
+
+import logging
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
-    SensorEntity,
     SensorStateClass,
 )
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfPower
 
+from .base_webhook_sensor import BaseWebhookSensor
 from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
 
+_LOGGER = logging.getLogger(__name__)
 
-class BatteryChargeSensor(SensorEntity):
+
+class BatteryChargeSensor(BaseWebhookSensor):
     """Sensor-Entität zur Darstellung der Ladeleistung einer bestimmten Batterie.
 
     Attribute:
@@ -38,7 +41,7 @@ class BatteryChargeSensor(SensorEntity):
             index (int): Index der Batterie, für die der Sensor steht.
 
         """
-        self._entry = entry
+        super().__init__(entry)
         self._index = index
         self._attr_translation_placeholders = {"index": str(index + 1)}
         self._attr_suggested_display_precision = 2
@@ -48,60 +51,65 @@ class BatteryChargeSensor(SensorEntity):
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = UnitOfPower.WATT
 
-        self._attr_native_value = None
-
-    async def async_added_to_hass(self):
-        """Registriert den Update-Handler dieses Sensors beim Dispatcher.
-
-        Wird aufgerufen, wenn die Entität in Home Assistant hinzugefügt wird.
-        """
-        self.hass.data[DOMAIN][self._entry.entry_id]["listeners"].append(
-            self._handle_update
-        )
-
-    async def _handle_update(self, data):
+    async def handle_update(self, data):
         """Verarbeitet eine Aktualisierung und aktualisiert den Sensorwert.
 
         Args:
             data (dict): Die eingehenden Aktualisierungsdaten mit Batterieinformationen.
 
-        Hinweis:
-            Ignoriert IndexError und KeyError stillschweigend, falls die Batterieinformationen
-            nicht vorhanden oder fehlerhaft sind.
-
         """
         try:
-            batterie_leistung = float(
-                data["batteriesInfo"][self._index]["batteryPower"]
+            batteries_info = data.get("batteriesInfo", [])
+            
+            if not batteries_info or self._index >= len(batteries_info):
+                _LOGGER.debug(
+                    "BatteryChargeSensor[%s]: Keine Batterie-Daten oder Index außerhalb Bereich", 
+                    self._index
+                )
+                return
+
+            battery_data = batteries_info[self._index]
+            battery_power = battery_data.get("batteryPower")
+            
+            if battery_power is None:
+                _LOGGER.debug(
+                    "BatteryChargeSensor[%s]: batteryPower fehlt", 
+                    self._index
+                )
+                return
+
+            # Konvertiere zu float
+            charge_power = float(battery_power)
+            
+            # Nur positive Werte sind Ladeleistung
+            if charge_power < 0:
+                _LOGGER.debug(
+                    "BatteryChargeSensor[%s]: Negative Leistung (%s W) - keine Ladeleistung", 
+                    self._index, charge_power
+                )
+                return
+
+            # Plausibilitätsprüfung: Ladeleistung sollte vernünftig sein
+            if charge_power > 20000:  # 20kW als vernünftige Obergrenze
+                _LOGGER.warning(
+                    "BatteryChargeSensor[%s]: Unplausible Ladeleistung: %s W", 
+                    self._index, charge_power
+                )
+                return
+
+            self._attr_native_value = charge_power
+            _LOGGER.debug(
+                "BatteryChargeSensor[%s]: Aktualisiert auf %s W", 
+                self._index, charge_power
             )
-
-            if batterie_leistung >= 0:
-                self._attr_native_value = batterie_leistung
-            else:
-                self._attr_native_value = 0
-
-            self._attr_available = True
-
-            self.async_write_ha_state()
-
-        except (IndexError, KeyError):
-            pass
-
-    @property
-    def device_info(self):
-        """Liefert die Geräteinformationen für diese Sensor-Entity.
-
-        Returns:
-            dict: Ein Dictionary mit Informationen zur Identifikation
-                  des Geräts in Home Assistant, einschließlich:
-                  - identifiers: Eindeutige Identifikatoren (Domain und Entry ID)
-                  - name: Anzeigename des Geräts
-                  - manufacturer: Herstellername
-                  - model: Modellbezeichnung
-
-        """
-        return {
-            "identifiers": {(DOMAIN, self._entry.entry_id)},
-            "name": self._entry.title,
-            **DEVICE_INFO,
-        }
+            
+        except (IndexError, KeyError) as err:
+            _LOGGER.warning(
+                "BatteryChargeSensor[%s]: Datenstrukturfehler: %s", 
+                self._index, err
+            )
+        except (ValueError, TypeError) as err:
+            _LOGGER.warning(
+                "BatteryChargeSensor[%s]: Konvertierungsfehler: %s", 
+                self._index, err
+            )

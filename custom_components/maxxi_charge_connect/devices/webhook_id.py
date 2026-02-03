@@ -4,11 +4,14 @@ Dieses Modul definiert die TextEntity `WebhookId`, die die Webhook-ID
 einer Integration als Textsensor in Home Assistant bereitstellt.
 """
 
+import logging
 from homeassistant.components.text import TextEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
 
 from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class WebhookId(TextEntity):
@@ -34,15 +37,27 @@ class WebhookId(TextEntity):
             entry (ConfigEntry): Die Konfigurationseintrag der Integration.
 
         """
-        self._attr_native_value = entry.data[CONF_WEBHOOK_ID]
-        #  self._unsub_dispatcher = None
         self._entry = entry
-        # self._attr_name = "Webhook ID"
+        
+        # Sichere Abfrage der Webhook-ID
+        webhook_id = entry.data.get(CONF_WEBHOOK_ID)
+        if webhook_id is None:
+            _LOGGER.error("WebhookId: CONF_WEBHOOK_ID nicht in ConfigEntry gefunden")
+            webhook_id = "unbekannt"
+        elif not webhook_id:
+            _LOGGER.warning("WebhookId: CONF_WEBHOOK_ID ist leer")
+            webhook_id = "leer"
+        else:
+            _LOGGER.info("WebhookId: Initialisiert mit ID: %s", webhook_id)
+        
+        self._attr_native_value = webhook_id
         self._attr_unique_id = f"{entry.entry_id}_webhook_id"
         self._attr_icon = "mdi:webhook"
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def set_value(self, value):
+        """Setzt einen neuen Webhook-ID Wert."""
+        _LOGGER.info("WebhookId: Wert geändert von %s zu %s", self._attr_native_value, value)
         self._attr_native_value = value
 
     @property

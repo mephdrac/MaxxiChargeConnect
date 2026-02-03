@@ -52,7 +52,25 @@ class UptimeSensor(BaseWebhookSensor):
 
         """
         try:
-            uptime_ms = int(data.get("uptime", 0))
+            uptime_ms = data.get("uptime")
+            
+            # Wenn uptime fehlt, nichts tun (letzten Wert behalten)
+            if uptime_ms is None:
+                _LOGGER.debug("UptimeSensor: uptime field missing, keeping current value")
+                return
+
+            # Typ-Konvertierung mit Fehlerbehandlung
+            try:
+                uptime_ms = int(uptime_ms)
+            except (ValueError, TypeError):
+                _LOGGER.warning("UptimeSensor: Invalid uptime value: %s", uptime_ms)
+                return
+
+            # Plausibilitätsprüfung: uptime sollte nicht negativ sein
+            if uptime_ms < 0:
+                _LOGGER.warning("UptimeSensor: Negative uptime value: %s", uptime_ms)
+                return
+
             now_utc = datetime.now(tz=UTC)
 
             # State nur einmal am Tag aktualisieren
@@ -75,5 +93,5 @@ class UptimeSensor(BaseWebhookSensor):
             }
             self.async_write_ha_state()
 
-        except ValueError as e:
+        except Exception as e:
             _LOGGER.warning("Uptime-Wert ungültig: %s", e)

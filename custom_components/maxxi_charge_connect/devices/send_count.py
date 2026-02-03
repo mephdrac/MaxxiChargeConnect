@@ -49,6 +49,13 @@ class SendCount(BaseWebhookSensor):
             _LOGGER.error("Wert für sendCount ist None")
             return
 
+        # Typ-Konvertierung für String-Werte
+        try:
+            new_value = int(new_value)
+        except (ValueError, TypeError):
+            _LOGGER.error("Ungültiger sendCount Wert: %s", new_value)
+            return
+
         self._process_sendcount(new_value)
 
     @property
@@ -65,6 +72,8 @@ class SendCount(BaseWebhookSensor):
 
         if self._last_sendcount is None:
             self._last_sendcount = new_value
+            self._attr_native_value = new_value
+            self.async_write_ha_state()
             return
 
         self._attr_native_value = new_value
@@ -74,8 +83,10 @@ class SendCount(BaseWebhookSensor):
 
         if delta > 1:
             self._missing_packets += (delta - 1)
+            _LOGGER.info("SendCount Lücke erkannt: %s fehlende Telegramme (Delta: %s)", delta - 1, delta)
         elif delta <= 0:
             self._resets += 1
+            _LOGGER.info("SendCount Reset erkannt: %s -> %s (Delta: %s)", self._last_sendcount, new_value, delta)
 
         self._last_sendcount = new_value
 

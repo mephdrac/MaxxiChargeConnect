@@ -430,6 +430,62 @@ async def test_battery_soc___do_wintermode2(mock_async_get_min_soc_entity):  # p
     mock_entity.set_change_limitation.assert_not_awaited()  # pylint: disable=protected-access
 
 
+@pytest.mark.asyncio
+async def test_battery_soc__handle_update_missing_soc():
+    """Testet Verhalten, wenn SOC-Feld komplett fehlt."""
+
+    dummy_config_entry = MagicMock()
+    dummy_config_entry.data = {}
+
+    sensor = BatterySoc(dummy_config_entry)
+    sensor._attr_native_value = 50.0  # pylint: disable=protected-access
+    sensor.async_write_ha_state = MagicMock()
+
+    await sensor.handle_update({})
+
+    # Bei fehlendem SOC sollte Sensor unavailable werden
+    assert sensor._attr_available is False  # pylint: disable=protected-access
+    # Wert sollte unverändert bleiben
+    assert sensor._attr_native_value == 50.0  # pylint: disable=protected-access
+
+
+@pytest.mark.asyncio
+async def test_battery_soc__handle_update_none_soc():
+    """Testet Verhalten, wenn SOC explizit None ist."""
+
+    dummy_config_entry = MagicMock()
+    dummy_config_entry.data = {}
+
+    sensor = BatterySoc(dummy_config_entry)
+    sensor._attr_native_value = 50.0  # pylint: disable=protected-access
+    sensor.async_write_ha_state = MagicMock()
+
+    await sensor.handle_update({"SOC": None})
+
+    # Bei None SOC sollte Sensor unavailable werden
+    assert sensor._attr_available is False  # pylint: disable=protected-access
+    # Wert sollte unverändert bleiben
+    assert sensor._attr_native_value == 50.0  # pylint: disable=protected-access
+
+
+@pytest.mark.asyncio
+async def test_battery_soc__handle_update_invalid_soc():
+    """Testet Verhalten bei ungültigen SOC-Werten."""
+
+    dummy_config_entry = MagicMock()
+    dummy_config_entry.data = {}
+
+    sensor = BatterySoc(dummy_config_entry)
+    sensor._attr_native_value = 50.0  # pylint: disable=protected-access
+    sensor.async_write_ha_state = MagicMock()
+
+    # Test mit ungültigem String
+    await sensor.handle_update({"SOC": "invalid"})
+
+    assert sensor._attr_available is False  # pylint: disable=protected-access
+    assert sensor._attr_native_value == 50.0  # pylint: disable=protected-access
+
+
 @patch(
     "custom_components.maxxi_charge_connect.devices.battery_soc.async_get_min_soc_entity",
     new_callable=AsyncMock,

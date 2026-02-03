@@ -101,6 +101,49 @@ async def test_power_meter_add_and_handle_update2(sensor):  # pylint: disable=re
         assert sensor.native_value is None
 
 
+@pytest.mark.asyncio
+async def test_power_meter_missing_pr_key(sensor):   # pylint: disable=redefined-outer-name
+    """Testet Verhalten, wenn Pr-Schlüssel komplett fehlt."""
+    sensor._attr_native_value = 100.0  # Startwert setzen
+    await sensor.handle_update({})
+    assert sensor.native_value == 100.0  # Sollte unverändert bleiben
+
+
+@pytest.mark.asyncio
+async def test_power_meter_pr_zero(sensor):  # pylint: disable=redefined-outer-name
+    """Testet Verhalten, wenn Pr explizit 0 ist."""
+    await sensor.handle_update({"Pr": 0})
+    assert sensor.native_value == 0
+
+
+@pytest.mark.asyncio
+async def test_power_meter_invalid_pr_values(sensor):  # pylint: disable=redefined-outer-name
+    """Testet Verhalten bei ungültigen Pr-Werten."""
+    # Test mit None
+    sensor._attr_native_value = 100.0  # Startwert
+    await sensor.handle_update({"Pr": None})
+    assert sensor.native_value == 100.0  # Sollte unverändert bleiben
+
+    # Test mit String
+    await sensor.handle_update({"Pr": "invalid"})
+    assert sensor.native_value == 100.0  # Sollte unverändert bleiben
+
+
+@pytest.mark.asyncio
+async def test_power_meter_state_update_calls(sensor):  # pylint: disable=redefined-outer-name
+    """Testet, ob async_write_ha_state korrekt aufgerufen wird."""
+    # Bei gültigem Wert
+    await sensor.handle_update({"Pr": 100})
+    sensor.async_write_ha_state.assert_called_once()
+
+    # Reset mock
+    sensor.async_write_ha_state.reset_mock()
+
+    # Bei ungültigem Wert
+    await sensor.handle_update({"Pr": 999999})  # Außerhalb Bereich
+    sensor.async_write_ha_state.assert_not_called()
+
+
 def test_device_info(sensor):  # pylint: disable=redefined-outer-name
     """Testet die `device_info`-Eigenschaft des power_meter-Sensors.
 
@@ -111,3 +154,4 @@ def test_device_info(sensor):  # pylint: disable=redefined-outer-name
     assert info["name"] == "Maxxi Entry"
     assert info["manufacturer"] == "mephdrac"
     assert info["model"] == "CCU - Maxxicharge"
+

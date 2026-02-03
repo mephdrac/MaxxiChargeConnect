@@ -48,9 +48,22 @@ class PvPower(BaseWebhookSensor):
                          und `batteriesInfo`.
 
         """
-        pv_power = float(data.get("PV_power_total", 0))
+        pv_power = data.get("PV_power_total")
         batteries = data.get("batteriesInfo", [])
+
+        # Wenn PV_power_total komplett fehlt, nichts tun (letzten Wert behalten)
+        if pv_power is None:
+            _LOGGER.debug("PvPower: PV_power_total field missing, keeping current value")
+            return
+
+        try:
+            pv_power = float(pv_power)
+        except (ValueError, TypeError):
+            _LOGGER.warning("PvPower: Invalid PV_power_total value: %s", pv_power)
+            return
 
         if is_power_total_ok(pv_power, batteries):
             self._attr_native_value = pv_power
             self.async_write_ha_state()
+        else:
+            _LOGGER.warning("PvPower: PV_power_total value not OK: %s", pv_power)

@@ -47,10 +47,11 @@ class PowerMeter(BaseWebhookSensor):
 
         Args:
             data (dict): Dictionary mit dem Schlüssel `Pr`, der die momentane
-                         Import-/Exportleistung repräsentiert.
+                         Import-/Exportleistung repräsentiert. Wenn der Wert
+                         fehlt oder ungültig ist, wird 0 als Default verwendet.
 
         """
-        pr = data.get("Pr")
+        pr = data.get("Pr", 0)
 
         if is_pr_ok(pr):
             self._attr_native_value = pr

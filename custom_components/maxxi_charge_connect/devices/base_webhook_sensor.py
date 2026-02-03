@@ -127,9 +127,12 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
     async def _wrapper_update(self, data: dict):
         """Ablauf bei einem eingehenden Update-Event."""
         try:
+            old_value = self._attr_native_value
             await self.handle_update(data)
-            self._attr_available = True
-            self.async_write_ha_state()
+            # Nur aktualisieren, wenn sich der Wert tatsächlich geändert hat
+            if old_value != self._attr_native_value:
+                self._attr_available = True
+                self.async_write_ha_state()
         except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error(
                 "Fehler im Sensor %s beim Update: %s", self.__class__.__name__, err

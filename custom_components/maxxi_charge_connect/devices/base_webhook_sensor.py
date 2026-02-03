@@ -100,10 +100,20 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
             None,
         ):
             try:
-                self._attr_native_value = float(old_state.state)
-                self._attr_available = True
-            except Exception:  # pylint: disable=broad-except
-                pass
+                # Versuch, den Wert basierend auf dem Sensortyp wiederherzustellen
+                restored_value = self._restore_state_value(old_state.state)
+                if restored_value is not None:
+                    self._attr_native_value = restored_value
+                    self._attr_available = True
+                    _LOGGER.debug(
+                        "Sensor %s: Zustand wiederhergestellt: %s", 
+                        self.__class__.__name__, restored_value
+                    )
+            except Exception as err:  # pylint: disable=broad-except
+                _LOGGER.warning(
+                    "Sensor %s: Konnte Zustand nicht wiederherstellen: %s", 
+                    self.__class__.__name__, err
+                )
 
     async def async_will_remove_from_hass(self):
         """Abmelden beim Dispatcher."""
@@ -161,6 +171,24 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
         self._attr_available = False
         self._attr_state = STATE_UNKNOWN
         self.async_write_ha_state()
+
+    def _restore_state_value(self, state_str: str):
+        """Stellt den Zustand basierend auf dem Sensortyp wieder her.
+        
+        Args:
+            state_str: Der gespeicherte Zustand als String
+            
+        Returns:
+            Der wiederhergestellte Wert im korrekten Typ oder None bei Fehler
+        """
+        # Standard: Versuch float-Konvertierung (für die meisten Sensoren)
+        try:
+            return float(state_str)
+        except (ValueError, TypeError):
+            pass
+        
+        # Wenn nichts passt, None zurückgeben
+        return None
 
     @property
     def device_info(self):

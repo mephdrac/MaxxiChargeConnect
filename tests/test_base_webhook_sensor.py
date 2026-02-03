@@ -30,6 +30,10 @@ class TestSensor(BaseWebhookSensor):
             self._attr_native_value = float(value)
 
 
+# Verhindert pytest Collection für diese Hilfsklasse
+TestSensor.__test__ = False
+
+
 @pytest.fixture
 def entry():
     """Mock ConfigEntry."""

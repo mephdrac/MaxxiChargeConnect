@@ -1,24 +1,28 @@
-"""Modul für die BatterySoESensor-Entität der maxxi_charge_connect Integration.
+"""Modul für die BatteryPVAmpereSensor-Entität der maxxi_charge_connect Integration.
 
-Definiert eine Sensor-Entität, einer einzelnen Batterie darstellt,
-dynamische Aktualisierungen verarbeitet
-und Geräteinformationen für Home Assistant bereitstellt.
+Definiert eine Sensor-Entität, die den PV-Strom einer bestimmten Batterie darstellt,
+dynamische Aktualisierungen verarbeitet und Geräteinformationen für Home Assistant bereitstellt.
 """
+
+import logging
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
-    SensorEntity,
     SensorStateClass,
 )
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfElectricCurrent
+from .base_webhook_sensor import BaseWebhookSensor
 
-from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+_LOGGER = logging.getLogger(__name__)
 
 
-class BatteryPVAmpereSensor(SensorEntity):
-    """Sensor-Entität zur Darstellung der Stromstärke einer bestimmten Batterie.
+class BatteryPVAmpereSensor(BaseWebhookSensor):
+    """Sensor-Entität zur Darstellung des PV-Stroms einer bestimmten Batterie.
+
+    Dieser Sensor zeigt den aktuellen PV-Strom (Photovoltaik-Strom) einer bestimmten Batterie
+    in Ampere an. Die Daten werden von den Batterieinformationen im Webhook-Datenstrom
+    extrahiert und von mA in A umgerechnet.
 
     Attribute:
         _entry (ConfigEntry): Konfigurationseintrag für diese Sensor-Instanz.
@@ -38,7 +42,7 @@ class BatteryPVAmpereSensor(SensorEntity):
             index (int): Index der Batterie, für die der Sensor steht.
 
         """
-        self._entry = entry
+        super().__init__(entry)
         self._index = index
         self._attr_translation_placeholders = {"index": str(index + 1)}
         self._attr_suggested_display_precision = 2
@@ -48,52 +52,65 @@ class BatteryPVAmpereSensor(SensorEntity):
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = UnitOfElectricCurrent.AMPERE
 
-        self._attr_native_value = None
-
-    async def async_added_to_hass(self):
-        """Registriert den Update-Handler dieses Sensors beim Dispatcher.
-
-        Wird aufgerufen, wenn die Entität in Home Assistant hinzugefügt wird.
-        """
-        self.hass.data[DOMAIN][self._entry.entry_id]["listeners"].append(
-            self._handle_update
-        )
-
-    async def _handle_update(self, data):
+    async def handle_update(self, data):
         """Verarbeitet eine Aktualisierung und aktualisiert den Sensorwert.
 
         Args:
             data (dict): Die eingehenden Aktualisierungsdaten mit Batterieinformationen.
 
-        Hinweis:
-            Ignoriert IndexError und KeyError stillschweigend, falls die Batterieinformationen
-            nicht vorhanden oder fehlerhaft sind.
-
         """
         try:
-            self._attr_native_value = (
-                float(data["batteriesInfo"][self._index]["pvCurrent"]) / 1000.0
+            # Batterieinformationen sicher abfragen
+            batteries_info = data.get("batteriesInfo", [])
+            if not batteries_info or self._index >= len(batteries_info):
+                _LOGGER.debug(
+                    "BatteryPVAmpereSensor[%s]: batteriesInfo leer oder Index außerhalb des Bereichs", 
+                    self._index
+                )
+                return
+
+            battery_data = batteries_info[self._index]
+            pv_current_raw = battery_data.get("pvCurrent")
+            
+            if pv_current_raw is None:
+                _LOGGER.debug(
+                    "BatteryPVAmpereSensor[%s]: pvCurrent fehlt", 
+                    self._index
+                )
+                return
+
+            # Konvertierung von mA zu A
+            pv_current = float(pv_current_raw) / 1000.0
+            
+            # Plausibilitätsprüfung: PV-Strom sollte nicht negativ sein
+            if pv_current < 0:
+                _LOGGER.warning(
+                    "BatteryPVAmpereSensor[%s]: Negativer PV-Strom: %s A", 
+                    self._index, pv_current
+                )
+                return
+
+            # Plausibilitätsprüfung: Maximaler PV-Strom (z.B. 100A)
+            if pv_current > 100:
+                _LOGGER.warning(
+                    "BatteryPVAmpereSensor[%s]: Unplausibler PV-Strom: %s A", 
+                    self._index, pv_current
+                )
+                return
+
+            self._attr_native_value = pv_current
+            _LOGGER.debug(
+                "BatteryPVAmpereSensor[%s]: Aktualisiert auf %s A", 
+                self._index, pv_current
             )
-            self._attr_available = True
-            self.async_write_ha_state()
-        except (IndexError, KeyError):
-            pass
-
-    @property
-    def device_info(self):
-        """Liefert die Geräteinformationen für diese Sensor-Entity.
-
-        Returns:
-            dict: Ein Dictionary mit Informationen zur Identifikation
-                  des Geräts in Home Assistant, einschließlich:
-                  - identifiers: Eindeutige Identifikatoren (Domain und Entry ID)
-                  - name: Anzeigename des Geräts
-                  - manufacturer: Herstellername
-                  - model: Modellbezeichnung
-
-        """
-        return {
-            "identifiers": {(DOMAIN, self._entry.entry_id)},
-            "name": self._entry.title,
-            **DEVICE_INFO,
-        }
+            
+        except (IndexError, KeyError) as err:
+            _LOGGER.warning(
+                "BatteryPVAmpereSensor[%s]: Datenstrukturfehler: %s", 
+                self._index, err
+            )
+        except (ValueError, TypeError) as err:
+            _LOGGER.warning(
+                "BatteryPVAmpereSensor[%s]: Konvertierungsfehler: %s", 
+                self._index, err
+            )

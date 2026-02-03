@@ -82,16 +82,42 @@ class BatteryPower(BaseWebhookSensor):
         die Batterieleistung. Aktualisiert dann den Sensorstatus.
 
         """
+        try:
+            # CCU-Verbrauch sicher abfragen
+            pccu_raw = data.get("Pccu")
+            if pccu_raw is None:
+                _LOGGER.debug("BatteryPower: Pccu fehlt")
+                return
+            
+            ccu = float(pccu_raw)
+            
+            if not is_pccu_ok(ccu):
+                _LOGGER.warning("BatteryPower: PCCU-Wert nicht plausibel: %s W", ccu)
+                return
 
-        ccu = float(data.get("Pccu", 0))
-
-        if is_pccu_ok(ccu):
-            pv_power = float(data.get("PV_power_total", 0))
+            # PV-Leistung sicher abfragen
+            pv_power_raw = data.get("PV_power_total")
+            if pv_power_raw is None:
+                _LOGGER.debug("BatteryPower: PV_power_total fehlt")
+                return
+            
+            pv_power = float(pv_power_raw)
             batteries = data.get("batteriesInfo", [])
 
-            if is_power_total_ok(pv_power, batteries):
-                batterie_leistung = round(pv_power - ccu, 3)
+            if not is_power_total_ok(pv_power, batteries):
+                _LOGGER.warning("BatteryPower: PV-Leistung nicht plausibel: %s W", pv_power)
+                return
 
-                self._attr_native_value = batterie_leistung
-                self._attr_available = True
-                self.async_write_ha_state()
+            # Netto-Batterieleistung berechnen (kann positiv oder negativ sein)
+            battery_power = round(pv_power - ccu, 3)
+            
+            self._attr_native_value = battery_power
+            _LOGGER.debug(
+                "BatteryPower: Netto-Batterieleistung berechnet: %s W (PV: %s W, CCU: %s W)", 
+                battery_power, pv_power, ccu
+            )
+            
+        except (ValueError, TypeError) as err:
+            _LOGGER.warning("BatteryPower: Konvertierungsfehler: %s", err)
+        except Exception as err:
+            _LOGGER.error("BatteryPower: Unerwarteter Fehler: %s", err)

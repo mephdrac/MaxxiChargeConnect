@@ -1,28 +1,28 @@
-"""Modul für die BatterySoESensor-Entität der maxxi_charge_connect Integration.
+"""Modul für die BatteryPVPowerSensor-Entität der maxxi_charge_connect Integration.
 
-Definiert eine Sensor-Entität, einer einzelnen Batterie darstellt,
-dynamische Aktualisierungen verarbeitet
-und Geräteinformationen für Home Assistant bereitstellt.
+Definiert eine Sensor-Entität, die die PV-Leistung einer bestimmten Batterie darstellt,
+dynamische Aktualisierungen verarbeitet und Geräteinformationen für Home Assistant bereitstellt.
 """
 
 import logging
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
-    SensorEntity,
     SensorStateClass,
 )
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfPower
-
-from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+from .base_webhook_sensor import BaseWebhookSensor
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class BatteryPVPowerSensor(SensorEntity):
+class BatteryPVPowerSensor(BaseWebhookSensor):
     """Sensor zur Überwachung und Anzeige der PV-Leistung einer Batterie.
+
+    Dieser Sensor zeigt die aktuelle PV-Leistung (Photovoltaik-Leistung) einer bestimmten Batterie
+    in Watt an. Die Daten werden von den Batterieinformationen im Webhook-Datenstrom
+    extrahiert.
 
     Attribute:
         _entry (ConfigEntry): Konfigurationseintrag für diese Sensor-Instanz.
@@ -42,7 +42,7 @@ class BatteryPVPowerSensor(SensorEntity):
             index (int): Index der Batterie, für die der Sensor steht.
 
         """
-        self._entry = entry
+        super().__init__(entry)
         self._index = index
         self._attr_translation_placeholders = {"index": str(index + 1)}
         self._attr_suggested_display_precision = 2
@@ -52,54 +52,67 @@ class BatteryPVPowerSensor(SensorEntity):
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = UnitOfPower.WATT
 
-        self._attr_native_value = None
-
         _LOGGER.debug("BatteryPVPowerSensor initialized for battery index %d", index)
 
-    async def async_added_to_hass(self):
-        """Registriert den Update-Handler dieses Sensors beim Dispatcher.
-
-        Wird aufgerufen, wenn die Entität in Home Assistant hinzugefügt wird.
-        """
-        self.hass.data[DOMAIN][self._entry.entry_id]["listeners"].append(
-            self._handle_update
-        )
-
-    async def _handle_update(self, data):
+    async def handle_update(self, data):
         """Verarbeitet eine Aktualisierung und aktualisiert den Sensorwert.
 
         Args:
             data (dict): Die eingehenden Aktualisierungsdaten mit Batterieinformationen.
 
-        Hinweis:
-            Ignoriert IndexError und KeyError stillschweigend, falls die Batterieinformationen
-            nicht vorhanden oder fehlerhaft sind.
-
         """
         try:
-            self._attr_native_value = (
-                float(data["batteriesInfo"][self._index]["pvPower"]) or 0.0
+            # Batterieinformationen sicher abfragen
+            batteries_info = data.get("batteriesInfo", [])
+            if not batteries_info or self._index >= len(batteries_info):
+                _LOGGER.debug(
+                    "BatteryPVPowerSensor[%s]: batteriesInfo leer oder Index außerhalb des Bereichs", 
+                    self._index
+                )
+                return
+
+            battery_data = batteries_info[self._index]
+            pv_power_raw = battery_data.get("pvPower")
+            
+            if pv_power_raw is None:
+                _LOGGER.debug(
+                    "BatteryPVPowerSensor[%s]: pvPower fehlt", 
+                    self._index
+                )
+                return
+
+            # Konvertierung zu float
+            pv_power = float(pv_power_raw)
+            
+            # Plausibilitätsprüfung: PV-Leistung sollte nicht negativ sein
+            if pv_power < 0:
+                _LOGGER.warning(
+                    "BatteryPVPowerSensor[%s]: Negative PV-Leistung: %s W", 
+                    self._index, pv_power
+                )
+                return
+
+            # Plausibilitätsprüfung: Maximale PV-Leistung (z.B. 10kW)
+            if pv_power > 10000:
+                _LOGGER.warning(
+                    "BatteryPVPowerSensor[%s]: Unplausible PV-Leistung: %s W", 
+                    self._index, pv_power
+                )
+                return
+
+            self._attr_native_value = pv_power
+            _LOGGER.debug(
+                "BatteryPVPowerSensor[%s]: Aktualisiert auf %s W", 
+                self._index, pv_power
             )
-            self._attr_available = True
-            self.async_write_ha_state()
-        except (IndexError, KeyError):
-            pass
-
-    @property
-    def device_info(self):
-        """Liefert die Geräteinformationen für diese Sensor-Entity.
-
-        Returns:
-            dict: Ein Dictionary mit Informationen zur Identifikation
-                  des Geräts in Home Assistant, einschließlich:
-                  - identifiers: Eindeutige Identifikatoren (Domain und Entry ID)
-                  - name: Anzeigename des Geräts
-                  - manufacturer: Herstellername
-                  - model: Modellbezeichnung
-
-        """
-        return {
-            "identifiers": {(DOMAIN, self._entry.entry_id)},
-            "name": self._entry.title,
-            **DEVICE_INFO,
-        }
+            
+        except (IndexError, KeyError) as err:
+            _LOGGER.warning(
+                "BatteryPVPowerSensor[%s]: Datenstrukturfehler: %s", 
+                self._index, err
+            )
+        except (ValueError, TypeError) as err:
+            _LOGGER.warning(
+                "BatteryPVPowerSensor[%s]: Konvertierungsfehler: %s", 
+                self._index, err
+            )

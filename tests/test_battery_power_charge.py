@@ -113,7 +113,7 @@ async def test_battery_power_charge__handle_update_negative_power():
         await sensor.handle_update(data)  # pylint: disable=protected-access
         mock_write_ha_state.assert_not_called()  # Sollte nicht aktualisiert werden
 
-    assert sensor._attr_native_value is None  # pylint: disable=protected-access
+    assert sensor._attr_native_value == 0  # pylint: disable=protected-access
 
 
 @pytest.mark.asyncio
@@ -143,7 +143,7 @@ async def test_battery_power_charge__handle_update_zero_power():
         await sensor.handle_update(data)  # pylint: disable=protected-access
         mock_write_ha_state.assert_not_called()  # Sollte nicht aktualisiert werden
 
-    assert sensor._attr_native_value is None  # pylint: disable=protected-access
+    assert sensor._attr_native_value == 0  # pylint: disable=protected-access
 
 
 @pytest.mark.asyncio

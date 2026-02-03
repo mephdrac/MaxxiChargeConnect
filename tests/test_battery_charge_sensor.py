@@ -160,7 +160,7 @@ async def test_battery_charge_sensor_handle_update_negative_power(sensor):
     await sensor.handle_update(data)
     
     # Sollte nichts aktualisieren (keine Ladeleistung)
-    assert sensor._attr_native_value is None
+    assert sensor._attr_native_value == 0
 
 
 @pytest.mark.asyncio

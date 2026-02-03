@@ -119,17 +119,33 @@ async def test_wrapper_update_value_change(entry, hass):
 
 
 @pytest.mark.asyncio
-async def test_wrapper_update_no_change(entry, hass):
+async def test_wrapper_update_no_change_no_stale(entry, hass):
     """Testet _wrapper_update ohne Wertänderung."""
     sensor = TestSensor(entry)
     sensor.hass = hass
     sensor._attr_native_value = 100.0
+    sensor._after_stale = False
     sensor.async_write_ha_state = MagicMock()
 
     await sensor._wrapper_update({"test_value": "100"})
 
     # Sollte nicht aktualisiert werden (keine Änderung)
     sensor.async_write_ha_state.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_wrapper_update_no_change_after_stale(entry, hass):
+    """Testet _wrapper_update ohne Wertänderung."""
+    sensor = TestSensor(entry)
+    sensor.hass = hass
+    sensor._attr_native_value = 100.0
+    sensor._after_stale = True
+    sensor.async_write_ha_state = MagicMock()
+
+    await sensor._wrapper_update({"test_value": "100"})
+
+    # Sollte nicht aktualisiert werden (keine Änderung)
+    sensor.async_write_ha_state.assert_called_once()
 
 
 @pytest.mark.asyncio

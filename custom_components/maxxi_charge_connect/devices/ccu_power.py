@@ -59,7 +59,6 @@ class CcuPower(BaseWebhookSensor):
             data (dict): Die per Webhook empfangenen Sensordaten.
 
         """
-
         pccu = float(data.get("Pccu", 0))
 
         if is_pccu_ok(pccu):

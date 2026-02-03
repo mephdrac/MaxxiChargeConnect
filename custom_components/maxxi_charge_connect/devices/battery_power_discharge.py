@@ -104,7 +104,7 @@ class BatteryPowerDischarge(BaseWebhookSensor):
             battery_discharge_power = round(pv_power - ccu, 3)
 
             # Nur negative Werte sind Entladeleistung
-            if battery_discharge_power < 0:
+            if battery_discharge_power <= 0:
                 discharge_power = abs(battery_discharge_power)
                 self._attr_native_value = discharge_power
                 _LOGGER.debug(
@@ -114,13 +114,13 @@ class BatteryPowerDischarge(BaseWebhookSensor):
                     ccu,
                 )
             else:
-                _LOGGER.debug(
+                _LOGGER.warning(
                     "BatteryPowerDischarge: Keine Entladeleistung (PV: %s W, CCU: %s W, Differenz: %s W)",
                     pv_power,
                     ccu,
                     battery_discharge_power,
                 )
-                return
+                self._attr_native_value = 0
 
         except (ValueError, TypeError) as err:
             _LOGGER.warning("BatteryPowerDischarge: Konvertierungsfehler: %s", err)

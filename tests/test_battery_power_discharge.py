@@ -1,6 +1,6 @@
 """Tests für die BatteryPowerDischarge Sensor Entität."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 from homeassistant.const import UnitOfPower
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -70,7 +70,7 @@ async def test_battery_power_discharge__handle_update_positive_power():
 
     await sensor.handle_update(data)  # pylint: disable=protected-access
 
-    assert sensor._attr_native_value is None  # pylint: disable=protected-access
+    assert sensor._attr_native_value == 0  # pylint: disable=protected-access
 
 
 @pytest.mark.asyncio
@@ -124,7 +124,7 @@ async def test_battery_power_discharge__handle_update_zero_power():
 
     await sensor.handle_update(data)  # pylint: disable=protected-access
 
-    assert sensor._attr_native_value is None  # pylint: disable=protected-access
+    assert sensor._attr_native_value == 0  # pylint: disable=protected-access
 
 
 @pytest.mark.asyncio

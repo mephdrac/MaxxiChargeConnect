@@ -68,3 +68,4 @@ class StatusSensor(BaseWebhookSensor):
     async def handle_stale(self):
         """Bei stale verfügbar bleiben und letzten Status beibehalten."""
         self._attr_available = True
+        self._state = "Off"

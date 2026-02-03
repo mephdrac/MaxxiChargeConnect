@@ -231,7 +231,7 @@
         "name": "Status"
       },
       "UptimeSensor": {
-        "name": "Betriebsstart"
+        "name": "Läuft seit"
       },
       "OnlineStatusSensor": {
         "name": "CCU-Online"
@@ -241,10 +241,7 @@
       },
       "SendCount": {
         "name": "Telegramme"
-      },
-      "Uptime": {
-        "name": "Läuft seit"
-      }
+      }      
     },
     "switch": {
       "Winterbetrieb": {

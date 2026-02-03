@@ -117,7 +117,7 @@ class BatteryPowerCharge(BaseWebhookSensor):
             battery_charge_power = round(pv_power - ccu, 3)
 
             # Nur positive Werte sind Ladeleistung
-            if battery_charge_power > 0:
+            if battery_charge_power >= 0:
                 self._attr_native_value = battery_charge_power
                 _LOGGER.debug(
                     "BatteryPowerCharge: Ladeleistung berechnet: %s W (PV: %s W, CCU: %s W)",
@@ -132,7 +132,7 @@ class BatteryPowerCharge(BaseWebhookSensor):
                     ccu,
                     battery_charge_power,
                 )
-                return
+                self._attr_native_value = 0
 
         except (ValueError, TypeError) as err:
             _LOGGER.warning("BatteryPowerCharge: Konvertierungsfehler: %s", err)

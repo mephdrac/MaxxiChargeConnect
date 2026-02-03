@@ -84,18 +84,18 @@ class BatteryDischargeSensor(BaseWebhookSensor):
                     "BatteryDischargeSensor[%s]: Positive Leistung (%s W) - keine Entladeleistung",
                     self._index, discharge_power
                 )
-                return
+                discharge_power = 0
 
             # Konvertiere negative Werte zu positiver Entladeleistung
             discharge_power = abs(discharge_power)
 
             # 0 Watt ist keine Entladeleistung
-            if discharge_power == 0:
-                _LOGGER.debug(
-                    "BatteryDischargeSensor[%s]: Leistung ist 0 W - keine Entladeleistung",
-                    self._index
-                )
-                return
+            # if discharge_power == 0:
+            #     _LOGGER.debug(
+            #         "BatteryDischargeSensor[%s]: Leistung ist 0 W - keine Entladeleistung",
+            #         self._index
+            #     )
+            #     return
 
             # Plausibilitätsprüfung: Entladeleistung sollte vernünftig sein
             if discharge_power > 20000:  # 20kW als vernünftige Obergrenze

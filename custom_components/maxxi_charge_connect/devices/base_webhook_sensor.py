@@ -56,6 +56,7 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
             name: Anzeigename des Sensors
             unique_id: Eindeutige ID für HA
         """
+        self._after_stale = True
         self._entry = entry
         self._attr_available = False  # bis erstes gültiges Update kommt
 
@@ -139,9 +140,11 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
         try:
             old_value = self._attr_native_value
             await self.handle_update(data)
-            # Nur aktualisieren, wenn sich der Wert tatsächlich geändert hat
-            if old_value != self._attr_native_value:
+            # Nur aktualisieren, wenn sich der Wert tatsächlich geändert hat oder zuvor ein Stale war
+            if old_value != self._attr_native_value or self._after_stale:
+                _LOGGER.warning("Sensor %s: Wert aktualisiert: %s", self.__class__.__name__, self._attr_native_value)
                 self._attr_available = True
+                self._after_stale = False
                 self.async_write_ha_state()
         except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error(
@@ -150,6 +153,7 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
 
     async def _wrapper_stale(self, _):
         """Ablauf, wenn das Watchdog-Event 'stale' gesendet wird."""
+        self._after_stale = True
         await self.handle_stale()
         self.async_write_ha_state()
 

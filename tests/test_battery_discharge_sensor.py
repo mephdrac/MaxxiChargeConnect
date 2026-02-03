@@ -160,7 +160,7 @@ async def test_battery_discharge_sensor_handle_update_positive_power(sensor):
     await sensor.handle_update(data)
     
     # Sollte nichts aktualisieren (keine Entladeleistung)
-    assert sensor._attr_native_value is None
+    assert sensor._attr_native_value == 0
 
 
 @pytest.mark.asyncio
@@ -175,7 +175,7 @@ async def test_battery_discharge_sensor_handle_update_zero_power(sensor):
     await sensor.handle_update(data)
     
     # Sollte nichts aktualisieren (keine Entladeleistung)
-    assert sensor._attr_native_value is None
+    assert sensor._attr_native_value == 0
 
 
 @pytest.mark.asyncio

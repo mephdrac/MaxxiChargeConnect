@@ -84,7 +84,7 @@ class BatteryChargeSensor(BaseWebhookSensor):
                     "BatteryChargeSensor[%s]: Negative Leistung (%s W) - keine Ladeleistung",
                     self._index, charge_power
                 )
-                return
+                charge_power = 0
 
             # Plausibilitätsprüfung: Ladeleistung sollte vernünftig sein
             if charge_power > 20000:  # 20kW als vernünftige Obergrenze

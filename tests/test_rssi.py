@@ -37,7 +37,6 @@ def sensor():
     sensor_obj = Rssi(mock_entry)
     sensor_obj.hass = MagicMock()
     sensor_obj.async_on_remove = MagicMock()
-    sensor_obj.async_write_ha_state = MagicMock()
 
     return sensor_obj
 
@@ -68,7 +67,31 @@ async def test_rssi_add_and_handle_update(sensor):  # pylint: disable=redefined-
     der Sensorwert (`native_value`) aktualisiert wird.
     """
     await sensor.handle_update({"wifiStrength": -42})  # pylint: disable=protected-access
-    assert sensor.native_value == -42
+    assert sensor.native_value == -42.0
+
+
+@pytest.mark.asyncio
+async def test_rssi_missing_value_keeps_previous(sensor):  # pylint: disable=redefined-outer-name
+    """Fehlender wifiStrength soll den letzten Wert beibehalten."""
+    sensor._attr_native_value = -50.0  # pylint: disable=protected-access
+    await sensor.handle_update({})
+    assert sensor.native_value == -50.0
+
+
+@pytest.mark.asyncio
+async def test_rssi_invalid_value_keeps_previous(sensor):  # pylint: disable=redefined-outer-name
+    """Ungültiger wifiStrength soll den letzten Wert beibehalten."""
+    sensor._attr_native_value = -50.0  # pylint: disable=protected-access
+    await sensor.handle_update({"wifiStrength": "invalid"})
+    assert sensor.native_value == -50.0
+
+
+@pytest.mark.asyncio
+async def test_rssi_implausible_value_keeps_previous(sensor):  # pylint: disable=redefined-outer-name
+    """Unplausibler wifiStrength soll den letzten Wert beibehalten."""
+    sensor._attr_native_value = -50.0  # pylint: disable=protected-access
+    await sensor.handle_update({"wifiStrength": -200})
+    assert sensor.native_value == -50.0
 
 
 def test_device_info(sensor):  # pylint: disable=redefined-outer-name

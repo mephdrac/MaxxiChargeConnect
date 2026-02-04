@@ -73,16 +73,8 @@ async def test_pv_self_consumption__handle_update_alles_ok():
 
     sensor = PvSelfConsumption(dummy_config_entry)
 
-    with (
-            patch(
-                "custom_components.maxxi_charge_connect.devices."
-                "pv_self_consumption.PvSelfConsumption.async_write_ha_state",
-                new_callable=MagicMock
-            ) as mock_write_ha_state
-    ):
-        await sensor.handle_update(data)
-        mock_write_ha_state.assert_called_once()
-        assert sensor._attr_native_value == pv_power - max(-pr, 0)  # pylint: disable=protected-access
+    await sensor.handle_update(data)
+    assert sensor._attr_native_value == round(pv_power - max(-pr, 0), 2)  # pylint: disable=protected-access
 
 
 @pytest.mark.asyncio
@@ -112,12 +104,6 @@ async def test_pv_self_consumption__handle_update_pr_nicht_ok():
     with (
             patch(
                 "custom_components.maxxi_charge_connect.devices.pv_self_consumption."
-                "PvSelfConsumption.async_write_ha_state",
-                new_callable=MagicMock
-            ) as mock_write_ha_state1,
-
-            patch(
-                "custom_components.maxxi_charge_connect.devices.pv_self_consumption."
                 "is_pr_ok",
                 return_value=False
             ) as mock_is_pr_ok1,
@@ -132,7 +118,6 @@ async def test_pv_self_consumption__handle_update_pr_nicht_ok():
 
         mock_is_power_ok1.assert_called_once()
         mock_is_pr_ok1.assert_called_once()
-        mock_write_ha_state1.assert_not_called()
 
         args, kwargs = mock_is_pr_ok1.call_args  # pylint: disable=unused-variable
 
@@ -166,12 +151,6 @@ async def test_pv_self_consumption__handle_update_power_nicht_ok():
     with (
             patch(
                 "custom_components.maxxi_charge_connect.devices."
-                "pv_self_consumption.PvSelfConsumption.async_write_ha_state",
-                new_callable=MagicMock
-            ) as mock_write_ha_state1,
-
-            patch(
-                "custom_components.maxxi_charge_connect.devices."
                 "pv_self_consumption.is_pr_ok",
                 return_value=True
             ) as mock_is_pr_ok1,
@@ -186,10 +165,9 @@ async def test_pv_self_consumption__handle_update_power_nicht_ok():
 
         mock_is_power_ok1.assert_called_once()
         mock_is_pr_ok1.assert_not_called()
-        mock_write_ha_state1.assert_not_called()
 
         args, kwargs = mock_is_power_ok1.call_args  # pylint: disable=unused-variable
 
-        assert args[0] == float(data.get("PV_power_total", 0))
+        assert args[0] == float(data.get("PV_power_total"))
         assert args[1] == data.get("batteriesInfo", [])
         assert sensor1._attr_native_value is None  # pylint: disable=protected-access

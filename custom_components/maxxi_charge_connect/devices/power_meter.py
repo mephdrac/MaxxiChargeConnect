@@ -47,11 +47,27 @@ class PowerMeter(BaseWebhookSensor):
 
         Args:
             data (dict): Dictionary mit dem Schlüssel `Pr`, der die momentane
-                         Import-/Exportleistung repräsentiert.
+                         Import-/Exportleistung repräsentiert. Wenn der Wert
+                         fehlt, wird der letzte gültige Wert beibehalten.
 
         """
-        pr = data.get("Pr")
+        pr_raw = data.get("Pr")
+
+        _LOGGER.debug("PowerMeter: Received Pr = %s", pr_raw)
+
+        # Wenn Pr komplett fehlt, nichts tun (letzten Wert behalten)
+        if pr_raw is None:
+            _LOGGER.debug("PowerMeter: Pr field missing, keeping current value")
+            return
+
+        try:
+            pr = float(pr_raw)
+        except (TypeError, ValueError) as err:
+            _LOGGER.warning("PowerMeter: Invalid Pr value %s: %s", pr_raw, err)
+            return
 
         if is_pr_ok(pr):
+            _LOGGER.debug("PowerMeter: Pr is OK, setting value to %s", pr)
             self._attr_native_value = pr
-            self.async_write_ha_state()
+        else:
+            _LOGGER.warning("PowerMeter: Pr is not OK, not updating value")

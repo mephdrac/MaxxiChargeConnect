@@ -51,29 +51,46 @@ class UptimeSensor(BaseWebhookSensor):
             data (dict): Die per Webhook empfangenen Sensordaten.
 
         """
+        uptime_ms = data.get("uptime")
+
+        # Wenn uptime fehlt, nichts tun (letzten Wert behalten)
+        if uptime_ms is None:
+            _LOGGER.debug("UptimeSensor: uptime field missing, keeping current value")
+            return
+
+        # Typ-Konvertierung mit Fehlerbehandlung
         try:
-            uptime_ms = int(data.get("uptime", 0))
-            now_utc = datetime.now(tz=UTC)
+            uptime_ms = int(uptime_ms)
+        except (ValueError, TypeError):
+            _LOGGER.warning("UptimeSensor: Invalid uptime value: %s", uptime_ms)
+            return
 
-            # State nur einmal am Tag aktualisieren
-            if (self._last_state_update is None) or (
-                now_utc - self._last_state_update >= timedelta(days=1)
-            ):
-                start_time_utc = now_utc - timedelta(milliseconds=uptime_ms)
-                self._attr_native_value = start_time_utc
-                self._last_state_update = now_utc
+        # Plausibilitätsprüfung: uptime sollte nicht negativ sein
+        if uptime_ms < 0:
+            _LOGGER.warning("UptimeSensor: Negative uptime value: %s", uptime_ms)
+            return
 
-            # lesbares Format als extra attribute
-            seconds_total = uptime_ms / 1000
-            days, remainder = divmod(int(seconds_total), 86400)
-            hours, remainder = divmod(remainder, 3600)
-            minutes, seconds = divmod(remainder, 60)
+        now_utc = datetime.now(tz=UTC)
 
-            self._attr_extra_state_attributes = {
-                "uptime": f"{days}d {hours}h {minutes}m {seconds}s",
-                "raw_ms": uptime_ms,
-            }
-            self.async_write_ha_state()
+        # State nur einmal am Tag aktualisieren
+        if (self._last_state_update is None) or (
+            now_utc - self._last_state_update >= timedelta(days=1)
+        ):
+            start_time_utc = now_utc - timedelta(milliseconds=uptime_ms)
+            self._attr_native_value = start_time_utc
+            self._last_state_update = now_utc
 
-        except ValueError as e:
-            _LOGGER.warning("Uptime-Wert ungültig: %s", e)
+        # lesbares Format als extra attribute
+        seconds_total = uptime_ms / 1000
+        days, remainder = divmod(int(seconds_total), 86400)
+        hours, remainder = divmod(remainder, 3600)
+        minutes, seconds = divmod(remainder, 60)
+
+        self._attr_extra_state_attributes = {
+            "uptime": f"{days}d {hours}h {minutes}m {seconds}s",
+            "raw_ms": uptime_ms,
+        }
+
+    async def handle_stale(self):
+        """Bei stale verfügbar bleiben und letzten Wert behalten."""
+        self._attr_available = True

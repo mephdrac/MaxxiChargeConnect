@@ -231,13 +231,16 @@
         "name": "Status"
       },
       "UptimeSensor": {
-        "name": "Betriebsstart"
+        "name": "Läuft seit"
       },
       "OnlineStatusSensor": {
         "name": "CCU-Online"
       },
       "CCUTemperaturSensor": {
         "name": "CCU-Temperatur"
+      },
+      "SendCount": {
+        "name": "Telegramme"
       }      
     },
     "switch": {

@@ -1,44 +1,32 @@
-"""Modul für die BatterySoESensor-Entität der maxxi_charge_connect Integration.
+"""Modul für die BatterySOCSensor-Entität der maxxi_charge_connect Integration.
 
-Definiert eine Sensor-Entität, einer einzelnen Batterie darstellt,
-dynamische Aktualisierungen verarbeitet
-und Geräteinformationen für Home Assistant bereitstellt.
+Definiert eine Sensor-Entität, die den SOC einer bestimmten Batterie darstellt,
+dynamische Aktualisierungen verarbeitet und Geräteinformationen für Home Assistant bereitstellt.
 """
+
+import logging
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
-    SensorEntity,
     SensorStateClass,
 )
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE
+from .base_webhook_sensor import BaseWebhookSensor
 
-from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+_LOGGER = logging.getLogger(__name__)
 
 
-class BatterySOCSensor(SensorEntity):
-    """Sensor-Entität zur Darstellung des SOC einer bestimmten Batterie.
-
-    Attribute:
-        _entry (ConfigEntry): Konfigurationseintrag für diese Sensor-Instanz.
-        _index (int): Index der Batterie, die dieser Sensor repräsentiert.
-
-    """
+class BatterySOCSensor(BaseWebhookSensor):
+    """Sensor-Entität zur Darstellung des SOC einer bestimmten Batterie."""
 
     _attr_entity_registry_enabled_default = False
     _attr_translation_key = "BatterySOCSensor"
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry, index: int) -> None:
-        """Initialisiert die BatterySOCSensor-Entität.
-
-        Args:
-            entry (ConfigEntry): Der Konfigurationseintrag der Integration.
-            index (int): Index der Batterie, für die der Sensor steht.
-
-        """
-        self._entry = entry
+        """Initialisiert die BatterySOCSensor-Entität."""
+        super().__init__(entry)
         self._index = index
         self._attr_translation_placeholders = {"index": str(index + 1)}
         self._attr_suggested_display_precision = 2
@@ -48,50 +36,45 @@ class BatterySOCSensor(SensorEntity):
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = PERCENTAGE
 
-        self._attr_native_value = None
-
-    async def async_added_to_hass(self):
-        """Registriert den Update-Handler dieses Sensors beim Dispatcher.
-
-        Wird aufgerufen, wenn die Entität in Home Assistant hinzugefügt wird.
-        """
-        self.hass.data[DOMAIN][self._entry.entry_id]["listeners"].append(
-            self._handle_update
-        )
-
-    async def _handle_update(self, data):
-        """Verarbeitet eine Aktualisierung und aktualisiert den Sensorwert.
-
-        Args:
-            data (dict): Die eingehenden Aktualisierungsdaten mit Batterieinformationen.
-
-        Hinweis:
-            Ignoriert IndexError und KeyError stillschweigend, falls die Batterieinformationen
-            nicht vorhanden oder fehlerhaft sind.
-
-        """
+    async def handle_update(self, data):
+        """Verarbeitet eine Aktualisierung und aktualisiert den Sensorwert."""
         try:
-            self._attr_native_value = data["batteriesInfo"][self._index]["batterySOC"]
-            self._attr_available = True
-            self.async_write_ha_state()
-        except (IndexError, KeyError):
-            pass
+            # Batterieinformationen sicher abfragen
+            batteries_info = data.get("batteriesInfo", [])
+            if not batteries_info or self._index >= len(batteries_info):
+                _LOGGER.debug(
+                    "BatterySOCSensor[%s]: batteriesInfo leer oder Index außerhalb des Bereichs",
+                    self._index,
+                )
+                return
 
-    @property
-    def device_info(self):
-        """Liefert die Geräteinformationen für diese Sensor-Entity.
+            battery_data = batteries_info[self._index]
+            soc_raw = battery_data.get("batterySOC")
 
-        Returns:
-            dict: Ein Dictionary mit Informationen zur Identifikation
-                  des Geräts in Home Assistant, einschließlich:
-                  - identifiers: Eindeutige Identifikatoren (Domain und Entry ID)
-                  - name: Anzeigename des Geräts
-                  - manufacturer: Herstellername
-                  - model: Modellbezeichnung
+            if soc_raw is None:
+                _LOGGER.debug("BatterySOCSensor[%s]: batterySOC fehlt", self._index)
+                return
 
-        """
-        return {
-            "identifiers": {(DOMAIN, self._entry.entry_id)},
-            "name": self._entry.title,
-            **DEVICE_INFO,
-        }
+            # Konvertierung zu float
+            soc = float(soc_raw)
+
+            # Plausibilitätsprüfung: SOC sollte zwischen 0 und 100% liegen
+            if soc < 0 or soc > 100:
+                _LOGGER.warning(
+                    "BatterySOCSensor[%s]: Unplausible SOC: %s%%", self._index, soc
+                )
+                return
+
+            self._attr_native_value = soc
+            _LOGGER.debug(
+                "BatterySOCSensor[%s]: Aktualisiert auf %s%%", self._index, soc
+            )
+
+        except (IndexError, KeyError) as err:
+            _LOGGER.warning(
+                "BatterySOCSensor[%s]: Datenstrukturfehler: %s", self._index, err
+            )
+        except (ValueError, TypeError) as err:
+            _LOGGER.warning(
+                "BatterySOCSensor[%s]: Konvertierungsfehler: %s", self._index, err
+            )

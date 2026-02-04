@@ -56,6 +56,7 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
             name: Anzeigename des Sensors
             unique_id: Eindeutige ID für HA
         """
+        self._after_stale = True
         self._entry = entry
         self._attr_available = False  # bis erstes gültiges Update kommt
 
@@ -100,10 +101,20 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
             None,
         ):
             try:
-                self._attr_native_value = float(old_state.state)
-                self._attr_available = True
-            except Exception:  # pylint: disable=broad-except
-                pass
+                # Versuch, den Wert basierend auf dem Sensortyp wiederherzustellen
+                restored_value = self._restore_state_value(old_state.state)
+                if restored_value is not None:
+                    self._attr_native_value = restored_value
+                    self._attr_available = True
+                    _LOGGER.debug(
+                        "Sensor %s: Zustand wiederhergestellt: %s",
+                        self.__class__.__name__, restored_value
+                    )
+            except Exception as err:  # pylint: disable=broad-except
+                _LOGGER.warning(
+                    "Sensor %s: Konnte Zustand nicht wiederherstellen: %s",
+                    self.__class__.__name__, err
+                )
 
     async def async_will_remove_from_hass(self):
         """Abmelden beim Dispatcher."""
@@ -127,9 +138,14 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
     async def _wrapper_update(self, data: dict):
         """Ablauf bei einem eingehenden Update-Event."""
         try:
+            old_value = self._attr_native_value
             await self.handle_update(data)
-            self._attr_available = True
-            self.async_write_ha_state()
+            # Nur aktualisieren, wenn sich der Wert tatsächlich geändert hat oder zuvor ein Stale war
+            if old_value != self._attr_native_value or self._after_stale:
+                _LOGGER.debug("Sensor %s: Wert aktualisiert: %s", self.__class__.__name__, self._attr_native_value)
+                self._attr_available = True
+                self._after_stale = False
+                self.async_write_ha_state()
         except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error(
                 "Fehler im Sensor %s beim Update: %s", self.__class__.__name__, err
@@ -137,6 +153,7 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
 
     async def _wrapper_stale(self, _):
         """Ablauf, wenn das Watchdog-Event 'stale' gesendet wird."""
+        self._after_stale = True
         await self.handle_stale()
         self.async_write_ha_state()
 
@@ -158,6 +175,22 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
         self._attr_available = False
         self._attr_state = STATE_UNKNOWN
         self.async_write_ha_state()
+
+    def _restore_state_value(self, state_str: str):
+        """Stellt den Zustand basierend auf dem Sensortyp wieder her.
+        Args:
+            state_str: Der gespeicherte Zustand als String
+        Returns:
+            Der wiederhergestellte Wert im korrekten Typ oder None bei Fehler
+        """
+        # Standard: Versuch float-Konvertierung (für die meisten Sensoren)
+        try:
+            return float(state_str)
+        except (ValueError, TypeError):
+            pass
+
+        # Wenn nichts passt, None zurückgeben
+        return None
 
     @property
     def device_info(self):

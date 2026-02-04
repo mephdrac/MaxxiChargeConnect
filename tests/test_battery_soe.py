@@ -1,6 +1,7 @@
 """Tests für die BatterySoE Entity im MaxxiChargeConnect Integration."""
 
 from unittest.mock import AsyncMock, MagicMock, patch
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfEnergy
 import pytest
 from custom_components.maxxi_charge_connect.devices.battery_soe import (
@@ -10,7 +11,7 @@ from custom_components.maxxi_charge_connect.devices.battery_soe import (
 
 @pytest.mark.asyncio
 async def test_battery_soe__init():
-    """ Initialisierung der BatterySoE Entity testen."""
+    """Initialisierung der BatterySoE Entity testen."""
 
     dummy_config_entry = MagicMock()
     dummy_config_entry.entry_id = "1234abcd"
@@ -21,7 +22,8 @@ async def test_battery_soe__init():
     # Grundlegende Attribute prüfen
     assert sensor._entry == dummy_config_entry  # pylint: disable=protected-access
     assert sensor._attr_suggested_display_precision == 2  # pylint: disable=protected-access
-    assert sensor._attr_device_class is None  # pylint: disable=protected-access
+    assert sensor._attr_device_class == SensorDeviceClass.ENERGY_STORAGE  # pylint: disable=protected-access
+    assert sensor._attr_state_class == SensorStateClass.MEASUREMENT  # pylint: disable=protected-access
     assert sensor._attr_native_unit_of_measurement == UnitOfEnergy.WATT_HOUR  # pylint: disable=protected-access
     assert sensor.icon == "mdi:home-battery"
     assert sensor._attr_unique_id == "1234abcd_battery_soe"  # pylint: disable=protected-access
@@ -30,7 +32,7 @@ async def test_battery_soe__init():
 
 @pytest.mark.asyncio
 async def test_battery_soe__device_info():
-    """ device_info Property der BatterySoE Entity testen."""
+    """device_info Property der BatterySoE Entity testen."""
 
     dummy_config_entry = MagicMock()
     dummy_config_entry.title = "Test Entry"
@@ -45,10 +47,7 @@ async def test_battery_soe__device_info():
 
 @pytest.mark.asyncio
 async def test_battery_soe_handle_update_alles_ok():
-    """ _handle_update Methode der BatterySoE Entity testen, wenn alle Bedingungen erfüllt sind."""
-
-    hass = MagicMock()
-    hass.async_add_job = AsyncMock()
+    """handle_update Methode der BatterySoE Entity testen, wenn alle Bedingungen erfüllt sind."""
 
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
@@ -64,26 +63,14 @@ async def test_battery_soe_handle_update_alles_ok():
     }
 
     sensor = BatterySoE(dummy_config_entry)
-    sensor.hass = hass
 
-    with (
-            patch(
-                "custom_components.maxxi_charge_connect.devices.battery_soe."
-                "BatterySoE.async_write_ha_state",
-                new_callable=MagicMock
-            ) as mock_write_ha_state
-    ):
-        await sensor.handle_update(data)
-        mock_write_ha_state.assert_called_once()
-        assert sensor._attr_native_value == capacity  # pylint: disable=protected-access
+    await sensor.handle_update(data)
+    assert sensor._attr_native_value == capacity  # pylint: disable=protected-access
 
 
 @pytest.mark.asyncio
 async def test_battery_soe__handle_update_keine_batterien():
-    """ _handle_update Methode der BatterySoE Entity testen, wenn keine Batterien im Datenpaket sind."""
-
-    hass = MagicMock()
-    hass.async_add_job = AsyncMock()
+    """handle_update Methode der BatterySoE Entity testen, wenn keine Batterien im Datenpaket sind."""
 
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
@@ -96,14 +83,168 @@ async def test_battery_soe__handle_update_keine_batterien():
 
     sensor = BatterySoE(dummy_config_entry)
 
-    with (
-            patch(
-                "custom_components.maxxi_charge_connect.devices.battery_soe.BatterySoE."
-                "async_write_ha_state",
-                new_callable=MagicMock
-            ) as mock_write_ha_state
-    ):
-        await sensor.handle_update(data)
-        mock_write_ha_state.assert_not_called()
+    await sensor.handle_update(data)
+    assert sensor._attr_native_value is None  # pylint: disable=protected-access
 
-        assert sensor._attr_native_value is None  # pylint: disable=protected-access
+
+@pytest.mark.asyncio
+async def test_battery_soe_handle_update_multiple_batteries():
+    """Testet handle_update mit mehreren Batterien."""
+
+    dummy_config_entry = MagicMock()
+    dummy_config_entry.data = {}
+
+    data = {
+        "batteriesInfo": [
+            {
+                "batteryCapacity": 1000.0
+            },
+            {
+                "batteryCapacity": 2000.0
+            },
+            {
+                "batteryCapacity": 1500.5
+            }
+        ]
+    }
+
+    sensor = BatterySoE(dummy_config_entry)
+
+    await sensor.handle_update(data)
+    assert sensor._attr_native_value == 4500.5  # pylint: disable=protected-access
+
+
+@pytest.mark.asyncio
+async def test_battery_soe_handle_update_invalid_values():
+    """Testet handle_update mit ungültigen Werten."""
+
+    dummy_config_entry = MagicMock()
+    dummy_config_entry.data = {}
+
+    # Test mit negativem Wert
+    data = {
+        "batteriesInfo": [
+            {
+                "batteryCapacity": -100
+            },
+            {
+                "batteryCapacity": 1000
+            }
+        ]
+    }
+
+    sensor = BatterySoE(dummy_config_entry)
+
+    await sensor.handle_update(data)
+    assert sensor._attr_native_value == 1000.0  # pylint: disable=protected-access
+
+    # Test mit zu hohem Wert (>100000 Wh)
+    data = {
+        "batteriesInfo": [
+            {
+                "batteryCapacity": 200000
+            },
+            {
+                "batteryCapacity": 1000
+            }
+        ]
+    }
+
+    await sensor.handle_update(data)
+    assert sensor._attr_native_value == 1000.0  # pylint: disable=protected-access
+
+
+@pytest.mark.asyncio
+async def test_battery_soe_handle_update_string_conversion():
+    """Testet handle_update mit String-Konvertierung."""
+
+    dummy_config_entry = MagicMock()
+    dummy_config_entry.data = {}
+
+    data = {
+        "batteriesInfo": [
+            {
+                "batteryCapacity": "1500.5"
+            },
+            {
+                "batteryCapacity": "2000.0"
+            }
+        ]
+    }
+
+    sensor = BatterySoE(dummy_config_entry)
+
+    await sensor.handle_update(data)
+    assert sensor._attr_native_value == 3500.5  # pylint: disable=protected-access
+
+
+@pytest.mark.asyncio
+async def test_battery_soe_handle_update_invalid_string():
+    """Testet handle_update mit ungültigem String."""
+
+    dummy_config_entry = MagicMock()
+    dummy_config_entry.data = {}
+
+    data = {
+        "batteriesInfo": [
+            {
+                "batteryCapacity": "invalid"
+            },
+            {
+                "batteryCapacity": 1000
+            }
+        ]
+    }
+
+    sensor = BatterySoE(dummy_config_entry)
+
+    await sensor.handle_update(data)
+    assert sensor._attr_native_value == 1000.0  # pylint: disable=protected-access
+
+
+@pytest.mark.asyncio
+async def test_battery_soe_handle_update_missing_capacity():
+    """Testet handle_update mit fehlender batteryCapacity."""
+
+    dummy_config_entry = MagicMock()
+    dummy_config_entry.data = {}
+
+    data = {
+        "batteriesInfo": [
+            {
+                "otherField": "value"
+            },
+            {
+                "batteryCapacity": 1000
+            }
+        ]
+    }
+
+    sensor = BatterySoE(dummy_config_entry)
+
+    await sensor.handle_update(data)
+    assert sensor._attr_native_value == 1000.0  # pylint: disable=protected-access
+
+
+@pytest.mark.asyncio
+async def test_battery_soe_handle_update_total_capacity_too_high():
+    """Testet handle_update mit zu hoher Gesamtkapazität."""
+
+    dummy_config_entry = MagicMock()
+    dummy_config_entry.data = {}
+
+    data = {
+        "batteriesInfo": [
+            {
+                "batteryCapacity": 300000
+            },
+            {
+                "batteryCapacity": 300000
+            }
+        ]
+    }
+
+    sensor = BatterySoE(dummy_config_entry)
+
+    await sensor.handle_update(data)
+    assert sensor._attr_native_value == 0.0  # pylint: disable=protected-access

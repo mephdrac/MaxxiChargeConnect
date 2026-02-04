@@ -49,7 +49,7 @@ class PowerConsumption(BaseWebhookSensor):
     async def handle_update(self, data):
         """Verarbeitet eingehende Leistungsdaten und aktualisiert den Sensorwert.
 
-        Die Verbrauchsberechnung lautet: Verbrauch = Pccu + max(-Pr, 0)
+        Die Verbrauchsberechnung lautet: Verbrauch = Pccu + max(Pr, 0)
 
         Args:
             data (dict): Ein Dictionary mit Leistungswerten von Webhook-Daten.
@@ -57,10 +57,29 @@ class PowerConsumption(BaseWebhookSensor):
 
         """
 
-        pccu = float(data.get("Pccu", 0))
+        try:
+            pccu_raw = data.get("Pccu")
+            pr_raw = data.get("Pr")
 
-        if is_pccu_ok(pccu):
-            pr = float(data.get("Pr", 0))
-            if is_pr_ok(pr):
-                self._attr_native_value = round(pccu + max(pr, 0), 2)
-                self.async_write_ha_state()
+            if pccu_raw is None or pr_raw is None:
+                _LOGGER.debug(
+                    "PowerConsumption: fehlende Werte (Pccu=%s, Pr=%s)", pccu_raw, pr_raw
+                )
+                return
+
+            pccu = float(pccu_raw)
+            pr = float(pr_raw)
+
+            if not is_pccu_ok(pccu) or not is_pr_ok(pr):
+                return
+
+            self._attr_native_value = round(pccu + max(pr, 0), 2)
+        except (TypeError, ValueError) as err:
+            _LOGGER.warning(
+                "PowerConsumption: ungültige Werte (Pccu=%s, Pr=%s): %s",
+                data.get("Pccu"),
+                data.get("Pr"),
+                err,
+            )
+        except Exception as err:  # pylint: disable=broad-except
+            _LOGGER.error("PowerConsumption: Fehler beim Update: %s", err)

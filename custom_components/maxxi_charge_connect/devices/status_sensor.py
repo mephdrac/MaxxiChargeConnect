@@ -39,12 +39,6 @@ class StatusSensor(BaseWebhookSensor):
         return f"{days}d {hours}h {minutes}m {seconds}s"
 
     @property
-    def native_value(self):
-        """Statuswert des Feldes."""
-
-        return self._state
-
-    @property
     def extra_state_attributes(self):
         """Weitere Attribute die visualisiert werden."""
 
@@ -62,11 +56,16 @@ class StatusSensor(BaseWebhookSensor):
             _LOGGER.warning("Status - Error - Event erhalten: %s", data)
 
             self._state = f"Fehler ({data.get(ERROR, 'Unbekannt')})"
+            self._attr_native_value = self._state
             self._attr_extra_state_attributes = data
-            self.async_write_ha_state()
 
         elif data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(CONF_DEVICE_ID):
             _LOGGER.info("Status - OK - Event erhalten: %s", data)
             self._state = data.get("integration_state", "OK")
+            self._attr_native_value = self._state
             self._attr_extra_state_attributes = data
-            self.async_write_ha_state()
+
+    async def handle_stale(self):
+        """Bei stale verfügbar bleiben und letzten Status beibehalten."""
+        self._attr_available = True
+        self._state = "Off"

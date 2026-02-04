@@ -80,22 +80,61 @@ class BatteryPowerCharge(BaseWebhookSensor):
             (z.B. 'Pccu', 'PV_power_total', 'batteriesInfo').
 
         Berechnet die Ladeleistung der Batterie als Differenz zwischen
-        PV-Leistung und Verbrauch (Pccu). Negative Werte (Entladung) werden auf 0 gesetzt.
+        PV-Leistung und Verbrauch (Pccu). Negative Werte (Entladung) werden ignoriert.
 
         """
+        try:
+            # CCU-Verbrauch sicher abfragen
+            pccu_raw = data.get("Pccu")
+            if pccu_raw is None:
+                _LOGGER.debug("BatteryPowerCharge: Pccu fehlt")
+                return
 
-        ccu = float(data.get("Pccu", 0))
+            ccu = float(pccu_raw)
 
-        if is_pccu_ok(ccu):
-            pv_power = float(data.get("PV_power_total", 0))
+            if not is_pccu_ok(ccu):
+                _LOGGER.warning(
+                    "BatteryPowerCharge: PCCU-Wert nicht plausibel: %s W", ccu
+                )
+                return
+
+            # PV-Leistung sicher abfragen
+            pv_power_raw = data.get("PV_power_total")
+            if pv_power_raw is None:
+                _LOGGER.debug("BatteryPowerCharge: PV_power_total fehlt")
+                return
+
+            pv_power = float(pv_power_raw)
             batteries = data.get("batteriesInfo", [])
 
-            if is_power_total_ok(pv_power, batteries):
-                batterie_leistung = round(pv_power - ccu, 3)
+            if not is_power_total_ok(pv_power, batteries):
+                _LOGGER.warning(
+                    "BatteryPowerCharge: PV-Leistung nicht plausibel: %s W", pv_power
+                )
+                return
 
-                if batterie_leistung >= 0:
-                    self._attr_native_value = batterie_leistung
-                else:
-                    self._attr_native_value = 0
-                self._attr_available = True
-                self.async_write_ha_state()
+            # Ladeleistung berechnen
+            battery_charge_power = round(pv_power - ccu, 3)
+
+            # Nur positive Werte sind Ladeleistung
+            if battery_charge_power >= 0:
+                self._attr_native_value = battery_charge_power
+                _LOGGER.debug(
+                    "BatteryPowerCharge: Ladeleistung berechnet: %s W (PV: %s W, CCU: %s W)",
+                    battery_charge_power,
+                    pv_power,
+                    ccu,
+                )
+            else:
+                _LOGGER.debug(
+                    "BatteryPowerCharge: Keine Ladeleistung (PV: %s W, CCU: %s W, Differenz: %s W)",
+                    pv_power,
+                    ccu,
+                    battery_charge_power,
+                )
+                self._attr_native_value = 0
+
+        except (ValueError, TypeError) as err:
+            _LOGGER.warning("BatteryPowerCharge: Konvertierungsfehler: %s", err)
+        except Exception as err:  # pylint: disable=broad-except
+            _LOGGER.error("BatteryPowerCharge: Unerwarteter Fehler: %s", err)

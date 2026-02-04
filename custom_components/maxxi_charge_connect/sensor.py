@@ -12,7 +12,6 @@ Module-Level Variable:
 
 """
 
-import asyncio
 import logging
 
 from homeassistant.config_entries import ConfigEntry
@@ -63,6 +62,8 @@ from .devices.uptime_sensor import UptimeSensor
 from .devices.online_status_sensor import OnlineStatusSensor
 from .devices.ccu_temperatur_sensor import CCUTemperaturSensor
 
+from .devices.send_count import SendCount
+
 from .const import DOMAIN
 
 SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
@@ -91,10 +92,20 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
 
     """
 
+    # BatterySensorManager initialisieren
     manager = BatterySensorManager(hass, entry, async_add_entities)
     SENSOR_MANAGER[entry.entry_id] = manager
     await manager.setup()
 
+    # Coordinator initialisieren mit Fehlerbehandlung
+    try:
+        coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
+        await coordinator.async_config_entry_first_refresh()
+    except Exception as e:  # pylint: disable=broad-except
+        _LOGGER.error("Coordinator refresh failed: %s", e)
+        return
+
+    # Standard Sensoren
     sensor = DeviceId(entry)
     rssi_sensor = Rssi(entry)
     ccu_power = CcuPower(entry)
@@ -114,87 +125,46 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     uptime_sensor = UptimeSensor(entry)
     online_status_sensor = OnlineStatusSensor(entry)
     ccu_temperatur_sensor = CCUTemperaturSensor(entry)
-
-    coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
-
     status_sensor = StatusSensor(entry)
 
-    # ---Http-Scan----
-    http_scan_sensor_list = []
-
-    http_scan_sensor_list.append(
-        HttpScanText(coordinator, "APIRoute", "API - Route", "mdi:link")
-    )
-
-    http_scan_sensor_list.append(
-        HttpScanText(coordinator, "LocalServer", "Use Local Server", "mdi:server-off")
-    )
-
-    http_scan_sensor_list.append(
-        HttpScanText(coordinator, "Cloudservice", "Cloudservice", "mdi:cloud-outline")
-    )
-
-    http_scan_sensor_list.append(
+    # Http-Scan Sensoren
+    http_scan_sensor_list = [
+        HttpScanText(coordinator, "APIRoute", "API - Route", "mdi:link"),
+        HttpScanText(coordinator, "LocalServer", "Use Local Server", "mdi:server-off"),
+        HttpScanText(coordinator, "Cloudservice", "Cloudservice", "mdi:cloud-outline"),
         HttpScanText(
             coordinator, "DC/DC-Algorithmus", "DC/DC algorithm", "mdi:source-branch"
-        )
-    )
-
-    http_scan_sensor_list.append(
-        HttpScanText(coordinator, "PowerMeterIp", "Power Meter IP", "mdi:ip")
-    )
-
-    http_scan_sensor_list.append(
-        HttpScanText(coordinator, "PowerMeterType", "Power Meter Type", "mdi:chip")
-    )
-    http_scan_sensor_list.append(
-        HttpScanText(coordinator, "MaximumPower", "Maximum Power", "mdi:flash")
-    )
-    http_scan_sensor_list.append(
+        ),
+        HttpScanText(coordinator, "PowerMeterIp", "Power Meter IP", "mdi:ip"),
+        HttpScanText(coordinator, "PowerMeterType", "Power Meter Type", "mdi:chip"),
+        HttpScanText(coordinator, "MaximumPower", "Maximum Power", "mdi:flash"),
         HttpScanText(
             coordinator, "OfflineOutputPower", "Offline Output Power", "mdi:flash"
-        )
-    )
-    http_scan_sensor_list.append(
+        ),
         HttpScanText(
             coordinator, "NumberOfBatteries", "Number of Batteries", "mdi:layers"
-        )
-    )
-    http_scan_sensor_list.append(
-        HttpScanText(coordinator, "OutputOffset", "Output Offset", "mdi:flash")
-    )
-    http_scan_sensor_list.append(
-        HttpScanText(coordinator, "CcuSpeed", "CCU - Speed", "mdi:flash")
-    )
-    http_scan_sensor_list.append(
-        HttpScanText(coordinator, "Microinverter", "Microinverter", "mdi:current-ac")
-    )
-    http_scan_sensor_list.append(
+        ),
+        HttpScanText(coordinator, "OutputOffset", "Output Offset", "mdi:flash"),
+        HttpScanText(coordinator, "CcuSpeed", "CCU - Speed", "mdi:flash"),
+        HttpScanText(coordinator, "Microinverter", "Microinverter", "mdi:current-ac"),
         HttpScanText(
             coordinator, "ResponseTolerance", "Response tolerance", "mdi:current-ac"
-        )
-    )
-
-    http_scan_sensor_list.append(
+        ),
         HttpScanText(
             coordinator,
             "MinimumBatteryDischarge",
             "Minimum Battery Discharge ",
             "mdi:battery-low",
-        )
-    )
-
-    http_scan_sensor_list.append(
+        ),
         HttpScanText(
             coordinator,
             "MaximumBatteryCharge",
             "Maximum Battery Charge ",
             "mdi:battery-high",
-        )
-    )
+        ),
+    ]
 
-    #    error_sensor = ErrorSensor(entry)
-
+    # Standard Sensoren hinzufügen
     async_add_entities(
         [
             sensor,
@@ -214,28 +184,14 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
             grid_import,
             pv_self_consumption,
             *http_scan_sensor_list,
-            # error_sensor,
             status_sensor,
             uptime_sensor,
             online_status_sensor,
             ccu_temperatur_sensor,
         ]
     )
-    await asyncio.sleep(0)
 
-    # # Proxy - Events
-    # async def handle_proxy_event(event: Event):
-    #     for sensor in proxySensors:
-    #         sensor.async_update_from_event(event)
-    #         if sensor.hass:  # <-- verhindert RuntimeError
-    #             sensor.async_write_ha_state()
-
-    # hass.bus.async_listen(PROXY_STATUS_EVENTNAME, handle_proxy_event)
-
-    # --
-
-    await coordinator.async_config_entry_first_refresh()
-
+    # Energie-Sensoren erstellen
     pv_today_energy = PvTodayEnergy(hass, entry, pv_power_sensor.entity_id)
     pv_total_energy = PvTotalEnergy(hass, entry, pv_power_sensor.entity_id)
     ccu_energy_today = CcuEnergyToday(hass, entry, ccu_power.entity_id)
@@ -247,7 +203,6 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     battery_today_energy_discharge = BatteryTodayEnergyDischarge(
         hass, entry, battery_power_discharge.entity_id
     )
-
     battery_total_energy_charge = BatteryTotalEnergyCharge(
         hass, entry, battery_power_charge.entity_id
     )
@@ -257,7 +212,6 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
 
     grid_export_energy_today = GridExportEnergyToday(hass, entry, grid_export.entity_id)
     grid_export_energy_total = GridExportEnergyTotal(hass, entry, grid_export.entity_id)
-
     grid_import_energy_today = GridImportEnergyToday(hass, entry, grid_import.entity_id)
     grid_import_energy_total = GridImportEnergyTotal(hass, entry, grid_import.entity_id)
 
@@ -271,52 +225,45 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     consumption_energy_today = ConsumptionEnergyToday(
         hass, entry, power_consumption.entity_id
     )
-
     consumption_energy_total = ConsumptionEnergyTotal(
         hass, entry, power_consumption.entity_id
     )
 
-    async_add_entities(
-        [
-            pv_today_energy,
-            pv_total_energy,
-            ccu_energy_today,
-            ccu_energy_total,
-            battery_today_energy_charge,
-            battery_today_energy_discharge,
-            battery_total_energy_charge,
-            battery_total_energy_discharge,
-            grid_export_energy_today,
-            grid_export_energy_total,
-            grid_import_energy_today,
-            grid_import_energy_total,
-            pv_self_consumption_today,
-            pv_self_consumption_total,
-            consumption_energy_today,
-            consumption_energy_total
-        ]
-    )
-    await asyncio.sleep(0)
+    send_count = SendCount(entry)
 
-    hass.data[DOMAIN][pv_total_energy.unique_id] = pv_total_energy
-    hass.data[DOMAIN][pv_today_energy.unique_id] = pv_today_energy
+    # Energie-Sensoren hinzufügen
+    energy_entities = [
+        pv_today_energy,
+        pv_total_energy,
+        ccu_energy_today,
+        ccu_energy_total,
+        battery_today_energy_charge,
+        battery_today_energy_discharge,
+        battery_total_energy_charge,
+        battery_total_energy_discharge,
+        grid_export_energy_today,
+        grid_export_energy_total,
+        grid_import_energy_today,
+        grid_import_energy_total,
+        pv_self_consumption_today,
+        pv_self_consumption_total,
+        consumption_energy_today,
+        consumption_energy_total,
+        send_count,
+    ]
+    async_add_entities(energy_entities)
 
-    hass.data[DOMAIN][battery_total_energy_charge.unique_id] = (
-        battery_total_energy_charge
-    )
-    hass.data[DOMAIN][battery_today_energy_charge.unique_id] = (
-        battery_today_energy_charge
-    )
-
-    hass.data[DOMAIN][battery_total_energy_discharge.unique_id] = (
-        battery_total_energy_discharge
-    )
-    hass.data[DOMAIN][battery_today_energy_discharge.unique_id] = (
-        battery_today_energy_discharge
-    )
-
-    hass.data[DOMAIN][grid_export_energy_total.unique_id] = grid_export_energy_total
-    hass.data[DOMAIN][grid_export_energy_today.unique_id] = grid_export_energy_today
-
-    hass.data[DOMAIN][grid_import_energy_total.unique_id] = grid_import_energy_total
-    hass.data[DOMAIN][grid_import_energy_today.unique_id] = grid_import_energy_today
+    # Energie-Entities zentral in hass.data speichern
+    energy_data = {
+        pv_total_energy.unique_id: pv_total_energy,
+        pv_today_energy.unique_id: pv_today_energy,
+        battery_total_energy_charge.unique_id: battery_total_energy_charge,
+        battery_today_energy_charge.unique_id: battery_today_energy_charge,
+        battery_total_energy_discharge.unique_id: battery_total_energy_discharge,
+        battery_today_energy_discharge.unique_id: battery_today_energy_discharge,
+        grid_export_energy_total.unique_id: grid_export_energy_total,
+        grid_export_energy_today.unique_id: grid_export_energy_today,
+        grid_import_energy_total.unique_id: grid_import_energy_total,
+        grid_import_energy_today.unique_id: grid_import_energy_today,
+    }
+    hass.data.setdefault(DOMAIN, {}).update(energy_data)

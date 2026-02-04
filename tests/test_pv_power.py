@@ -45,9 +45,6 @@ def sensor():
     sensor_obj = PvPower(entry)
     sensor_obj.hass = MagicMock()
 
-    # async_write_ha_state mocken
-    sensor_obj.async_write_ha_state = MagicMock()
-
     return sensor_obj
 
 
@@ -97,6 +94,43 @@ async def test_pv_power_add_and_handle_update2(sensor):  # pylint: disable=redef
 
         await sensor.handle_update({"PV_power_total": 234})  # pylint: disable=protected-access
         assert sensor.native_value is None
+
+
+@pytest.mark.asyncio
+async def test_pv_power_missing_field(sensor):  # pylint: disable=redefined-outer-name
+    """Testet Verhalten, wenn PV_power_total Feld fehlt."""
+    sensor._attr_native_value = 500.0  # Startwert
+    await sensor.handle_update({})
+    assert sensor.native_value == 500.0  # Sollte unverändert bleiben
+
+
+@pytest.mark.asyncio
+async def test_pv_power_none_value(sensor):  # pylint: disable=redefined-outer-name
+    """Testet Verhalten, wenn PV_power_total None ist."""
+    sensor._attr_native_value = 500.0  # Startwert
+    await sensor.handle_update({"PV_power_total": None})
+    assert sensor.native_value == 500.0  # Sollte unverändert bleiben
+
+
+@pytest.mark.asyncio
+async def test_pv_power_invalid_string(sensor):  # pylint: disable=redefined-outer-name
+    """Testet Verhalten bei ungültigen String-Werten."""
+    sensor._attr_native_value = 500.0  # Startwert
+    await sensor.handle_update({"PV_power_total": "invalid"})
+    assert sensor.native_value == 500.0  # Sollte unverändert bleiben
+
+
+@pytest.mark.asyncio
+async def test_pv_power_explicit_zero(sensor):  # pylint: disable=redefined-outer-name
+    """Testet Verhalten bei explizitem 0-Wert."""
+    with (
+        patch(
+            "custom_components.maxxi_charge_connect.devices.pv_power.is_power_total_ok"
+        ) as mock_is_power_total_ok,
+    ):
+        mock_is_power_total_ok.return_value = True
+        await sensor.handle_update({"PV_power_total": 0})
+        assert sensor.native_value == 0
 
 
 def test_device_info(sensor):  # pylint: disable=redefined-outer-name

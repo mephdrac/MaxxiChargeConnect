@@ -1,24 +1,28 @@
-"""Modul für die BatterySoESensor-Entität der maxxi_charge_connect Integration.
+"""Modul für die BatteryVoltageSensor-Entität der maxxi_charge_connect Integration.
 
-Definiert eine Sensor-Entität, einer einzelnen Batterie darstellt,
-dynamische Aktualisierungen verarbeitet
-und Geräteinformationen für Home Assistant bereitstellt.
+Definiert eine Sensor-Entität, die die Spannung einer bestimmten Batterie darstellt,
+dynamische Aktualisierungen verarbeitet und Geräteinformationen für Home Assistant bereitstellt.
 """
+
+import logging
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
-    SensorEntity,
     SensorStateClass,
 )
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfElectricPotential
+from .base_webhook_sensor import BaseWebhookSensor
 
-from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+_LOGGER = logging.getLogger(__name__)
 
 
-class BatteryVoltageSensor(SensorEntity):
-    """Sensor-Entität zur Darstellung des SOC einer bestimmten Batterie.
+class BatteryVoltageSensor(BaseWebhookSensor):
+    """Sensor-Entität zur Darstellung der Spannung einer bestimmten Batterie.
+
+    Dieser Sensor zeigt die aktuelle Spannung einer bestimmten Batterie in Volt an.
+    Die Daten werden von den Batterieinformationen im Webhook-Datenstrom extrahiert,
+    von mV zu V konvertiert und auf Plausibilität geprüft.
 
     Attribute:
         _entry (ConfigEntry): Konfigurationseintrag für diese Sensor-Instanz.
@@ -38,7 +42,7 @@ class BatteryVoltageSensor(SensorEntity):
             index (int): Index der Batterie, für die der Sensor steht.
 
         """
-        self._entry = entry
+        super().__init__(entry)
         self._index = index
         self._attr_translation_placeholders = {"index": str(index + 1)}
         self._attr_suggested_display_precision = 2
@@ -48,52 +52,63 @@ class BatteryVoltageSensor(SensorEntity):
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
 
-        self._attr_native_value = None
-
-    async def async_added_to_hass(self):
-        """Registriert den Update-Handler dieses Sensors beim Dispatcher.
-
-        Wird aufgerufen, wenn die Entität in Home Assistant hinzugefügt wird.
-        """
-        self.hass.data[DOMAIN][self._entry.entry_id]["listeners"].append(
-            self._handle_update
-        )
-
-    async def _handle_update(self, data):
+    async def handle_update(self, data):
         """Verarbeitet eine Aktualisierung und aktualisiert den Sensorwert.
 
         Args:
             data (dict): Die eingehenden Aktualisierungsdaten mit Batterieinformationen.
 
-        Hinweis:
-            Ignoriert IndexError und KeyError stillschweigend, falls die Batterieinformationen
-            nicht vorhanden oder fehlerhaft sind.
-
         """
         try:
-            self._attr_native_value = (
-                float(data["batteriesInfo"][self._index]["batteryVoltage"]) / 1000.0
+            # Batterieinformationen sicher abfragen
+            batteries_info = data.get("batteriesInfo", [])
+            if not batteries_info or self._index >= len(batteries_info):
+                _LOGGER.debug(
+                    "BatteryVoltageSensor[%s]: batteriesInfo leer oder Index außerhalb des Bereichs",
+                    self._index,
+                )
+                return
+
+            battery_data = batteries_info[self._index]
+            voltage_raw = battery_data.get("batteryVoltage")
+
+            if voltage_raw is None:
+                _LOGGER.debug(
+                    "BatteryVoltageSensor[%s]: batteryVoltage fehlt", self._index
+                )
+                return
+
+            # Konvertierung zu float und von mV zu V
+            voltage_mv = float(voltage_raw)
+            voltage = voltage_mv / 1000.0
+
+            # Plausibilitätsprüfung: Spannung sollte im vernünftigen Bereich liegen (0-60V)
+            if voltage < 0:
+                _LOGGER.warning(
+                    "BatteryVoltageSensor[%s]: Unplausible Spannung: %s V",
+                    self._index,
+                    voltage,
+                )
+                return
+
+            if voltage > 60:
+                _LOGGER.warning(
+                    "BatteryVoltageSensor[%s]: Spannung zu hoch: %s V (erwartet <60V)",
+                    self._index,
+                    voltage,
+                )
+                return
+
+            self._attr_native_value = voltage
+            _LOGGER.debug(
+                "BatteryVoltageSensor[%s]: Aktualisiert auf %s V", self._index, voltage
             )
-            self._attr_available = True
-            self.async_write_ha_state()
-        except (IndexError, KeyError):
-            pass
 
-    @property
-    def device_info(self):
-        """Liefert die Geräteinformationen für diese Sensor-Entity.
-
-        Returns:
-            dict: Ein Dictionary mit Informationen zur Identifikation
-                  des Geräts in Home Assistant, einschließlich:
-                  - identifiers: Eindeutige Identifikatoren (Domain und Entry ID)
-                  - name: Anzeigename des Geräts
-                  - manufacturer: Herstellername
-                  - model: Modellbezeichnung
-
-        """
-        return {
-            "identifiers": {(DOMAIN, self._entry.entry_id)},
-            "name": self._entry.title,
-            **DEVICE_INFO,
-        }
+        except (IndexError, KeyError) as err:
+            _LOGGER.warning(
+                "BatteryVoltageSensor[%s]: Datenstrukturfehler: %s", self._index, err
+            )
+        except (ValueError, TypeError) as err:
+            _LOGGER.warning(
+                "BatteryVoltageSensor[%s]: Konvertierungsfehler: %s", self._index, err
+            )

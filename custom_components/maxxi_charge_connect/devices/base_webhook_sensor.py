@@ -142,7 +142,7 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
             await self.handle_update(data)
             # Nur aktualisieren, wenn sich der Wert tatsächlich geändert hat oder zuvor ein Stale war
             if old_value != self._attr_native_value or self._after_stale:
-                _LOGGER.warning("Sensor %s: Wert aktualisiert: %s", self.__class__.__name__, self._attr_native_value)
+                _LOGGER.debug("Sensor %s: Wert aktualisiert: %s", self.__class__.__name__, self._attr_native_value)
                 self._attr_available = True
                 self._after_stale = False
                 self.async_write_ha_state()

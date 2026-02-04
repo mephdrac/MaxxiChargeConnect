@@ -114,7 +114,7 @@ class BatteryPowerDischarge(BaseWebhookSensor):
                     ccu,
                 )
             else:
-                _LOGGER.warning(
+                _LOGGER.debug(
                     "BatteryPowerDischarge: Keine Entladeleistung (PV: %s W, CCU: %s W, Differenz: %s W)",
                     pv_power,
                     ccu,

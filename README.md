@@ -19,6 +19,30 @@ Es ist schade und ich verstehe auch nicht - warum HA sich da so anstellt.
 
 **mittlerweile habe ich die Erlaubnis von Maxxisun ihr Logo zu verwenden. Also demnächst gibt es auch ein Logo.**
 
+
+Maxxisun Maxxihandel GmbH <support@maxxisun.de>
+Mi., 10. Sept. 2025, 10:02
+an mich
+
+>Guten Tag Herr xxxx,
+>
+>Wir bitten vielmals um Entschuldigung für die späte Rückmeldung.
+>Gerne dürfen Sie unser Logo für nichtgewerbliche Zwecke, in Ihrem Fall die Homeassistant Github Integration verwenden.
+>Unser Logo können Sie unserer Webseite entnehmen. Wir freuen uns über die Unterstützung in diesem spannenden Umfeld der Automatisierung unseres Maxxicharge Systems.
+>
+>Mit freundlichen Grüßen
+>
+>-Supportteam-
+>
+>Maxxihandel GmbH
+>Lilienthalstraße 6
+
+>04509 Wiedemar
+>Telefon: 0345 54838394
+>Mail: support@maxxisun.de
+>Amtsgericht Leipzig: HRB 41639
+>Unsere Datenschutzerklärung finden Sie hier
+
 ## Update - Hiweis für Version 1.2.0
 
 **ACHTUNG:** beim Wechsel auf Version 1.2.0 von einer früheren Version kann es u.U. zu Datenverlusten kommen. Beim Betrieb der Version 1.2.0 kommt es selbstverständlich nicht mehr zu Datenverlusten. Bitte vorher Backup machen - und mir Bescheid geben - wenn es ein Problem gab.

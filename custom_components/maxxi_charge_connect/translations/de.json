@@ -131,6 +131,12 @@
       "BatteryPVPowerSensor":{
         "name": "Batterie ({index}) PV-Leistung"
       },
+      "BatteryCycleSensor":{
+        "name": "Batterie ({index}) Zyklus"
+      },
+      "BatteryTotalEnergyChargeSensor":{
+        "name": "Batterie ({index}) Gesamtladeenergie"
+      },
       "APIRoute":{
         "name": "API-Route"
       },

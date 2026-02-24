@@ -133,6 +133,12 @@
       "BatteryDischargeSensor":{
         "name": "Battery ({index}) Discharge Power"
       },
+      "BatteryCycleSensor":{
+        "name": "Battery ({index}) Cycle"
+      },
+      "BatteryTotalEnergyChargeSensor":{
+        "name": "Battery ({index}) Total Charge Energy"
+      },
       "APIRoute":{
         "name": "API-Route"
       },

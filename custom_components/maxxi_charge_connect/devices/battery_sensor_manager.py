@@ -34,6 +34,8 @@ from .battery_mppt_voltage_sensor import BatteryMpptVoltageSensor
 from .battery_mppt_ampere_sensor import BatteryMpptAmpereSensor
 from .battery_charge_sensor import BatteryChargeSensor
 from .battery_discharge_sensor import BatteryDischargeSensor
+from .battery_cycle_sensor import BatteryCycleSensor
+from .battery_total_energy_charge_sensor import BatteryTotalEnergyChargeSensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -59,6 +61,8 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
         ("battery_mppt_ampere_sensor", BatteryMpptAmpereSensor),
         ("battery_charge_sensor", BatteryChargeSensor),
         ("battery_discharge_sensor", BatteryDischargeSensor),
+        ("battery_cycle_sensor", BatteryCycleSensor),
+        ("battery_total_energy_charge_sensor", BatteryTotalEnergyChargeSensor),
     ]
 
     def __init__(

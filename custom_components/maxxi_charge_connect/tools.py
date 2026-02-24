@@ -226,6 +226,7 @@ def get_entity(hass: HomeAssistant, plattform: str, unique_id: str):
 
     for entity in entity_registry.entities.values():
         if plattform == entity.platform and entity.unique_id == unique_id:
+        # if entity.unique_id == unique_id:
             return entity
 
     return None
@@ -233,29 +234,43 @@ def get_entity(hass: HomeAssistant, plattform: str, unique_id: str):
 
 async def async_get_min_soc_entity(hass: HomeAssistant, entry_id: str):
     """Hole minSoc Entity"""
+    return await async_get_entity(hass, "minSOC", entry_id)
+
+
+async def async_get_entity(hass: HomeAssistant, keyname: str, entry_id: str):
+    """Get entity and its current state from Home Assistant data.
+
+    Args:
+        hass: The Home Assistant instance
+        keyname: The key name to look up the entity
+        entry_id: The entry ID to retrieve data from
+    Returns:
+        Tuple of (entity, current_state) or (None, None) if not found or error occurs"""
+
     try:
         entry_data = hass.data.get(DOMAIN, {}).get(entry_id)
         if not entry_data:
             return None, None
 
-        min_soc_entity = entry_data.get("entities", {}).get("minSOC")
+        entity = entry_data.get("entities", {}).get(keyname)
         cur_state = None
-        if min_soc_entity is not None:
-            cur_state = hass.states.get(min_soc_entity.entity_id)
+        if entity is not None:
+            cur_state = hass.states.get(entity.entity_id)
 
             if cur_state is not None and cur_state.state not in (
                 "unknown",
                 "unavailable",
             ):
                 _LOGGER.debug(
-                    "Current state of min_soc entity %s: %s",
-                    min_soc_entity.entity_id,
+                    "Current state of %s entity %s: %s",
+                    keyname,
+                    entity.entity_id,
                     cur_state.state if cur_state else "State not found",
                 )
         else:
             _LOGGER.error("min_soc_entity is None")
 
-        return min_soc_entity, cur_state
+        return entity, cur_state
     except Exception as e:  # pylint: disable=broad-except
-        _LOGGER.error("Fehler bei min_soc Entity: %s", e)
+        _LOGGER.error("Fehler bei %s Entity: %s", keyname, e)
         return None, None

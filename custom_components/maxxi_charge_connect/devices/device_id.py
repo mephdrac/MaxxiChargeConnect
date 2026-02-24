@@ -69,4 +69,3 @@ class DeviceId(BaseWebhookSensor):
 
         except Exception as err:  # pylint: disable=broad-exception-caught
             _LOGGER.error("DeviceId: Fehler bei der Verarbeitung: %s", err)
-

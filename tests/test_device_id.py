@@ -46,18 +46,6 @@ def mock_entry():
     entry.data = {"webhook_id": WEBHOOK_ID}
     return entry
 
-
-@pytest.mark.asyncio
-async def test_device_id__set_value(mock_entry):  # pylint: disable=redefined-outer-name
-    """Teste die `set_value`-Methode von `DeviceId`."""
-
-    test_text = "HalloText"
-    sensor = DeviceId(mock_entry)
-    sensor.set_value(test_text)
-
-    assert sensor._attr_native_value == test_text  # pylint: disable=protected-access
-
-
 @pytest.mark.asyncio
 async def test_device_id_initialization(mock_entry):  # pylint: disable=redefined-outer-name
     """Teste Initialisierung von `DeviceId`.

@@ -13,9 +13,6 @@ Ich, @mephdrac, stehe in keinerlei Verbindung von Maxxisun bzw. der Maxxihandel 
 ## Warum hat meine Integration kein Logo in Home Assistant
 Der Grund ist, es wurde mir nicht erlaubt. Ich habe versucht mein Logo in "https://brands.home-assistant.io/" zu hinterlegen. Das wurde mir verwehrt mit dem Hinweis, dass mein Logo nicht das von Maxxisun ist. An dem Logo von Maxxisun habe ich indes keine Rechte, daher kann ich es nicht verwenden. Als ich daraufhinwies, wurde mir gesagt, dass ich dann kein Logo hinterlegen kann. 
 
-Evt. wäre es möglich, wenn ich meinen Integration breiter mache, d.h. nicht nur Maxxisun unterstütze. Aber ob es dann klappt - keine Ahnnung. Falls jemand von Euch weiß, wie ich ein Logo für meine Integration hinterlegt bekomme - so bin ich für den Tipp sehr dankbar.
-
-Es ist schade und ich verstehe auch nicht - warum HA sich da so anstellt.
 
 **mittlerweile habe ich die Erlaubnis von Maxxisun ihr Logo zu verwenden. Also demnächst gibt es auch ein Logo.**
 

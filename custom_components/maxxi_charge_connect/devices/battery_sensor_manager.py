@@ -177,18 +177,29 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
             if not self.sensors:
                 new_sensors = await self._create_sensors_for_batteries(batteries)
                 if new_sensors:
-                    _LOGGER.info(
-                        "Erstelle %d neue Battery-Sensoren für %d Batterien",
-                        len(new_sensors),
-                        len(batteries),
-                    )
-                    await self.async_add_entities(new_sensors)
+                    # Filter None-Sensoren heraus
+                    valid_sensors = [s for s in new_sensors if s is not None]
+                    if valid_sensors and self.async_add_entities is not None:
+                        _LOGGER.info(
+                            "Erstelle %d neue Battery-Sensoren für %d Batterien",
+                            len(valid_sensors),
+                            len(batteries),
+                        )
+                        self.async_add_entities(valid_sensors)
+                    elif not valid_sensors:
+                        _LOGGER.warning("Keine gültigen Sensoren zum Erstellen gefunden")
+                    else:
+                        _LOGGER.error("async_add_entities ist None")
 
             # Update alle Sensoren über die Listener
-            await self._update_all_listeners(data)
+            if self._update_all_listeners is not None:
+                await self._update_all_listeners(data)
+            else:
+                _LOGGER.error("_update_all_listeners ist None")
 
         except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error("Fehler bei der Verarbeitung der Battery-Daten: %s", err)
+            _LOGGER.error("Data: %s", data)
 
     async def _create_sensors_for_batteries(
         self, batteries: List[Dict[str, Any]]
@@ -210,8 +221,15 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
                         try:
                             _LOGGER.debug("Erstelle %s für Batterie %d", sensor_name, i)
                             sensor = sensor_class(self.entry, i)
-                            self.sensors[unique_key] = sensor
-                            new_sensors.append(sensor)
+                            if sensor is not None:
+                                self.sensors[unique_key] = sensor
+                                new_sensors.append(sensor)
+                            else:
+                                _LOGGER.warning(
+                                    "Sensor-Klasse %s für Batterie %d gab None zurück",
+                                    sensor_name,
+                                    i,
+                                )
                         except Exception as err:  # pylint: disable=broad-except
                             _LOGGER.error(
                                 "Fehler beim Erstellen von %s für Batterie %d: %s",
@@ -232,18 +250,30 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
             data: Die zu verteilenden Update-Daten
         """
         try:
-            # Sichere Abfrage der Listener-Liste
-            listeners = (
-                self.hass.data.get(DOMAIN, {})
-                .get(self.entry.entry_id, {})
-                .get("listeners", [])
-            )
+            # Sichere Abfrage der Listener-Liste mit mehreren None-Prüfungen
+            domain_data = self.hass.data.get(DOMAIN)
+            if domain_data is None:
+                _LOGGER.warning("DOMAIN Daten nicht gefunden in hass.data")
+                return
+
+            entry_data = domain_data.get(self.entry.entry_id)
+            if entry_data is None:
+                _LOGGER.warning("Entry Daten nicht gefunden für entry_id: %s", self.entry.entry_id)
+                return
+
+            listeners = entry_data.get("listeners", [])
+            if listeners is None:
+                _LOGGER.warning("Listeners ist None, verwende leere Liste")
+                listeners = []
 
             _LOGGER.debug("Verteile Update an %d Listener", len(listeners))
 
             for listener in listeners:
                 try:
-                    await listener(data)
+                    if listener is not None:
+                        await listener(data)
+                    else:
+                        _LOGGER.warning("None-Listener gefunden, wird übersprungen")
                 except Exception as err:  # pylint: disable=broad-except
                     _LOGGER.warning("Fehler beim Update eines Listeners: %s", err)
 

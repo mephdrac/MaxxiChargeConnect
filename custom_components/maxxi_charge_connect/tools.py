@@ -37,7 +37,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-async def fire_status_event(hass: HomeAssistant, json_data: dict, forwarded: bool):
+async def fire_status_event(hass: HomeAssistant, json_data: dict, forwarded: bool, event_name: str = PROXY_STATUS_EVENTNAME):
     """Feuert ein Status-Event zum Anzeigen des Fehlers in der UI."""
 
     if not isinstance(json_data, dict):
@@ -45,7 +45,7 @@ async def fire_status_event(hass: HomeAssistant, json_data: dict, forwarded: boo
         return
 
     hass.bus.async_fire(
-        PROXY_STATUS_EVENTNAME,
+        event_name,
         {
             PROXY_ERROR_DEVICE_ID: json_data.get(PROXY_ERROR_DEVICE_ID),
             PROXY_ERROR_CCU: json_data.get(PROXY_ERROR_CCU),

@@ -25,6 +25,7 @@ from ..const import (
     DOMAIN,
     PROXY_ERROR_DEVICE_ID,
     PROXY_STATUS_EVENTNAME,
+    HTTP_SCAN_EVENTNAME,
     WEBHOOK_SIGNAL_STATE,
     WEBHOOK_SIGNAL_UPDATE,
 )
@@ -130,6 +131,12 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
     async def async_update_from_event(self, event: Event):
         """Aktualisiert Sensor von Proxy-Event."""
 
+        _LOGGER.warning("Sensor %s, %s: Event empfangen: %s", self.__class__.__name__, event.event_type, event)
+
+        # HTTP-Scan Events ignorieren - diese haben keine Batterie-Daten
+        if event.event_type == HTTP_SCAN_EVENTNAME:
+            return
+
         json_data = event.data.get("payload", {})
 
         if json_data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(CONF_DEVICE_ID):
@@ -138,6 +145,8 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
     async def _wrapper_update(self, data: dict):
         """Ablauf bei einem eingehenden Update-Event."""
         try:
+            _LOGGER.warning("Sensor %s: Update empfangen: %s", self.__class__.__name__, data)
+            
             old_value = self._attr_native_value
             await self.handle_update(data)
             # Nur aktualisieren, wenn sich der Wert tatsächlich geändert hat oder zuvor ein Stale war

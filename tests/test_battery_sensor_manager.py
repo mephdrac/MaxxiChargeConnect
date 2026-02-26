@@ -238,13 +238,19 @@ class TestBatterySensorManager:
             "payload": {
                 PROXY_ERROR_DEVICE_ID: "device123",
                 "deviceId": "device123",
+                "batteriesInfo": [],
                 "test": "data"
             }
         }
 
         with patch.object(manager, "handle_update") as mock_handle_update:
             await manager.async_update_from_event(event)
-            mock_handle_update.assert_called_once_with({"deviceId": "device123", "test": "data"})
+            mock_handle_update.assert_called_once_with({
+                PROXY_ERROR_DEVICE_ID: "device123",
+                "deviceId": "device123",
+                "batteriesInfo": [],
+                "test": "data"
+            })
 
     @pytest.mark.asyncio
     async def test_async_update_from_event_wrong_device(self, manager):

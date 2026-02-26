@@ -39,7 +39,7 @@ def test_battery_ampere_sensor_initialization(sensor, entry):
     assert sensor._index == 0
     assert sensor._attr_unique_id == "test_entry_id_battery_ampere_sensor_0"
     assert sensor._attr_icon == "mdi:alpha-a-circle"
-    assert sensor._attr_device_class == SensorDeviceClass.BATTERY
+    assert sensor._attr_device_class == SensorDeviceClass.CURRENT
     assert sensor._attr_state_class == SensorStateClass.MEASUREMENT
     assert sensor._attr_native_unit_of_measurement == UnitOfElectricCurrent.AMPERE
     assert sensor._attr_suggested_display_precision == 2

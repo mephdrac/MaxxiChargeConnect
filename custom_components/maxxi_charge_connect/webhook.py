@@ -123,7 +123,7 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
             cache_key = f"{entry.entry_id}_last_sendcount"
             last_sendcount = hass.data[DOMAIN][entry.entry_id].get(cache_key)
             last_process_time = hass.data[DOMAIN][entry.entry_id].get(f"{cache_key}_time")
-            
+
             _LOGGER.debug("Webhook [%s] last_sendcount: %s", webhook_id, last_sendcount)
             _LOGGER.debug("Webhook [%s] last_process_time: %s", webhook_id, last_process_time)
 

@@ -7,8 +7,9 @@ bei jedem Update aktualisiert.
 """
 
 import logging
-from typing import Dict, List, Callable, Any
+from typing import Dict, List, Any
 from homeassistant.components.sensor import SensorEntity
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.const import STATE_UNKNOWN
 from homeassistant.core import HomeAssistant, Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
@@ -62,20 +63,21 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
     ]
 
     def __init__(
-        self, hass: HomeAssistant, entry, async_add_entities: Callable
+        self, hass: HomeAssistant, entry, async_add_entities: AddEntitiesCallback
     ) -> None:
         """Initialisiert den BatterySensorManager.
 
         Args:
             hass (HomeAssistant): Die Home Assistant Instanz.
             entry (ConfigEntry): Der Konfigurationseintrag der Integration.
-            async_add_entities (Callable): Callback zum Hinzufügen neuer Entitäten.
+            async_add_entities: Callback zum Hinzufügen neuer Entitäten (kann sync oder async sein).
 
         """
         self.hass = hass
         self.entry = entry
         self.async_add_entities = async_add_entities
         self.sensors: Dict[str, SensorEntity] = {}
+        self._pending_sensors: List[SensorEntity] = []
         self._registered = False
         self._unsub_update = None
         self._unsub_stale = None
@@ -115,8 +117,19 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
                     )
                     self._registered = True
                     _LOGGER.debug("BatterySensorManager Dispatcher registriert")
+                    await self._add_pending_sensors()
+
         except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error("Fehler beim Setup des BatterySensorManager: %s", err)
+
+    async def _add_pending_sensors(self):
+        """Fügt ausstehende Sensoren hinzu, falls async_add_entities verfügbar ist."""
+        if self._pending_sensors and self.async_add_entities is not None:
+            _LOGGER.info("Füge %d ausstehende Sensoren hinzu", len(self._pending_sensors))
+            self.async_add_entities(self._pending_sensors)
+            self._pending_sensors.clear()
+        elif self._pending_sensors:
+            _LOGGER.warning("Kann ausstehende Sensoren nicht hinzufügen - async_add_entities ist None")
 
     async def async_added_to_hass(self):
         """HA informiert uns, dass der Sensor hinzugefügt wurde."""
@@ -244,7 +257,15 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
                         len(new_sensors),
                         len(batteries),
                     )
-                    self.async_add_entities(new_sensors)
+                    if self.async_add_entities is not None:
+                        _LOGGER.debug("Rufe async_add_entities für %d Sensoren auf", len(new_sensors))
+                        self.async_add_entities(new_sensors)
+                    else:
+                        _LOGGER.warning(
+                            "async_add_entities ist None. Speichere %d Sensoren für spätere Addition.",
+                            len(new_sensors)
+                        )
+                        self._pending_sensors.extend(new_sensors)
 
             # Update alle Sensoren über die Listener
             await self._update_all_listeners(data)

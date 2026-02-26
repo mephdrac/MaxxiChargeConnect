@@ -10,7 +10,6 @@ Diese Klasse:
 from __future__ import annotations
 
 import logging
-from datetime import UTC, datetime
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
@@ -149,10 +148,10 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
 
         _LOGGER.debug("Sensor(check_valid) %s: Daten empfangen: %s", self.__class__.__name__, data)
 
-        send_count = data.get("sendCount")        
-        device_id = data.get("deviceId")        
-        pccu = data.get("Pccu")        
-        batteries_info = data.get("batteriesInfo")        
+        send_count = data.get("sendCount")
+        device_id = data.get("deviceId")
+        pccu = data.get("Pccu")
+        batteries_info = data.get("batteriesInfo")
 
         if send_count is None:
             _LOGGER.error("Sensor(check_valid) %s: sendCount nicht gefunden", self.__class__.__name__)

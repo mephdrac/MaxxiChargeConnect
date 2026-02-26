@@ -20,7 +20,7 @@ from homeassistant.const import CONF_IP_ADDRESS, CONF_WEBHOOK_ID
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 
-from .const import (
+from ..const import (
     CONF_TIMEOUT_RECEIVE,
     DEFAULT_TIMEOUT_RECEIVE,
     DOMAIN,

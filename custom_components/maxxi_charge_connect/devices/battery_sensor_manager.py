@@ -9,7 +9,7 @@ bei jedem Update aktualisiert.
 import logging
 from typing import Dict, List, Callable, Any
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.const import STATE_UNKNOWN, STATE_UNAVAILABLE
+from homeassistant.const import STATE_UNKNOWN
 from homeassistant.core import HomeAssistant, Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
@@ -153,14 +153,6 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
             self._unsub_stale = async_dispatcher_connect(
                 self.hass, stale_signal, self._wrapper_stale
             )
-
-        # letzten Zustand wiederherstellen
-        old_state = await self.async_get_last_state()
-        if old_state is not None and old_state.state not in (
-            STATE_UNAVAILABLE,
-            STATE_UNKNOWN,
-        ):
-            self._attr_native_value = old_state.state
 
     async def _wrapper_update(self, data: dict):
         """Ablauf bei einem eingehenden Update-Event."""

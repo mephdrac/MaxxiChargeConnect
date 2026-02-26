@@ -4,7 +4,21 @@ import logging
 from homeassistant.const import EntityCategory, STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from ..const import PROXY_ERROR_DEVICE_ID, WEBHOOK_SIGNAL_UPDATE, CONF_DEVICE_ID, CCU, ERROR, ERRORS, HTTP_SCAN_EVENTNAME, PROXY_STATUS_EVENTNAME, DOMAIN, WEBHOOK_SIGNAL_STATE  # noqa: TID252
+
+# pylint: disable=line-too-long
+from ..const import (
+    PROXY_ERROR_DEVICE_ID,
+    WEBHOOK_SIGNAL_UPDATE,
+    CONF_DEVICE_ID,
+    CCU,
+    ERROR,
+    ERRORS,
+    HTTP_SCAN_EVENTNAME,
+    PROXY_STATUS_EVENTNAME,
+    DOMAIN,
+    WEBHOOK_SIGNAL_STATE,
+)  # noqa: TID252
+
 from .base_webhook_sensor import BaseWebhookSensor
 
 _LOGGER = logging.getLogger(__name__)

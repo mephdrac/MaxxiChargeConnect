@@ -152,7 +152,7 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
         send_count = data.get("sendCount")
         device_id = data.get("deviceID")
         pccu = data.get("Pccu")
-        batteriesInfo = data.get("batteriesInfo")
+        batteries_info = data.get("batteriesInfo")
 
         if send_count is None:
             _LOGGER.error("Sensor(check_valid) %s: sendCount nicht gefunden", self.__class__.__name__)
@@ -166,7 +166,7 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
             _LOGGER.error("Sensor(check_valid) %s: Pccu nicht gefunden", self.__class__.__name__)
             return False
 
-        if batteriesInfo is None:
+        if batteries_info is None:
             _LOGGER.error("Sensor(check_valid) %s: batteriesInfo nicht gefunden", self.__class__.__name__)
             return False
 

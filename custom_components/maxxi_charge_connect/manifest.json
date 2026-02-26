@@ -1,7 +1,7 @@
 {
   "domain": "maxxi_charge_connect",
   "name": "MaxxiChargeConnect",
-  "version": "2.8.1",
+  "version": "2.8.2",
   "loggers": "custom_components.maxxi_charge_connect",  
   "documentation": "https://github.com/mephdrac/MaxxiChargeConnect",
   "issue_tracker": "https://github.com/mephdrac/MaxxiChargeConnect/issues",

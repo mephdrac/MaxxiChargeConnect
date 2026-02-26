@@ -18,6 +18,7 @@ from homeassistant.core import Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
 
+
 from ..const import (
     DEVICE_INFO,
     CONF_DEVICE_ID,
@@ -25,6 +26,7 @@ from ..const import (
     DOMAIN,
     PROXY_ERROR_DEVICE_ID,
     PROXY_STATUS_EVENTNAME,
+    HTTP_SCAN_EVENTNAME,
     WEBHOOK_SIGNAL_STATE,
     WEBHOOK_SIGNAL_UPDATE,
 )
@@ -130,14 +132,53 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
     async def async_update_from_event(self, event: Event):
         """Aktualisiert Sensor von Proxy-Event."""
 
+        _LOGGER.debug("Sensor(async_update_from_event) %s, %s: Event empfangen: %s", self.__class__.__name__, event.event_type, event)
+
+        # HTTP-Scan Events ignorieren - diese haben keine Batterie-Daten
+        if event.event_type == HTTP_SCAN_EVENTNAME:
+            return
+
         json_data = event.data.get("payload", {})
 
         if json_data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(CONF_DEVICE_ID):
             await self._wrapper_update(json_data)
 
+    async def check_valid(self, data: dict) -> bool:
+        """Prüft, ob die empfangenen Daten gültig sind."""
+
+        _LOGGER.debug("Sensor(check_valid) %s: Daten empfangen: %s", self.__class__.__name__, data)
+
+        send_count = data.get("sendCount")
+        device_id = data.get("deviceId")
+        pccu = data.get("Pccu")
+        batteries_info = data.get("batteriesInfo")
+
+        if send_count is None:
+            _LOGGER.error("Sensor(check_valid) %s: sendCount nicht gefunden", self.__class__.__name__)
+            return False
+
+        if device_id is None:
+            _LOGGER.error("Sensor(check_valid) %s: deviceID nicht gefunden", self.__class__.__name__)
+            return False
+
+        if pccu is None:
+            _LOGGER.error("Sensor(check_valid) %s: Pccu nicht gefunden", self.__class__.__name__)
+            return False
+
+        if batteries_info is None:
+            _LOGGER.error("Sensor(check_valid) %s: batteriesInfo nicht gefunden", self.__class__.__name__)
+            return False
+
+        return True
+
     async def _wrapper_update(self, data: dict):
         """Ablauf bei einem eingehenden Update-Event."""
         try:
+            _LOGGER.debug("Sensor(_wrapper_update) %s: Update empfangen: %s", self.__class__.__name__, data)
+
+            if not await self.check_valid(data):
+                return
+
             old_value = self._attr_native_value
             await self.handle_update(data)
             # Nur aktualisieren, wenn sich der Wert tatsächlich geändert hat oder zuvor ein Stale war

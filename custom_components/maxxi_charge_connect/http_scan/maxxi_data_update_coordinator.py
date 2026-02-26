@@ -14,7 +14,7 @@ from homeassistant.const import CONF_IP_ADDRESS
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from ..const import REQUIRED, NEIN, CONF_DEVICE_ID
+from ..const import REQUIRED, NEIN, CONF_DEVICE_ID, HTTP_SCAN_EVENTNAME
 
 from ..tools import fire_status_event
 
@@ -137,7 +137,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                                 "message": "Http-Scan Sensoren ausgelesen.",
                                 "timestamp": datetime.now(timezone.utc).isoformat(),
                             }
-                            await fire_status_event(self.hass, json_data, False)
+                            await fire_status_event(self.hass, json_data, False, HTTP_SCAN_EVENTNAME)
 
                             return data
 
@@ -153,7 +153,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                     "exception": str(e),
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
-                await fire_status_event(self.hass, json_data, False)
+                await fire_status_event(self.hass, json_data, False, HTTP_SCAN_EVENTNAME)
                 return {}
 
             except TimeoutError as e:
@@ -171,7 +171,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
 
-                await fire_status_event(self.hass, json_data, False)
+                await fire_status_event(self.hass, json_data, False, HTTP_SCAN_EVENTNAME)
                 return {}
 
             except Exception as e:  # pylint: disable=broad-exception-caught
@@ -186,7 +186,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                     "exception": str(e),
                     "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
-                await fire_status_event(self.hass, json_data, False)
+                await fire_status_event(self.hass, json_data, False, HTTP_SCAN_EVENTNAME)
                 return {}
         else:
             json_data = {
@@ -197,5 +197,5 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                 "message": "Es wurde keine IP eingeben, daher sind einige Sensoren auf unbekannt",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
-            await fire_status_event(self.hass, json_data, False)
+            await fire_status_event(self.hass, json_data, False, HTTP_SCAN_EVENTNAME)
             return {}

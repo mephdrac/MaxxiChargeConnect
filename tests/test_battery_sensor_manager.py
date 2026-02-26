@@ -87,14 +87,14 @@ class TestBatterySensorManager:
                 }
             }
         }
-        
+
         with patch(
             "custom_components.maxxi_charge_connect.devices.battery_sensor_manager.async_dispatcher_connect"
         ) as mock_connect:
             mock_connect.return_value = AsyncMock()
-            
+
             await manager.setup()
-            
+
             assert manager._registered is True
             assert mock_connect.call_count == 2  # update + stale signal
 
@@ -103,7 +103,7 @@ class TestBatterySensorManager:
         """Testet das Setup im Cloud-Modus."""
         entry.data[CONF_ENABLE_CLOUD_DATA] = True
         manager = BatterySensorManager(hass, entry, async_add_entities)
-        
+
         hass.bus = MagicMock()
         with patch.object(hass.bus, "async_listen") as mock_listen:
             await manager.setup()
@@ -123,9 +123,9 @@ class TestBatterySensorManager:
     async def test_handle_update_no_batteries(self, manager):
         """Testet handle_update ohne Batterie-Informationen."""
         data = {"other": "data"}
-        
+
         await manager.handle_update(data)
-        
+
         # Sollte keine Sensoren erstellen
         assert len(manager.sensors) == 0
         manager.async_add_entities.assert_not_called()
@@ -139,9 +139,9 @@ class TestBatterySensorManager:
                 {"batteryCapacity": 2000}
             ]
         }
-        
+
         await manager.handle_update(data)
-        
+
         # Sollte 22 Sensoren erstellen (11 pro Batterie)
         assert len(manager.sensors) == 22
         # async_add_entities sollte aufgerufen werden, aber wir prüfen nur die Anzahl
@@ -155,14 +155,14 @@ class TestBatterySensorManager:
                 {"batteryCapacity": 1000}
             ]
         }
-        
+
         # Erster Aufruf - erstellt Sensoren
         await manager.handle_update(data)
         first_call_count = manager.async_add_entities.call_count
-        
+
         # Zweiter Aufruf - sollte keine neuen Sensoren erstellen
         await manager.handle_update(data)
-        
+
         # Sollte keine zusätzlichen Sensoren erstellt haben
         assert manager.async_add_entities.call_count == first_call_count
         assert len(manager.sensors) == 11  # 11 Sensoren für 1 Batterie
@@ -175,11 +175,11 @@ class TestBatterySensorManager:
                 {"batteryCapacity": 1000}
             ]
         }
-        
+
         # Mock-Listener hinzufügen
         mock_listener1 = AsyncMock()
         mock_listener2 = AsyncMock()
-        
+
         manager.hass.data = {
             "maxxi_charge_connect": {
                 "test_entry_id": {
@@ -187,9 +187,9 @@ class TestBatterySensorManager:
                 }
             }
         }
-        
+
         await manager.handle_update(data)
-        
+
         # Beide Listener sollten aufgerufen werden
         mock_listener1.assert_called_once_with(data)
         mock_listener2.assert_called_once_with(data)
@@ -202,19 +202,19 @@ class TestBatterySensorManager:
         mock_sensor1.hass = MagicMock()
         mock_sensor2 = MagicMock()
         mock_sensor2.hass = MagicMock()
-        
+
         manager.sensors = {
             "sensor1": mock_sensor1,
             "sensor2": mock_sensor2
         }
-        
+
         await manager.handle_stale()
-        
+
         # Alle Sensoren sollten auf unavailable gesetzt werden
         assert mock_sensor1._attr_available is False
         assert mock_sensor1._attr_state == STATE_UNKNOWN
         mock_sensor1.async_write_ha_state.assert_called_once()
-        
+
         assert mock_sensor2._attr_available is False
         assert mock_sensor2._attr_state == STATE_UNKNOWN
         mock_sensor2.async_write_ha_state.assert_called_once()
@@ -226,7 +226,7 @@ class TestBatterySensorManager:
             "sensor1": None,
             "sensor2": MagicMock()
         }
-        
+
         # Sollte keine Exception werfen
         await manager.handle_stale()
 
@@ -238,13 +238,19 @@ class TestBatterySensorManager:
             "payload": {
                 PROXY_ERROR_DEVICE_ID: "device123",
                 "deviceId": "device123",
+                "batteriesInfo": [],
                 "test": "data"
             }
         }
-        
+
         with patch.object(manager, "handle_update") as mock_handle_update:
             await manager.async_update_from_event(event)
-            mock_handle_update.assert_called_once_with({"deviceId": "device123", "test": "data"})
+            mock_handle_update.assert_called_once_with({
+                PROXY_ERROR_DEVICE_ID: "device123",
+                "deviceId": "device123",
+                "batteriesInfo": [],
+                "test": "data"
+            })
 
     @pytest.mark.asyncio
     async def test_async_update_from_event_wrong_device(self, manager):
@@ -256,7 +262,7 @@ class TestBatterySensorManager:
                 "test": "data"
             }
         }
-        
+
         with patch.object(manager, "handle_update") as mock_handle_update:
             await manager.async_update_from_event(event)
             mock_handle_update.assert_not_called()
@@ -265,7 +271,7 @@ class TestBatterySensorManager:
     async def test_wrapper_update(self, manager):
         """Testet den Update-Wrapper."""
         data = {"test": "data"}
-        
+
         with patch.object(manager, "handle_update") as mock_handle_update:
             await manager._wrapper_update(data)
             mock_handle_update.assert_called_once_with(data)
@@ -274,7 +280,7 @@ class TestBatterySensorManager:
     async def test_wrapper_update_error(self, manager):
         """Testet die Fehlerbehandlung im Update-Wrapper."""
         data = {"test": "data"}
-        
+
         with patch.object(manager, "handle_update", side_effect=Exception("Test Error")):
             # Sollte keine Exception werfen
             await manager._wrapper_update(data)
@@ -296,7 +302,7 @@ class TestBatterySensorManager:
     def test_get_sensor_count(self, manager):
         """Testet die Sensor-Zählung."""
         assert manager.get_sensor_count() == 0
-        
+
         manager.sensors = {"sensor1": MagicMock(), "sensor2": MagicMock()}
         assert manager.get_sensor_count() == 2
 
@@ -306,11 +312,11 @@ class TestBatterySensorManager:
         mock_sensor.__class__.__name__ = "TestSensor"
         mock_sensor._attr_available = True
         mock_sensor._attr_native_value = 42.5
-        
+
         manager.sensors = {"test_sensor": mock_sensor}
-        
+
         info = manager.get_sensor_info()
-        
+
         assert "test_sensor" in info
         assert info["test_sensor"]["class"] == "TestSensor"
         assert info["test_sensor"]["available"] is True
@@ -322,16 +328,17 @@ class TestBatterySensorManager:
         mock_sensor.__class__.__name__ = "TestSensor"
         mock_sensor._attr_available = True
         # Simuliere einen Fehler beim Zugriff mit AttributeError
+        
         def side_effect_attr(name):
             if name == "_attr_native_value":
                 raise AttributeError("Test error")
             return object.__getattribute__(mock_sensor, name)
         type(mock_sensor).__getattribute__ = side_effect_attr
-        
+
         manager.sensors = {"test_sensor": mock_sensor}
-        
+
         info = manager.get_sensor_info()
-        
+
         assert "test_sensor" in info
         assert "error" in info["test_sensor"]
 
@@ -339,11 +346,11 @@ class TestBatterySensorManager:
     async def test_create_sensors_for_batteries_error(self, manager):
         """Testet die Sensor-Erstellung mit Fehlern."""
         batteries = [{"batteryCapacity": 1000}]
-        
+
         # Mock eine Sensor-Klasse, die einen Fehler wirft
         with patch.object(manager, "SENSOR_CLASSES", [("test_sensor", MagicMock(side_effect=Exception("Creation Error")))]):
             new_sensors = await manager._create_sensors_for_batteries(batteries)
-            
+
             # Sollte leere Liste zurückgeben, trotz Fehler
             assert new_sensors == []
 
@@ -351,10 +358,10 @@ class TestBatterySensorManager:
     async def test_update_all_listeners_error(self, manager):
         """Testet die Listener-Updates mit Fehlern."""
         data = {"test": "data"}
-        
+
         # Mock-Listener, der einen Fehler wirft
         mock_listener = AsyncMock(side_effect=Exception("Listener Error"))
-        
+
         manager.hass.data = {
             "maxxi_charge_connect": {
                 "test_entry_id": {
@@ -362,20 +369,20 @@ class TestBatterySensorManager:
                 }
             }
         }
-        
+
         # Sollte keine Exception werfen
         await manager._update_all_listeners(data)
 
     def test_sensor_classes_constant(self, manager):
         """Testet die SENSOR_CLASSES Konstante."""
         assert len(manager.SENSOR_CLASSES) == 11
-        
+
         # Prüfen, ob alle erwarteten Sensorklassen vorhanden sind
         sensor_names = [name for name, _ in manager.SENSOR_CLASSES]
         expected_names = [
             "battery_soe",
             "battery_soc_sensor",
-            "battery_voltage_sensor", 
+            "battery_voltage_sensor",
             "battery_ampere_sensor",
             "battery_pv_power_sensor",
             "battery_pv_voltage_sensor",
@@ -385,5 +392,5 @@ class TestBatterySensorManager:
             "battery_charge_sensor",
             "battery_discharge_sensor"
         ]
-        
+
         assert sensor_names == expected_names

@@ -3,7 +3,7 @@
 import logging
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, AsyncMock, patch
 
 import pytest
 
@@ -111,6 +111,8 @@ async def test_wrapper_update_value_change(entry, hass):
     sensor.hass = hass
     sensor.async_write_ha_state = MagicMock()
 
+    sensor.check_valid = AsyncMock(return_value=True)
+
     await sensor._wrapper_update({"test_value": "100"})
 
     assert sensor._attr_native_value == 100.0
@@ -141,6 +143,7 @@ async def test_wrapper_update_no_change_after_stale(entry, hass):
     sensor._attr_native_value = 100.0
     sensor._after_stale = True
     sensor.async_write_ha_state = MagicMock()
+    sensor.check_valid = AsyncMock(return_value=True)
 
     await sensor._wrapper_update({"test_value": "100"})
 
@@ -160,6 +163,7 @@ async def test_wrapper_update_error_handling(entry, hass):
         raise ValueError("Test error")
 
     sensor.handle_update = failing_handle_update
+    sensor.check_valid = AsyncMock(return_value=True)
 
     await sensor._wrapper_update({"test_value": "100"})
 
@@ -173,6 +177,7 @@ async def test_wrapper_stale(entry, hass):
     sensor = TestSensor(entry)
     sensor.hass = hass
     sensor.async_write_ha_state = MagicMock()
+    sensor.check_valid = AsyncMock(return_value=True)
 
     await sensor._wrapper_stale(None)
 

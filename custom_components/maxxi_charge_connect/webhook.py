@@ -34,7 +34,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-
+# pylint: disable=too-many-locals, too-many-return-statements, too-many-statements
 async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
     """Registriert einen Webhook für den angegebenen ConfigEntry.
 
@@ -101,8 +101,45 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
             data = await request.json()
             _LOGGER.debug("Webhook [%s] received data: %s", webhook_id, data)
 
+            # JSON-Validierung
+            if not isinstance(data, dict):
+                _LOGGER.error("Ungültige JSON-Datenstruktur: %s", type(data))
+                return web.Response(status=400, text="Invalid JSON structure")
+
+            # Erforderliche Felder prüfen
+            required_fields = ["deviceId", "sendCount"]
+            missing_fields = [field for field in required_fields if field not in data]
+            if missing_fields:
+                _LOGGER.error("Fehlende erforderliche Felder: %s", missing_fields)
+                return web.Response(status=400, text=f"Missing required fields: {missing_fields}")
+
+            # Doppelte Ausführung verhindern (basierend auf sendCount und Zeitstempel)
+            send_count = data.get("sendCount")
+            current_time = datetime.now(tz=UTC)
+            _LOGGER.debug("Webhook [%s] sendCount: %s", webhook_id, send_count)
+            _LOGGER.debug("Webhook [%s] current_time: %s", webhook_id, current_time)
+
+            # Cache für letzte Verarbeitung
+            cache_key = f"{entry.entry_id}_last_sendcount"
+            last_sendcount = hass.data[DOMAIN][entry.entry_id].get(cache_key)
+            last_process_time = hass.data[DOMAIN][entry.entry_id].get(f"{cache_key}_time")
+
+            _LOGGER.debug("Webhook [%s] last_sendcount: %s", webhook_id, last_sendcount)
+            _LOGGER.debug("Webhook [%s] last_process_time: %s", webhook_id, last_process_time)
+
+            # Wenn gleicher sendCount innerhalb von 5 Sekunden → ignorieren
+            if (last_sendcount == send_count and
+                    last_process_time and
+                    (current_time - last_process_time).total_seconds() < 5):
+                _LOGGER.warning("Doppelte Webhook-Ausführung erkannt (sendCount: %s), ignoriere", send_count)
+                return web.Response(status=200, text="Duplicate request ignored")
+
+            # Cache aktualisieren
+            hass.data[DOMAIN][entry.entry_id][cache_key] = send_count
+            hass.data[DOMAIN][entry.entry_id][f"{cache_key}_time"] = current_time
+
             # Letzte Aktualisierungszeit speichern
-            zeitstempel = datetime.now(tz=UTC)
+            zeitstempel = current_time
             hass.data[DOMAIN][entry.entry_id][WEBHOOK_LAST_UPDATE] = zeitstempel
 
             _LOGGER.debug("Letzte Webhook-Aktualisierung: %s", zeitstempel)

@@ -244,7 +244,7 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
                         len(new_sensors),
                         len(batteries),
                     )
-                    await self.async_add_entities(new_sensors)
+                    self.async_add_entities(new_sensors)
 
             # Update alle Sensoren über die Listener
             await self._update_all_listeners(data)

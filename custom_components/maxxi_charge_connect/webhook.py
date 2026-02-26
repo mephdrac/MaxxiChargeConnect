@@ -34,7 +34,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
-
+# pylint: disable=too-many-locals, too-many-return-statements, too-many-statements
 async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
     """Registriert einen Webhook für den angegebenen ConfigEntry.
 
@@ -116,11 +116,16 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
             # Doppelte Ausführung verhindern (basierend auf sendCount und Zeitstempel)
             send_count = data.get("sendCount")
             current_time = datetime.now(tz=UTC)
+            _LOGGER.debug("Webhook [%s] sendCount: %s", webhook_id, send_count)
+            _LOGGER.debug("Webhook [%s] current_time: %s", webhook_id, current_time)
 
             # Cache für letzte Verarbeitung
             cache_key = f"{entry.entry_id}_last_sendcount"
             last_sendcount = hass.data[DOMAIN][entry.entry_id].get(cache_key)
             last_process_time = hass.data[DOMAIN][entry.entry_id].get(f"{cache_key}_time")
+            
+            _LOGGER.debug("Webhook [%s] last_sendcount: %s", webhook_id, last_sendcount)
+            _LOGGER.debug("Webhook [%s] last_process_time: %s", webhook_id, last_process_time)
 
             # Wenn gleicher sendCount innerhalb von 5 Sekunden → ignorieren
             if (last_sendcount == send_count and

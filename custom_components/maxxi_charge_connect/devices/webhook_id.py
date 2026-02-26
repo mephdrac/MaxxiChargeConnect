@@ -1,205 +1,83 @@
-"""Funktionen zum Registrieren und Abmelden von Webhooks.
+"""Modul definiert die TextEntity `WebhookId`.
 
-Dieses Modul bietet Funktionen zum Registrieren und Abmelden von Webhooks
-für den MaxxiChargeConnect-Integrationseintrag in Home Assistant.
-
-Die Webhooks empfangen JSON-Daten, validieren optional die IP-Adresse des Anrufers
-und senden empfangene Daten über den Dispatcher an registrierte Sensoren weiter.
+Dieses Modul definiert die TextEntity `WebhookId`, die die Webhook-ID
+einer Integration als Textsensor in Home Assistant bereitstellt.
 """
 
-import asyncio
-from datetime import UTC, datetime
-import json
 import logging
-
-from aiohttp import web
-
-from homeassistant.components.webhook import async_register, async_unregister
+from homeassistant.components.text import TextEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_IP_ADDRESS, CONF_WEBHOOK_ID
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.dispatcher import async_dispatcher_send
+from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
 
-from ..const import (
-    CONF_TIMEOUT_RECEIVE,
-    DEFAULT_TIMEOUT_RECEIVE,
-    DOMAIN,
-    ONLY_ONE_IP,
-    WEBHOOK_LAST_UPDATE,
-    WEBHOOK_NAME,
-    WEBHOOK_SIGNAL_STATE,
-    WEBHOOK_SIGNAL_UPDATE,
-    WEBHOOK_WATCHDOG_TASK,
-)
+from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
-    """Registriert einen Webhook für den angegebenen ConfigEntry.
+class WebhookId(TextEntity):
+    """TextEntity zur Darstellung der Webhook-ID aus der ConfigEntry.
 
-    Der Webhook empfängt JSON-Daten und validiert optional die IP-Adresse
-    des aufrufenden Geräts, falls in den Optionen konfiguriert.
-
-    Die empfangenen Daten werden über den Dispatcher an verbundene Sensoren weitergeleitet.
-
-
-    Args:
-        hass (HomeAssistant): Die Home Assistant Instanz.
-        entry (ConfigEntry): Die Konfigurationseintrag, für den der Webhook registriert wird.
-
-    Returns:
-        None
+    Attributes:
+        _entry (ConfigEntry): Die Konfigurationseintrag der Integration.
+        _attr_native_value (str): Die aktuelle Webhook-ID als Text.
+        _attr_name (str): Anzeigename der Entity.
+        _attr_unique_id (str): Eindeutige ID der Entity.
+        _attr_icon (str): Icon der Entity.
+        _attr_entity_category (EntityCategory): Kategorie der Entity, hier DIAGNOSTIC.
 
     """
-    webhook_id = entry.data[CONF_WEBHOOK_ID]
 
-    # Vorherigen Handler entfernen, falls vorhanden
-    try:
-        async_unregister(hass, webhook_id)
-        _LOGGER.warning("Alter Webhook mit ID %s wurde entfernt", webhook_id)
-    except Exception:  # pylint: disable=broad-exception-caught
-        _LOGGER.debug("Kein bestehender Webhook für ID %s gefunden", webhook_id)
+    _attr_translation_key = "WebhookId"
+    _attr_has_entity_name = True
 
-    signal_sensor = f"{DOMAIN}_{webhook_id}_update_sensor"
-    signal_stale = f"{DOMAIN}_{webhook_id}_sensor_stale"
+    def __init__(self, entry: ConfigEntry) -> None:
+        """Initialisiert die WebhookId-TextEntity.
 
-    hass.data[DOMAIN][entry.entry_id][WEBHOOK_SIGNAL_UPDATE] = signal_sensor
-    hass.data[DOMAIN][entry.entry_id][WEBHOOK_SIGNAL_STATE] = signal_stale
+        Args:
+            entry (ConfigEntry): Die Konfigurationseintrag der Integration.
 
-    _LOGGER.info("Registering webhook '%s'", WEBHOOK_NAME)
+        """
+        self._entry = entry
 
-    # async def handle_webhook(webhook_id, request):
+        # Sichere Abfrage der Webhook-ID
+        webhook_id = entry.data.get(CONF_WEBHOOK_ID)
+        if webhook_id is None:
+            _LOGGER.error("WebhookId: CONF_WEBHOOK_ID nicht in ConfigEntry gefunden")
+            webhook_id = "unbekannt"
+        elif not webhook_id:
+            _LOGGER.warning("WebhookId: CONF_WEBHOOK_ID ist leer")
+            webhook_id = "leer"
+        else:
+            _LOGGER.info("WebhookId: Initialisiert mit ID: %s", webhook_id)
 
-    async def handle_webhook(
-        hass: HomeAssistant, webhook_id: str, request: web.Request
-    ):
-        try:
-            allowed_ip = entry.data.get(CONF_IP_ADDRESS, "")
-            only_one_ip = entry.data.get(ONLY_ONE_IP, False)
+        self._attr_native_value = webhook_id
+        self._attr_unique_id = f"{entry.entry_id}_webhook_id"
+        self._attr_icon = "mdi:webhook"
+        self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
-            _LOGGER.debug("Hier: OnlyOneIp (%s)", only_one_ip)
+    def set_value(self, value):
+        """Setzt einen neuen Webhook-ID Wert."""
+        _LOGGER.info(
+            "WebhookId: Wert geändert von %s zu %s", self._attr_native_value, value
+        )
+        self._attr_native_value = value
 
-            if only_one_ip:
-                # IP des aufrufenden Geräts ermitteln
-                peername = None
-                if request.transport is not None:
-                    peername = request.transport.get_extra_info("peername")
+    @property
+    def device_info(self):
+        """Liefert die Geräteinformationen für diese Sensor-Entity.
 
-                if peername is None:
-                    _LOGGER.warning(
-                        "Konnte Peername nicht ermitteln – Zugriff verweigert"
-                    )
-                    return web.Response(status=403, text="Forbidden")
+        Returns:
+            dict: Ein Dictionary mit Informationen zur Identifikation
+                  des Geräts in Home Assistant, einschließlich:
+                  - identifiers: Eindeutige Identifikatoren (Domain und Entry ID)
+                  - name: Anzeigename des Geräts
+                  - manufacturer: Herstellername
+                  - model: Modellbezeichnung
 
-                remote_ip, _ = peername
+        """
 
-                if remote_ip != allowed_ip:
-                    _LOGGER.warning("Zugriff verweigert für IP: %s", remote_ip)
-                    return web.Response(status=403, text="Forbidden")
-
-            data = await request.json()
-            _LOGGER.debug("Webhook [%s] received data: %s", webhook_id, data)
-
-            # JSON-Validierung
-            if not isinstance(data, dict):
-                _LOGGER.error("Ungültige JSON-Datenstruktur: %s", type(data))
-                return web.Response(status=400, text="Invalid JSON structure")
-
-            # Erforderliche Felder prüfen
-            required_fields = ["deviceId", "sendCount"]
-            missing_fields = [field for field in required_fields if field not in data]
-            if missing_fields:
-                _LOGGER.error("Fehlende erforderliche Felder: %s", missing_fields)
-                return web.Response(status=400, text=f"Missing required fields: {missing_fields}")
-
-            # Doppelte Ausführung verhindern (basierend auf sendCount und Zeitstempel)
-            send_count = data.get("sendCount")
-            current_time = datetime.now(tz=UTC)
-
-            # Cache für letzte Verarbeitung
-            cache_key = f"{entry.entry_id}_last_sendcount"
-            last_sendcount = hass.data[DOMAIN][entry.entry_id].get(cache_key)
-            last_process_time = hass.data[DOMAIN][entry.entry_id].get(f"{cache_key}_time")
-
-            # Wenn gleicher sendCount innerhalb von 5 Sekunden → ignorieren
-            if (last_sendcount == send_count and
-                    last_process_time and
-                    (current_time - last_process_time).total_seconds() < 5):
-                _LOGGER.warning("Doppelte Webhook-Ausführung erkannt (sendCount: %s), ignoriere", send_count)
-                return web.Response(status=200, text="Duplicate request ignored")
-
-            # Cache aktualisieren
-            hass.data[DOMAIN][entry.entry_id][cache_key] = send_count
-            hass.data[DOMAIN][entry.entry_id][f"{cache_key}_time"] = current_time
-
-            # Letzte Aktualisierungszeit speichern
-            zeitstempel = current_time
-            hass.data[DOMAIN][entry.entry_id][WEBHOOK_LAST_UPDATE] = zeitstempel
-
-            _LOGGER.debug("Letzte Webhook-Aktualisierung: %s", zeitstempel)
-            async_dispatcher_send(hass, signal_sensor, data)
-
-            # Watchdog nur einmal starten
-            if hass.data[DOMAIN][entry.entry_id].get(WEBHOOK_WATCHDOG_TASK) is None:
-                task = hass.loop.create_task(_webhook_timeout_watcher(hass, entry))
-                hass.data[DOMAIN][entry.entry_id][WEBHOOK_WATCHDOG_TASK] = task
-            else:
-                _LOGGER.debug("Watchdog läuft bereits – wird nicht erneut gestartet")
-
-        except json.JSONDecodeError as e:
-            _LOGGER.error("Ungültige JSON-Daten empfangen: %s", e)
-            return web.Response(status=400, text="Invalid JSON")
-
-        return web.Response(status=200, text="OK")
-
-    async_register(
-        hass,
-        DOMAIN,
-        WEBHOOK_NAME,
-        webhook_id,
-        handle_webhook,
-    )
-
-
-async def async_unregister_webhook(
-    hass: HomeAssistant, entry: ConfigEntry, old_webhook_id: str | None = None
-):
-    """Meldet den Webhook für den angegebenen ConfigEntry ab."""
-
-    task = hass.data[DOMAIN][entry.entry_id].get(WEBHOOK_WATCHDOG_TASK)
-    if task:
-        task.cancel()
-        hass.data[DOMAIN][entry.entry_id][WEBHOOK_WATCHDOG_TASK] = None
-
-    webhook_id = old_webhook_id or entry.data[CONF_WEBHOOK_ID]
-    _LOGGER.info("Unregistering webhook with ID: %s", webhook_id)
-
-    async_unregister(hass, webhook_id)
-
-
-async def _webhook_timeout_watcher(hass, entry):
-    """Setzt Sensoren nach Timeout auf 'stale'."""
-
-    entry_data = hass.data[DOMAIN][entry.entry_id]
-    signal_stale = entry_data[WEBHOOK_SIGNAL_STATE]
-
-    while True:
-        await asyncio.sleep(4)
-        last = entry_data.get(WEBHOOK_LAST_UPDATE)
-
-        if last is None:
-            continue
-
-        timeout_receive = entry.data.get(CONF_TIMEOUT_RECEIVE, DEFAULT_TIMEOUT_RECEIVE)
-        timeout_receive = max(timeout_receive, 5)
-
-        delta = datetime.now(tz=UTC) - last
-
-        if delta.total_seconds() > timeout_receive:
-            # Zu lange her → alle Sensoren stale setzen
-            async_dispatcher_send(hass, signal_stale, None)
-            _LOGGER.warning(
-                "Webhook-Timeout überschritten (%s Sekunden). Sensoren auf 'stale' gesetzt",
-                timeout_receive,
-            )
+        return {
+            "identifiers": {(DOMAIN, self._entry.entry_id)},
+            "name": self._entry.title,
+            **DEVICE_INFO,
+        }

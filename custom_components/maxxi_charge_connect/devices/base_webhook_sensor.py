@@ -149,10 +149,10 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
 
         _LOGGER.debug("Sensor(check_valid) %s: Daten empfangen: %s", self.__class__.__name__, data)
 
-        send_count = data.get("sendCount")
-        device_id = data.get("deviceID")
-        pccu = data.get("Pccu")
-        batteries_info = data.get("batteriesInfo")
+        send_count = data.get("sendCount")        
+        device_id = data.get("deviceId")        
+        pccu = data.get("Pccu")        
+        batteries_info = data.get("batteriesInfo")        
 
         if send_count is None:
             _LOGGER.error("Sensor(check_valid) %s: sendCount nicht gefunden", self.__class__.__name__)
@@ -178,21 +178,6 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
             _LOGGER.debug("Sensor(_wrapper_update) %s: Update empfangen: %s", self.__class__.__name__, data)
 
             if not await self.check_valid(data):
-                _LOGGER.error("Sensor(_wrapper_update) %s: Update nicht gültig", self.__class__.__name__)
-                return
-
-            send_count = data.get("sendCount")
-            current_time = datetime.now(tz=UTC)
-
-            cache_key = f"{self._entry.entry_id}_last_sendcount"
-            last_sendcount = self.hass.data[DOMAIN][self._entry.entry_id].get(cache_key)
-            last_process_time = self.hass.data[DOMAIN][self._entry.entry_id].get(f"{cache_key}_time")
-
-            # Wenn gleicher sendCount innerhalb von 5 Sekunden → ignorieren
-            if (last_sendcount == send_count and
-                    last_process_time and
-                    (current_time - last_process_time).total_seconds() < 5):
-                _LOGGER.error("Doppelte Webhook-Ausführung erkannt (sendCount: %s), ignoriere", send_count)
                 return
 
             old_value = self._attr_native_value

@@ -10,6 +10,7 @@ Diese Klasse:
 from __future__ import annotations
 
 import logging
+from datetime import UTC, datetime
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
@@ -17,6 +18,7 @@ from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
+
 
 from ..const import (
     DEVICE_INFO,
@@ -131,7 +133,7 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
     async def async_update_from_event(self, event: Event):
         """Aktualisiert Sensor von Proxy-Event."""
 
-        _LOGGER.warning("Sensor %s, %s: Event empfangen: %s", self.__class__.__name__, event.event_type, event)
+        _LOGGER.debug("Sensor(async_update_from_event) %s, %s: Event empfangen: %s", self.__class__.__name__, event.event_type, event)
 
         # HTTP-Scan Events ignorieren - diese haben keine Batterie-Daten
         if event.event_type == HTTP_SCAN_EVENTNAME:
@@ -142,11 +144,57 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
         if json_data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(CONF_DEVICE_ID):
             await self._wrapper_update(json_data)
 
+    async def check_valid(self, data: dict) -> bool:
+        """Prüft, ob die empfangenen Daten gültig sind."""
+
+        _LOGGER.debug("Sensor(check_valid) %s: Daten empfangen: %s", self.__class__.__name__, data)
+
+        send_count = data.get("sendCount")
+        device_id = data.get("deviceID")
+        pccu = data.get("Pccu")
+        batteriesInfo = data.get("batteriesInfo")
+
+        if send_count is None:
+            _LOGGER.error("Sensor(check_valid) %s: sendCount nicht gefunden", self.__class__.__name__)
+            return False
+
+        if device_id is None:
+            _LOGGER.error("Sensor(check_valid) %s: deviceID nicht gefunden", self.__class__.__name__)
+            return False
+
+        if pccu is None:
+            _LOGGER.error("Sensor(check_valid) %s: Pccu nicht gefunden", self.__class__.__name__)
+            return False
+
+        if batteriesInfo is None:
+            _LOGGER.error("Sensor(check_valid) %s: batteriesInfo nicht gefunden", self.__class__.__name__)
+            return False
+
+        return True
+
     async def _wrapper_update(self, data: dict):
         """Ablauf bei einem eingehenden Update-Event."""
         try:
-            _LOGGER.warning("Sensor %s: Update empfangen: %s", self.__class__.__name__, data)
-            
+            _LOGGER.debug("Sensor(_wrapper_update) %s: Update empfangen: %s", self.__class__.__name__, data)
+
+            if not await self.check_valid(data):
+                _LOGGER.error("Sensor(_wrapper_update) %s: Update nicht gültig", self.__class__.__name__)
+                return
+
+            send_count = data.get("sendCount")
+            current_time = datetime.now(tz=UTC)
+
+            cache_key = f"{self._entry.entry_id}_last_sendcount"
+            last_sendcount = self.hass.data[DOMAIN][self._entry.entry_id].get(cache_key)
+            last_process_time = self.hass.data[DOMAIN][self._entry.entry_id].get(f"{cache_key}_time")
+
+            # Wenn gleicher sendCount innerhalb von 5 Sekunden → ignorieren
+            if (last_sendcount == send_count and
+                    last_process_time and
+                    (current_time - last_process_time).total_seconds() < 5):
+                _LOGGER.error("Doppelte Webhook-Ausführung erkannt (sendCount: %s), ignoriere", send_count)
+                return
+
             old_value = self._attr_native_value
             await self.handle_update(data)
             # Nur aktualisieren, wenn sich der Wert tatsächlich geändert hat oder zuvor ein Stale war

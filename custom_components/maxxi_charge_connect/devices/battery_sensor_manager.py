@@ -9,7 +9,7 @@ bei jedem Update aktualisiert.
 import logging
 from typing import Dict, List, Callable, Any
 from homeassistant.components.sensor import SensorEntity
-from homeassistant.const import STATE_UNKNOWN
+from homeassistant.const import STATE_UNKNOWN, STATE_UNAVAILABLE
 from homeassistant.core import HomeAssistant, Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
@@ -118,6 +118,50 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
         except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error("Fehler beim Setup des BatterySensorManager: %s", err)
 
+    async def async_added_to_hass(self):
+        """HA informiert uns, dass der Sensor hinzugefügt wurde."""
+        # Nicht super() aufrufen, um die Registrierung auf PROXY_STATUS_EVENTNAME zu vermeiden
+        # await super().async_added_to_hass()
+
+        # Nur im Webhook-Modus den Dispatcher abonnieren
+        if not self._enable_cloud_data:
+            _LOGGER.info("Daten kommen vom Webhook")
+            entry_data = self.hass.data[DOMAIN][self.entry.entry_id]
+            update_signal = entry_data[WEBHOOK_SIGNAL_UPDATE]
+            stale_signal = entry_data[WEBHOOK_SIGNAL_STATE]
+
+            if not self._registered:
+                self._unsub_update = async_dispatcher_connect(
+                    self.hass, update_signal, self._wrapper_update
+                )
+
+                self._unsub_stale = async_dispatcher_connect(
+                    self.hass, stale_signal, self._wrapper_stale
+                )
+                self._registered = True
+                _LOGGER.debug("BatterySensorManager Dispatcher registriert")
+        else:
+            # Cloud-Modus: Event Bus abonnieren
+            _LOGGER.info("Daten kommen vom Proxy")
+            self.hass.bus.async_listen(
+                PROXY_STATUS_EVENTNAME, self.async_update_from_event
+            )
+
+            # Stale-Signal abonnieren
+            entry_data = self.hass.data[DOMAIN][self.entry.entry_id]
+            stale_signal = entry_data[WEBHOOK_SIGNAL_STATE]
+            self._unsub_stale = async_dispatcher_connect(
+                self.hass, stale_signal, self._wrapper_stale
+            )
+
+        # letzten Zustand wiederherstellen
+        old_state = await self.async_get_last_state()
+        if old_state is not None and old_state.state not in (
+            STATE_UNAVAILABLE,
+            STATE_UNKNOWN,
+        ):
+            self._attr_native_value = old_state.state
+
     async def _wrapper_update(self, data: dict):
         """Ablauf bei einem eingehenden Update-Event."""
         try:
@@ -136,6 +180,17 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
         """Aktualisiert Sensor von Proxy-Event."""
         try:
             json_data = event.data.get("payload", {})
+
+            # HTTP-Scan Events ignorieren (erkennbar an http:// in ip_addr)
+            ip_addr = json_data.get("ip_addr", "")
+            if ip_addr.startswith("http://") or ip_addr.startswith("https://"):
+                _LOGGER.debug("BatterySensorManager: HTTP-Scan Event erkannt (%s), ignoriere", ip_addr)
+                return
+
+            # Prüfen, ob Batterie-Daten vorhanden sind (nicht bei HTTP-Scan Events)
+            if "batteriesInfo" not in json_data:
+                _LOGGER.debug("BatterySensorManager: Keine batteriesInfo im Event, ignoriere")
+                return
 
             if json_data.get(PROXY_ERROR_DEVICE_ID) == self.entry.data.get(
                 CONF_DEVICE_ID
@@ -167,39 +222,43 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
             data (dict): Webhook-Daten, typischerweise mit `batteriesInfo`.
         """
         try:
+            # Zusätzliche Validierung der Datenstruktur
+            if not data or not isinstance(data, dict):
+                _LOGGER.warning("BatterySensorManager: Leere oder ungültige Datenstruktur erhalten: %s", data)
+                return
+
             batteries = data.get("batteriesInfo", [])
 
             if not batteries:
                 _LOGGER.debug("Keine Batterie-Informationen im Update")
                 return
 
+            # Prüfen, ob batteriesInfo eine Liste ist
+            if not isinstance(batteries, list):
+                _LOGGER.warning("BatterySensorManager: batteriesInfo ist keine Liste: %s", type(batteries))
+                return
+
+            # Prüfen, ob die Liste Elemente hat
+            if len(batteries) == 0:
+                _LOGGER.debug("BatterySensorManager: batteriesInfo ist leer")
+                return
+
             # Initialisiere Sensoren, falls noch nicht vorhanden
             if not self.sensors:
                 new_sensors = await self._create_sensors_for_batteries(batteries)
                 if new_sensors:
-                    # Filter None-Sensoren heraus
-                    valid_sensors = [s for s in new_sensors if s is not None]
-                    if valid_sensors and self.async_add_entities is not None:
-                        _LOGGER.info(
-                            "Erstelle %d neue Battery-Sensoren für %d Batterien",
-                            len(valid_sensors),
-                            len(batteries),
-                        )
-                        self.async_add_entities(valid_sensors)
-                    elif not valid_sensors:
-                        _LOGGER.warning("Keine gültigen Sensoren zum Erstellen gefunden")
-                    else:
-                        _LOGGER.error("async_add_entities ist None")
+                    _LOGGER.info(
+                        "Erstelle %d neue Battery-Sensoren für %d Batterien",
+                        len(new_sensors),
+                        len(batteries),
+                    )
+                    await self.async_add_entities(new_sensors)
 
             # Update alle Sensoren über die Listener
-            if self._update_all_listeners is not None:
-                await self._update_all_listeners(data)
-            else:
-                _LOGGER.error("_update_all_listeners ist None")
+            await self._update_all_listeners(data)
 
         except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error("Fehler bei der Verarbeitung der Battery-Daten: %s", err)
-            _LOGGER.error("Data: %s", data)
 
     async def _create_sensors_for_batteries(
         self, batteries: List[Dict[str, Any]]
@@ -221,15 +280,8 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
                         try:
                             _LOGGER.debug("Erstelle %s für Batterie %d", sensor_name, i)
                             sensor = sensor_class(self.entry, i)
-                            if sensor is not None:
-                                self.sensors[unique_key] = sensor
-                                new_sensors.append(sensor)
-                            else:
-                                _LOGGER.warning(
-                                    "Sensor-Klasse %s für Batterie %d gab None zurück",
-                                    sensor_name,
-                                    i,
-                                )
+                            self.sensors[unique_key] = sensor
+                            new_sensors.append(sensor)
                         except Exception as err:  # pylint: disable=broad-except
                             _LOGGER.error(
                                 "Fehler beim Erstellen von %s für Batterie %d: %s",
@@ -250,30 +302,18 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
             data: Die zu verteilenden Update-Daten
         """
         try:
-            # Sichere Abfrage der Listener-Liste mit mehreren None-Prüfungen
-            domain_data = self.hass.data.get(DOMAIN)
-            if domain_data is None:
-                _LOGGER.warning("DOMAIN Daten nicht gefunden in hass.data")
-                return
-
-            entry_data = domain_data.get(self.entry.entry_id)
-            if entry_data is None:
-                _LOGGER.warning("Entry Daten nicht gefunden für entry_id: %s", self.entry.entry_id)
-                return
-
-            listeners = entry_data.get("listeners", [])
-            if listeners is None:
-                _LOGGER.warning("Listeners ist None, verwende leere Liste")
-                listeners = []
+            # Sichere Abfrage der Listener-Liste
+            listeners = (
+                self.hass.data.get(DOMAIN, {})
+                .get(self.entry.entry_id, {})
+                .get("listeners", [])
+            )
 
             _LOGGER.debug("Verteile Update an %d Listener", len(listeners))
 
             for listener in listeners:
                 try:
-                    if listener is not None:
-                        await listener(data)
-                    else:
-                        _LOGGER.warning("None-Listener gefunden, wird übersprungen")
+                    await listener(data)
                 except Exception as err:  # pylint: disable=broad-except
                     _LOGGER.warning("Fehler beim Update eines Listeners: %s", err)
 

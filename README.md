@@ -47,7 +47,7 @@ an mich
 
 ## ⚠️ Limitationen:
 
-Die Integration unterstützt zur Zeit die CCUv1 Version .44, .45 und .46
+Die Integration unterstützt zur Zeit die CCUv1 Version .44, .45, .46, .48
 Die **Version .41 nur bedingt.** Der Webhook teil funktioniert. Die weiteren Informationen, die auf maxxi.local erscheinen, bleiben auf **unbekannt**. **(Falls hier eine Unterstützung gewünscht ist. Bitte hier als ISSUE (#77) melden.** 
 
 Die Versionen < .41 werden nicht direkt unterstützt, dennoch ist es machbar (Wer das braucht, einfach bei mir melden.). Da es hier auch noch kein maxxi.local gibt, soweit mir bekannt ist.
@@ -67,6 +67,9 @@ Der User soll selbst entscheiden, ob er diese Sensoren nutzen möchte.
 
 **nur Version .46**
 - die Information der CCU-Temperatur ist nicht mehr in den Daten enthalten, daher erscheint hier ein "nicht verfügbar"
+
+**Version .48**
+- die Information der CCU-Temperatur ist wieder in den Daten enthalten, daher ist die Anzeige nun wieder möglich.
 
 ## ✅ Funktionen
 Empfang von Daten über einen lokalen Webhook

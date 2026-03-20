@@ -2,6 +2,29 @@
 
 # MaxxiChargeConnect
 
+[![GitHub Release][releases-shield]][releases]
+[![hacs][hacsbadge]][hacs]
+[![License][license-shield]][license]
+[![Issues][issue-shield]][issues]
+[![GitHub Activity][commits-shield]][commits]
+
+
+[Maxxisun-CCUs]: https://maxxisun.de/
+[maxxisun-ha]: https://github.com/mephdrac/MaxxiChargeConnect
+[commits-shield]: https://img.shields.io/github/commit-activity/y/mephdrac/MaxxiChargeConnect
+[commits]: https://github.com/mephdrac/PowerGroupMonitor/commits/main
+[hacs]: https://github.com/hacs/integration
+[hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg
+[license-shield]: https://img.shields.io/github/license/mephdrac/MaxxiChargeConnect.svg
+[issue-shield]: https://img.shields.io/github/issues/mephdrac/MaxxiChargeConnect.svg
+[releases-shield]: https://img.shields.io/github/release/mephdrac/MaxxiChargeConnect.svg
+[releases]: https://github.com/mephdrac/MaxxiChargeConnect/releases
+
+[ha-analytics]: https://analytics.home-assistant.io/
+[issues]: https://github.com/mephdrac/MaxxiChargeConnect/issues
+[license]: https://github.com/mephdrac/MaxxiChargeConnect/blob/main/LICENSE
+
+
 
 MaxxiChargeConnect ist eine benutzerdefinierte Home Assistant Integration, die das MaxxiCharge-System von Maxxisun unterstützt. Die Integration empfängt Statuswerte über einen lokalen Webhook und stellt sie in Home Assistant als Sensoren bereit.
 

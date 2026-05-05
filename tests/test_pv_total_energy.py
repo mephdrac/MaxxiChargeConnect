@@ -1,6 +1,7 @@
 """Testet die Initialisierung und Attribute des `PvTotalEnergy` Sensors."""
 
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 
 from custom_components.maxxi_charge_connect.devices.pv_total_energy import (

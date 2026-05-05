@@ -1,24 +1,24 @@
 """Sensor - der den aktuellen Zustand des Gerätes bzw. der Integration anzeigt."""
 
 import logging
-from homeassistant.const import EntityCategory, STATE_UNAVAILABLE, STATE_UNKNOWN
+
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN, EntityCategory
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 # pylint: disable=line-too-long
 from ..const import (
-    PROXY_ERROR_DEVICE_ID,
-    WEBHOOK_SIGNAL_UPDATE,
-    CONF_DEVICE_ID,
     CCU,
+    CONF_DEVICE_ID,
+    DOMAIN,
     ERROR,
     ERRORS,
     HTTP_SCAN_EVENTNAME,
+    PROXY_ERROR_DEVICE_ID,
     PROXY_STATUS_EVENTNAME,
-    DOMAIN,
     WEBHOOK_SIGNAL_STATE,
+    WEBHOOK_SIGNAL_UPDATE,
 )  # noqa: TID252
-
 from .base_webhook_sensor import BaseWebhookSensor
 
 _LOGGER = logging.getLogger(__name__)

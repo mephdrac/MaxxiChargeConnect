@@ -1,12 +1,14 @@
 """Testet die Initialisierung und Attribute des `PvSelfConsumption` Sensors."""
 
 from unittest.mock import AsyncMock, MagicMock, patch
-from homeassistant.const import UnitOfPower
+
+import pytest
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorStateClass,
 )
-import pytest
+from homeassistant.const import UnitOfPower
+
 from custom_components.maxxi_charge_connect.devices.pv_self_consumption import (
     PvSelfConsumption,
 )

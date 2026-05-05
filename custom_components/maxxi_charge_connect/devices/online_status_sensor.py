@@ -3,8 +3,8 @@
 Die Klasse nutzt Home Assistants Dispatcher-System, um auf neue Sensordaten zu reagieren.
 """
 
-from datetime import UTC, datetime
 import logging
+from datetime import UTC, datetime
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,

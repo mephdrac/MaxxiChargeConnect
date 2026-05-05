@@ -7,6 +7,7 @@ Koordinator, der die Daten regelmäßig aktualisiert.
 """
 
 import logging
+
 from homeassistant.components.text import TextEntity
 from homeassistant.const import EntityCategory
 from homeassistant.helpers.entity import DeviceInfo

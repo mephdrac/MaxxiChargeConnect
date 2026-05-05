@@ -1,12 +1,14 @@
 """Tests für die BatteryPowerDischarge Sensor Entität."""
 
 from unittest.mock import MagicMock, patch
-from homeassistant.const import UnitOfPower
+
+import pytest
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorStateClass,
 )
-import pytest
+from homeassistant.const import UnitOfPower
+
 from custom_components.maxxi_charge_connect.devices.battery_power_discharge import (
     BatteryPowerDischarge,
 )

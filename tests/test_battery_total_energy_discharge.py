@@ -1,6 +1,7 @@
 """Tests für die BatteryTotalEnergyDischarge Entity im MaxxiChargeConnect Integration."""
 
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 
 from custom_components.maxxi_charge_connect.devices.battery_total_energy_discharge import (

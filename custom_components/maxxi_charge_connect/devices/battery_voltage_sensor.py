@@ -12,6 +12,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfElectricPotential
+
 from .base_webhook_sensor import BaseWebhookSensor
 
 _LOGGER = logging.getLogger(__name__)

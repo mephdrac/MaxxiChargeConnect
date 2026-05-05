@@ -1,16 +1,13 @@
 """SwitchEntity für den Winterbetrieb in der MaxxiCharge Connect Integration."""
 
 import logging
+
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 
-from ..const import (
-    DEVICE_INFO,
-    DOMAIN,
-    CONF_WINTER_MODE,
-    WINTER_MODE_CHANGED_EVENT
-)
+from ..const import CONF_WINTER_MODE, DEVICE_INFO, DOMAIN, WINTER_MODE_CHANGED_EVENT
+
 _LOGGER = logging.getLogger(__name__)
 
 

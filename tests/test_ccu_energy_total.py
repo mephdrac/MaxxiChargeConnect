@@ -1,6 +1,7 @@
 """Tests für die CcuEnergyTotal Entity im MaxxiChargeConnect Integration."""
 
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 
 from custom_components.maxxi_charge_connect.devices.ccu_energy_total import (

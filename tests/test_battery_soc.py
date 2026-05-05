@@ -1,17 +1,19 @@
 """Tests für die BatterySoc Entity der MaxxiChargeConnect Integration."""
 
 from unittest.mock import AsyncMock, MagicMock, patch
-from homeassistant.const import PERCENTAGE
+
+import pytest
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorStateClass,
 )
-import pytest
+from homeassistant.const import PERCENTAGE
+
 from custom_components.maxxi_charge_connect.const import (
-    DOMAIN,
-    CONF_WINTER_MODE,
     CONF_WINTER_MAX_CHARGE,
     CONF_WINTER_MIN_CHARGE,
+    CONF_WINTER_MODE,
+    DOMAIN,
 )
 from custom_components.maxxi_charge_connect.devices.battery_soc import (
     BatterySoc,

@@ -9,10 +9,12 @@ wie fehlende Pakete, letzte Differenz und Anzahl der Resets.
 """
 
 import logging
+
 from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
+
 from .base_webhook_sensor import BaseWebhookSensor
 
 _LOGGER = logging.getLogger(__name__)

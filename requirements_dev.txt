@@ -1,5 +1,6 @@
 pylint
 pylint-per-file-ignores
+ruff
 
 voluptuous
 beautifulsoup4==4.12.3

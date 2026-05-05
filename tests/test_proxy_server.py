@@ -1,17 +1,18 @@
 """Tests für MaxxiProxyServer."""
 
 from unittest.mock import AsyncMock, MagicMock, patch
-import pytest
-from aiohttp import ClientConnectorError, web
 
-from custom_components.maxxi_charge_connect.reverse_proxy.proxy_server import (
-    MaxxiProxyServer,
-)
+import pytest
+from aiohttp import ClientConnectorError
+
 from custom_components.maxxi_charge_connect.const import (
     CONF_DEVICE_ID,
-    CONF_ENABLE_FORWARD_TO_CLOUD,
     CONF_ENABLE_CLOUD_DATA,
+    CONF_ENABLE_FORWARD_TO_CLOUD,
     PROXY_ERROR_DEVICE_ID,
+)
+from custom_components.maxxi_charge_connect.reverse_proxy.proxy_server import (
+    MaxxiProxyServer,
 )
 
 

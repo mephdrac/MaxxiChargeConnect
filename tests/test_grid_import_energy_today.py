@@ -5,12 +5,12 @@ des GridImportEnergyToday-Sensors.
 """
 
 import sys
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
-from datetime import datetime, timedelta, UTC
-from homeassistant.util import dt as dt_util
 
 import pytest
+from homeassistant.util import dt as dt_util
 
 from custom_components.maxxi_charge_connect.devices.grid_import_energy_today import (
     GridImportEnergyToday,

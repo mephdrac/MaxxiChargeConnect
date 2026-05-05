@@ -3,8 +3,8 @@
 import logging
 import sys
 from pathlib import Path
-
 from unittest.mock import MagicMock
+
 import pytest
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfElectricPotential

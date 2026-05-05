@@ -9,9 +9,9 @@ Classes:
     TodayIntegralSensor: Oberklassen-Sensorentität zur Anzeige der aufsummierten Energie
 """
 
+import logging
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
-import logging
 
 from homeassistant.components.integration.sensor import (
     UNIT_PREFIXES,

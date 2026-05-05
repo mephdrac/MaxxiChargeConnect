@@ -4,10 +4,11 @@ Dieses Modul testet die `_reset_energy_daily`-Methode, die täglich um Mitternac
 den internen `last_reset`-Zeitstempel aktualisiert und den Sensorzustand neu schreibt.
 """
 
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
-from datetime import datetime, timedelta, UTC
-from homeassistant.util import dt as dt_util
+
 import pytest
+from homeassistant.util import dt as dt_util
 
 from custom_components.maxxi_charge_connect.devices.battery_today_energy_charge import (
     BatteryTodayEnergyCharge,

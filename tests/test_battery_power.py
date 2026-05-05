@@ -1,12 +1,14 @@
 """Tests für die BatteryPower Sensor Entity der MaxxiChargeConnect Integration."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
-from homeassistant.const import UnitOfPower
+from unittest.mock import MagicMock, patch
+
+import pytest
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorStateClass,
 )
-import pytest
+from homeassistant.const import UnitOfPower
+
 from custom_components.maxxi_charge_connect.devices.battery_power import (
     BatteryPower,
 )

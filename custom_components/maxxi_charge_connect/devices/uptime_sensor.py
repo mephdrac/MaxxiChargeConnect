@@ -4,8 +4,8 @@ Uptime wird in Milliesekunden angegeben.
 Die Klasse nutzt Home Assistants Dispatcher-System, um auf neue Sensordaten zu reagieren.
 """
 
-from datetime import UTC, datetime, timedelta
 import logging
+from datetime import UTC, datetime, timedelta
 
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry

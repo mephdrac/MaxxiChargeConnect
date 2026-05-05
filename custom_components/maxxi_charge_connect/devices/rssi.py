@@ -15,6 +15,7 @@ from homeassistant.const import (
     SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
     EntityCategory,
 )
+
 from .base_webhook_sensor import BaseWebhookSensor
 
 _LOGGER = logging.getLogger(__name__)

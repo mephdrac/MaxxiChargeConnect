@@ -7,8 +7,8 @@ des SendCount-Sensors.
 import logging
 import sys
 from pathlib import Path
-
 from unittest.mock import MagicMock
+
 import pytest
 from homeassistant.components.sensor import SensorStateClass
 

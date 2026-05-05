@@ -10,13 +10,13 @@ Geprüft werden:
 """
 import sys
 from pathlib import Path
-
 from unittest.mock import MagicMock
-from homeassistant.const import CONF_WEBHOOK_ID, SIGNAL_STRENGTH_DECIBELS_MILLIWATT
-from homeassistant.components.sensor import SensorDeviceClass
-from homeassistant.helpers.entity import EntityCategory
 
 import pytest
+from homeassistant.components.sensor import SensorDeviceClass
+from homeassistant.const import CONF_WEBHOOK_ID, SIGNAL_STRENGTH_DECIBELS_MILLIWATT
+from homeassistant.helpers.entity import EntityCategory
+
 from custom_components.maxxi_charge_connect.const import DOMAIN
 from custom_components.maxxi_charge_connect.devices.rssi import Rssi
 

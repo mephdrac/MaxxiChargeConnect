@@ -8,12 +8,11 @@ und senden empfangene Daten über den Dispatcher an registrierte Sensoren weiter
 """
 
 import asyncio
-from datetime import UTC, datetime
 import json
 import logging
+from datetime import UTC, datetime
 
 from aiohttp import web
-
 from homeassistant.components.webhook import async_register, async_unregister
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_IP_ADDRESS, CONF_WEBHOOK_ID

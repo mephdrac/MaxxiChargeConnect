@@ -14,8 +14,9 @@ Verwendete Bibliotheken:
 """
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock
-from homeassistant.util import dt as dt_util
+
 import pytest
+from homeassistant.util import dt as dt_util
 
 from custom_components.maxxi_charge_connect.devices.battery_today_energy_discharge import (
     BatteryTodayEnergyDischarge,

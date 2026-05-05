@@ -1,12 +1,13 @@
 """Tests für die CcuPower Entity im MaxxiChargeConnect Integration."""
 from unittest.mock import AsyncMock, MagicMock, patch
-from homeassistant.const import CONF_WEBHOOK_ID, UnitOfPower
+
+import pytest
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorStateClass,
 )
-import pytest
-from custom_components.maxxi_charge_connect.const import DOMAIN
+from homeassistant.const import UnitOfPower
+
 from custom_components.maxxi_charge_connect.devices.ccu_power import (
     CcuPower,
 )

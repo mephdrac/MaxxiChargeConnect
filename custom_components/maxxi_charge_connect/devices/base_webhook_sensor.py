@@ -18,15 +18,14 @@ from homeassistant.core import Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
 
-
 from ..const import (
-    DEVICE_INFO,
     CONF_DEVICE_ID,
     CONF_ENABLE_CLOUD_DATA,
+    DEVICE_INFO,
     DOMAIN,
+    HTTP_SCAN_EVENTNAME,
     PROXY_ERROR_DEVICE_ID,
     PROXY_STATUS_EVENTNAME,
-    HTTP_SCAN_EVENTNAME,
     WEBHOOK_SIGNAL_STATE,
     WEBHOOK_SIGNAL_UPDATE,
 )

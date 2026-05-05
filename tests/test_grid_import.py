@@ -10,10 +10,9 @@ import sys
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfPower
-
-import pytest
 
 from custom_components.maxxi_charge_connect.const import DOMAIN
 from custom_components.maxxi_charge_connect.devices.grid_import import GridImport

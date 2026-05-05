@@ -1,8 +1,9 @@
 """Tests für die BatteryVoltageSensor Entity im MaxxiChargeConnect Integration."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
-from homeassistant.const import UnitOfElectricPotential
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
+from homeassistant.const import UnitOfElectricPotential
 
 from custom_components.maxxi_charge_connect.devices.battery_voltage_sensor import (
     BatteryVoltageSensor,

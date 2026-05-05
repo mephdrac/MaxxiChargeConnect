@@ -3,11 +3,11 @@
 import logging
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from custom_components.maxxi_charge_connect.const import DOMAIN, WEBHOOK_SIGNAL_UPDATE, WEBHOOK_SIGNAL_STATE
+from custom_components.maxxi_charge_connect.const import DOMAIN, WEBHOOK_SIGNAL_STATE, WEBHOOK_SIGNAL_UPDATE
 from custom_components.maxxi_charge_connect.devices.base_webhook_sensor import BaseWebhookSensor
 
 sys.path.append(str(Path(__file__).resolve().parents[3]))

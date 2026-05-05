@@ -8,12 +8,11 @@ korrekte Verarbeitung der Daten geachtet, insbesondere abhängig von `isPrOk()`.
 import logging
 import sys
 from pathlib import Path
-
 from unittest.mock import MagicMock, patch
-from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
-from homeassistant.const import UnitOfPower
 
 import pytest
+from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
+from homeassistant.const import UnitOfPower
 
 from custom_components.maxxi_charge_connect.const import DOMAIN
 from custom_components.maxxi_charge_connect.devices.power_meter import PowerMeter

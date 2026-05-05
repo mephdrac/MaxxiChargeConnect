@@ -1,24 +1,25 @@
 """Konfigurationsfluss für MaxxiChargeConnect mit Duplicate-Prüfung"""
 
 import logging
+
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_IP_ADDRESS, CONF_NAME, CONF_WEBHOOK_ID
 from homeassistant.helpers.selector import BooleanSelector
 
 from .const import (
-    DOMAIN,
-    ONLY_ONE_IP,
-    NOTIFY_MIGRATION,
-    CONF_ENABLE_LOCAL_CLOUD_PROXY,
-    CONF_ENABLE_FORWARD_TO_CLOUD,
-    DEFAULT_ENABLE_FORWARD_TO_CLOUD,
-    DEFAULT_ENABLE_LOCAL_CLOUD_PROXY,
     CONF_DEVICE_ID,
     CONF_ENABLE_CLOUD_DATA,
+    CONF_ENABLE_FORWARD_TO_CLOUD,
+    CONF_ENABLE_LOCAL_CLOUD_PROXY,
     CONF_REFRESH_CONFIG_FROM_CLOUD,
     CONF_TIMEOUT_RECEIVE,
+    DEFAULT_ENABLE_FORWARD_TO_CLOUD,
+    DEFAULT_ENABLE_LOCAL_CLOUD_PROXY,
     DEFAULT_TIMEOUT_RECEIVE,
+    DOMAIN,
+    NOTIFY_MIGRATION,
+    ONLY_ONE_IP,
 )
 
 _LOGGER = logging.getLogger(__name__)

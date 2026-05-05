@@ -5,6 +5,7 @@ einer Integration als Textsensor in Home Assistant bereitstellt.
 """
 
 import logging
+
 from homeassistant.components.text import TextEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory

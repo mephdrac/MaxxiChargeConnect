@@ -13,16 +13,14 @@ from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE
 
-from .base_webhook_sensor import BaseWebhookSensor
-
 from ..const import (
-    DOMAIN,
-    CONF_WINTER_MODE,
-    CONF_WINTER_MIN_CHARGE,
     CONF_WINTER_MAX_CHARGE,
+    CONF_WINTER_MIN_CHARGE,
+    CONF_WINTER_MODE,
+    DOMAIN,
 )
-
 from ..tools import async_get_min_soc_entity
+from .base_webhook_sensor import BaseWebhookSensor
 
 _LOGGER = logging.getLogger(__name__)
 

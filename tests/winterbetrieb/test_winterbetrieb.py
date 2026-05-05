@@ -1,15 +1,16 @@
 """Tests für Winterbetrieb SwitchEntity."""
 
 from unittest.mock import MagicMock, patch
+
 import pytest
 
-from custom_components.maxxi_charge_connect.winterbetrieb.winterbetrieb import (
-    Winterbetrieb,
-)
 from custom_components.maxxi_charge_connect.const import (
     CONF_WINTER_MODE,
     DOMAIN,
     WINTER_MODE_CHANGED_EVENT,
+)
+from custom_components.maxxi_charge_connect.winterbetrieb.winterbetrieb import (
+    Winterbetrieb,
 )
 
 

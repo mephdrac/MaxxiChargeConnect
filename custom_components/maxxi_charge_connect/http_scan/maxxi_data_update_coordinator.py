@@ -6,7 +6,8 @@ um sie als Sensordaten in Home Assistant bereitzustellen.
 """
 
 import logging
-from datetime import timedelta, datetime, timezone
+from datetime import datetime, timedelta, timezone
+
 import aiohttp
 import async_timeout
 from bs4 import BeautifulSoup
@@ -14,8 +15,7 @@ from homeassistant.const import CONF_IP_ADDRESS
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from ..const import REQUIRED, NEIN, CONF_DEVICE_ID, HTTP_SCAN_EVENTNAME
-
+from ..const import CONF_DEVICE_ID, HTTP_SCAN_EVENTNAME, NEIN, REQUIRED
 from ..tools import fire_status_event
 
 _LOGGER = logging.getLogger(__name__)

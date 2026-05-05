@@ -1,9 +1,10 @@
 """" Tests für die WebhookId Entity."""
 
 from unittest.mock import MagicMock
-from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
 
 import pytest
+from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
+
 from custom_components.maxxi_charge_connect.devices.webhook_id import (
     WebhookId,
 )

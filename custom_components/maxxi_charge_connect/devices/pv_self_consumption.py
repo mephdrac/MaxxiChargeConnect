@@ -5,6 +5,7 @@ basierend auf der Differenz zwischen erzeugter PV-Leistung und Rückeinspeisung.
 """
 
 import logging
+
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorStateClass,
@@ -13,7 +14,6 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfPower
 
 from ..tools import is_power_total_ok, is_pr_ok  # noqa: TID252
-
 from .base_webhook_sensor import BaseWebhookSensor
 
 _LOGGER = logging.getLogger(__name__)

@@ -7,7 +7,7 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfTemperature, EntityCategory
+from homeassistant.const import EntityCategory, UnitOfTemperature
 
 from .base_webhook_sensor import BaseWebhookSensor
 

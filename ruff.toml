@@ -1,0 +1,25 @@
+exclude = [
+    ".git",
+    ".git-rewrite",
+    ".ruff_cache",
+]
+
+line-length = 120
+indent-width = 4
+
+[lint]
+select = [
+    "I",
+    "F401",
+    "UP032",
+    "UP015",
+    "A001",
+    "PLR1722",
+    "UP031",
+]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "lf"

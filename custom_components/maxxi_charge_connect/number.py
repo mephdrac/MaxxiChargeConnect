@@ -1,25 +1,25 @@
 """Number-Plattform für MaxxiChargeConnect."""
 
 import logging
-from homeassistant.core import HomeAssistant
+
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import PERCENTAGE, UnitOfPower
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.const import UnitOfPower, PERCENTAGE
-from .http_post.number_config_entity import (
-    NumberConfigEntity,
-)  # Importiere deine Entity-Klasse
 
 from .const import (
-    DOMAIN,
     CONF_WINTER_MAX_CHARGE,
     CONF_WINTER_MIN_CHARGE,
     DEFAULT_WINTER_MAX_CHARGE,
-    DEFAULT_WINTER_MIN_CHARGE
+    DEFAULT_WINTER_MIN_CHARGE,
+    DOMAIN,
 )
-
-from .winterbetrieb.winter_min_charge import WinterMinCharge
-from .winterbetrieb.winter_max_charge import WinterMaxCharge
+from .http_post.number_config_entity import (
+    NumberConfigEntity,
+)  # Importiere deine Entity-Klasse
 from .winterbetrieb.summer_min_charge import SummerMinCharge
+from .winterbetrieb.winter_max_charge import WinterMaxCharge
+from .winterbetrieb.winter_min_charge import WinterMinCharge
 
 _LOGGER = logging.getLogger(__name__)
 

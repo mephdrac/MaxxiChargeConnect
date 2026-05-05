@@ -18,6 +18,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .const import DOMAIN
 from .devices.battery_power import BatteryPower
 from .devices.battery_power_charge import BatteryPowerCharge
 from .devices.battery_power_discharge import BatteryPowerDischarge
@@ -31,6 +32,9 @@ from .devices.battery_total_energy_discharge import BatteryTotalEnergyDischarge
 from .devices.ccu_energy_today import CcuEnergyToday
 from .devices.ccu_energy_total import CcuEnergyTotal
 from .devices.ccu_power import CcuPower
+from .devices.ccu_temperatur_sensor import CCUTemperaturSensor
+from .devices.consumption_energy_today import ConsumptionEnergyToday
+from .devices.consumption_energy_total import ConsumptionEnergyTotal
 from .devices.device_id import DeviceId
 from .devices.firmware_version import FirmwareVersion
 from .devices.grid_export import GridExport
@@ -39,32 +43,21 @@ from .devices.grid_export_energy_total import GridExportEnergyTotal
 from .devices.grid_import import GridImport
 from .devices.grid_import_energy_today import GridImportEnergyToday
 from .devices.grid_import_energy_total import GridImportEnergyTotal
-
+from .devices.online_status_sensor import OnlineStatusSensor
 from .devices.power_consumption import PowerConsumption
 from .devices.power_meter import PowerMeter
 from .devices.pv_power import PvPower
-
 from .devices.pv_self_consumption import PvSelfConsumption
 from .devices.pv_self_consumption_energy_today import PvSelfConsumptionEnergyToday
 from .devices.pv_self_consumption_energy_total import PvSelfConsumptionEnergyTotal
 from .devices.pv_today_energy import PvTodayEnergy
 from .devices.pv_total_energy import PvTotalEnergy
 from .devices.rssi import Rssi
-from .devices.webhook_id import WebhookId
-
-from .devices.consumption_energy_today import ConsumptionEnergyToday
-from .devices.consumption_energy_total import ConsumptionEnergyTotal
-
-from .http_scan.http_scan_text import HttpScanText
-
+from .devices.send_count import SendCount
 from .devices.status_sensor import StatusSensor
 from .devices.uptime_sensor import UptimeSensor
-from .devices.online_status_sensor import OnlineStatusSensor
-from .devices.ccu_temperatur_sensor import CCUTemperaturSensor
-
-from .devices.send_count import SendCount
-
-from .const import DOMAIN
+from .devices.webhook_id import WebhookId
+from .http_scan.http_scan_text import HttpScanText
 
 SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
 

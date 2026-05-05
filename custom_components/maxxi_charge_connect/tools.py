@@ -20,18 +20,17 @@ from typing import Optional
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 
-
 from .const import (
+    DOMAIN,
     PROXY_ERROR_CCU,
     PROXY_ERROR_CODE,
     PROXY_ERROR_DEVICE_ID,
-    PROXY_STATUS_EVENTNAME,
     PROXY_ERROR_IP,
     PROXY_ERROR_MESSAGE,
     PROXY_ERROR_TOTAL,
     PROXY_FORWARDED,
     PROXY_PAYLOAD,
-    DOMAIN,
+    PROXY_STATUS_EVENTNAME,
 )
 
 _LOGGER = logging.getLogger(__name__)

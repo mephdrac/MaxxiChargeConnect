@@ -1,8 +1,10 @@
 """"Tests für die HttpScanText Entity."""
 
 from unittest.mock import MagicMock
-from homeassistant.const import EntityCategory
+
 import pytest
+from homeassistant.const import EntityCategory
+
 from custom_components.maxxi_charge_connect.http_scan.http_scan_text import (
     HttpScanText,
 )

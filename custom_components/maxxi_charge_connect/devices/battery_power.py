@@ -22,15 +22,16 @@ Abhängigkeiten:
 """
 
 import logging
+
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfPower
-from .base_webhook_sensor import BaseWebhookSensor
 
 from ..tools import is_pccu_ok, is_power_total_ok  # noqa: TID252
+from .base_webhook_sensor import BaseWebhookSensor
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -4,16 +4,17 @@ import logging
 import sys
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 from homeassistant.const import STATE_UNKNOWN
-from homeassistant.core import HomeAssistant, Event
+from homeassistant.core import Event, HomeAssistant
 
 from custom_components.maxxi_charge_connect.const import (
-    CONF_ENABLE_CLOUD_DATA,
     CONF_DEVICE_ID,
+    CONF_ENABLE_CLOUD_DATA,
     PROXY_ERROR_DEVICE_ID,
-    WEBHOOK_SIGNAL_UPDATE,
     WEBHOOK_SIGNAL_STATE,
+    WEBHOOK_SIGNAL_UPDATE,
 )
 from custom_components.maxxi_charge_connect.devices.battery_sensor_manager import BatterySensorManager
 

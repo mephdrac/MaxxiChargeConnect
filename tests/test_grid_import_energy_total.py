@@ -1,6 +1,7 @@
 """Tests für die GridImportEnergyTotal Entity."""
 
 from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 
 from custom_components.maxxi_charge_connect.devices.grid_import_energy_total import (

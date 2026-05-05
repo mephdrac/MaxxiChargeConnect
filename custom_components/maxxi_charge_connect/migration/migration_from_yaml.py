@@ -4,24 +4,23 @@ Dieses Modul beihnhaltet alles, was für eine Migration notwendig ist.
 """
 
 # pylint:disable=too-many-lines
+import asyncio
+import json
 import logging
 import os
 import re
 import sqlite3
-import asyncio
-import json
-from functools import partial
-# import datetime
-
-from pathlib import Path
 from datetime import datetime, timezone
-
 from decimal import Decimal
+from functools import partial
 
+# import datetime
+from pathlib import Path
+
+from homeassistant.components.integration.sensor import IntegrationSensor
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
-from homeassistant.components.integration.sensor import IntegrationSensor
 
 from ..const import DOMAIN  # pylint:disable=relative-beyond-top-level
 
@@ -956,7 +955,7 @@ class MigrateFromYaml:
                     continue
                 file_path = os.path.join(root, file)
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
 
                     if old_entity_id in content:

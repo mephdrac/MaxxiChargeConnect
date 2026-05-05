@@ -6,10 +6,10 @@ Fehlerbehandlung des UptimeSensor.
 
 import logging
 import sys
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from datetime import datetime, UTC, timedelta
-
 from unittest.mock import MagicMock
+
 import pytest
 from homeassistant.components.sensor import SensorDeviceClass
 

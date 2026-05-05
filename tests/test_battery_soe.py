@@ -56,13 +56,7 @@ async def test_battery_soe_handle_update_alles_ok():
 
     capacity = 1187.339966
 
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryCapacity": capacity
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryCapacity": capacity}]}
 
     sensor = BatterySoE(dummy_config_entry)
 
@@ -77,11 +71,7 @@ async def test_battery_soe__handle_update_keine_batterien():
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "batteriesInfo": [
-
-        ]
-    }
+    data = {"batteriesInfo": []}
 
     sensor = BatterySoE(dummy_config_entry)
 
@@ -96,19 +86,7 @@ async def test_battery_soe_handle_update_multiple_batteries():
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1000.0
-            },
-            {
-                "batteryCapacity": 2000.0
-            },
-            {
-                "batteryCapacity": 1500.5
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryCapacity": 1000.0}, {"batteryCapacity": 2000.0}, {"batteryCapacity": 1500.5}]}
 
     sensor = BatterySoE(dummy_config_entry)
 
@@ -124,16 +102,7 @@ async def test_battery_soe_handle_update_invalid_values():
     dummy_config_entry.data = {}
 
     # Test mit negativem Wert
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryCapacity": -100
-            },
-            {
-                "batteryCapacity": 1000
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryCapacity": -100}, {"batteryCapacity": 1000}]}
 
     sensor = BatterySoE(dummy_config_entry)
 
@@ -141,16 +110,7 @@ async def test_battery_soe_handle_update_invalid_values():
     assert sensor._attr_native_value == 1000.0  # pylint: disable=protected-access
 
     # Test mit zu hohem Wert (>100000 Wh)
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 200000
-            },
-            {
-                "batteryCapacity": 1000
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryCapacity": 200000}, {"batteryCapacity": 1000}]}
 
     await sensor.handle_update(data)
     assert sensor._attr_native_value == 1000.0  # pylint: disable=protected-access
@@ -163,16 +123,7 @@ async def test_battery_soe_handle_update_string_conversion():
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryCapacity": "1500.5"
-            },
-            {
-                "batteryCapacity": "2000.0"
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryCapacity": "1500.5"}, {"batteryCapacity": "2000.0"}]}
 
     sensor = BatterySoE(dummy_config_entry)
 
@@ -187,16 +138,7 @@ async def test_battery_soe_handle_update_invalid_string():
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryCapacity": "invalid"
-            },
-            {
-                "batteryCapacity": 1000
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryCapacity": "invalid"}, {"batteryCapacity": 1000}]}
 
     sensor = BatterySoE(dummy_config_entry)
 
@@ -211,16 +153,7 @@ async def test_battery_soe_handle_update_missing_capacity():
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "batteriesInfo": [
-            {
-                "otherField": "value"
-            },
-            {
-                "batteryCapacity": 1000
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"otherField": "value"}, {"batteryCapacity": 1000}]}
 
     sensor = BatterySoE(dummy_config_entry)
 
@@ -235,16 +168,7 @@ async def test_battery_soe_handle_update_total_capacity_too_high():
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 300000
-            },
-            {
-                "batteryCapacity": 300000
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryCapacity": 300000}, {"batteryCapacity": 300000}]}
 
     sensor = BatterySoE(dummy_config_entry)
 

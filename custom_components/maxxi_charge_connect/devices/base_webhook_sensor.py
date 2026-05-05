@@ -81,18 +81,12 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
 
         if self._enable_cloud_data:
             _LOGGER.info("Daten kommen vom Proxy")
-            self.hass.bus.async_listen(
-                PROXY_STATUS_EVENTNAME, self.async_update_from_event
-            )
+            self.hass.bus.async_listen(PROXY_STATUS_EVENTNAME, self.async_update_from_event)
         else:
             # Dispatcher abonnieren
-            self._unsub_update = async_dispatcher_connect(
-                self.hass, update_signal, self._wrapper_update
-            )
+            self._unsub_update = async_dispatcher_connect(self.hass, update_signal, self._wrapper_update)
 
-        self._unsub_stale = async_dispatcher_connect(
-            self.hass, stale_signal, self._wrapper_stale
-        )
+        self._unsub_stale = async_dispatcher_connect(self.hass, stale_signal, self._wrapper_stale)
 
         # letzten Zustand wiederherstellen
         old_state = await self.async_get_last_state()
@@ -107,15 +101,9 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
                 if restored_value is not None:
                     self._attr_native_value = restored_value
                     self._attr_available = True
-                    _LOGGER.debug(
-                        "Sensor %s: Zustand wiederhergestellt: %s",
-                        self.__class__.__name__, restored_value
-                    )
+                    _LOGGER.debug("Sensor %s: Zustand wiederhergestellt: %s", self.__class__.__name__, restored_value)
             except Exception as err:  # pylint: disable=broad-except
-                _LOGGER.warning(
-                    "Sensor %s: Konnte Zustand nicht wiederherstellen: %s",
-                    self.__class__.__name__, err
-                )
+                _LOGGER.warning("Sensor %s: Konnte Zustand nicht wiederherstellen: %s", self.__class__.__name__, err)
 
     async def async_will_remove_from_hass(self):
         """Abmelden beim Dispatcher."""
@@ -131,7 +119,12 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
     async def async_update_from_event(self, event: Event):
         """Aktualisiert Sensor von Proxy-Event."""
 
-        _LOGGER.debug("Sensor(async_update_from_event) %s, %s: Event empfangen: %s", self.__class__.__name__, event.event_type, event)
+        _LOGGER.debug(
+            "Sensor(async_update_from_event) %s, %s: Event empfangen: %s",
+            self.__class__.__name__,
+            event.event_type,
+            event,
+        )
 
         # HTTP-Scan Events ignorieren - diese haben keine Batterie-Daten
         if event.event_type == HTTP_SCAN_EVENTNAME:
@@ -187,9 +180,7 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
                 self._after_stale = False
                 self.async_write_ha_state()
         except Exception as err:  # pylint: disable=broad-except
-            _LOGGER.error(
-                "Fehler im Sensor %s beim Update: %s", self.__class__.__name__, err
-            )
+            _LOGGER.error("Fehler im Sensor %s beim Update: %s", self.__class__.__name__, err)
 
     async def _wrapper_stale(self, _):
         """Ablauf, wenn das Watchdog-Event 'stale' gesendet wird."""

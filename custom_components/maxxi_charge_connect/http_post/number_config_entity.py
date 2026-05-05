@@ -34,9 +34,7 @@ from ..tools import as_float  # pylint: disable=relative-beyond-top-level
 _LOGGER = logging.getLogger(__name__)
 
 
-class NumberConfigEntity(
-    NumberEntity
-):  # pylint: disable=abstract-method, too-many-instance-attributes
+class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-many-instance-attributes
     """Konfigurierbare NumberEntity für MaxxiCharge-Geräteeinstellungen.
 
     Diese Entität ermöglicht die Anzeige und Änderung eines konfigurierbaren Parameters
@@ -103,21 +101,15 @@ class NumberConfigEntity(
         _LOGGER.debug("Wert: %s", as_float(self._coordinator.data.get(self._value_key)))
 
         if self._coordinator.data:
-            self._attr_native_value = as_float(
-                self._coordinator.data.get(self._value_key)
-            )
+            self._attr_native_value = as_float(self._coordinator.data.get(self._value_key))
         else:
             self._attr_native_value = None
 
     async def async_added_to_hass(self):
         """Registriert Callback bei Datenaktualisierung durch den Koordinator."""
-        self.async_on_remove(
-            self._coordinator.async_add_listener(self.async_write_ha_state)
-        )
+        self.async_on_remove(self._coordinator.async_add_listener(self.async_write_ha_state))
 
-        if (
-            self._depends_on_winter_mode
-        ):  # Nur registrieren, wenn abhängig vom Wintermodus
+        if self._depends_on_winter_mode:  # Nur registrieren, wenn abhängig vom Wintermodus
             self._remove_listener = self.hass.bus.async_listen(
                 WINTER_MODE_CHANGED_EVENT,
                 self._handle_winter_mode_changed,
@@ -234,17 +226,11 @@ class NumberConfigEntity(
             return True
 
         except ClientConnectorError as e:
-            _LOGGER.error(
-                "Verbindung zu MaxxiCharge (%s) fehlgeschlagen: %s", self._ip, e
-            )
+            _LOGGER.error("Verbindung zu MaxxiCharge (%s) fehlgeschlagen: %s", self._ip, e)
         except ClientError as e:
-            _LOGGER.error(
-                "HTTP-Fehler beim Senden von %s = %s: %s", self._rest_key, value, e
-            )
+            _LOGGER.error("HTTP-Fehler beim Senden von %s = %s: %s", self._rest_key, value, e)
         except Exception as e:  # pylint: disable=broad-exception-caught
-            _LOGGER.exception(
-                "Unerwarteter Fehler bei %s = %s: %s", self._rest_key, value, e
-            )
+            _LOGGER.exception("Unerwarteter Fehler bei %s = %s: %s", self._rest_key, value, e)
         return False
 
     @property
@@ -256,19 +242,13 @@ class NumberConfigEntity(
                         falls keine Daten vorhanden sind.
 
         """
-        _LOGGER.debug(
-            "Value: %s", as_float(self._coordinator.data.get(self._value_key))
-        )
+        _LOGGER.debug("Value: %s", as_float(self._coordinator.data.get(self._value_key)))
 
         if self._show_current_value_immediately:
             result = self._attr_native_value
             self._show_current_value_immediately = False
         else:
-            result = (
-                as_float(self._coordinator.data.get(self._value_key))
-                if self._coordinator.data
-                else None
-            )
+            result = as_float(self._coordinator.data.get(self._value_key)) if self._coordinator.data else None
 
         return result
 
@@ -279,9 +259,7 @@ class NumberConfigEntity(
         if self._depends_on_winter_mode:
             value = event.data.get("value")
 
-            _LOGGER.warning(
-                "SummerMinCharge received summer min charge changed event: %s", value
-            )
+            _LOGGER.warning("SummerMinCharge received summer min charge changed event: %s", value)
 
             if value is None:
                 return

@@ -56,9 +56,9 @@ async def test_battery_ampere_sensor_handle_update_valid_data(sensor):
             }
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     assert sensor._attr_native_value == 5.0  # 5000mA / 1000 = 5A
 
 
@@ -66,9 +66,9 @@ async def test_battery_ampere_sensor_handle_update_valid_data(sensor):
 async def test_battery_ampere_sensor_handle_update_no_batteries_info(sensor):
     """Testet Verhalten bei fehlendem batteriesInfo."""
     data = {}
-    
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren
     assert sensor._attr_native_value is None
 
@@ -77,9 +77,9 @@ async def test_battery_ampere_sensor_handle_update_no_batteries_info(sensor):
 async def test_battery_ampere_sensor_handle_update_empty_batteries_info(sensor):
     """Testet Verhalten bei leerem batteriesInfo."""
     data = {"batteriesInfo": []}
-    
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren
     assert sensor._attr_native_value is None
 
@@ -87,17 +87,13 @@ async def test_battery_ampere_sensor_handle_update_empty_batteries_info(sensor):
 @pytest.mark.asyncio
 async def test_battery_ampere_sensor_handle_update_index_out_of_range(sensor):
     """Testet Verhalten bei Index außerhalb des Bereichs."""
-    data = {
-        "batteriesInfo": [
-            {"batteryCurrent": 1000}
-        ]
-    }
-    
+    data = {"batteriesInfo": [{"batteryCurrent": 1000}]}
+
     # Ändere Index auf 1 (außerhalb Bereich)
     sensor._index = 1
-    
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren
     assert sensor._attr_native_value is None
 
@@ -110,9 +106,9 @@ async def test_battery_ampere_sensor_handle_update_missing_battery_current(senso
             {}  # Kein batteryCurrent
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren
     assert sensor._attr_native_value is None
 
@@ -120,14 +116,10 @@ async def test_battery_ampere_sensor_handle_update_missing_battery_current(senso
 @pytest.mark.asyncio
 async def test_battery_ampere_sensor_handle_update_none_battery_current(sensor):
     """Testet Verhalten bei batteryCurrent = None."""
-    data = {
-        "batteriesInfo": [
-            {"batteryCurrent": None}
-        ]
-    }
-    
+    data = {"batteriesInfo": [{"batteryCurrent": None}]}
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren
     assert sensor._attr_native_value is None
 
@@ -135,14 +127,10 @@ async def test_battery_ampere_sensor_handle_update_none_battery_current(sensor):
 @pytest.mark.asyncio
 async def test_battery_ampere_sensor_handle_update_invalid_current_value(sensor):
     """Testet Verhalten bei ungültigem batteryCurrent Wert."""
-    data = {
-        "batteriesInfo": [
-            {"batteryCurrent": "invalid"}
-        ]
-    }
-    
+    data = {"batteriesInfo": [{"batteryCurrent": "invalid"}]}
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren
     assert sensor._attr_native_value is None
 
@@ -155,9 +143,9 @@ async def test_battery_ampere_sensor_handle_update_extreme_current(sensor):
             {"batteryCurrent": 250000}  # 250A (über 200A Grenze)
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren (Plausibilitätsprüfung)
     assert sensor._attr_native_value is None
 
@@ -170,9 +158,9 @@ async def test_battery_ampere_sensor_handle_update_negative_current(sensor):
             {"batteryCurrent": -5000}  # -5A
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     # Sollte aktualisieren (negativer Strom ist gültig)
     assert sensor._attr_native_value == -5.0
 
@@ -180,14 +168,10 @@ async def test_battery_ampere_sensor_handle_update_negative_current(sensor):
 @pytest.mark.asyncio
 async def test_battery_ampere_sensor_handle_update_zero_current(sensor):
     """Testet Verhalten bei 0 Strom."""
-    data = {
-        "batteriesInfo": [
-            {"batteryCurrent": 0}
-        ]
-    }
-    
+    data = {"batteriesInfo": [{"batteryCurrent": 0}]}
+
     await sensor.handle_update(data)
-    
+
     assert sensor._attr_native_value == 0.0
 
 
@@ -203,12 +187,12 @@ async def test_battery_ampere_sensor_different_indices():
     """Testet Sensoren mit unterschiedlichen Indizes."""
     entry = MagicMock()
     entry.entry_id = "test_entry_id"
-    
+
     sensor1 = BatteryAmpereSensor(entry, index=0)
     sensor2 = BatteryAmpereSensor(entry, index=1)
-    
+
     assert sensor1._attr_unique_id == "test_entry_id_battery_ampere_sensor_0"
     assert sensor1._attr_translation_placeholders == {"index": "1"}
-    
+
     assert sensor2._attr_unique_id == "test_entry_id_battery_ampere_sensor_1"
     assert sensor2._attr_translation_placeholders == {"index": "2"}

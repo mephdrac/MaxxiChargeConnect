@@ -58,9 +58,7 @@ class WebhookId(TextEntity):
 
     def set_value(self, value):
         """Setzt einen neuen Webhook-ID Wert."""
-        _LOGGER.info(
-            "WebhookId: Wert geändert von %s zu %s", self._attr_native_value, value
-        )
+        _LOGGER.info("WebhookId: Wert geändert von %s zu %s", self._attr_native_value, value)
         self._attr_native_value = value
 
     @property

@@ -70,9 +70,7 @@ class BatterySoESensor(BaseWebhookSensor):
             soe_raw = battery_data.get("batteryCapacity")
 
             if soe_raw is None:
-                _LOGGER.debug(
-                    "BatterySoESensor[%s]: batteryCapacity fehlt", self._index
-                )
+                _LOGGER.debug("BatterySoESensor[%s]: batteryCapacity fehlt", self._index)
                 return
 
             # Konvertierung zu float
@@ -80,9 +78,7 @@ class BatterySoESensor(BaseWebhookSensor):
 
             # Plausibilitätsprüfung: SoE sollte positiv sein (in Watt-Stunden)
             if soe < 0:
-                _LOGGER.warning(
-                    "BatterySoESensor[%s]: Unplausible SoE: %s Wh", self._index, soe
-                )
+                _LOGGER.warning("BatterySoESensor[%s]: Unplausible SoE: %s Wh", self._index, soe)
                 return
 
             # Obere Grenze für typische Batteriespeicher (max 100 kWh)
@@ -95,15 +91,9 @@ class BatterySoESensor(BaseWebhookSensor):
                 return
 
             self._attr_native_value = soe
-            _LOGGER.debug(
-                "BatterySoESensor[%s]: Aktualisiert auf %s Wh", self._index, soe
-            )
+            _LOGGER.debug("BatterySoESensor[%s]: Aktualisiert auf %s Wh", self._index, soe)
 
         except (IndexError, KeyError) as err:
-            _LOGGER.warning(
-                "BatterySoESensor[%s]: Datenstrukturfehler: %s", self._index, err
-            )
+            _LOGGER.warning("BatterySoESensor[%s]: Datenstrukturfehler: %s", self._index, err)
         except (ValueError, TypeError) as err:
-            _LOGGER.warning(
-                "BatterySoESensor[%s]: Konvertierungsfehler: %s", self._index, err
-            )
+            _LOGGER.warning("BatterySoESensor[%s]: Konvertierungsfehler: %s", self._index, err)

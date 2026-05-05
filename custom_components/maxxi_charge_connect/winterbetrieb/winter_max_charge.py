@@ -42,24 +42,15 @@ class WinterMaxCharge(NumberEntity):
         self._attr_native_max_value = 100
         self._attr_native_step = 1
 
-        self.attr_native_min_value = entry.options.get(
-            CONF_WINTER_MIN_CHARGE,
-            DEFAULT_WINTER_MIN_CHARGE
-        )
+        self.attr_native_min_value = entry.options.get(CONF_WINTER_MIN_CHARGE, DEFAULT_WINTER_MIN_CHARGE)
 
-        self._attr_native_value = entry.options.get(
-            CONF_WINTER_MAX_CHARGE,
-            DEFAULT_WINTER_MAX_CHARGE
-        )
+        self._attr_native_value = entry.options.get(CONF_WINTER_MAX_CHARGE, DEFAULT_WINTER_MAX_CHARGE)
 
         self._remove_listener = None
 
     def _notify_dependents(self, value: float):
         _LOGGER.debug("Feuer WinterMaxCharge changed event mit Wert: %s", value)
-        self.hass.bus.async_fire(
-            EVENT_WINTER_MAX_CHARGE_CHANGED,
-            {"value": value}
-        )
+        self.hass.bus.async_fire(EVENT_WINTER_MAX_CHARGE_CHANGED, {"value": value})
 
     def set_native_value(self, value):
         async def runner():
@@ -73,7 +64,6 @@ class WinterMaxCharge(NumberEntity):
         min_soc_entity, cur_state = await async_get_min_soc_entity(self.hass, self._entry.entry_id)
 
         if min_soc_entity is not None and cur_state is not None and cur_state != value:
-
             changed = await min_soc_entity.set_change_limitation(value, 5)
 
             if changed:
@@ -103,7 +93,9 @@ class WinterMaxCharge(NumberEntity):
 
     @property
     def available(self) -> bool:
-        _LOGGER.debug("WinterMaxCharge available abgefragt: %s", not self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False))
+        _LOGGER.debug(
+            "WinterMaxCharge available abgefragt: %s", not self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False)
+        )
         return self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False)
 
     async def async_added_to_hass(self):

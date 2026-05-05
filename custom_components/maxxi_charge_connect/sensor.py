@@ -125,24 +125,16 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
         HttpScanText(coordinator, "APIRoute", "API - Route", "mdi:link"),
         HttpScanText(coordinator, "LocalServer", "Use Local Server", "mdi:server-off"),
         HttpScanText(coordinator, "Cloudservice", "Cloudservice", "mdi:cloud-outline"),
-        HttpScanText(
-            coordinator, "DC/DC-Algorithmus", "DC/DC algorithm", "mdi:source-branch"
-        ),
+        HttpScanText(coordinator, "DC/DC-Algorithmus", "DC/DC algorithm", "mdi:source-branch"),
         HttpScanText(coordinator, "PowerMeterIp", "Power Meter IP", "mdi:ip"),
         HttpScanText(coordinator, "PowerMeterType", "Power Meter Type", "mdi:chip"),
         HttpScanText(coordinator, "MaximumPower", "Maximum Power", "mdi:flash"),
-        HttpScanText(
-            coordinator, "OfflineOutputPower", "Offline Output Power", "mdi:flash"
-        ),
-        HttpScanText(
-            coordinator, "NumberOfBatteries", "Number of Batteries", "mdi:layers"
-        ),
+        HttpScanText(coordinator, "OfflineOutputPower", "Offline Output Power", "mdi:flash"),
+        HttpScanText(coordinator, "NumberOfBatteries", "Number of Batteries", "mdi:layers"),
         HttpScanText(coordinator, "OutputOffset", "Output Offset", "mdi:flash"),
         HttpScanText(coordinator, "CcuSpeed", "CCU - Speed", "mdi:flash"),
         HttpScanText(coordinator, "Microinverter", "Microinverter", "mdi:current-ac"),
-        HttpScanText(
-            coordinator, "ResponseTolerance", "Response tolerance", "mdi:current-ac"
-        ),
+        HttpScanText(coordinator, "ResponseTolerance", "Response tolerance", "mdi:current-ac"),
         HttpScanText(
             coordinator,
             "MinimumBatteryDischarge",
@@ -190,37 +182,21 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     ccu_energy_today = CcuEnergyToday(hass, entry, ccu_power.entity_id)
     ccu_energy_total = CcuEnergyTotal(hass, entry, ccu_power.entity_id)
 
-    battery_today_energy_charge = BatteryTodayEnergyCharge(
-        hass, entry, battery_power_charge.entity_id
-    )
-    battery_today_energy_discharge = BatteryTodayEnergyDischarge(
-        hass, entry, battery_power_discharge.entity_id
-    )
-    battery_total_energy_charge = BatteryTotalEnergyCharge(
-        hass, entry, battery_power_charge.entity_id
-    )
-    battery_total_energy_discharge = BatteryTotalEnergyDischarge(
-        hass, entry, battery_power_discharge.entity_id
-    )
+    battery_today_energy_charge = BatteryTodayEnergyCharge(hass, entry, battery_power_charge.entity_id)
+    battery_today_energy_discharge = BatteryTodayEnergyDischarge(hass, entry, battery_power_discharge.entity_id)
+    battery_total_energy_charge = BatteryTotalEnergyCharge(hass, entry, battery_power_charge.entity_id)
+    battery_total_energy_discharge = BatteryTotalEnergyDischarge(hass, entry, battery_power_discharge.entity_id)
 
     grid_export_energy_today = GridExportEnergyToday(hass, entry, grid_export.entity_id)
     grid_export_energy_total = GridExportEnergyTotal(hass, entry, grid_export.entity_id)
     grid_import_energy_today = GridImportEnergyToday(hass, entry, grid_import.entity_id)
     grid_import_energy_total = GridImportEnergyTotal(hass, entry, grid_import.entity_id)
 
-    pv_self_consumption_today = PvSelfConsumptionEnergyToday(
-        hass, entry, pv_self_consumption.entity_id
-    )
-    pv_self_consumption_total = PvSelfConsumptionEnergyTotal(
-        hass, entry, pv_self_consumption.entity_id
-    )
+    pv_self_consumption_today = PvSelfConsumptionEnergyToday(hass, entry, pv_self_consumption.entity_id)
+    pv_self_consumption_total = PvSelfConsumptionEnergyTotal(hass, entry, pv_self_consumption.entity_id)
 
-    consumption_energy_today = ConsumptionEnergyToday(
-        hass, entry, power_consumption.entity_id
-    )
-    consumption_energy_total = ConsumptionEnergyTotal(
-        hass, entry, power_consumption.entity_id
-    )
+    consumption_energy_today = ConsumptionEnergyToday(hass, entry, power_consumption.entity_id)
+    consumption_energy_total = ConsumptionEnergyTotal(hass, entry, power_consumption.entity_id)
 
     send_count = SendCount(entry)
 

@@ -62,9 +62,7 @@ class FirmwareVersion(BaseWebhookSensor):
 
             # Maximale Länge prüfen (typisch für Versions-Strings)
             if len(firmware) > 100:
-                _LOGGER.error(
-                    "FirmwareVersion: Versionsstring zu lang: %s", firmware[:50] + "..."
-                )
+                _LOGGER.error("FirmwareVersion: Versionsstring zu lang: %s", firmware[:50] + "...")
                 return
 
             # Prüfen auf offensichtlich ungültige Werte
@@ -74,9 +72,7 @@ class FirmwareVersion(BaseWebhookSensor):
                 return
 
             self._attr_native_value = firmware
-            _LOGGER.debug(
-                "FirmwareVersion: Aktualisiert auf %s", self._attr_native_value
-            )
+            _LOGGER.debug("FirmwareVersion: Aktualisiert auf %s", self._attr_native_value)
 
         except (AttributeError, TypeError, ValueError) as err:
             _LOGGER.error("FirmwareVersion: Fehler bei der Verarbeitung: %s", err)

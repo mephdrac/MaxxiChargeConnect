@@ -8,6 +8,7 @@ Geprüft werden:
 - das Verhalten beim Entfernen aus Home Assistant,
 - und die bereitgestellten Gerätedaten.
 """
+
 import sys
 from pathlib import Path
 from unittest.mock import MagicMock

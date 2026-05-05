@@ -74,13 +74,9 @@ class MaxxiProxyServer:
                         if self._store:
                             await self._store.async_save(self._device_config_cache)
                         return data
-                    _LOGGER.error(
-                        "Cloud returned %s for device %s", resp.status, device_id
-                    )
+                    _LOGGER.error("Cloud returned %s for device %s", resp.status, device_id)
         except ClientConnectorError as e:
-            _LOGGER.error(
-                "DNS/Verbindungsproblem mit Cloud (%s, %s, %s)", device_id, cloud_url, e
-            )
+            _LOGGER.error("DNS/Verbindungsproblem mit Cloud (%s, %s, %s)", device_id, cloud_url, e)
         except TimeoutError:
             _LOGGER.error(
                 "Timeout beim Abholen der Konfigurations aus der Cloud (%s, %s)",
@@ -107,17 +103,11 @@ class MaxxiProxyServer:
         for e in self.hass.config_entries.async_entries(DOMAIN):
             if e.data.get(CONF_DEVICE_ID) == device_id:
                 entry = e
-                enable_forward = e.data.get(
-                    CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
-                )
+                enable_forward = e.data.get(CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD)
                 refresh_cloud = e.data.get(CONF_REFRESH_CONFIG_FROM_CLOUD, False)
                 break
 
-        if (
-            refresh_cloud
-            or enable_forward
-            or device_id not in self._device_config_cache
-        ):
+        if refresh_cloud or enable_forward or device_id not in self._device_config_cache:
             _LOGGER.debug("Konfiguration wird von der Cloud gelesen für %s", device_id)
             config_data = await self.fetch_cloud_config(device_id)
             if not config_data:
@@ -164,13 +154,9 @@ class MaxxiProxyServer:
 
             for cur_entry in self.hass.config_entries.async_entries(DOMAIN):
                 if cur_entry.data.get(CONF_DEVICE_ID) == device_id:
-                    enable_forward = cur_entry.data.get(
-                        CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
-                    )
+                    enable_forward = cur_entry.data.get(CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD)
 
-                    enable_cloud_data = cur_entry.data.get(
-                        CONF_ENABLE_CLOUD_DATA, False
-                    )
+                    enable_cloud_data = cur_entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
 
                     _LOGGER.warning(
                         "Forward-Check für Device %s: cur_entry=%s, enable_forward=%s, enable_cloud_data=%s",
@@ -184,12 +170,10 @@ class MaxxiProxyServer:
 
             if not found_entry and device_id != ERRORS:
                 known_devices = [
-                    entry.data.get(CONF_DEVICE_ID)
-                    for entry in self.hass.config_entries.async_entries(DOMAIN)
+                    entry.data.get(CONF_DEVICE_ID) for entry in self.hass.config_entries.async_entries(DOMAIN)
                 ]
                 _LOGGER.error(
-                    "Eingehender Webhook mit unbekannter deviceId: %s. "
-                    "Bekannte IDs: %s",
+                    "Eingehender Webhook mit unbekannter deviceId: %s. Bekannte IDs: %s",
                     device_id,
                     ", ".join(known_devices),
                 )
@@ -204,13 +188,11 @@ class MaxxiProxyServer:
                     translation_key="unknown_device",
                     translation_placeholders={
                         "device_id": device_id,
-                        "known_devices": ", ".join(known_devices) or "keine"
+                        "known_devices": ", ".join(known_devices) or "keine",
                     },
                 )
 
-            forwarded = await self._forward_to_cloud(
-                device_id, enable_cloud_data, data, enable_forward
-            )
+            forwarded = await self._forward_to_cloud(device_id, enable_cloud_data, data, enable_forward)
             await self._on_reverse_proxy_message(data, forwarded)
             return web.Response(status=200, text="OK")
 
@@ -218,9 +200,7 @@ class MaxxiProxyServer:
             _LOGGER.error("Error (%s)", e)
             return web.Response(status=400, text="An internal error has occurred")
 
-    async def _forward_to_cloud(
-        self, device_id, enable_cloud_data: bool, data, enable_forward: bool
-    ) -> bool:
+    async def _forward_to_cloud(self, device_id, enable_cloud_data: bool, data, enable_forward: bool) -> bool:
         forwarded = False
 
         if enable_forward:
@@ -308,9 +288,7 @@ class MaxxiProxyServer:
 
         _LOGGER.info("Maxxi-Proxy-Server gestoppt")
 
-    async def resolve_external(
-        self, domain: str, nameservers: list[str] | None = None
-    ) -> str:
+    async def resolve_external(self, domain: str, nameservers: list[str] | None = None) -> str:
         """Ermittelt die IP der Cloud über einen externen Nameserver."""
 
         if nameservers is None:
@@ -364,27 +342,30 @@ class MaxxiProxyServer:
 
         if not entry:
             _LOGGER.warning(
-                "Webhook %s ohne zugeordneten Entry – fallback auf deviceId-Suche (%s).",
-                webhook_id, payload_device_id
+                "Webhook %s ohne zugeordneten Entry – fallback auf deviceId-Suche (%s).", webhook_id, payload_device_id
             )
             entry = next(
-                (e for e in self.hass.config_entries.async_entries(DOMAIN)
-                 if e.data.get(CONF_DEVICE_ID) == payload_device_id),
+                (
+                    e
+                    for e in self.hass.config_entries.async_entries(DOMAIN)
+                    if e.data.get(CONF_DEVICE_ID) == payload_device_id
+                ),
                 None,
             )
 
         # Wenn wir jetzt immer noch keinen Entry haben → Issue "unknown_device"
         if not entry and payload_device_id != ERRORS:
-            known_devices = [
-                e.data.get(CONF_DEVICE_ID)
-                for e in self.hass.config_entries.async_entries(DOMAIN)
-            ]
+            known_devices = [e.data.get(CONF_DEVICE_ID) for e in self.hass.config_entries.async_entries(DOMAIN)]
             _LOGGER.error(
                 "Unbekannte deviceId vom Webhook %s: %s. Bekannte IDs: %s",
-                webhook_id, payload_device_id, ", ".join(filter(None, known_devices)) or "keine"
+                webhook_id,
+                payload_device_id,
+                ", ".join(filter(None, known_devices)) or "keine",
             )
             ir.async_create_issue(
-                self.hass, DOMAIN, f"unknown_device_{payload_device_id}",
+                self.hass,
+                DOMAIN,
+                f"unknown_device_{payload_device_id}",
                 is_fixable=False,
                 severity=ir.IssueSeverity.CRITICAL,
                 translation_key="unknown_device",
@@ -401,7 +382,10 @@ class MaxxiProxyServer:
         if payload_device_id != ERRORS and payload_device_id and cfg_device_id and payload_device_id != cfg_device_id:
             _LOGGER.error(
                 "Geräte-Mismatch für Webhook %s: payload=%s, config=%s (entry_id=%s)",
-                webhook_id, payload_device_id, cfg_device_id, entry.entry_id
+                webhook_id,
+                payload_device_id,
+                cfg_device_id,
+                entry.entry_id,
             )
 
             ir.async_create_issue(
@@ -416,7 +400,7 @@ class MaxxiProxyServer:
                     "webhook_id": webhook_id or "unbekannt",
                     "payload_device_id": payload_device_id,
                     "config_device_id": cfg_device_id,
-                }
+                },
             )
             return  # bewusst nicht forwarden
 
@@ -425,14 +409,15 @@ class MaxxiProxyServer:
             ir.async_delete_issue(self.hass, DOMAIN, f"device_mismatch_{webhook_id}")
 
         # Jetzt flags **sicher** aus dem richtigen Entry
-        enable_forward = entry.data.get(
-            CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
-        )
+        enable_forward = entry.data.get(CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD)
         enable_cloud_data = entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
 
         _LOGGER.debug(
             "Forward-Check OK (entry_id=%s, deviceId=%s, enable_forward=%s, enable_cloud_data=%s)",
-            entry.entry_id, cfg_device_id, enable_forward, enable_cloud_data
+            entry.entry_id,
+            cfg_device_id,
+            enable_forward,
+            enable_cloud_data,
         )
 
         forwarded = await self._forward_to_cloud(cfg_device_id, enable_cloud_data, data, enable_forward)

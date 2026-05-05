@@ -42,7 +42,7 @@ def sensor_list():
 @pytest.fixture
 def coordinator(hass, entry, sensor_list):
     """Create MaxxiDataUpdateCoordinator instance for testing."""
-    with patch('homeassistant.helpers.frame.report_usage'):
+    with patch("homeassistant.helpers.frame.report_usage"):
         return MaxxiDataUpdateCoordinator(hass, entry, sensor_list)
 
 
@@ -71,18 +71,18 @@ def test_initialization(coordinator):
 
 def test_extract_data_success(coordinator):
     """Test successful data extraction from HTML."""
-    html = '<div><b>Messgerät IP:</b>192.168.1.100</div>'
+    html = "<div><b>Messgerät IP:</b>192.168.1.100</div>"
     soup = BeautifulSoup(html, "html.parser")
-    
+
     result = coordinator.exract_data(soup, "Messgerät IP:")
     assert result == "192.168.1.100"
 
 
 def test_extract_data_not_found(coordinator):
     """Test extract_data when label is not found."""
-    html = '<div><b>Other Label:</b>Some Value</div>'
+    html = "<div><b>Other Label:</b>Some Value</div>"
     soup = BeautifulSoup(html, "html.parser")
-    
+
     with pytest.raises(Exception):  # Should raise UpdateFailed
         coordinator.exract_data(soup, "Messgerät IP:")
 
@@ -99,17 +99,17 @@ def test_extract_data_not_found(coordinator):
 #         </body>
 #     </html>
 #     """
-    
+
 #     mock_response = MagicMock()
 #     mock_response.status = 200
 #     mock_response.text = AsyncMock(return_value=html)
-    
+
 #     with patch("aiohttp.ClientSession.get") as mock_get:
 #         mock_get.return_value.__aenter__.return_value = mock_response
 #         with patch("async_timeout.timeout"):
 #             with patch.object(coordinator, "fire_status_event") as mock_fire:
 #                 result = await coordinator._async_update_data()
-                
+
 #                 assert result["PowerMeterIp"] == "192.168.1.100"
 #                 assert result["MaximumPower"] == "8000 W"
 #                 assert result["SomeValue"] == "123"
@@ -123,7 +123,7 @@ def test_extract_data_not_found(coordinator):
 #         mock_get.side_effect = aiohttp.ClientError("Connection failed")
 #         with patch.object(coordinator, "fire_status_event") as mock_fire:
 #             result = await coordinator._async_update_data()
-            
+
 #             assert result == {}
 #             mock_fire.assert_called_once()
 
@@ -135,7 +135,7 @@ def test_extract_data_not_found(coordinator):
 #         mock_get.side_effect = TimeoutError("Request timeout")
 #         with patch.object(coordinator, "fire_status_event") as mock_fire:
 #             result = await coordinator._async_update_data()
-            
+
 #             assert result == {}
 #             mock_fire.assert_called_once()
 
@@ -145,10 +145,10 @@ def test_extract_data_not_found(coordinator):
 #     """Test _async_update_data when no resource is configured."""
 #     entry.data = {"device_id": "test_device", "ip_address": ""}
 #     coordinator = MaxxiDataUpdateCoordinator(hass, entry, sensor_list)
-    
+
 #     with patch.object(coordinator, "fire_status_event") as mock_fire:
 #          result = await coordinator._async_update_data()
-        
+
 #         assert result == {}
 #         mock_fire.assert_called_once()
 
@@ -163,11 +163,11 @@ def test_extract_data_not_found(coordinator):
 #         </body>
 #     </html>
 #     """
-    
+
 #     mock_response = MagicMock()
 #     mock_response.status = 200
 #     mock_response.text = AsyncMock(return_value=html)
-    
+
 #     with patch("aiohttp.ClientSession.get") as mock_get:
 #         mock_get.return_value.__aenter__.return_value = mock_response
 #         with patch("async_timeout.timeout"):
@@ -185,21 +185,21 @@ def test_extract_data_not_found(coordinator):
 #         </body>
 #     </html>
 #     """
-    
-    # mock_response = MagicMock()
-    # mock_response.status = 200
-    # mock_response.text = AsyncMock(return_value=html)
-    
-    # with patch("aiohttp.ClientSession.get") as mock_get:
-    #     mock_get.return_value.__aenter__.return_value = mock_response
-    #     with patch("async_timeout.timeout"):
-    #         with patch.object(coordinator, "fire_status_event") as mock_fire:
-    #             result = await coordinator._async_update_data()
-                
-    #             assert result["PowerMeterIp"] == "192.168.1.100"
-    #             assert result["MaximumPower"] == "Nein"  # NEIN command
-    #             assert result["SomeValue"] == "nicht gesetzt"  # optional command
-    #             mock_fire.assert_called_once()
+
+# mock_response = MagicMock()
+# mock_response.status = 200
+# mock_response.text = AsyncMock(return_value=html)
+
+# with patch("aiohttp.ClientSession.get") as mock_get:
+#     mock_get.return_value.__aenter__.return_value = mock_response
+#     with patch("async_timeout.timeout"):
+#         with patch.object(coordinator, "fire_status_event") as mock_fire:
+#             result = await coordinator._async_update_data()
+
+#             assert result["PowerMeterIp"] == "192.168.1.100"
+#             assert result["MaximumPower"] == "Nein"  # NEIN command
+#             assert result["SomeValue"] == "nicht gesetzt"  # optional command
+#             mock_fire.assert_called_once()
 
 
 # @pytest.mark.asyncio
@@ -212,17 +212,17 @@ def test_extract_data_not_found(coordinator):
 #         </body>
 #     </html>
 #     """
-    
+
 #     mock_response = MagicMock()
 #     mock_response.status = 200
 #     mock_response.text = AsyncMock(return_value=html)
-    
+
 #     with patch("aiohttp.ClientSession.get") as mock_get:
 #         mock_get.return_value.__aenter__.return_value = mock_response
 #         with patch("async_timeout.timeout"):
 #             with patch.object(coordinator, "fire_status_event") as mock_fire:
 #                 result = await coordinator._async_update_data()
-                
+
 #                 assert result["PowerMeterIp"] == "192.168.1.100"
 #                 assert result["MaximumPower"] == "Nein"  # NEIN command
 #                 assert result["SomeValue"] == "nicht gesetzt"  # optional command

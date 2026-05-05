@@ -75,6 +75,4 @@ async def test_reset_energy_daily_resets_last_reset_and_writes_state(caplog):
     sensor.async_write_ha_state.assert_called_once()
     assert sensor._state == 0.0  # pylint: disable=protected-access
     assert sensor.native_value == 0.0
-    assert any("Resetting daily energy" in r.message for r in caplog.records), (
-        "Reset-Log nicht gefunden"
-    )
+    assert any("Resetting daily energy" in r.message for r in caplog.records), "Reset-Log nicht gefunden"

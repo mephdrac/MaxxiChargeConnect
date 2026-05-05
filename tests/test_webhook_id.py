@@ -1,4 +1,4 @@
-"""" Tests für die WebhookId Entity."""
+""" " Tests für die WebhookId Entity."""
 
 from unittest.mock import MagicMock
 
@@ -17,9 +17,7 @@ async def test_webhook_id__init():
     dummy_config_entry = MagicMock()
     dummy_config_entry.entry_id = "1234abcd"
     dummy_config_entry.title = "Test Entry"
-    dummy_config_entry.data = {
-        CONF_WEBHOOK_ID: "Webhook_ID"
-    }
+    dummy_config_entry.data = {CONF_WEBHOOK_ID: "Webhook_ID"}
     sensor = WebhookId(dummy_config_entry)
 
     # Grundlegende Attribute prüfen
@@ -34,14 +32,14 @@ async def test_webhook_id__init():
 @pytest.mark.asyncio
 async def test_webhook_id__missing_webhook_id():
     """Testet Verhalten bei fehlendem CONF_WEBHOOK_ID."""
-    
+
     dummy_config_entry = MagicMock()
     dummy_config_entry.entry_id = "1234abcd"
     dummy_config_entry.title = "Test Entry"
     dummy_config_entry.data = {}  # Kein webhook_id
-    
+
     sensor = WebhookId(dummy_config_entry)
-    
+
     # Sollte "unbekannt" als Fallback verwenden
     assert sensor._attr_native_value == "unbekannt"  # pylint: disable=protected-access
 
@@ -49,16 +47,14 @@ async def test_webhook_id__missing_webhook_id():
 @pytest.mark.asyncio
 async def test_webhook_id__empty_webhook_id():
     """Testet Verhalten bei leerem CONF_WEBHOOK_ID."""
-    
+
     dummy_config_entry = MagicMock()
     dummy_config_entry.entry_id = "1234abcd"
     dummy_config_entry.title = "Test Entry"
-    dummy_config_entry.data = {
-        CONF_WEBHOOK_ID: ""
-    }
-    
+    dummy_config_entry.data = {CONF_WEBHOOK_ID: ""}
+
     sensor = WebhookId(dummy_config_entry)
-    
+
     # Sollte "leer" als Fallback verwenden
     assert sensor._attr_native_value == "leer"  # pylint: disable=protected-access
 

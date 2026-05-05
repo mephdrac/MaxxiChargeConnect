@@ -36,7 +36,9 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-async def fire_status_event(hass: HomeAssistant, json_data: dict, forwarded: bool, event_name: str = PROXY_STATUS_EVENTNAME):
+async def fire_status_event(
+    hass: HomeAssistant, json_data: dict, forwarded: bool, event_name: str = PROXY_STATUS_EVENTNAME
+):
     """Feuert ein Status-Event zum Anzeigen des Fehlers in der UI."""
 
     if not isinstance(json_data, dict):
@@ -58,9 +60,7 @@ async def fire_status_event(hass: HomeAssistant, json_data: dict, forwarded: boo
     )
 
 
-def validate_numeric_value(
-    value: float, value_name: str, min_val: float, max_val: float
-) -> bool:
+def validate_numeric_value(value: float, value_name: str, min_val: float, max_val: float) -> bool:
     """Allgemeine Validierung für numerische Werte.
 
     Args:
@@ -79,9 +79,7 @@ def validate_numeric_value(
     if min_val <= value <= max_val:
         return True
 
-    _LOGGER.error(
-        "%s-Wert(%s) ist nicht plausibel und wird verworfen", value_name, value
-    )
+    _LOGGER.error("%s-Wert(%s) ist nicht plausibel und wird verworfen", value_name, value)
     return False
 
 
@@ -142,9 +140,7 @@ def is_power_total_ok(power_total: float, batterien: list) -> bool:
 
     anzahl_batterien = len(batterien)
 
-    if (0 < anzahl_batterien <= 16) and (
-        0 <= power_total <= (60 * 138 * anzahl_batterien)
-    ):
+    if (0 < anzahl_batterien <= 16) and (0 <= power_total <= (60 * 138 * anzahl_batterien)):
         return True
 
     _LOGGER.error(

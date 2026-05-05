@@ -69,9 +69,7 @@ async def test_pv_power_add_and_handle_update1(sensor):  # pylint: disable=redef
     Erwartet, dass der Sensorwert korrekt auf die empfangene Leistung gesetzt wird.
     """
     with (
-        patch(
-            "custom_components.maxxi_charge_connect.devices.pv_power.is_power_total_ok"
-        ) as mock_is_power_total_ok,
+        patch("custom_components.maxxi_charge_connect.devices.pv_power.is_power_total_ok") as mock_is_power_total_ok,
     ):
         mock_is_power_total_ok.return_value = True
 
@@ -86,9 +84,7 @@ async def test_pv_power_add_and_handle_update2(sensor):  # pylint: disable=redef
     Erwartet, dass der Sensorwert in diesem Fall nicht gesetzt wird (None).
     """
     with (
-        patch(
-            "custom_components.maxxi_charge_connect.devices.pv_power.is_power_total_ok"
-        ) as mock_is_power_total_ok,
+        patch("custom_components.maxxi_charge_connect.devices.pv_power.is_power_total_ok") as mock_is_power_total_ok,
     ):
         mock_is_power_total_ok.return_value = False
 
@@ -124,9 +120,7 @@ async def test_pv_power_invalid_string(sensor):  # pylint: disable=redefined-out
 async def test_pv_power_explicit_zero(sensor):  # pylint: disable=redefined-outer-name
     """Testet Verhalten bei explizitem 0-Wert."""
     with (
-        patch(
-            "custom_components.maxxi_charge_connect.devices.pv_power.is_power_total_ok"
-        ) as mock_is_power_total_ok,
+        patch("custom_components.maxxi_charge_connect.devices.pv_power.is_power_total_ok") as mock_is_power_total_ok,
     ):
         mock_is_power_total_ok.return_value = True
         await sensor.handle_update({"PV_power_total": 0})

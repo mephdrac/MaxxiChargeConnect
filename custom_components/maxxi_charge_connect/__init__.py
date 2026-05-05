@@ -54,9 +54,7 @@ async def check_device_id_issue(hass):
     for entry in hass.config_entries.async_entries(DOMAIN):
         device_id = entry.data.get(CONF_DEVICE_ID)
         if not device_id:
-            _LOGGER.error(
-                "Device-ID fehlt für Entry %s (%s)", entry.entry_id, entry.title
-            )
+            _LOGGER.error("Device-ID fehlt für Entry %s (%s)", entry.entry_id, entry.title)
             async_create_issue(
                 hass,
                 DOMAIN,
@@ -109,9 +107,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         DEFAULT_WINTER_MODE,
     )
 
-    summer_min_discharge = entry.options.get(
-        CONF_SUMMER_MIN_CHARGE, DEFAULT_SUMMER_MIN_CHARGE
-    )
+    summer_min_discharge = entry.options.get(CONF_SUMMER_MIN_CHARGE, DEFAULT_SUMMER_MIN_CHARGE)
 
     hass.data[DOMAIN][CONF_WINTER_MODE] = winter_mode
     hass.data[DOMAIN][CONF_SUMMER_MIN_CHARGE] = summer_min_discharge
@@ -139,15 +135,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         mappings = call.data.get("mappings", [])
 
         try:
-            if not isinstance(mappings, list) or not all(
-                isinstance(item, dict) for item in mappings
-            ):
+            if not isinstance(mappings, list) or not all(isinstance(item, dict) for item in mappings):
                 raise ValueError("Mappings must be a list of dictionaries.")
             for item in mappings:
                 if "old_sensor" not in item or "new_sensor" not in item:
-                    raise ValueError(
-                        "Each mapping must contain 'old_sensor' and 'new_sensor'."
-                    )
+                    raise ValueError("Each mapping must contain 'old_sensor' and 'new_sensor'.")
         except ValueError as e:
             _LOGGER.error("Invalid mappings provided for migration: %s", e)
             return
@@ -157,9 +149,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error("Fehler bei der Migration: %s", e)
 
-    hass.services.async_register(
-        DOMAIN, "migration_von_yaml_konfiguration", handle_trigger_migration
-    )
+    hass.services.async_register(DOMAIN, "migration_von_yaml_konfiguration", handle_trigger_migration)
 
     # Migration-Hinweis
     notify_migration = entry.data.get(NOTIFY_MIGRATION, False)
@@ -174,15 +164,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         task = hass.async_create_task(sub_notify_migration())
         task.add_done_callback(
-            lambda t: _LOGGER.error("Notify-Migration-Task beendet: %s", t.exception())
-            if t.exception()
-            else None
+            lambda t: _LOGGER.error("Notify-Migration-Task beendet: %s", t.exception()) if t.exception() else None
         )
 
     # --- GLOBALEN PROXY starten ---
-    proxy_enabled = entry.data.get(
-        CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_ENABLE_LOCAL_CLOUD_PROXY
-    )
+    proxy_enabled = entry.data.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_ENABLE_LOCAL_CLOUD_PROXY)
     if proxy_enabled:
         if hass.data[DOMAIN]["proxy"] is None:
             _LOGGER.info("Starte globalen Proxy-Server (Port 3001)")
@@ -198,9 +184,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
             task = hass.loop.create_task(_start_proxy())
             task.add_done_callback(
-                lambda t: _LOGGER.error("Proxy-Task beendet: %s", t.exception())
-                if t.exception()
-                else None
+                lambda t: _LOGGER.error("Proxy-Task beendet: %s", t.exception()) if t.exception() else None
             )
 
         else:
@@ -231,10 +215,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     unload_ok = all(
         await asyncio.gather(
-            *[
-                hass.config_entries.async_forward_entry_unload(entry, platform)
-                for platform in (PLATFORMS)
-            ]
+            *[hass.config_entries.async_forward_entry_unload(entry, platform) for platform in (PLATFORMS)]
         )
     )
 
@@ -276,9 +257,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             _LOGGER.info("Migration MaxxiChargeConnect v1 → v2 gestartet")
             new_data = {**config_entry.data}
             version = 2
-            hass.config_entries.async_update_entry(
-                config_entry, data=new_data, version=version
-            )
+            hass.config_entries.async_update_entry(config_entry, data=new_data, version=version)
         except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error("Fehler beim Migrieren der Konfiguration: %s", e)
             return False
@@ -292,10 +271,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             f"{config_entry.entry_id}_pv_self_consumption_energy_today",
         ]
         for entity in list(entity_registry.entities.values()):
-            if (
-                entity.config_entry_id == config_entry.entry_id
-                and entity.unique_id in unique_ids_to_remove
-            ):
+            if entity.config_entry_id == config_entry.entry_id and entity.unique_id in unique_ids_to_remove:
                 _LOGGER.info("Entferne veraltete Entität: %s", entity.entity_id)
                 entity_registry.async_remove(entity.entity_id)
         version = 3
@@ -326,17 +302,11 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             for old_key, new_key in keys:
                 old_unique_id = f"{config_entry.entry_id}_{old_key}"
                 new_unique_id = f"{config_entry.entry_id}_{new_key}"
-                entity_id = entity_registry.async_get_entity_id(
-                    "sensor", "maxxi_charge_connect", old_unique_id
-                )
+                entity_id = entity_registry.async_get_entity_id("sensor", "maxxi_charge_connect", old_unique_id)
                 if entity_id:
-                    entity_registry.async_update_entity(
-                        entity_id, new_unique_id=new_unique_id
-                    )
+                    entity_registry.async_update_entity(entity_id, new_unique_id=new_unique_id)
             minor_version = 1
-            hass.config_entries.async_update_entry(
-                config_entry, version=version, minor_version=minor_version
-            )
+            hass.config_entries.async_update_entry(config_entry, version=version, minor_version=minor_version)
         except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error("Fehler beim Migrieren der Konfiguration: %s", e)
             return False
@@ -346,9 +316,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         try:
             new_data = dict(config_entry.data)
             if CONF_DEVICE_ID not in new_data or not new_data[CONF_DEVICE_ID]:
-                _LOGGER.warning(
-                    "Device ID fehlt, setze leere Device ID und markiere zur Nachbearbeitung"
-                )
+                _LOGGER.warning("Device ID fehlt, setze leere Device ID und markiere zur Nachbearbeitung")
                 new_data[CONF_DEVICE_ID] = ""
                 new_data[CONF_NEEDS_DEVICE_ID] = True
             minor_version = 2
@@ -416,8 +384,6 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             _LOGGER.error("Fehler beim Migrieren der Konfiguration: %s", e)
             return False
 
-    _LOGGER.info(
-        "MaxxiChargeConnect - config v%s.%s installiert", version, minor_version
-    )
+    _LOGGER.info("MaxxiChargeConnect - config v%s.%s installiert", version, minor_version)
     await check_device_id_issue(hass)
     return version == 3 and minor_version == 4

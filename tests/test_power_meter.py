@@ -71,9 +71,7 @@ async def test_power_meter_add_and_handle_update1(sensor):  # pylint: disable=re
     ob dieser gesetzt wird.
     """
     with (
-        patch(
-            "custom_components.maxxi_charge_connect.devices.power_meter.is_pr_ok"
-        ) as mock_is_pr_ok,
+        patch("custom_components.maxxi_charge_connect.devices.power_meter.is_pr_ok") as mock_is_pr_ok,
     ):
         mock_is_pr_ok.return_value = True
         await sensor.handle_update({"Pr": 234.675})  # pylint: disable=protected-access
@@ -87,9 +85,7 @@ async def test_power_meter_add_and_handle_update2(sensor):  # pylint: disable=re
     Erwartet, dass der Sensorwert nicht gesetzt wird.
     """
     with (
-        patch(
-            "custom_components.maxxi_charge_connect.devices.power_meter.is_pr_ok"
-        ) as mock_is_pr_ok,
+        patch("custom_components.maxxi_charge_connect.devices.power_meter.is_pr_ok") as mock_is_pr_ok,
     ):
         mock_is_pr_ok.return_value = False
 
@@ -98,7 +94,7 @@ async def test_power_meter_add_and_handle_update2(sensor):  # pylint: disable=re
 
 
 @pytest.mark.asyncio
-async def test_power_meter_missing_pr_key(sensor):   # pylint: disable=redefined-outer-name
+async def test_power_meter_missing_pr_key(sensor):  # pylint: disable=redefined-outer-name
     """Testet Verhalten, wenn Pr-Schlüssel komplett fehlt."""
     sensor._attr_native_value = 100.0  # Startwert setzen
     await sensor.handle_update({})
@@ -135,4 +131,3 @@ def test_device_info(sensor):  # pylint: disable=redefined-outer-name
     assert info["name"] == "Maxxi Entry"
     assert info["manufacturer"] == "mephdrac"
     assert info["model"] == "CCU - Maxxicharge"
-

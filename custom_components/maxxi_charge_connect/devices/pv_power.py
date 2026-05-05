@@ -63,9 +63,7 @@ class PvPower(BaseWebhookSensor):
         try:
             pv_power = float(pv_power_raw)
         except (ValueError, TypeError) as err:
-            _LOGGER.warning(
-                "PvPower: Invalid PV_power_total value: %s (%s)", pv_power_raw, err
-            )
+            _LOGGER.warning("PvPower: Invalid PV_power_total value: %s (%s)", pv_power_raw, err)
             return
 
         if is_power_total_ok(pv_power, batteries):

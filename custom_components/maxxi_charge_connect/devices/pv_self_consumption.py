@@ -58,9 +58,7 @@ class PvSelfConsumption(BaseWebhookSensor):
         batteries = data.get("batteriesInfo", [])
 
         if not isinstance(batteries, list):
-            _LOGGER.warning(
-                "PvSelfConsumption: Invalid batteriesInfo type: %s", type(batteries)
-            )
+            _LOGGER.warning("PvSelfConsumption: Invalid batteriesInfo type: %s", type(batteries))
             batteries = []
 
         if pv_power_raw is None or pr_raw is None:

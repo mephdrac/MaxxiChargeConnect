@@ -50,7 +50,7 @@ async def test_send_count_initialization(sensor):
 async def test_send_count_first_value(sensor):
     """Testet das erste empfangene sendCount."""
     await sensor.handle_update({"sendCount": 100})
-    
+
     assert sensor.native_value == 100
     assert sensor._last_sendcount == 100  # pylint: disable=protected-access
     assert sensor._missing_packets == 0  # pylint: disable=protected-access
@@ -62,10 +62,10 @@ async def test_send_count_normal_increment(sensor):
     """Testet normales Inkrement (keine Lücke)."""
     # Erster Wert
     await sensor.handle_update({"sendCount": 100})
-    
+
     # Normaler Zähler
     await sensor.handle_update({"sendCount": 101})
-    
+
     assert sensor.native_value == 101
     assert sensor._missing_packets == 0  # pylint: disable=protected-access
     assert sensor._resets == 0  # pylint: disable=protected-access
@@ -77,10 +77,10 @@ async def test_send_count_gap_detection(sensor):
     """Testet Lückenerkennung bei Sprung > 1."""
     # Erster Wert
     await sensor.handle_update({"sendCount": 100})
-    
+
     # Lücke von 3 Telegrammen
     await sensor.handle_update({"sendCount": 104})
-    
+
     assert sensor.native_value == 104
     assert sensor._missing_packets == 3  # pylint: disable=protected-access (104 - 100 - 1)
     assert sensor._resets == 0  # pylint: disable=protected-access
@@ -92,10 +92,10 @@ async def test_send_count_reset_detection(sensor):
     """Testet Reset-Erkennung bei delta <= 0."""
     # Erster Wert
     await sensor.handle_update({"sendCount": 100})
-    
+
     # Reset (Zähler beginnt von vorne)
     await sensor.handle_update({"sendCount": 5})
-    
+
     assert sensor.native_value == 5
     assert sensor._missing_packets == 0  # pylint: disable=protected-access
     assert sensor._resets == 1  # pylint: disable=protected-access
@@ -108,7 +108,7 @@ async def test_send_count_multiple_gaps(sensor):
     await sensor.handle_update({"sendCount": 100})
     await sensor.handle_update({"sendCount": 102})  # Lücke von 1
     await sensor.handle_update({"sendCount": 105})  # Lücke von 2
-    
+
     assert sensor._missing_packets == 3  # pylint: disable=protected-access (1 + 2)
     assert sensor._resets == 0  # pylint: disable=protected-access
 
@@ -117,9 +117,9 @@ async def test_send_count_multiple_gaps(sensor):
 async def test_send_count_multiple_resets(sensor):
     """Testet mehrere Resets hintereinander."""
     await sensor.handle_update({"sendCount": 100})
-    await sensor.handle_update({"sendCount": 10})   # Reset 1
-    await sensor.handle_update({"sendCount": 5})    # Reset 2
-    
+    await sensor.handle_update({"sendCount": 10})  # Reset 1
+    await sensor.handle_update({"sendCount": 5})  # Reset 2
+
     assert sensor._resets == 2  # pylint: disable=protected-access
 
 
@@ -127,7 +127,7 @@ async def test_send_count_multiple_resets(sensor):
 async def test_send_count_missing_field(sensor):
     """Testet Verhalten bei fehlendem sendCount-Feld."""
     await sensor.handle_update({})
-    
+
     # Sollte nichts ändern
     assert sensor.native_value is None
     assert sensor._last_sendcount is None  # pylint: disable=protected-access
@@ -137,7 +137,7 @@ async def test_send_count_missing_field(sensor):
 async def test_send_count_none_value(sensor):
     """Testet Verhalten bei sendCount = None."""
     await sensor.handle_update({"sendCount": None})
-    
+
     # Sollte nichts ändern
     assert sensor.native_value is None
     assert sensor._last_sendcount is None  # pylint: disable=protected-access
@@ -148,7 +148,7 @@ async def test_send_count_string_value(sensor):
     """Testet Konvertierung von String zu int."""
     await sensor.handle_update({"sendCount": "100"})
     await sensor.handle_update({"sendCount": "102"})
-    
+
     assert sensor.native_value == 102
     assert sensor._missing_packets == 1  # pylint: disable=protected-access
 
@@ -159,9 +159,9 @@ def test_send_count_extra_attributes(sensor):
     sensor._missing_packets = 5
     sensor._last_delta = 3
     sensor._resets = 2
-    
+
     attrs = sensor.extra_state_attributes
-    
+
     assert attrs["missing_packets"] == 5
     assert attrs["last_delta"] == 3
     assert attrs["resets"] == 2

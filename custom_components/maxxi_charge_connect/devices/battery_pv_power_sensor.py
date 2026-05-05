@@ -101,15 +101,9 @@ class BatteryPVPowerSensor(BaseWebhookSensor):
                 return
 
             self._attr_native_value = pv_power
-            _LOGGER.debug(
-                "BatteryPVPowerSensor[%s]: Aktualisiert auf %s W", self._index, pv_power
-            )
+            _LOGGER.debug("BatteryPVPowerSensor[%s]: Aktualisiert auf %s W", self._index, pv_power)
 
         except (IndexError, KeyError) as err:
-            _LOGGER.warning(
-                "BatteryPVPowerSensor[%s]: Datenstrukturfehler: %s", self._index, err
-            )
+            _LOGGER.warning("BatteryPVPowerSensor[%s]: Datenstrukturfehler: %s", self._index, err)
         except (ValueError, TypeError) as err:
-            _LOGGER.warning(
-                "BatteryPVPowerSensor[%s]: Konvertierungsfehler: %s", self._index, err
-            )
+            _LOGGER.warning("BatteryPVPowerSensor[%s]: Konvertierungsfehler: %s", self._index, err)

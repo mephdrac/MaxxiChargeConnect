@@ -50,30 +50,22 @@ class StatusSensor(BaseWebhookSensor):
         await super().async_added_to_hass()
 
         # StatusSensor hört IMMER auf HTTP-Scan-Events
-        self.hass.bus.async_listen(
-            HTTP_SCAN_EVENTNAME, self.async_update_from_event
-        )
+        self.hass.bus.async_listen(HTTP_SCAN_EVENTNAME, self.async_update_from_event)
 
         # Zusätzlich je nach Konfiguration auf Webhook/Cloud-Events hören
         if self._enable_cloud_data:
             # Cloud-Modus: Auf PROXY_STATUS_EVENTNAME hören
-            self.hass.bus.async_listen(
-                PROXY_STATUS_EVENTNAME, self.async_update_from_event
-            )
+            self.hass.bus.async_listen(PROXY_STATUS_EVENTNAME, self.async_update_from_event)
         else:
             # Webhook-Modus: Auf WEBHOOK_SIGNAL_UPDATE hören (Dispatcher)
             entry_data = self.hass.data[DOMAIN][self._entry.entry_id]
             update_signal = entry_data[WEBHOOK_SIGNAL_UPDATE]
-            self._unsub_update = async_dispatcher_connect(
-                self.hass, update_signal, self._wrapper_update
-            )
+            self._unsub_update = async_dispatcher_connect(self.hass, update_signal, self._wrapper_update)
 
         # Stale-Signal abonnieren
         entry_data = self.hass.data[DOMAIN][self._entry.entry_id]
         stale_signal = entry_data[WEBHOOK_SIGNAL_STATE]
-        self._unsub_stale = async_dispatcher_connect(
-            self.hass, stale_signal, self._wrapper_stale
-        )
+        self._unsub_stale = async_dispatcher_connect(self.hass, stale_signal, self._wrapper_stale)
 
         # letzten Zustand wiederherstellen
         old_state = await self.async_get_last_state()
@@ -116,10 +108,7 @@ class StatusSensor(BaseWebhookSensor):
 
         _LOGGER.debug("Status - Event erhalten: %s", data)
 
-        if (
-            data.get(CCU) == self._entry.data.get(CONF_DEVICE_ID)
-            and data.get(PROXY_ERROR_DEVICE_ID) == ERRORS
-        ):
+        if data.get(CCU) == self._entry.data.get(CONF_DEVICE_ID) and data.get(PROXY_ERROR_DEVICE_ID) == ERRORS:
             _LOGGER.warning("Status - Error - Event erhalten: %s", data)
 
             self._state = f"Fehler ({data.get(ERROR, 'Unbekannt')})"

@@ -67,16 +67,12 @@ class TodayIntegralSensor(IntegrationSensor):
 
         self.hass = hass
         self._attr_translation_key = self.__class__.__name__
-        self._attr_unique_id = (
-            f"{entry.entry_id}_{clean_title(self.__class__.__name__)}"
-        )
+        self._attr_unique_id = f"{entry.entry_id}_{clean_title(self.__class__.__name__)}"
         self._source_entity = source_entity_id
         self._sensor_source_id = source_entity_id
         self._round_digits = 3
         self._state = None
-        self._integration_method = self._method = _IntegrationMethod.from_name(
-            "trapezoidal"
-        )
+        self._integration_method = self._method = _IntegrationMethod.from_name("trapezoidal")
 
         self._unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
         self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
@@ -94,9 +90,7 @@ class TodayIntegralSensor(IntegrationSensor):
         self._attr_suggested_display_precision = self._round_digits or 2
 
         # Zuweisung
-        self._max_sub_interval_exceeded_callback = (
-            self._handle_max_sub_interval_exceeded
-        )
+        self._max_sub_interval_exceeded_callback = self._handle_max_sub_interval_exceeded
 
         # Setzte neue Attribute
         self._entry = entry

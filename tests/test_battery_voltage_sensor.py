@@ -45,11 +45,7 @@ async def test_battery_voltage_sensor__async_added_to_hass():
     mock_dispatcher_connect = AsyncMock()
     hass.data = {
         "maxxi_charge_connect": {
-            "abc123": {
-                "listeners": [],
-                "signal_update": "test_update_signal",
-                "signal_stale": "test_stale_signal"
-            }
+            "abc123": {"listeners": [], "signal_update": "test_update_signal", "signal_stale": "test_stale_signal"}
         }
     }
 
@@ -89,13 +85,7 @@ async def test_battery_voltage_sensor__handle_update_alles_ok():
     dummy_config_entry.data = {}
 
     voltage_mv = 52300  # 52.3V in mV
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryVoltage": voltage_mv
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryVoltage": voltage_mv}]}
 
     sensor = BatteryVoltageSensor(dummy_config_entry, 0)
 
@@ -112,13 +102,7 @@ async def test_battery_voltage_sensor__handle_update__index_error():
     dummy_config_entry.data = {}
 
     voltage_mv = 52300
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryVoltage": voltage_mv
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryVoltage": voltage_mv}]}
 
     sensor = BatteryVoltageSensor(dummy_config_entry, 10)
 
@@ -150,13 +134,7 @@ async def test_battery_voltage_sensor__handle_update_none_battery_voltage():
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryVoltage": None
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryVoltage": None}]}
 
     sensor = BatteryVoltageSensor(dummy_config_entry, 0)
 
@@ -173,13 +151,7 @@ async def test_battery_voltage_sensor__handle_update_invalid_values():
     dummy_config_entry.data = {}
 
     # Test mit negativem Wert
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryVoltage": -1000
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryVoltage": -1000}]}
 
     sensor = BatteryVoltageSensor(dummy_config_entry, 0)
 
@@ -188,13 +160,7 @@ async def test_battery_voltage_sensor__handle_update_invalid_values():
     assert sensor._attr_native_value is None  # pylint: disable=protected-access
 
     # Test mit zu hohem Wert (>60000 mV = 60V)
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryVoltage": 65000
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryVoltage": 65000}]}
 
     await sensor.handle_update(data)
 
@@ -208,13 +174,7 @@ async def test_battery_voltage_sensor__handle_update_string_conversion():
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryVoltage": "52300"
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryVoltage": "52300"}]}
 
     sensor = BatteryVoltageSensor(dummy_config_entry, 0)
 
@@ -230,13 +190,7 @@ async def test_battery_voltage_sensor__handle_update_invalid_string():
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryVoltage": "invalid"
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryVoltage": "invalid"}]}
 
     sensor = BatteryVoltageSensor(dummy_config_entry, 0)
 
@@ -255,37 +209,19 @@ async def test_battery_voltage_sensor__handle_update_edge_cases():
     sensor = BatteryVoltageSensor(dummy_config_entry, 0)
 
     # Test mit 0V
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryVoltage": 0
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryVoltage": 0}]}
 
     await sensor.handle_update(data)
     assert sensor._attr_native_value == 0.0  # pylint: disable=protected-access
 
     # Test mit exakt 60V
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryVoltage": 60000
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryVoltage": 60000}]}
 
     await sensor.handle_update(data)
     assert sensor._attr_native_value == 60.0  # pylint: disable=protected-access
 
     # Test mit 60.1V (sollte ignoriert werden)
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryVoltage": 60100
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryVoltage": 60100}]}
 
     await sensor.handle_update(data)
     assert sensor._attr_native_value == 60.0  # pylint: disable=protected-access (sollte unverändert bleiben)

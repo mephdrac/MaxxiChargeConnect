@@ -106,9 +106,7 @@ class BatteryPower(BaseWebhookSensor):
             batteries = data.get("batteriesInfo", [])
 
             if not is_power_total_ok(pv_power, batteries):
-                _LOGGER.warning(
-                    "BatteryPower: PV-Leistung nicht plausibel: %s W", pv_power
-                )
+                _LOGGER.warning("BatteryPower: PV-Leistung nicht plausibel: %s W", pv_power)
                 return
 
             # Netto-Batterieleistung berechnen (kann positiv oder negativ sein)

@@ -59,8 +59,7 @@ class BatteryMpptAmpereSensor(BaseWebhookSensor):
 
             if not batteries_info or self._index >= len(batteries_info):
                 _LOGGER.debug(
-                    "BatteryMpptAmpereSensor[%s]: Keine Batterie-Daten oder Index außerhalb Bereich",
-                    self._index
+                    "BatteryMpptAmpereSensor[%s]: Keine Batterie-Daten oder Index außerhalb Bereich", self._index
                 )
                 return
 
@@ -68,10 +67,7 @@ class BatteryMpptAmpereSensor(BaseWebhookSensor):
             mppt_current = battery_data.get("mpptCurrent")
 
             if mppt_current is None:
-                _LOGGER.debug(
-                    "BatteryMpptAmpereSensor[%s]: mpptCurrent fehlt",
-                    self._index
-                )
+                _LOGGER.debug("BatteryMpptAmpereSensor[%s]: mpptCurrent fehlt", self._index)
                 return
 
             # Konvertiere mA zu A
@@ -79,25 +75,13 @@ class BatteryMpptAmpereSensor(BaseWebhookSensor):
 
             # Plausibilitätsprüfung: MPPT-Strom sollte vernünftig sein
             if abs(mppt_amps) > 100:  # 100A als vernünftige Obergrenze für MPPT
-                _LOGGER.warning(
-                    "BatteryMpptAmpereSensor[%s]: Unplausibler MPPT-Strom: %s A",
-                    self._index, mppt_amps
-                )
+                _LOGGER.warning("BatteryMpptAmpereSensor[%s]: Unplausibler MPPT-Strom: %s A", self._index, mppt_amps)
                 return
 
             self._attr_native_value = mppt_amps
-            _LOGGER.debug(
-                "BatteryMpptAmpereSensor[%s]: Aktualisiert auf %s A",
-                self._index, mppt_amps
-            )
+            _LOGGER.debug("BatteryMpptAmpereSensor[%s]: Aktualisiert auf %s A", self._index, mppt_amps)
 
         except (IndexError, KeyError) as err:
-            _LOGGER.warning(
-                "BatteryMpptAmpereSensor[%s]: Datenstrukturfehler: %s",
-                self._index, err
-            )
+            _LOGGER.warning("BatteryMpptAmpereSensor[%s]: Datenstrukturfehler: %s", self._index, err)
         except (ValueError, TypeError) as err:
-            _LOGGER.warning(
-                "BatteryMpptAmpereSensor[%s]: Konvertierungsfehler: %s",
-                self._index, err
-            )
+            _LOGGER.warning("BatteryMpptAmpereSensor[%s]: Konvertierungsfehler: %s", self._index, err)

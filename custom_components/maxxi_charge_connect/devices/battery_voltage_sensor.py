@@ -74,9 +74,7 @@ class BatteryVoltageSensor(BaseWebhookSensor):
             voltage_raw = battery_data.get("batteryVoltage")
 
             if voltage_raw is None:
-                _LOGGER.debug(
-                    "BatteryVoltageSensor[%s]: batteryVoltage fehlt", self._index
-                )
+                _LOGGER.debug("BatteryVoltageSensor[%s]: batteryVoltage fehlt", self._index)
                 return
 
             # Konvertierung zu float und von mV zu V
@@ -101,15 +99,9 @@ class BatteryVoltageSensor(BaseWebhookSensor):
                 return
 
             self._attr_native_value = voltage
-            _LOGGER.debug(
-                "BatteryVoltageSensor[%s]: Aktualisiert auf %s V", self._index, voltage
-            )
+            _LOGGER.debug("BatteryVoltageSensor[%s]: Aktualisiert auf %s V", self._index, voltage)
 
         except (IndexError, KeyError) as err:
-            _LOGGER.warning(
-                "BatteryVoltageSensor[%s]: Datenstrukturfehler: %s", self._index, err
-            )
+            _LOGGER.warning("BatteryVoltageSensor[%s]: Datenstrukturfehler: %s", self._index, err)
         except (ValueError, TypeError) as err:
-            _LOGGER.warning(
-                "BatteryVoltageSensor[%s]: Konvertierungsfehler: %s", self._index, err
-            )
+            _LOGGER.warning("BatteryVoltageSensor[%s]: Konvertierungsfehler: %s", self._index, err)

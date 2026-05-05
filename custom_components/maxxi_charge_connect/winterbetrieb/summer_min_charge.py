@@ -1,6 +1,5 @@
 """NumberEntity für die minimale Entladeleistung im Winterbetrieb."""
 
-
 import logging
 
 from homeassistant.components.number import NumberEntity
@@ -39,10 +38,7 @@ class SummerMinCharge(NumberEntity):
         self._attr_native_step = 1
         self._attr_native_max_value = 100
 
-        self._attr_native_value = entry.options.get(
-            CONF_SUMMER_MIN_CHARGE,
-            DEFAULT_SUMMER_MIN_CHARGE
-        )
+        self._attr_native_value = entry.options.get(CONF_SUMMER_MIN_CHARGE, DEFAULT_SUMMER_MIN_CHARGE)
         self._remove_listener = None
         self._remove_listener_max_charge = None
 
@@ -73,10 +69,7 @@ class SummerMinCharge(NumberEntity):
     async def async_added_to_hass(self):
         """Registriert den Listener, wenn die Entität hinzugefügt wird."""
 
-        self._remove_listener = self.hass.bus.async_listen(
-            WINTER_MODE_CHANGED_EVENT,
-            self._handle_winter_mode_changed
-            )
+        self._remove_listener = self.hass.bus.async_listen(WINTER_MODE_CHANGED_EVENT, self._handle_winter_mode_changed)
 
         self.async_write_ha_state()
 

@@ -61,21 +61,13 @@ class BatterySOCSensor(BaseWebhookSensor):
 
             # Plausibilitätsprüfung: SOC sollte zwischen 0 und 100% liegen
             if soc < 0 or soc > 100:
-                _LOGGER.warning(
-                    "BatterySOCSensor[%s]: Unplausible SOC: %s%%", self._index, soc
-                )
+                _LOGGER.warning("BatterySOCSensor[%s]: Unplausible SOC: %s%%", self._index, soc)
                 return
 
             self._attr_native_value = soc
-            _LOGGER.debug(
-                "BatterySOCSensor[%s]: Aktualisiert auf %s%%", self._index, soc
-            )
+            _LOGGER.debug("BatterySOCSensor[%s]: Aktualisiert auf %s%%", self._index, soc)
 
         except (IndexError, KeyError) as err:
-            _LOGGER.warning(
-                "BatterySOCSensor[%s]: Datenstrukturfehler: %s", self._index, err
-            )
+            _LOGGER.warning("BatterySOCSensor[%s]: Datenstrukturfehler: %s", self._index, err)
         except (ValueError, TypeError) as err:
-            _LOGGER.warning(
-                "BatterySOCSensor[%s]: Konvertierungsfehler: %s", self._index, err
-            )
+            _LOGGER.warning("BatterySOCSensor[%s]: Konvertierungsfehler: %s", self._index, err)

@@ -85,9 +85,7 @@ class BatterySoE(BaseWebhookSensor):
 
                 capacity_raw = battery.get("batteryCapacity")
                 if capacity_raw is None:
-                    _LOGGER.debug(
-                        "BatterySoE: batteryCapacity fehlt bei Batterie %s", i
-                    )
+                    _LOGGER.debug("BatterySoE: batteryCapacity fehlt bei Batterie %s", i)
                     continue
 
                 try:
@@ -114,22 +112,16 @@ class BatterySoE(BaseWebhookSensor):
                     valid_batteries += 1
 
                 except (ValueError, TypeError) as err:
-                    _LOGGER.warning(
-                        "BatterySoE: Konvertierungsfehler bei Batterie %s: %s", i, err
-                    )
+                    _LOGGER.warning("BatterySoE: Konvertierungsfehler bei Batterie %s: %s", i, err)
                     continue
 
             # Plausibilitätsprüfung für Gesamtkapazität
             if total_capacity < 0:
-                _LOGGER.warning(
-                    "BatterySoE: Negative Gesamtkapazität: %s Wh", total_capacity
-                )
+                _LOGGER.warning("BatterySoE: Negative Gesamtkapazität: %s Wh", total_capacity)
                 return
 
             if total_capacity > 500000:  # Max 500 kWh für Gesamtsystem
-                _LOGGER.warning(
-                    "BatterySoE: Gesamtkapazität unrealistisch: %s Wh", total_capacity
-                )
+                _LOGGER.warning("BatterySoE: Gesamtkapazität unrealistisch: %s Wh", total_capacity)
                 return
 
             self._attr_native_value = total_capacity

@@ -1,6 +1,5 @@
 """NumberEntity für die minimale Entladeleistung im Winterbetrieb."""
 
-
 import logging
 
 from homeassistant.components.number import NumberEntity
@@ -42,15 +41,9 @@ class WinterMinCharge(NumberEntity):
         self._attr_native_min_value = 0
         self._attr_native_step = 1
 
-        self._attr_native_max_value = entry.options.get(
-            CONF_WINTER_MAX_CHARGE,
-            DEFAULT_WINTER_MAX_CHARGE
-        )
+        self._attr_native_max_value = entry.options.get(CONF_WINTER_MAX_CHARGE, DEFAULT_WINTER_MAX_CHARGE)
 
-        self._attr_native_value = entry.options.get(
-            CONF_WINTER_MIN_CHARGE,
-            DEFAULT_WINTER_MIN_CHARGE
-        )
+        self._attr_native_value = entry.options.get(CONF_WINTER_MIN_CHARGE, DEFAULT_WINTER_MIN_CHARGE)
         self._remove_listener = None
         self._remove_listener_max_charge = None
 
@@ -92,7 +85,9 @@ class WinterMinCharge(NumberEntity):
 
     @property
     def available(self) -> bool:
-        _LOGGER.debug("WinterMinCharge available abgefragt: %s", not self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False))
+        _LOGGER.debug(
+            "WinterMinCharge available abgefragt: %s", not self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False)
+        )
         return self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False)
 
     async def async_added_to_hass(self):

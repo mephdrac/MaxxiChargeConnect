@@ -50,10 +50,7 @@ class MigrateFromYaml:
         neu_sensor_map = {}
 
         for entity in entity_registry.entities.values():
-            if (
-                entity.config_entry_id == self._entry.entry_id
-                and entity.domain == "sensor"
-            ):
+            if entity.config_entry_id == self._entry.entry_id and entity.domain == "sensor":
                 typ = entity.unique_id.removeprefix(f"{self._entry.entry_id}_").lower()
                 old_typ = self.get_type(typ)
                 neu_sensor_map[entity.entity_id] = (typ, old_typ, entity)
@@ -164,9 +161,7 @@ class MigrateFromYaml:
             return None
 
         for entity_id, (sensor_type, old_type, entity) in self._current_sensors.items():  # pylint:disable=unused-variable
-            if sensor_type is not None and sensor_type == self.get_type_from_unique_id(
-                old_entity.unique_id
-            ):
+            if sensor_type is not None and sensor_type == self.get_type_from_unique_id(old_entity.unique_id):
                 return entity_id
 
         return None
@@ -290,9 +285,7 @@ class MigrateFromYaml:
         for entry in all_entries:
             for key, key_neu in riemann_list:
                 if entry.unique_id.endswith(key):
-                    sensors_temp[key] = self.find_integral_helpers_by_input_sensor(
-                        entry.entity_id
-                    )
+                    sensors_temp[key] = self.find_integral_helpers_by_input_sensor(entry.entity_id)
                 elif entry.unique_id.lower().endswith(key_neu):
                     sensors_temp2[key] = entry
 
@@ -370,9 +363,7 @@ class MigrateFromYaml:
 
             new_entity_id = self.get_new_sensor(entry)
             if new_entity_id is None:
-                _LOGGER.warning(
-                    "Typ: %s", self.get_type_from_unique_id(entry.unique_id)
-                )
+                _LOGGER.warning("Typ: %s", self.get_type_from_unique_id(entry.unique_id))
 
                 lines.append('  new_sensor: "sensor.HIER_EINTRAGEN"')
             else:
@@ -402,9 +393,7 @@ class MigrateFromYaml:
         )
 
     # pylint:disable=too-many-locals
-    async def async_handle_trigger_migration(
-        self, sensor_mapping: list[dict] | None = None
-    ):
+    async def async_handle_trigger_migration(self, sensor_mapping: list[dict] | None = None):
         """Service - Trigger zum Starten des Migrationsvorgangs."""
 
         _LOGGER.info("Starte Migration ...")
@@ -415,9 +404,7 @@ class MigrateFromYaml:
         entity_registry = async_get_entity_registry(self._hass)
 
         if self._current_sensors is None:
-            _LOGGER.error(
-                "Aktuelle Senoren konnten nicht geladen werden. Migration nicht möglch"
-            )
+            _LOGGER.error("Aktuelle Senoren konnten nicht geladen werden. Migration nicht möglch")
             return
 
         # Hole alle States nur einmal
@@ -451,9 +438,7 @@ class MigrateFromYaml:
             #     continue
 
             # sensor_map[old_type] = new_entity_id
-            _LOGGER.warning(
-                "Mapping: %s → %s (Typ: %s)", old_entity_id, new_entity_id, typ
-            )
+            _LOGGER.warning("Mapping: %s → %s (Typ: %s)", old_entity_id, new_entity_id, typ)
 
             db_path = self._hass.config.path("home-assistant_v2.db")
 
@@ -511,9 +496,7 @@ class MigrateFromYaml:
 
                     # else:
 
-                    self.migrate_sqlite_statistics(
-                        old_entity_id, new_entity_id, db_path, False
-                    )
+                    self.migrate_sqlite_statistics(old_entity_id, new_entity_id, db_path, False)
                     # self.migrate_positive_statistics(
                     #     db_path, old_entity_id, new_entity_id
                     # )
@@ -619,13 +602,9 @@ class MigrateFromYaml:
             if new_row:
                 new_id = new_row[0]
             else:
-                cursor.execute(
-                    "INSERT INTO states_meta (entity_id) VALUES (?)", (new_entity_id,)
-                )
+                cursor.execute("INSERT INTO states_meta (entity_id) VALUES (?)", (new_entity_id,))
                 new_id = cursor.lastrowid
-                _LOGGER.info(
-                    "states_meta für %s erstellt mit ID %s", new_entity_id, new_id
-                )
+                _LOGGER.info("states_meta für %s erstellt mit ID %s", new_entity_id, new_id)
 
             # States umhängen
             updated = cursor.execute(
@@ -809,9 +788,7 @@ class MigrateFromYaml:
             conn.close()
 
     # pylint:disable=too-many-locals
-    def migrate_sqlite_statistics(
-        self, old_sensor, new_sensor, db_path, clear_existing=True
-    ):
+    def migrate_sqlite_statistics(self, old_sensor, new_sensor, db_path, clear_existing=True):
         """Kopieren der Statistik eines Sensors in einen neuen Sensor."""
 
         if old_sensor == new_sensor:
@@ -830,25 +807,19 @@ class MigrateFromYaml:
             cursor = conn.cursor()
 
             # IDs aus statistics_meta holen
-            cursor.execute(
-                "SELECT id FROM statistics_meta WHERE statistic_id = ?", (old_sensor,)
-            )
+            cursor.execute("SELECT id FROM statistics_meta WHERE statistic_id = ?", (old_sensor,))
             old_row = cursor.fetchone()
             if not old_row:
                 _LOGGER.warning("Keine Statistikdaten für alten Sensor %s", old_sensor)
                 return
             old_id = old_row[0]
 
-            cursor.execute(
-                "SELECT id FROM statistics_meta WHERE statistic_id = ?", (new_sensor,)
-            )
+            cursor.execute("SELECT id FROM statistics_meta WHERE statistic_id = ?", (new_sensor,))
             new_row = cursor.fetchone()
 
             if new_row:
                 new_id = new_row[0]
-                _LOGGER.info(
-                    "Neue Sensor-ID %s existiert bereits mit ID %s", new_sensor, new_id
-                )
+                _LOGGER.info("Neue Sensor-ID %s existiert bereits mit ID %s", new_sensor, new_id)
 
                 if clear_existing:
                     _LOGGER.info(
@@ -861,9 +832,7 @@ class MigrateFromYaml:
                         "statistics_short_term",
                         "statistics_runs",
                     ]:
-                        cursor.execute(
-                            f"DELETE FROM {table} WHERE metadata_id = ?", (new_id,)
-                        )
+                        cursor.execute(f"DELETE FROM {table} WHERE metadata_id = ?", (new_id,))
             else:
                 _LOGGER.info(
                     "Neuer Sensor %s hat noch keinen statistics_meta-Eintrag – erstelle neuen.",
@@ -927,9 +896,7 @@ class MigrateFromYaml:
         finally:
             conn.close()
 
-    async def async_replace_entity_ids_in_yaml_files(
-        self, old_entity_id: str, new_entity_id: str
-    ) -> None:
+    async def async_replace_entity_ids_in_yaml_files(self, old_entity_id: str, new_entity_id: str) -> None:
         """Suche, die entity_id in allen YAML-Dateien und benennt diese in die neue entity_id um."""
 
         await asyncio.to_thread(
@@ -938,12 +905,10 @@ class MigrateFromYaml:
             new_entity_id,
         )
 
-    def _replace_entity_ids_in_yaml_files_blocking(
-        self, old_entity_id, new_entity_id, base_path=None
-    ):
+    def _replace_entity_ids_in_yaml_files_blocking(self, old_entity_id, new_entity_id, base_path=None):
         """Durchsucht alle .yaml-Dateien im config-Verzeichnis nach der
 
-           alten Entity-ID und ersetzt sie durch die neue.
+        alten Entity-ID und ersetzt sie durch die neue.
         """
         if base_path is None:
             base_path = self._hass.config.config_dir
@@ -974,16 +939,12 @@ class MigrateFromYaml:
                     _LOGGER.error("Fehler beim Bearbeiten von %s: %s", file_path, e)
 
         if replaced_files:
-            _LOGGER.info(
-                "Ersetzungen abgeschlossen in %d Datei(en)", len(replaced_files)
-            )
+            _LOGGER.info("Ersetzungen abgeschlossen in %d Datei(en)", len(replaced_files))
         else:
             _LOGGER.info("Keine YAML-Dateien mit %s gefunden", old_entity_id)
 
     # pylint:disable=too-many-locals, too-many-statements
-    def migrate_positive_statistics(
-        self, db_path, old_sensor, new_sensor, clear_existing=True
-    ):
+    def migrate_positive_statistics(self, db_path, old_sensor, new_sensor, clear_existing=True):
         """Obsolet, kopieren nur der positiven Statistikwerte eines Sensors in einen neuen Sensor."""  # pylint:disable=line-too-long
 
         if old_sensor == new_sensor:
@@ -997,18 +958,14 @@ class MigrateFromYaml:
         cur = conn.cursor()
 
         # IDs besorgen
-        cur.execute(
-            "SELECT id FROM statistics_meta WHERE statistic_id=?", (old_sensor,)
-        )
+        cur.execute("SELECT id FROM statistics_meta WHERE statistic_id=?", (old_sensor,))
         row = cur.fetchone()
         if not row:
             _LOGGER.info("Kein statistics_meta für %s", old_sensor)
             return
         old_id = row[0]
 
-        cur.execute(
-            "SELECT id FROM statistics_meta WHERE statistic_id=?", (new_sensor,)
-        )
+        cur.execute("SELECT id FROM statistics_meta WHERE statistic_id=?", (new_sensor,))
         row = cur.fetchone()
 
         if row:
@@ -1040,9 +997,7 @@ class MigrateFromYaml:
                 )
 
             ph = ", ".join("?" * len(meta))
-            cur.execute(
-                f"INSERT INTO statistics_meta ({', '.join(cols)}) VALUES ({ph})", meta
-            )
+            cur.execute(f"INSERT INTO statistics_meta ({', '.join(cols)}) VALUES ({ph})", meta)
             new_id = cur.lastrowid
             _LOGGER.info("statistics_meta angelegt für %s, ID: %s", new_sensor, new_id)
 
@@ -1081,9 +1036,7 @@ class MigrateFromYaml:
         conn.close()
         _LOGGER.info("Fertig! Home Assistant neu starten.")
 
-    def migrate_negative_statistics(
-        self, db_path, old_sensor, new_sensor, clear_existing=True
-    ):
+    def migrate_negative_statistics(self, db_path, old_sensor, new_sensor, clear_existing=True):
         """Obsolet, kopieren nur der negativen Statistikwerte eines Sensors in einen neuen Sensor."""  # pylint:disable=line-too-long
 
         if old_sensor == new_sensor:
@@ -1097,18 +1050,14 @@ class MigrateFromYaml:
         cur = conn.cursor()
 
         # IDs besorgen
-        cur.execute(
-            "SELECT id FROM statistics_meta WHERE statistic_id=?", (old_sensor,)
-        )
+        cur.execute("SELECT id FROM statistics_meta WHERE statistic_id=?", (old_sensor,))
         row = cur.fetchone()
         if not row:
             _LOGGER.info("Kein statistics_meta für %s", old_sensor)
             return
         old_id = row[0]
 
-        cur.execute(
-            "SELECT id FROM statistics_meta WHERE statistic_id=?", (new_sensor,)
-        )
+        cur.execute("SELECT id FROM statistics_meta WHERE statistic_id=?", (new_sensor,))
         row = cur.fetchone()
 
         if row:
@@ -1141,9 +1090,7 @@ class MigrateFromYaml:
                 )
 
             ph = ", ".join("?" * len(meta))
-            cur.execute(
-                f"INSERT INTO statistics_meta ({', '.join(cols)}) VALUES ({ph})", meta
-            )
+            cur.execute(f"INSERT INTO statistics_meta ({', '.join(cols)}) VALUES ({ph})", meta)
             new_id = cur.lastrowid
             _LOGGER.info("statistics_meta angelegt für %s, ID: %s", new_sensor, new_id)
 
@@ -1191,9 +1138,7 @@ class MigrateFromYaml:
 
                 if entity._source_entity == input_entity_id:  # pylint:disable=protected-access
                     # pylint:disable=protected-access
-                    _LOGGER.debug(
-                        "Found: %s, %s", entity._source_entity, entity.entity_id
-                    )
+                    _LOGGER.debug("Found: %s, %s", entity._source_entity, entity.entity_id)
                     return entity
 
         return None
@@ -1216,11 +1161,7 @@ class MigrateFromYaml:
 
             data = json.loads(raw)
 
-            if (
-                not isinstance(data, dict)
-                or "data" not in data
-                or not isinstance(data["data"], list)
-            ):
+            if not isinstance(data, dict) or "data" not in data or not isinstance(data["data"], list):
                 _LOGGER.error("Unerwartiges Format in restore_state – Abbruch")
                 return
 
@@ -1229,14 +1170,10 @@ class MigrateFromYaml:
             val_str = str(new_value)
 
             # passenden Eintrag suchen
-            entry = next(
-                (e for e in entries if e["state"]["entity_id"] == entity_id), None
-            )
+            entry = next((e for e in entries if e["state"]["entity_id"] == entity_id), None)
 
             if entry is None:
-                _LOGGER.warning(
-                    "Kein restore_state-Eintrag für %s – lege neuen an", entity_id
-                )
+                _LOGGER.warning("Kein restore_state-Eintrag für %s – lege neuen an", entity_id)
                 entry = {
                     "state": {
                         "entity_id": entity_id,

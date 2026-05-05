@@ -81,9 +81,7 @@ class BatteryPowerDischarge(BaseWebhookSensor):
             ccu = float(pccu_raw)
 
             if not is_pccu_ok(ccu):
-                _LOGGER.warning(
-                    "BatteryPowerDischarge: PCCU-Wert nicht plausibel: %s W", ccu
-                )
+                _LOGGER.warning("BatteryPowerDischarge: PCCU-Wert nicht plausibel: %s W", ccu)
                 return
 
             # PV-Leistung sicher abfragen
@@ -96,9 +94,7 @@ class BatteryPowerDischarge(BaseWebhookSensor):
             batteries = data.get("batteriesInfo", [])
 
             if not is_power_total_ok(pv_power, batteries):
-                _LOGGER.warning(
-                    "BatteryPowerDischarge: PV-Leistung nicht plausibel: %s W", pv_power
-                )
+                _LOGGER.warning("BatteryPowerDischarge: PV-Leistung nicht plausibel: %s W", pv_power)
                 return
 
             # Entladeleistung berechnen

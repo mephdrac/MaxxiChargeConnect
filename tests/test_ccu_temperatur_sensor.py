@@ -55,19 +55,7 @@ async def test_ccu_temperatur_sensor__handle_update_alles_ok():
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "convertersInfo": [
-            {
-                "ccuTemperature": 25.5
-            },
-            {
-                "ccuTemperature": 26.0
-            },
-            {
-                "ccuTemperature": 24.5
-            }
-        ]
-    }
+    data = {"convertersInfo": [{"ccuTemperature": 25.5}, {"ccuTemperature": 26.0}, {"ccuTemperature": 24.5}]}
 
     sensor = CCUTemperaturSensor(dummy_config_entry)
 
@@ -99,9 +87,7 @@ async def test_ccu_temperatur_sensor__handle_update_leere_converters():
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "convertersInfo": []
-    }
+    data = {"convertersInfo": []}
 
     sensor = CCUTemperaturSensor(dummy_config_entry)
 
@@ -117,16 +103,7 @@ async def test_ccu_temperatur_sensor__handle_update_fehlende_temperatur():
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "convertersInfo": [
-            {
-                "otherField": "value"
-            },
-            {
-                "ccuTemperature": 25.0
-            }
-        ]
-    }
+    data = {"convertersInfo": [{"otherField": "value"}, {"ccuTemperature": 25.0}]}
 
     sensor = CCUTemperaturSensor(dummy_config_entry)
 
@@ -150,9 +127,7 @@ async def test_ccu_temperatur_sensor__handle_update_ungültige_werte():
             {
                 "ccuTemperature": -50  # Unter -40°C
             },
-            {
-                "ccuTemperature": 25.0
-            }
+            {"ccuTemperature": 25.0},
         ]
     }
 
@@ -165,9 +140,7 @@ async def test_ccu_temperatur_sensor__handle_update_ungültige_werte():
             {
                 "ccuTemperature": 90  # Über 85°C
             },
-            {
-                "ccuTemperature": 25.0
-            }
+            {"ccuTemperature": 25.0},
         ]
     }
 
@@ -182,16 +155,7 @@ async def test_ccu_temperatur_sensor__handle_update_string_konvertierung():
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "convertersInfo": [
-            {
-                "ccuTemperature": "25.5"
-            },
-            {
-                "ccuTemperature": "26.0"
-            }
-        ]
-    }
+    data = {"convertersInfo": [{"ccuTemperature": "25.5"}, {"ccuTemperature": "26.0"}]}
 
     sensor = CCUTemperaturSensor(dummy_config_entry)
 
@@ -207,16 +171,7 @@ async def test_ccu_temperatur_sensor__handle_update_ungültiger_string():
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "convertersInfo": [
-            {
-                "ccuTemperature": "invalid"
-            },
-            {
-                "ccuTemperature": 25.0
-            }
-        ]
-    }
+    data = {"convertersInfo": [{"ccuTemperature": "invalid"}, {"ccuTemperature": 25.0}]}
 
     sensor = CCUTemperaturSensor(dummy_config_entry)
 
@@ -235,14 +190,7 @@ async def test_ccu_temperatur_sensor__handle_update_ungültige_datenstruktur():
     sensor = CCUTemperaturSensor(dummy_config_entry)
 
     # Test mit nicht-Dictionary Converter
-    data = {
-        "convertersInfo": [
-            "invalid_converter",
-            {
-                "ccuTemperature": 25.0
-            }
-        ]
-    }
+    data = {"convertersInfo": ["invalid_converter", {"ccuTemperature": 25.0}]}
 
     await sensor.handle_update(data)
 
@@ -259,31 +207,13 @@ async def test_ccu_temperatur_sensor__handle_update_grenzwerte():
     sensor = CCUTemperaturSensor(dummy_config_entry)
 
     # Test mit unterem Grenzwert (-40°C)
-    data = {
-        "convertersInfo": [
-            {
-                "ccuTemperature": -40
-            },
-            {
-                "ccuTemperature": 20.0
-            }
-        ]
-    }
+    data = {"convertersInfo": [{"ccuTemperature": -40}, {"ccuTemperature": 20.0}]}
 
     await sensor.handle_update(data)
     assert sensor._attr_native_value == -10.0  # pylint: disable=protected-access (gerundet)
 
     # Test mit oberem Grenzwert (85°C)
-    data = {
-        "convertersInfo": [
-            {
-                "ccuTemperature": 85
-            },
-            {
-                "ccuTemperature": 20.0
-            }
-        ]
-    }
+    data = {"convertersInfo": [{"ccuTemperature": 85}, {"ccuTemperature": 20.0}]}
 
     await sensor.handle_update(data)
     assert sensor._attr_native_value == 52.5  # pylint: disable=protected-access (gerundet)
@@ -302,8 +232,8 @@ async def test_ccu_temperatur_sensor__handle_update_keine_gültige_temperaturen(
                 "ccuTemperature": -50  # Ungültig
             },
             {
-                "ccuTemperature": 90   # Ungültig
-            }
+                "ccuTemperature": 90  # Ungültig
+            },
         ]
     }
 

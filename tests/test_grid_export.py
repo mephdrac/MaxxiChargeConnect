@@ -94,9 +94,7 @@ async def test_grid_export_add_and_handle_update1(mock_entry):  # pylint: disabl
     sensor.async_write_ha_state = MagicMock()
 
     with (
-        patch(
-            "custom_components.maxxi_charge_connect.devices.grid_export.is_pr_ok"
-        ) as mock_is_pr_ok,
+        patch("custom_components.maxxi_charge_connect.devices.grid_export.is_pr_ok") as mock_is_pr_ok,
     ):
         mock_is_pr_ok.return_value = True
         pr = 234.675
@@ -119,9 +117,7 @@ async def test_grid_export_add_and_handle_update2(mock_entry):  # pylint: disabl
     sensor.async_write_ha_state = MagicMock()
 
     with (
-        patch(
-            "custom_components.maxxi_charge_connect.devices.grid_export.is_pr_ok"
-        ) as mock_is_pr_ok,
+        patch("custom_components.maxxi_charge_connect.devices.grid_export.is_pr_ok") as mock_is_pr_ok,
     ):
         mock_is_pr_ok.return_value = False
         pr = 234.675

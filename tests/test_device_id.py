@@ -47,6 +47,7 @@ def mock_entry():
     entry.data = {"webhook_id": WEBHOOK_ID}
     return entry
 
+
 @pytest.mark.asyncio
 async def test_device_id_initialization(mock_entry):  # pylint: disable=redefined-outer-name
     """Teste Initialisierung von `DeviceId`.

@@ -57,9 +57,9 @@ async def test_battery_mppt_voltage_sensor_handle_update_valid_data(sensor):
             }
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     assert sensor._attr_native_value == 48.0  # 48000mV / 1000 = 48V
 
 
@@ -67,9 +67,9 @@ async def test_battery_mppt_voltage_sensor_handle_update_valid_data(sensor):
 async def test_battery_mppt_voltage_sensor_handle_update_no_batteries_info(sensor):
     """Testet Verhalten bei fehlendem batteriesInfo."""
     data = {}
-    
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren
     assert sensor._attr_native_value is None
 
@@ -78,9 +78,9 @@ async def test_battery_mppt_voltage_sensor_handle_update_no_batteries_info(senso
 async def test_battery_mppt_voltage_sensor_handle_update_empty_batteries_info(sensor):
     """Testet Verhalten bei leerem batteriesInfo."""
     data = {"batteriesInfo": []}
-    
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren
     assert sensor._attr_native_value is None
 
@@ -88,17 +88,13 @@ async def test_battery_mppt_voltage_sensor_handle_update_empty_batteries_info(se
 @pytest.mark.asyncio
 async def test_battery_mppt_voltage_sensor_handle_update_index_out_of_range(sensor):
     """Testet Verhalten bei Index außerhalb des Bereichs."""
-    data = {
-        "batteriesInfo": [
-            {"mpptVoltage": 48000}
-        ]
-    }
-    
+    data = {"batteriesInfo": [{"mpptVoltage": 48000}]}
+
     # Ändere Index auf 1 (außerhalb Bereich)
     sensor._index = 1
-    
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren
     assert sensor._attr_native_value is None
 
@@ -111,9 +107,9 @@ async def test_battery_mppt_voltage_sensor_handle_update_missing_mppt_voltage(se
             {}  # Kein mpptVoltage
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren
     assert sensor._attr_native_value is None
 
@@ -121,14 +117,10 @@ async def test_battery_mppt_voltage_sensor_handle_update_missing_mppt_voltage(se
 @pytest.mark.asyncio
 async def test_battery_mppt_voltage_sensor_handle_update_none_mppt_voltage(sensor):
     """Testet Verhalten bei mpptVoltage = None."""
-    data = {
-        "batteriesInfo": [
-            {"mpptVoltage": None}
-        ]
-    }
-    
+    data = {"batteriesInfo": [{"mpptVoltage": None}]}
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren
     assert sensor._attr_native_value is None
 
@@ -136,14 +128,10 @@ async def test_battery_mppt_voltage_sensor_handle_update_none_mppt_voltage(senso
 @pytest.mark.asyncio
 async def test_battery_mppt_voltage_sensor_handle_update_invalid_voltage_value(sensor):
     """Testet Verhalten bei ungültigem mpptVoltage Wert."""
-    data = {
-        "batteriesInfo": [
-            {"mpptVoltage": "invalid"}
-        ]
-    }
-    
+    data = {"batteriesInfo": [{"mpptVoltage": "invalid"}]}
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren
     assert sensor._attr_native_value is None
 
@@ -156,9 +144,9 @@ async def test_battery_mppt_voltage_sensor_handle_update_negative_voltage(sensor
             {"mpptVoltage": -1000}  # -1V MPPT-Spannung
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren (negative Spannung unplausibel)
     assert sensor._attr_native_value is None
 
@@ -166,14 +154,10 @@ async def test_battery_mppt_voltage_sensor_handle_update_negative_voltage(sensor
 @pytest.mark.asyncio
 async def test_battery_mppt_voltage_sensor_handle_update_zero_voltage(sensor):
     """Testet Verhalten bei 0 MPPT-Spannung."""
-    data = {
-        "batteriesInfo": [
-            {"mpptVoltage": 0}
-        ]
-    }
-    
+    data = {"batteriesInfo": [{"mpptVoltage": 0}]}
+
     await sensor.handle_update(data)
-    
+
     assert sensor._attr_native_value == 0.0
 
 
@@ -185,9 +169,9 @@ async def test_battery_mppt_voltage_sensor_handle_update_extreme_voltage(sensor)
             {"mpptVoltage": 150000}  # 150V (über 100V Grenze)
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren (Plausibilitätsprüfung)
     assert sensor._attr_native_value is None
 
@@ -200,9 +184,9 @@ async def test_battery_mppt_voltage_sensor_handle_update_max_valid_voltage(senso
             {"mpptVoltage": 100000}  # 100V (Grenzwert)
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     assert sensor._attr_native_value == 100.0
 
 
@@ -218,13 +202,13 @@ async def test_battery_mppt_voltage_sensor_different_indices():
     """Testet Sensoren mit unterschiedlichen Indizes."""
     entry = MagicMock()
     entry.entry_id = "test_entry_id"
-    
+
     sensor1 = BatteryMpptVoltageSensor(entry, index=0)
     sensor2 = BatteryMpptVoltageSensor(entry, index=1)
-    
+
     assert sensor1._attr_unique_id == "test_entry_id_battery_mppt_voltage_sensor_0"
     assert sensor1._attr_translation_placeholders == {"index": "1"}
-    
+
     assert sensor2._attr_unique_id == "test_entry_id_battery_mppt_voltage_sensor_1"
     assert sensor2._attr_translation_placeholders == {"index": "2"}
 
@@ -237,9 +221,9 @@ async def test_battery_mppt_voltage_sensor_string_voltage_conversion(sensor):
             {"mpptVoltage": "24000"}  # String statt int
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     assert sensor._attr_native_value == 24.0
 
 
@@ -251,9 +235,9 @@ async def test_battery_mppt_voltage_sensor_low_voltage(sensor):
             {"mpptVoltage": 12000}  # 12V
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     assert sensor._attr_native_value == 12.0
 
 
@@ -265,7 +249,7 @@ async def test_battery_mppt_voltage_sensor_typical_solar_voltage(sensor):
             {"mpptVoltage": 36000}  # 36V (typische Solar-Spannung)
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     assert sensor._attr_native_value == 36.0

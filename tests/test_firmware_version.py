@@ -55,6 +55,7 @@ def mock_entry():
     entry.data = {"webhook_id": WEBHOOK_ID}
     return entry
 
+
 @pytest.mark.asyncio
 async def test_firmware_version_initialization(mock_entry):  # pylint: disable=redefined-outer-name
     """Testet die Initialisierung des FirmwareVersion Sensors.

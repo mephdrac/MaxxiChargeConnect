@@ -9,10 +9,9 @@ from .winterbetrieb.winterbetrieb import Winterbetrieb
 
 # _LOGGER = logging.getLogger(__name__)
 
+
 # pylint: disable=unused-argument
-async def async_setup_entry(
-    hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback
-) -> None:
+async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     """Setup switches for MaxxiCharge Connect integration."""
 
     winterbetrieb = Winterbetrieb(entry)

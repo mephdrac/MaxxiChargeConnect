@@ -100,9 +100,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                     async with async_timeout.timeout(10):
                         async with session.get(self._resource) as response:
                             if response.status != 200:
-                                raise UpdateFailed(
-                                    f"Fehler beim Abruf: HTTP {response.status}"
-                                )
+                                raise UpdateFailed(f"Fehler beim Abruf: HTTP {response.status}")
 
                             html = await response.text()
                             soup = BeautifulSoup(html, "html.parser")

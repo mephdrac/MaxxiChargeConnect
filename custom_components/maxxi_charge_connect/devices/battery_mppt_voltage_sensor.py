@@ -70,9 +70,7 @@ class BatteryMpptVoltageSensor(BaseWebhookSensor):
             mppt_voltage = battery_data.get("mpptVoltage")
 
             if mppt_voltage is None:
-                _LOGGER.debug(
-                    "BatteryMpptVoltageSensor[%s]: mpptVoltage fehlt", self._index
-                )
+                _LOGGER.debug("BatteryMpptVoltageSensor[%s]: mpptVoltage fehlt", self._index)
                 return
 
             # Konvertiere mV zu V

@@ -56,9 +56,9 @@ async def test_battery_pv_ampere_sensor_handle_update_valid_data(sensor):
             }
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     assert sensor._attr_native_value == 5.0  # 5000mA / 1000 = 5A
 
 
@@ -66,9 +66,9 @@ async def test_battery_pv_ampere_sensor_handle_update_valid_data(sensor):
 async def test_battery_pv_ampere_sensor_handle_update_no_batteries_info(sensor):
     """Testet Verhalten bei fehlendem batteriesInfo."""
     data = {}
-    
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren
     assert sensor._attr_native_value is None
 
@@ -77,9 +77,9 @@ async def test_battery_pv_ampere_sensor_handle_update_no_batteries_info(sensor):
 async def test_battery_pv_ampere_sensor_handle_update_empty_batteries_info(sensor):
     """Testet Verhalten bei leerem batteriesInfo."""
     data = {"batteriesInfo": []}
-    
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren
     assert sensor._attr_native_value is None
 
@@ -87,17 +87,13 @@ async def test_battery_pv_ampere_sensor_handle_update_empty_batteries_info(senso
 @pytest.mark.asyncio
 async def test_battery_pv_ampere_sensor_handle_update_index_out_of_range(sensor):
     """Testet Verhalten bei Index außerhalb des Bereichs."""
-    data = {
-        "batteriesInfo": [
-            {"pvCurrent": 5000}
-        ]
-    }
-    
+    data = {"batteriesInfo": [{"pvCurrent": 5000}]}
+
     # Ändere Index auf 1 (außerhalb Bereich)
     sensor._index = 1
-    
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren
     assert sensor._attr_native_value is None
 
@@ -110,9 +106,9 @@ async def test_battery_pv_ampere_sensor_handle_update_missing_pv_current(sensor)
             {}  # Kein pvCurrent
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren
     assert sensor._attr_native_value is None
 
@@ -120,14 +116,10 @@ async def test_battery_pv_ampere_sensor_handle_update_missing_pv_current(sensor)
 @pytest.mark.asyncio
 async def test_battery_pv_ampere_sensor_handle_update_none_pv_current(sensor):
     """Testet Verhalten bei pvCurrent = None."""
-    data = {
-        "batteriesInfo": [
-            {"pvCurrent": None}
-        ]
-    }
-    
+    data = {"batteriesInfo": [{"pvCurrent": None}]}
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren
     assert sensor._attr_native_value is None
 
@@ -135,14 +127,10 @@ async def test_battery_pv_ampere_sensor_handle_update_none_pv_current(sensor):
 @pytest.mark.asyncio
 async def test_battery_pv_ampere_sensor_handle_update_invalid_current_value(sensor):
     """Testet Verhalten bei ungültigem pvCurrent Wert."""
-    data = {
-        "batteriesInfo": [
-            {"pvCurrent": "invalid"}
-        ]
-    }
-    
+    data = {"batteriesInfo": [{"pvCurrent": "invalid"}]}
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren
     assert sensor._attr_native_value is None
 
@@ -155,9 +143,9 @@ async def test_battery_pv_ampere_sensor_handle_update_negative_current(sensor):
             {"pvCurrent": -1000}  # -1A PV-Strom
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren (negativer PV-Strom unplausibel)
     assert sensor._attr_native_value is None
 
@@ -165,14 +153,10 @@ async def test_battery_pv_ampere_sensor_handle_update_negative_current(sensor):
 @pytest.mark.asyncio
 async def test_battery_pv_ampere_sensor_handle_update_zero_current(sensor):
     """Testet Verhalten bei 0 PV-Strom."""
-    data = {
-        "batteriesInfo": [
-            {"pvCurrent": 0}
-        ]
-    }
-    
+    data = {"batteriesInfo": [{"pvCurrent": 0}]}
+
     await sensor.handle_update(data)
-    
+
     assert sensor._attr_native_value == 0.0
 
 
@@ -184,9 +168,9 @@ async def test_battery_pv_ampere_sensor_handle_update_extreme_current(sensor):
             {"pvCurrent": 150000}  # 150A (über 100A Grenze)
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     # Sollte nichts aktualisieren (Plausibilitätsprüfung)
     assert sensor._attr_native_value is None
 
@@ -199,9 +183,9 @@ async def test_battery_pv_ampere_sensor_handle_update_max_valid_current(sensor):
             {"pvCurrent": 100000}  # 100A (Grenzwert)
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     assert sensor._attr_native_value == 100.0
 
 
@@ -217,13 +201,13 @@ async def test_battery_pv_ampere_sensor_different_indices():
     """Testet Sensoren mit unterschiedlichen Indizes."""
     entry = MagicMock()
     entry.entry_id = "test_entry_id"
-    
+
     sensor1 = BatteryPVAmpereSensor(entry, index=0)
     sensor2 = BatteryPVAmpereSensor(entry, index=1)
-    
+
     assert sensor1._attr_unique_id == "test_entry_id_battery_pv_ampere_sensor_0"
     assert sensor1._attr_translation_placeholders == {"index": "1"}
-    
+
     assert sensor2._attr_unique_id == "test_entry_id_battery_pv_ampere_sensor_1"
     assert sensor2._attr_translation_placeholders == {"index": "2"}
 
@@ -236,9 +220,9 @@ async def test_battery_pv_ampere_sensor_string_current_conversion(sensor):
             {"pvCurrent": "25000"}  # String statt int
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     assert sensor._attr_native_value == 25.0
 
 
@@ -250,9 +234,9 @@ async def test_battery_pv_ampere_sensor_low_current(sensor):
             {"pvCurrent": 500}  # 0.5A
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     assert sensor._attr_native_value == 0.5
 
 
@@ -264,7 +248,7 @@ async def test_battery_pv_ampere_sensor_typical_solar_current(sensor):
             {"pvCurrent": 8000}  # 8A (typischer Solar-Strom)
         ]
     }
-    
+
     await sensor.handle_update(data)
-    
+
     assert sensor._attr_native_value == 8.0

@@ -1,4 +1,4 @@
-""""Tests für die HttpScanText Entity."""
+""" "Tests für die HttpScanText Entity."""
 
 from unittest.mock import MagicMock
 

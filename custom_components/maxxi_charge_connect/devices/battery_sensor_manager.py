@@ -63,9 +63,7 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
         ("battery_discharge_sensor", BatteryDischargeSensor),
     ]
 
-    def __init__(
-        self, hass: HomeAssistant, entry, async_add_entities: AddEntitiesCallback
-    ) -> None:
+    def __init__(self, hass: HomeAssistant, entry, async_add_entities: AddEntitiesCallback) -> None:
         """Initialisiert den BatterySensorManager.
 
         Args:
@@ -91,17 +89,13 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
         um später automatisch neue Sensoren zu erzeugen und Daten zu verarbeiten.
         """
         try:
-            entry_data = self.hass.data.setdefault(DOMAIN, {}).setdefault(
-                self.entry.entry_id, {}
-            )
+            entry_data = self.hass.data.setdefault(DOMAIN, {}).setdefault(self.entry.entry_id, {})
             # Listener-Liste nur initialisieren, falls noch nicht vorhanden
             entry_data.setdefault("listeners", [])
 
             if self._enable_cloud_data:
                 _LOGGER.info("Daten kommen vom Proxy")
-                self.hass.bus.async_listen(
-                    PROXY_STATUS_EVENTNAME, self.async_update_from_event
-                )
+                self.hass.bus.async_listen(PROXY_STATUS_EVENTNAME, self.async_update_from_event)
             else:
                 _LOGGER.info("Daten kommen vom Webhook")
                 entry_data = self.hass.data[DOMAIN][self.entry.entry_id]
@@ -109,13 +103,9 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
                 stale_signal = entry_data[WEBHOOK_SIGNAL_STATE]
 
                 if not self._registered:
-                    self._unsub_update = async_dispatcher_connect(
-                        self.hass, update_signal, self._wrapper_update
-                    )
+                    self._unsub_update = async_dispatcher_connect(self.hass, update_signal, self._wrapper_update)
 
-                    self._unsub_stale = async_dispatcher_connect(
-                        self.hass, stale_signal, self._wrapper_stale
-                    )
+                    self._unsub_stale = async_dispatcher_connect(self.hass, stale_signal, self._wrapper_stale)
                     self._registered = True
                     _LOGGER.debug("BatterySensorManager Dispatcher registriert")
                     await self._add_pending_sensors()
@@ -145,28 +135,20 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
             stale_signal = entry_data[WEBHOOK_SIGNAL_STATE]
 
             if not self._registered:
-                self._unsub_update = async_dispatcher_connect(
-                    self.hass, update_signal, self._wrapper_update
-                )
+                self._unsub_update = async_dispatcher_connect(self.hass, update_signal, self._wrapper_update)
 
-                self._unsub_stale = async_dispatcher_connect(
-                    self.hass, stale_signal, self._wrapper_stale
-                )
+                self._unsub_stale = async_dispatcher_connect(self.hass, stale_signal, self._wrapper_stale)
                 self._registered = True
                 _LOGGER.debug("BatterySensorManager Dispatcher registriert")
         else:
             # Cloud-Modus: Event Bus abonnieren
             _LOGGER.info("Daten kommen vom Proxy")
-            self.hass.bus.async_listen(
-                PROXY_STATUS_EVENTNAME, self.async_update_from_event
-            )
+            self.hass.bus.async_listen(PROXY_STATUS_EVENTNAME, self.async_update_from_event)
 
             # Stale-Signal abonnieren
             entry_data = self.hass.data[DOMAIN][self.entry.entry_id]
             stale_signal = entry_data[WEBHOOK_SIGNAL_STATE]
-            self._unsub_stale = async_dispatcher_connect(
-                self.hass, stale_signal, self._wrapper_stale
-            )
+            self._unsub_stale = async_dispatcher_connect(self.hass, stale_signal, self._wrapper_stale)
 
     async def _wrapper_update(self, data: dict):
         """Ablauf bei einem eingehenden Update-Event."""
@@ -198,9 +180,7 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
                 _LOGGER.debug("BatterySensorManager: Keine batteriesInfo im Event, ignoriere")
                 return
 
-            if json_data.get(PROXY_ERROR_DEVICE_ID) == self.entry.data.get(
-                CONF_DEVICE_ID
-            ):
+            if json_data.get(PROXY_ERROR_DEVICE_ID) == self.entry.data.get(CONF_DEVICE_ID):
                 await self.handle_update(json_data)
         except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error("Fehler beim Proxy-Update: %s", err)
@@ -263,8 +243,7 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
                         self.async_add_entities(new_sensors)
                     else:
                         _LOGGER.warning(
-                            "async_add_entities ist None. Speichere %d Sensoren für spätere Addition.",
-                            len(new_sensors)
+                            "async_add_entities ist None. Speichere %d Sensoren für spätere Addition.", len(new_sensors)
                         )
                         self._pending_sensors.extend(new_sensors)
 
@@ -274,9 +253,7 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
         except Exception as err:  # pylint: disable=broad-except
             _LOGGER.error("Fehler bei der Verarbeitung der Battery-Daten: %s", err)
 
-    async def _create_sensors_for_batteries(
-        self, batteries: List[Dict[str, Any]]
-    ) -> List["BaseWebhookSensor"]:
+    async def _create_sensors_for_batteries(self, batteries: List[Dict[str, Any]]) -> List["BaseWebhookSensor"]:
         """Erstellt Sensoren für alle Batterien.
         Args:
             batteries: Liste der Batterie-Informationen
@@ -317,11 +294,7 @@ class BatterySensorManager:  # pylint: disable=too-few-public-methods
         """
         try:
             # Sichere Abfrage der Listener-Liste
-            listeners = (
-                self.hass.data.get(DOMAIN, {})
-                .get(self.entry.entry_id, {})
-                .get("listeners", [])
-            )
+            listeners = self.hass.data.get(DOMAIN, {}).get(self.entry.entry_id, {}).get("listeners", [])
 
             _LOGGER.debug("Verteile Update an %d Listener", len(listeners))
 

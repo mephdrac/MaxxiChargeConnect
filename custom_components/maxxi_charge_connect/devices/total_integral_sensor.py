@@ -65,16 +65,12 @@ class TotalIntegralSensor(IntegrationSensor):
         """
         self.hass = hass
         self._attr_translation_key = self.__class__.__name__
-        self._attr_unique_id = (
-            f"{entry.entry_id}_{clean_title(self.__class__.__name__)}"
-        )
+        self._attr_unique_id = f"{entry.entry_id}_{clean_title(self.__class__.__name__)}"
         self._source_entity = source_entity_id
         self._sensor_source_id = source_entity_id
         self._round_digits = 3
         self._state = None
-        self._integration_method = self._method = _IntegrationMethod.from_name(
-            "trapezoidal"
-        )
+        self._integration_method = self._method = _IntegrationMethod.from_name("trapezoidal")
 
         # self._attr_name = name if name is not None else f"{source_entity} integral"
         self._unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
@@ -92,9 +88,7 @@ class TotalIntegralSensor(IntegrationSensor):
         self._last_integration_trigger = _IntegrationTrigger.StateEvent
         self._attr_suggested_display_precision = self._round_digits or 2
         # Zuweisung
-        self._max_sub_interval_exceeded_callback = (
-            self._handle_max_sub_interval_exceeded
-        )
+        self._max_sub_interval_exceeded_callback = self._handle_max_sub_interval_exceeded
 
         # Setzte neue Attribute
         self._entry = entry

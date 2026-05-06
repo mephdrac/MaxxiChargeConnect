@@ -62,9 +62,7 @@ class PowerConsumption(BaseWebhookSensor):
             pr_raw = data.get("Pr")
 
             if pccu_raw is None or pr_raw is None:
-                _LOGGER.debug(
-                    "PowerConsumption: fehlende Werte (Pccu=%s, Pr=%s)", pccu_raw, pr_raw
-                )
+                _LOGGER.debug("PowerConsumption: fehlende Werte (Pccu=%s, Pr=%s)", pccu_raw, pr_raw)
                 return
 
             pccu = float(pccu_raw)

@@ -16,7 +16,7 @@ from custom_components.maxxi_charge_connect.devices.battery_power import (
 
 @pytest.mark.asyncio
 async def test_battery_power_init():
-    """ Initialisierung der BatteryPower Entity testen."""
+    """Initialisierung der BatteryPower Entity testen."""
 
     dummy_config_entry = MagicMock()
     dummy_config_entry.entry_id = "1234abcd"
@@ -37,7 +37,7 @@ async def test_battery_power_init():
 
 @pytest.mark.asyncio
 async def test_battery_power_device_info():
-    """ Testet die device_info Eigenschaft der BatteryPower Entity."""
+    """Testet die device_info Eigenschaft der BatteryPower Entity."""
 
     dummy_config_entry = MagicMock()
     dummy_config_entry.title = "Test Entry"
@@ -60,15 +60,7 @@ async def test_battery_power__handle_update_positive_power():
     pccu = 37.623
     pv_power = 218  # PV > CCU = positive Leistung (Ladung)
 
-    data = {
-        "Pccu": pccu,
-        "PV_power_total": pv_power,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pccu": pccu, "PV_power_total": pv_power, "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor = BatteryPower(dummy_config_entry)
 
@@ -87,15 +79,7 @@ async def test_battery_power__handle_update_negative_power():
     pccu = 100.0
     pv_power = 50.0  # PV < CCU = negative Leistung (Entladung)
 
-    data = {
-        "Pccu": pccu,
-        "PV_power_total": pv_power,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pccu": pccu, "PV_power_total": pv_power, "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor = BatteryPower(dummy_config_entry)
 
@@ -114,15 +98,7 @@ async def test_battery_power__handle_update_zero_power():
     pccu = 100.0
     pv_power = 100.0  # PV == CCU = 0 Leistung
 
-    data = {
-        "Pccu": pccu,
-        "PV_power_total": pv_power,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pccu": pccu, "PV_power_total": pv_power, "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor = BatteryPower(dummy_config_entry)
 
@@ -134,18 +110,11 @@ async def test_battery_power__handle_update_zero_power():
 @pytest.mark.asyncio
 async def test_battery_power__handle_update_missing_pccu():
     """Testet Verhalten bei fehlendem Pccu Feld."""
-    
+
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "PV_power_total": 200.0,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"PV_power_total": 200.0, "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor = BatteryPower(dummy_config_entry)
 
@@ -157,18 +126,11 @@ async def test_battery_power__handle_update_missing_pccu():
 @pytest.mark.asyncio
 async def test_battery_power__handle_update_missing_pv_power():
     """Testet Verhalten bei fehlendem PV_power_total Feld."""
-    
+
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "Pccu": 50.0,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pccu": 50.0, "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor = BatteryPower(dummy_config_entry)
 
@@ -180,43 +142,27 @@ async def test_battery_power__handle_update_missing_pv_power():
 @pytest.mark.asyncio
 async def test_battery_power__handle_update_string_values():
     """Testet Konvertierung von String-Werten."""
-    
+
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "Pccu": "50.5",
-        "PV_power_total": "150.5",
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pccu": "50.5", "PV_power_total": "150.5", "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor = BatteryPower(dummy_config_entry)
 
     await sensor.handle_update(data)  # pylint: disable=protected-access
-    
+
     assert sensor._attr_native_value == 100.0  # 150.5 - 50.5 = 100.0  # pylint: disable=protected-access
 
 
 @pytest.mark.asyncio
 async def test_battery_power__handle_update_invalid_string_values():
     """Testet Verhalten bei ungültigen String-Werten."""
-    
+
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "Pccu": "invalid",
-        "PV_power_total": "150.5",
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pccu": "invalid", "PV_power_total": "150.5", "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor = BatteryPower(dummy_config_entry)
 
@@ -227,7 +173,7 @@ async def test_battery_power__handle_update_invalid_string_values():
 
 @pytest.mark.asyncio
 async def test_battery_power__handle_update_pccu_nicht_ok():
-    """ _handle_update Methode der BatteryPower Entity testen, wenn die PCCU Bedingung nicht erfüllt ist."""
+    """_handle_update Methode der BatteryPower Entity testen, wenn die PCCU Bedingung nicht erfüllt ist."""
     # is_pccu_ok(ccu) == false
     # is_power_total_ok(pv_power, batteries) == true
 
@@ -236,30 +182,17 @@ async def test_battery_power__handle_update_pccu_nicht_ok():
     pccu = 36500
     pv_power = 218
 
-    data = {
-        "Pccu": pccu,
-        "PV_power_total": pv_power,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pccu": pccu, "PV_power_total": pv_power, "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor1 = BatteryPower(dummy_config_entry)
 
     with (
-            patch(
-                "custom_components.maxxi_charge_connect.devices.battery_power."
-                "is_pccu_ok",
-                return_value=False
-            ) as mock_is_pccu_ok1,
-
-            patch(
-                "custom_components.maxxi_charge_connect.devices.battery_power."
-                "is_power_total_ok",
-                return_value=True
-            ) as mock_is_power_ok1
+        patch(
+            "custom_components.maxxi_charge_connect.devices.battery_power.is_pccu_ok", return_value=False
+        ) as mock_is_pccu_ok1,
+        patch(
+            "custom_components.maxxi_charge_connect.devices.battery_power.is_power_total_ok", return_value=True
+        ) as mock_is_power_ok1,
     ):
         await sensor1.handle_update(data)  # pylint: disable=protected-access
 
@@ -274,7 +207,7 @@ async def test_battery_power__handle_update_pccu_nicht_ok():
 
 @pytest.mark.asyncio
 async def test_battery_power__handle_update_alles_nicht_ok():
-    """ _handle_update Methode der BatteryPower Entity testen, wenn keine der Bedingungen erfüllt ist."""
+    """_handle_update Methode der BatteryPower Entity testen, wenn keine der Bedingungen erfüllt ist."""
     # is_pccu_ok(ccu) == false
     # is_power_total_ok(pv_power, batteries) == false
 
@@ -283,30 +216,17 @@ async def test_battery_power__handle_update_alles_nicht_ok():
     pccu = 36500
     pv_power = 218
 
-    data = {
-        "Pccu": pccu,
-        "PV_power_total": pv_power,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pccu": pccu, "PV_power_total": pv_power, "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor1 = BatteryPower(dummy_config_entry)
 
     with (
-            patch(
-                "custom_components.maxxi_charge_connect.devices.battery_power."
-                "is_pccu_ok",
-                return_value=False
-            ) as mock_is_pccu_ok1,
-
-            patch(
-                "custom_components.maxxi_charge_connect.devices.battery_power."
-                "is_power_total_ok",
-                return_value=False
-            ) as mock_is_power_ok1
+        patch(
+            "custom_components.maxxi_charge_connect.devices.battery_power.is_pccu_ok", return_value=False
+        ) as mock_is_pccu_ok1,
+        patch(
+            "custom_components.maxxi_charge_connect.devices.battery_power.is_power_total_ok", return_value=False
+        ) as mock_is_power_ok1,
     ):
         await sensor1.handle_update(data)  # pylint: disable=protected-access
 
@@ -321,7 +241,7 @@ async def test_battery_power__handle_update_alles_nicht_ok():
 
 @pytest.mark.asyncio
 async def test_battery_power__handle_update_power_total_nicht_ok():
-    """ _handle_update Methode der BatteryPower Entity testen, wenn die Power Total Bedingung nicht erfüllt ist."""
+    """_handle_update Methode der BatteryPower Entity testen, wenn die Power Total Bedingung nicht erfüllt ist."""
     # is_pccu_ok(ccu) == true
     # is_power_total_ok(pv_power, batteries) == false
 
@@ -330,30 +250,17 @@ async def test_battery_power__handle_update_power_total_nicht_ok():
     pccu = 45.345
     pv_power = 218
 
-    data = {
-        "Pccu": pccu,
-        "PV_power_total": pv_power,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pccu": pccu, "PV_power_total": pv_power, "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor1 = BatteryPower(dummy_config_entry)
 
     with (
-            patch(
-                "custom_components.maxxi_charge_connect.devices.battery_power."
-                "is_pccu_ok",
-                return_value=True
-            ) as mock_is_pccu_ok1,
-
-            patch(
-                "custom_components.maxxi_charge_connect.devices.battery_power."
-                "is_power_total_ok",
-                return_value=False
-            ) as mock_is_power_ok1
+        patch(
+            "custom_components.maxxi_charge_connect.devices.battery_power.is_pccu_ok", return_value=True
+        ) as mock_is_pccu_ok1,
+        patch(
+            "custom_components.maxxi_charge_connect.devices.battery_power.is_power_total_ok", return_value=False
+        ) as mock_is_power_ok1,
     ):
         await sensor1.handle_update(data)  # pylint: disable=protected-access
 

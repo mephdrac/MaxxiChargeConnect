@@ -22,7 +22,7 @@ from custom_components.maxxi_charge_connect.devices.battery_soc import (
 
 @pytest.mark.asyncio
 async def test_battery_soc__init():
-    """ Initialisierung der BatterySoc Entity testen."""
+    """Initialisierung der BatterySoc Entity testen."""
 
     dummy_config_entry = MagicMock()
     dummy_config_entry.entry_id = "1234abcd"
@@ -42,7 +42,7 @@ async def test_battery_soc__init():
 
 @pytest.mark.asyncio
 async def test_battery_soc__device_info():
-    """ Testet die device_info Eigenschaft der BatterySoc Entity."""
+    """Testet die device_info Eigenschaft der BatterySoc Entity."""
 
     dummy_config_entry = MagicMock()
     dummy_config_entry.title = "Test Entry"
@@ -57,7 +57,7 @@ async def test_battery_soc__device_info():
 
 @pytest.mark.asyncio
 async def test_battery_soc__handle_update_alles_ok():
-    """ _handle_update Methode der BatterySoc Entity testen, wenn alle Bedingungen erfüllt sind."""
+    """_handle_update Methode der BatterySoc Entity testen, wenn alle Bedingungen erfüllt sind."""
 
     hass = MagicMock()
     hass.async_add_job = AsyncMock()
@@ -72,9 +72,7 @@ async def test_battery_soc__handle_update_alles_ok():
 
     soc = 37.623
 
-    data = {
-        "SOC": soc
-    }
+    data = {"SOC": soc}
 
     sensor = BatterySoc(dummy_config_entry)
     sensor.hass = hass  # <<< WICHTIG
@@ -83,7 +81,6 @@ async def test_battery_soc__handle_update_alles_ok():
         "custom_components.maxxi_charge_connect.devices.battery_soc.BatterySoc.async_write_ha_state",
         new_callable=MagicMock,
     ) as mock_write_ha_state:
-
         await sensor.handle_update(data)
         mock_write_ha_state.assert_called_once()
 
@@ -92,7 +89,7 @@ async def test_battery_soc__handle_update_alles_ok():
 
 @pytest.mark.asyncio
 async def test_battery_soc__icon_0_Prozent():  # pylint: disable=invalid-name
-    """ Testet das Icon der BatterySoc Entity bei 0 Prozent SOC."""
+    """Testet das Icon der BatterySoc Entity bei 0 Prozent SOC."""
 
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
@@ -105,7 +102,7 @@ async def test_battery_soc__icon_0_Prozent():  # pylint: disable=invalid-name
 
 @pytest.mark.asyncio
 async def test_battery_soc__icon_18_Prozent():  # pylint: disable=invalid-name
-    """ Testet das Icon der BatterySoc Entity bei 18 Prozent SOC."""
+    """Testet das Icon der BatterySoc Entity bei 18 Prozent SOC."""
 
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
@@ -118,7 +115,7 @@ async def test_battery_soc__icon_18_Prozent():  # pylint: disable=invalid-name
 
 @pytest.mark.asyncio
 async def test_battery_soc__icon_38_Prozent():  # pylint: disable=invalid-name
-    """ Testet das Icon der BatterySoc Entity bei 38 Prozent SOC."""
+    """Testet das Icon der BatterySoc Entity bei 38 Prozent SOC."""
 
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
@@ -131,7 +128,7 @@ async def test_battery_soc__icon_38_Prozent():  # pylint: disable=invalid-name
 
 @pytest.mark.asyncio
 async def test_battery_soc__icon_100_Prozent():  # pylint: disable=invalid-name
-    """ Testet das Icon der BatterySoc Entity bei 100 Prozent SOC."""
+    """Testet das Icon der BatterySoc Entity bei 100 Prozent SOC."""
 
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
@@ -144,7 +141,7 @@ async def test_battery_soc__icon_100_Prozent():  # pylint: disable=invalid-name
 
 @pytest.mark.asyncio
 async def test_battery_soc__check_upper_limit_reached1():  # pylint: disable=invalid-name
-    """ Testet die _check_upper_limit_reached Methode der BatterySoc Entity.
+    """Testet die _check_upper_limit_reached Methode der BatterySoc Entity.
 
     Test den Fall, dass die obere Grenze erreicht ist. Also der Returnwert True ist.
     """
@@ -154,12 +151,7 @@ async def test_battery_soc__check_upper_limit_reached1():  # pylint: disable=inv
 
     hass = MagicMock()
 
-    hass.data = {
-        DOMAIN: {
-            CONF_WINTER_MAX_CHARGE: 60,
-            CONF_WINTER_MIN_CHARGE: 20
-        }
-    }
+    hass.data = {DOMAIN: {CONF_WINTER_MAX_CHARGE: 60, CONF_WINTER_MIN_CHARGE: 20}}
 
     cur_value = float(60)
     cur_min_limit = float(60)  # aktuelles Entladelimmit der CCU
@@ -174,7 +166,7 @@ async def test_battery_soc__check_upper_limit_reached1():  # pylint: disable=inv
 
 @pytest.mark.asyncio
 async def test_battery_soc__check_upper_limit_reached2():  # pylint: disable=invalid-name
-    """ Testet die _check_upper_limit_reached Methode der BatterySoc Entity.
+    """Testet die _check_upper_limit_reached Methode der BatterySoc Entity.
 
     Test den Fall, dass die obere Grenze noch nicht erreicht ist. Also der Returnwert False ist.
     """
@@ -184,12 +176,7 @@ async def test_battery_soc__check_upper_limit_reached2():  # pylint: disable=inv
 
     hass = MagicMock()
 
-    hass.data = {
-        DOMAIN: {
-            CONF_WINTER_MAX_CHARGE: 60,
-            CONF_WINTER_MIN_CHARGE: 20
-        }
-    }
+    hass.data = {DOMAIN: {CONF_WINTER_MAX_CHARGE: 60, CONF_WINTER_MIN_CHARGE: 20}}
 
     cur_value = float(46)
     cur_min_limit = float(60)  # aktuelles Entladelimmit der CCU
@@ -204,7 +191,7 @@ async def test_battery_soc__check_upper_limit_reached2():  # pylint: disable=inv
 
 @pytest.mark.asyncio
 async def test_battery_soc__check_upper_limit_reached3():  # pylint: disable=invalid-name
-    """ Testet die _check_upper_limit_reached Methode der BatterySoc Entity.
+    """Testet die _check_upper_limit_reached Methode der BatterySoc Entity.
 
     Test den Fall, dass die obere Grenze erreicht ist. Aber das cur_min_limit - bereits
     auf dem unteren WinterMinLimit steht.Also der Returnwert False ist.
@@ -215,12 +202,7 @@ async def test_battery_soc__check_upper_limit_reached3():  # pylint: disable=inv
 
     hass = MagicMock()
 
-    hass.data = {
-        DOMAIN: {
-            CONF_WINTER_MAX_CHARGE: 60,
-            CONF_WINTER_MIN_CHARGE: 20
-        }
-    }
+    hass.data = {DOMAIN: {CONF_WINTER_MAX_CHARGE: 60, CONF_WINTER_MIN_CHARGE: 20}}
 
     cur_value = float(61)
     cur_min_limit = float(20)  # aktuelles Entladelimmit der CCU
@@ -235,7 +217,7 @@ async def test_battery_soc__check_upper_limit_reached3():  # pylint: disable=inv
 
 @pytest.mark.asyncio
 async def test_battery_soc__check_lower_limit_reached1():  # pylint: disable=invalid-name
-    """ Testet die _check_lower_limit_reached Methode der BatterySoc Entity.
+    """Testet die _check_lower_limit_reached Methode der BatterySoc Entity.
 
     Test den Fall, dass die untere Grenze erreicht ist. Also der Returnwert True ist.
     """
@@ -245,12 +227,7 @@ async def test_battery_soc__check_lower_limit_reached1():  # pylint: disable=inv
 
     hass = MagicMock()
 
-    hass.data = {
-        DOMAIN: {
-            CONF_WINTER_MAX_CHARGE: 60,
-            CONF_WINTER_MIN_CHARGE: 20
-        }
-    }
+    hass.data = {DOMAIN: {CONF_WINTER_MAX_CHARGE: 60, CONF_WINTER_MIN_CHARGE: 20}}
 
     cur_value = float(20)
     cur_min_limit = float(20)  # aktuelles Entladelimmit der CCU
@@ -265,7 +242,7 @@ async def test_battery_soc__check_lower_limit_reached1():  # pylint: disable=inv
 
 @pytest.mark.asyncio
 async def test_battery_soc__check_lower_limit_reached2():  # pylint: disable=invalid-name
-    """ Testet die _check_upper_limit_reached Methode der BatterySoc Entity.
+    """Testet die _check_upper_limit_reached Methode der BatterySoc Entity.
 
     Test den Fall, dass die untere Grenze noch nicht erreicht ist. Also der Returnwert False ist.
     """
@@ -275,12 +252,7 @@ async def test_battery_soc__check_lower_limit_reached2():  # pylint: disable=inv
 
     hass = MagicMock()
 
-    hass.data = {
-        DOMAIN: {
-            CONF_WINTER_MAX_CHARGE: 60,
-            CONF_WINTER_MIN_CHARGE: 20
-        }
-    }
+    hass.data = {DOMAIN: {CONF_WINTER_MAX_CHARGE: 60, CONF_WINTER_MIN_CHARGE: 20}}
 
     cur_value = float(41)
     cur_min_limit = float(20)  # aktuelles Entladelimmit der CCU
@@ -295,7 +267,7 @@ async def test_battery_soc__check_lower_limit_reached2():  # pylint: disable=inv
 
 @pytest.mark.asyncio
 async def test_battery_soc__check_lower_limit_reached3():  # pylint: disable=invalid-name
-    """ Testet die _check_upper_limit_reached Methode der BatterySoc Entity.
+    """Testet die _check_upper_limit_reached Methode der BatterySoc Entity.
 
     Test den Fall, dass die untere Grenze erreicht ist. Aber das cur_min_limit - bereits
     auf dem oberen WinterMinLimit steht. Also der Returnwert False ist.
@@ -306,12 +278,7 @@ async def test_battery_soc__check_lower_limit_reached3():  # pylint: disable=inv
 
     hass = MagicMock()
 
-    hass.data = {
-        DOMAIN: {
-            CONF_WINTER_MAX_CHARGE: 60,
-            CONF_WINTER_MIN_CHARGE: 20
-        }
-    }
+    hass.data = {DOMAIN: {CONF_WINTER_MAX_CHARGE: 60, CONF_WINTER_MIN_CHARGE: 20}}
 
     cur_value = float(61)
     cur_min_limit = float(20)  # aktuelles Entladelimmit der CCU
@@ -339,12 +306,7 @@ async def test_battery_soc___do_wintermode1(mock_async_get_min_soc_entity):  # p
     winter_max_charge = float(60)
     winter_min_charge = float(20)
 
-    mock_hass.data = {
-        DOMAIN: {
-            CONF_WINTER_MAX_CHARGE: winter_max_charge,
-            CONF_WINTER_MIN_CHARGE: winter_min_charge
-        }
-    }
+    mock_hass.data = {DOMAIN: {CONF_WINTER_MAX_CHARGE: winter_max_charge, CONF_WINTER_MIN_CHARGE: winter_min_charge}}
     mock_entity = MagicMock()
     mock_entity.set_change_limitation = AsyncMock()
 
@@ -359,23 +321,23 @@ async def test_battery_soc___do_wintermode1(mock_async_get_min_soc_entity):  # p
 
     mock_async_get_min_soc_entity.return_value = (mock_entity, mock_state)
 
-    sensor._check_lower_limit_reached = AsyncMock(    # pylint: disable=protected-access
+    sensor._check_lower_limit_reached = AsyncMock(  # pylint: disable=protected-access
         return_value=True
     )
 
-    sensor._check_upper_limit_reached = AsyncMock(    # pylint: disable=protected-access
+    sensor._check_upper_limit_reached = AsyncMock(  # pylint: disable=protected-access
         return_value=False
     )
 
-    await sensor._do_wintermode(cur_value)   # pylint: disable=protected-access
+    await sensor._do_wintermode(cur_value)  # pylint: disable=protected-access
 
     mock_async_get_min_soc_entity.assert_awaited_once_with(
         sensor.hass,
         sensor._entry.entry_id,  # pylint: disable=protected-access
     )
-    sensor._check_lower_limit_reached.assert_called_once_with(cur_value, cur_state)   # pylint: disable=protected-access
-    sensor._check_upper_limit_reached.assert_not_called()   # pylint: disable=protected-access
-    mock_entity.set_change_limitation.assert_awaited_once_with(winter_max_charge, 5)   # pylint: disable=protected-access
+    sensor._check_lower_limit_reached.assert_called_once_with(cur_value, cur_state)  # pylint: disable=protected-access
+    sensor._check_upper_limit_reached.assert_not_called()  # pylint: disable=protected-access
+    mock_entity.set_change_limitation.assert_awaited_once_with(winter_max_charge, 5)  # pylint: disable=protected-access
 
 
 @patch(
@@ -393,12 +355,7 @@ async def test_battery_soc___do_wintermode2(mock_async_get_min_soc_entity):  # p
     winter_max_charge = float(60)
     winter_min_charge = float(20)
 
-    mock_hass.data = {
-        DOMAIN: {
-            CONF_WINTER_MAX_CHARGE: winter_max_charge,
-            CONF_WINTER_MIN_CHARGE: winter_min_charge
-        }
-    }
+    mock_hass.data = {DOMAIN: {CONF_WINTER_MAX_CHARGE: winter_max_charge, CONF_WINTER_MIN_CHARGE: winter_min_charge}}
     mock_entity = MagicMock()
     mock_entity.set_change_limitation = AsyncMock()
 
@@ -413,22 +370,22 @@ async def test_battery_soc___do_wintermode2(mock_async_get_min_soc_entity):  # p
 
     mock_async_get_min_soc_entity.return_value = (mock_entity, mock_state)
 
-    sensor._check_lower_limit_reached = AsyncMock(    # pylint: disable=protected-access
+    sensor._check_lower_limit_reached = AsyncMock(  # pylint: disable=protected-access
         return_value=False
     )
 
-    sensor._check_upper_limit_reached = AsyncMock(    # pylint: disable=protected-access
+    sensor._check_upper_limit_reached = AsyncMock(  # pylint: disable=protected-access
         return_value=False
     )
 
-    await sensor._do_wintermode(cur_value)   # pylint: disable=protected-access
+    await sensor._do_wintermode(cur_value)  # pylint: disable=protected-access
 
     mock_async_get_min_soc_entity.assert_awaited_once_with(
         sensor.hass,
         sensor._entry.entry_id,  # pylint: disable=protected-access
     )
-    sensor._check_lower_limit_reached.assert_called_once_with(cur_value, cur_state)   # pylint: disable=protected-access
-    sensor._check_upper_limit_reached.assert_called_once_with(cur_value, cur_state)   # pylint: disable=protected-access
+    sensor._check_lower_limit_reached.assert_called_once_with(cur_value, cur_state)  # pylint: disable=protected-access
+    sensor._check_upper_limit_reached.assert_called_once_with(cur_value, cur_state)  # pylint: disable=protected-access
     mock_entity.set_change_limitation.assert_not_awaited()  # pylint: disable=protected-access
 
 
@@ -503,12 +460,7 @@ async def test_battery_soc___do_wintermode3(mock_async_get_min_soc_entity):  # p
     winter_max_charge = float(60)
     winter_min_charge = float(20)
 
-    mock_hass.data = {
-        DOMAIN: {
-            CONF_WINTER_MAX_CHARGE: winter_max_charge,
-            CONF_WINTER_MIN_CHARGE: winter_min_charge
-        }
-    }
+    mock_hass.data = {DOMAIN: {CONF_WINTER_MAX_CHARGE: winter_max_charge, CONF_WINTER_MIN_CHARGE: winter_min_charge}}
     mock_entity = MagicMock()
     mock_entity.set_change_limitation = AsyncMock()
 
@@ -523,20 +475,20 @@ async def test_battery_soc___do_wintermode3(mock_async_get_min_soc_entity):  # p
 
     mock_async_get_min_soc_entity.return_value = (mock_entity, mock_state)
 
-    sensor._check_lower_limit_reached = AsyncMock(    # pylint: disable=protected-access
+    sensor._check_lower_limit_reached = AsyncMock(  # pylint: disable=protected-access
         return_value=False
     )
 
-    sensor._check_upper_limit_reached = AsyncMock(    # pylint: disable=protected-access
+    sensor._check_upper_limit_reached = AsyncMock(  # pylint: disable=protected-access
         return_value=True
     )
 
-    await sensor._do_wintermode(cur_value)   # pylint: disable=protected-access
+    await sensor._do_wintermode(cur_value)  # pylint: disable=protected-access
 
     mock_async_get_min_soc_entity.assert_awaited_once_with(
         sensor.hass,
         sensor._entry.entry_id,  # pylint: disable=protected-access
     )
-    sensor._check_upper_limit_reached.assert_called_once_with(cur_value, cur_state)   # pylint: disable=protected-access
-    sensor._check_lower_limit_reached.assert_called_once_with(cur_value, cur_state)   # pylint: disable=protected-access
-    mock_entity.set_change_limitation.assert_awaited_once_with(winter_min_charge, 5)   # pylint: disable=protected-access
+    sensor._check_upper_limit_reached.assert_called_once_with(cur_value, cur_state)  # pylint: disable=protected-access
+    sensor._check_lower_limit_reached.assert_called_once_with(cur_value, cur_state)  # pylint: disable=protected-access
+    mock_entity.set_change_limitation.assert_awaited_once_with(winter_min_charge, 5)  # pylint: disable=protected-access

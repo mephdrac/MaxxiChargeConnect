@@ -76,14 +76,9 @@ async def test_power_consumption_add_and_handle_update1(sensor):  # pylint: disa
     - native_value bleibt None.
     """
     with (
-        patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption.is_pccu_ok"
-        ) as mock_is_pccu_ok,
-        patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption.is_pr_ok"
-        ) as mock_is_pr_ok,
+        patch("custom_components.maxxi_charge_connect.devices.power_consumption.is_pccu_ok") as mock_is_pccu_ok,
+        patch("custom_components.maxxi_charge_connect.devices.power_consumption.is_pr_ok") as mock_is_pr_ok,
     ):
-
         mock_is_pccu_ok.return_value = True
         mock_is_pr_ok.return_value = True
 
@@ -101,12 +96,8 @@ async def test_power_consumption_add_and_handle_update2(sensor):  # pylint: disa
     - native_value bleibt None.
     """
     with (
-        patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption.is_pccu_ok"
-        ) as mock_is_pccu_ok,
-        patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption.is_pr_ok"
-        ) as mock_is_pr_ok,
+        patch("custom_components.maxxi_charge_connect.devices.power_consumption.is_pccu_ok") as mock_is_pccu_ok,
+        patch("custom_components.maxxi_charge_connect.devices.power_consumption.is_pr_ok") as mock_is_pr_ok,
     ):
         mock_is_pccu_ok.return_value = False
         mock_is_pr_ok.return_value = True
@@ -125,12 +116,8 @@ async def test_power_consumption_add_and_handle_update3(sensor):  # pylint: disa
     - native_value bleibt None.
     """
     with (
-        patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption.is_pccu_ok"
-        ) as mock_is_pccu_ok,
-        patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption.is_pr_ok"
-        ) as mock_is_pr_ok,
+        patch("custom_components.maxxi_charge_connect.devices.power_consumption.is_pccu_ok") as mock_is_pccu_ok,
+        patch("custom_components.maxxi_charge_connect.devices.power_consumption.is_pr_ok") as mock_is_pr_ok,
     ):
         mock_is_pccu_ok.return_value = True
         mock_is_pr_ok.return_value = False
@@ -151,12 +138,8 @@ async def test_power_consumption_add_and_handle_update4(sensor):  # pylint: disa
     """
 
     with (
-        patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption.is_pccu_ok"
-        ) as mock_is_pccu_ok,
-        patch(
-            "custom_components.maxxi_charge_connect.devices.power_consumption.is_pr_ok"
-        ) as mock_is_pr_ok,
+        patch("custom_components.maxxi_charge_connect.devices.power_consumption.is_pccu_ok") as mock_is_pccu_ok,
+        patch("custom_components.maxxi_charge_connect.devices.power_consumption.is_pr_ok") as mock_is_pr_ok,
     ):
         mock_is_pccu_ok.return_value = False
         mock_is_pr_ok.return_value = False

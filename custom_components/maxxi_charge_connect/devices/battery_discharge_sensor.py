@@ -59,8 +59,7 @@ class BatteryDischargeSensor(BaseWebhookSensor):
 
             if not batteries_info or self._index >= len(batteries_info):
                 _LOGGER.debug(
-                    "BatteryDischargeSensor[%s]: Keine Batterie-Daten oder Index außerhalb Bereich",
-                    self._index
+                    "BatteryDischargeSensor[%s]: Keine Batterie-Daten oder Index außerhalb Bereich", self._index
                 )
                 return
 
@@ -68,10 +67,7 @@ class BatteryDischargeSensor(BaseWebhookSensor):
             battery_power = battery_data.get("batteryPower")
 
             if battery_power is None:
-                _LOGGER.debug(
-                    "BatteryDischargeSensor[%s]: batteryPower fehlt",
-                    self._index
-                )
+                _LOGGER.debug("BatteryDischargeSensor[%s]: batteryPower fehlt", self._index)
                 return
 
             # Konvertiere zu float
@@ -81,7 +77,8 @@ class BatteryDischargeSensor(BaseWebhookSensor):
             if discharge_power > 0:
                 _LOGGER.debug(
                     "BatteryDischargeSensor[%s]: Positive Leistung (%s W) - keine Entladeleistung",
-                    self._index, discharge_power
+                    self._index,
+                    discharge_power,
                 )
                 discharge_power = 0
 
@@ -99,24 +96,14 @@ class BatteryDischargeSensor(BaseWebhookSensor):
             # Plausibilitätsprüfung: Entladeleistung sollte vernünftig sein
             if discharge_power > 20000:  # 20kW als vernünftige Obergrenze
                 _LOGGER.warning(
-                    "BatteryDischargeSensor[%s]: Unplausible Entladeleistung: %s W",
-                    self._index, discharge_power
+                    "BatteryDischargeSensor[%s]: Unplausible Entladeleistung: %s W", self._index, discharge_power
                 )
                 return
 
             self._attr_native_value = discharge_power
-            _LOGGER.debug(
-                "BatteryDischargeSensor[%s]: Aktualisiert auf %s W",
-                self._index, discharge_power
-            )
+            _LOGGER.debug("BatteryDischargeSensor[%s]: Aktualisiert auf %s W", self._index, discharge_power)
 
         except (IndexError, KeyError) as err:
-            _LOGGER.warning(
-                "BatteryDischargeSensor[%s]: Datenstrukturfehler: %s",
-                self._index, err
-            )
+            _LOGGER.warning("BatteryDischargeSensor[%s]: Datenstrukturfehler: %s", self._index, err)
         except (ValueError, TypeError) as err:
-            _LOGGER.warning(
-                "BatteryDischargeSensor[%s]: Konvertierungsfehler: %s",
-                self._index, err
-            )
+            _LOGGER.warning("BatteryDischargeSensor[%s]: Konvertierungsfehler: %s", self._index, err)

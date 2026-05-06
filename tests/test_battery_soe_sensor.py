@@ -46,17 +46,11 @@ async def test_battery_soe_sensor__async_added_to_hass():
     mock_dispatcher_connect = AsyncMock()
     hass.data = {
         "maxxi_charge_connect": {
-            "abc123": {
-                "listeners": [],
-                "signal_update": "test_update_signal",
-                "signal_stale": "test_stale_signal"
-            }
+            "abc123": {"listeners": [], "signal_update": "test_update_signal", "signal_stale": "test_stale_signal"}
         }
     }
 
-    dummy_config_entry.data = {
-        CONF_WEBHOOK_ID: "Webhook_ID"
-    }
+    dummy_config_entry.data = {CONF_WEBHOOK_ID: "Webhook_ID"}
 
     sensor = BatterySoESensor(dummy_config_entry, 0)
     sensor.hass = hass
@@ -92,13 +86,7 @@ async def test_battery_soe_sensor__handle_update_alles_ok():
     dummy_config_entry.data = {}
 
     bat = 1187.339966
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryCapacity": bat
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryCapacity": bat}]}
 
     sensor = BatterySoESensor(dummy_config_entry, 0)
 
@@ -115,13 +103,7 @@ async def test_battery_soe_sensor__handle_update__index_error():
     dummy_config_entry.data = {}
 
     bat = 1187.339966
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryCapacity": bat
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryCapacity": bat}]}
 
     sensor = BatterySoESensor(dummy_config_entry, 10)
 
@@ -153,13 +135,7 @@ async def test_battery_soe_sensor__handle_update_none_battery_capacity():
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryCapacity": None
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryCapacity": None}]}
 
     sensor = BatterySoESensor(dummy_config_entry, 0)
 
@@ -176,13 +152,7 @@ async def test_battery_soe_sensor__handle_update_invalid_values():
     dummy_config_entry.data = {}
 
     # Test mit negativem Wert
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryCapacity": -100
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryCapacity": -100}]}
 
     sensor = BatterySoESensor(dummy_config_entry, 0)
 
@@ -191,13 +161,7 @@ async def test_battery_soe_sensor__handle_update_invalid_values():
     assert sensor._attr_native_value is None  # pylint: disable=protected-access
 
     # Test mit zu hohem Wert (>100000 Wh)
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 200000
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryCapacity": 200000}]}
 
     await sensor.handle_update(data)
 
@@ -211,13 +175,7 @@ async def test_battery_soe_sensor__handle_update_string_conversion():
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryCapacity": "1500.5"
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryCapacity": "1500.5"}]}
 
     sensor = BatterySoESensor(dummy_config_entry, 0)
 
@@ -233,13 +191,7 @@ async def test_battery_soe_sensor__handle_update_invalid_string():
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "batteriesInfo": [
-            {
-                "batteryCapacity": "invalid"
-            }
-        ]
-    }
+    data = {"batteriesInfo": [{"batteryCapacity": "invalid"}]}
 
     sensor = BatterySoESensor(dummy_config_entry, 0)
 

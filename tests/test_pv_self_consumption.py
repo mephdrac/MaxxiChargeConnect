@@ -37,7 +37,7 @@ async def test_pv_self_consumption__init():
 
 @pytest.mark.asyncio
 async def test_pv_self_consumption__device_info():
-    """ device_info Property der PvSelfConsumption Entity testen."""
+    """device_info Property der PvSelfConsumption Entity testen."""
 
     dummy_config_entry = MagicMock()
     dummy_config_entry.title = "Test Entry"
@@ -52,7 +52,7 @@ async def test_pv_self_consumption__device_info():
 
 @pytest.mark.asyncio
 async def test_pv_self_consumption__handle_update_alles_ok():
-    """ _handle_update Methode der PvSelfConsumption Entity testen, wenn alle Bedingungen erfüllt sind."""
+    """_handle_update Methode der PvSelfConsumption Entity testen, wenn alle Bedingungen erfüllt sind."""
 
     hass = MagicMock()
     hass.async_add_job = AsyncMock()
@@ -63,15 +63,7 @@ async def test_pv_self_consumption__handle_update_alles_ok():
     pr = 37.623
     pv_power = 218
 
-    data = {
-        "Pr": pr,
-        "PV_power_total": pv_power,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pr": pr, "PV_power_total": pv_power, "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor = PvSelfConsumption(dummy_config_entry)
 
@@ -81,7 +73,7 @@ async def test_pv_self_consumption__handle_update_alles_ok():
 
 @pytest.mark.asyncio
 async def test_pv_self_consumption__handle_update_pr_nicht_ok():
-    """ _handle_update Methode der PvSelfConsumption Entity testen, wenn PR nicht ok ist."""
+    """_handle_update Methode der PvSelfConsumption Entity testen, wenn PR nicht ok ist."""
 
     # is_pr_ok(pr) == false
     # is_power_total_ok(pv_power, batteries) == true
@@ -91,30 +83,17 @@ async def test_pv_self_consumption__handle_update_pr_nicht_ok():
     pr = 35
     pv_power = 218
 
-    data = {
-        "Pr": pr,
-        "PV_power_total": pv_power,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pr": pr, "PV_power_total": pv_power, "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor1 = PvSelfConsumption(dummy_config_entry)
 
     with (
-            patch(
-                "custom_components.maxxi_charge_connect.devices.pv_self_consumption."
-                "is_pr_ok",
-                return_value=False
-            ) as mock_is_pr_ok1,
-
-            patch(
-                "custom_components.maxxi_charge_connect.devices.pv_self_consumption."
-                "is_power_total_ok",
-                return_value=True
-            ) as mock_is_power_ok1
+        patch(
+            "custom_components.maxxi_charge_connect.devices.pv_self_consumption.is_pr_ok", return_value=False
+        ) as mock_is_pr_ok1,
+        patch(
+            "custom_components.maxxi_charge_connect.devices.pv_self_consumption.is_power_total_ok", return_value=True
+        ) as mock_is_power_ok1,
     ):
         await sensor1.handle_update(data)
 
@@ -129,7 +108,7 @@ async def test_pv_self_consumption__handle_update_pr_nicht_ok():
 
 @pytest.mark.asyncio
 async def test_pv_self_consumption__handle_update_power_nicht_ok():
-    """ _handle_update Methode der PvSelfConsumption Entity testen, wenn PV-Leistung nicht ok ist."""
+    """_handle_update Methode der PvSelfConsumption Entity testen, wenn PV-Leistung nicht ok ist."""
     # is_pr_ok(pr) == true
     # is_power_total_ok(pv_power, batteries) == false
 
@@ -138,30 +117,17 @@ async def test_pv_self_consumption__handle_update_power_nicht_ok():
     pr = 35
     pv_power = 218
 
-    data = {
-        "Pr": pr,
-        "PV_power_total": pv_power,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pr": pr, "PV_power_total": pv_power, "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor1 = PvSelfConsumption(dummy_config_entry)
 
     with (
-            patch(
-                "custom_components.maxxi_charge_connect.devices."
-                "pv_self_consumption.is_pr_ok",
-                return_value=True
-            ) as mock_is_pr_ok1,
-
-            patch(
-                "custom_components.maxxi_charge_connect.devices."
-                "pv_self_consumption.is_power_total_ok",
-                return_value=False
-            ) as mock_is_power_ok1
+        patch(
+            "custom_components.maxxi_charge_connect.devices.pv_self_consumption.is_pr_ok", return_value=True
+        ) as mock_is_pr_ok1,
+        patch(
+            "custom_components.maxxi_charge_connect.devices.pv_self_consumption.is_power_total_ok", return_value=False
+        ) as mock_is_power_ok1,
     ):
         await sensor1.handle_update(data)
 

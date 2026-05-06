@@ -60,9 +60,7 @@ class DeviceId(BaseWebhookSensor):
 
             # Maximale Länge prüfen (typisch für Geräte-IDs)
             if len(device_id.strip()) > 100:
-                _LOGGER.error(
-                    "DeviceId: deviceId zu lang: %s", device_id[:50] + "..."
-                )
+                _LOGGER.error("DeviceId: deviceId zu lang: %s", device_id[:50] + "...")
                 return
 
             self._attr_native_value = device_id.strip()

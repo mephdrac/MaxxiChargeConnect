@@ -52,7 +52,7 @@ async def test_battery_power_charge__device_info():
 
 @pytest.mark.asyncio
 async def test_battery_power_charge__handle_update_alles_ok():
-    """ _handle_update Methode der BatteryPowerCharge Entity testen, wenn alle Bedingungen erfüllt sind."""
+    """_handle_update Methode der BatteryPowerCharge Entity testen, wenn alle Bedingungen erfüllt sind."""
 
     # is_pccu_ok(ccu) == true
     # is_power_total_ok(pv_power, batteries) == true
@@ -65,15 +65,7 @@ async def test_battery_power_charge__handle_update_alles_ok():
     pccu = 37.623
     pv_power = 218
 
-    data = {
-        "Pccu": pccu,
-        "PV_power_total": pv_power,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pccu": pccu, "PV_power_total": pv_power, "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor = BatteryPowerCharge(dummy_config_entry)
 
@@ -81,7 +73,7 @@ async def test_battery_power_charge__handle_update_alles_ok():
     sensor.async_write_ha_state = MagicMock()
 
     await sensor.handle_update(data)  # pylint: disable=protected-access
-    
+
     # Bei BaseWebhookSensor wird async_write_ha_state im Wrapper aufgerufen
     # Wir prüfen nur, ob der Wert korrekt gesetzt wurde
     assert sensor._attr_native_value == round(pv_power - pccu, 3)  # pylint: disable=protected-access
@@ -89,28 +81,22 @@ async def test_battery_power_charge__handle_update_alles_ok():
 
 @pytest.mark.asyncio
 async def test_battery_power_charge__handle_update_negative_power():
-    """ _handle_update Methode testen, wenn die berechnete Batterieleistung negativ ist (Entladung)."""
-    
+    """_handle_update Methode testen, wenn die berechnete Batterieleistung negativ ist (Entladung)."""
+
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
     pccu = 100.0
     pv_power = 50.0  # PV < CCU = Entladung
 
-    data = {
-        "Pccu": pccu,
-        "PV_power_total": pv_power,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pccu": pccu, "PV_power_total": pv_power, "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor = BatteryPowerCharge(dummy_config_entry)
 
-    with patch("custom_components.maxxi_charge_connect.devices.battery_power_charge.BatteryPowerCharge.async_write_ha_state", new_callable=MagicMock
-               ) as mock_write_ha_state:
+    with patch(
+        "custom_components.maxxi_charge_connect.devices.battery_power_charge.BatteryPowerCharge.async_write_ha_state",
+        new_callable=MagicMock,
+    ) as mock_write_ha_state:
         await sensor.handle_update(data)  # pylint: disable=protected-access
         mock_write_ha_state.assert_not_called()  # Sollte nicht aktualisiert werden
 
@@ -119,28 +105,22 @@ async def test_battery_power_charge__handle_update_negative_power():
 
 @pytest.mark.asyncio
 async def test_battery_power_charge__handle_update_zero_power():
-    """ _handle_update Methode testen, wenn die berechnete Batterieleistung 0 ist."""
-    
+    """_handle_update Methode testen, wenn die berechnete Batterieleistung 0 ist."""
+
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
     pccu = 100.0
     pv_power = 100.0  # PV == CCU = 0 Ladeleistung
 
-    data = {
-        "Pccu": pccu,
-        "PV_power_total": pv_power,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pccu": pccu, "PV_power_total": pv_power, "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor = BatteryPowerCharge(dummy_config_entry)
 
-    with patch("custom_components.maxxi_charge_connect.devices.battery_power_charge.BatteryPowerCharge.async_write_ha_state", new_callable=MagicMock
-               ) as mock_write_ha_state:
+    with patch(
+        "custom_components.maxxi_charge_connect.devices.battery_power_charge.BatteryPowerCharge.async_write_ha_state",
+        new_callable=MagicMock,
+    ) as mock_write_ha_state:
         await sensor.handle_update(data)  # pylint: disable=protected-access
         mock_write_ha_state.assert_not_called()  # Sollte nicht aktualisiert werden
 
@@ -150,23 +130,18 @@ async def test_battery_power_charge__handle_update_zero_power():
 @pytest.mark.asyncio
 async def test_battery_power_charge__handle_update_missing_pccu():
     """Testet Verhalten bei fehlendem Pccu Feld."""
-    
+
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "PV_power_total": 200.0,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"PV_power_total": 200.0, "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor = BatteryPowerCharge(dummy_config_entry)
 
-    with patch("custom_components.maxxi_charge_connect.devices.battery_power_charge.BatteryPowerCharge.async_write_ha_state", new_callable=MagicMock
-               ) as mock_write_ha_state:
+    with patch(
+        "custom_components.maxxi_charge_connect.devices.battery_power_charge.BatteryPowerCharge.async_write_ha_state",
+        new_callable=MagicMock,
+    ) as mock_write_ha_state:
         await sensor.handle_update(data)  # pylint: disable=protected-access
         mock_write_ha_state.assert_not_called()
 
@@ -176,23 +151,18 @@ async def test_battery_power_charge__handle_update_missing_pccu():
 @pytest.mark.asyncio
 async def test_battery_power_charge__handle_update_missing_pv_power():
     """Testet Verhalten bei fehlendem PV_power_total Feld."""
-    
+
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "Pccu": 50.0,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pccu": 50.0, "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor = BatteryPowerCharge(dummy_config_entry)
 
-    with patch("custom_components.maxxi_charge_connect.devices.battery_power_charge.BatteryPowerCharge.async_write_ha_state", new_callable=MagicMock
-               ) as mock_write_ha_state:
+    with patch(
+        "custom_components.maxxi_charge_connect.devices.battery_power_charge.BatteryPowerCharge.async_write_ha_state",
+        new_callable=MagicMock,
+    ) as mock_write_ha_state:
         await sensor.handle_update(data)  # pylint: disable=protected-access
         mock_write_ha_state.assert_not_called()
 
@@ -202,24 +172,16 @@ async def test_battery_power_charge__handle_update_missing_pv_power():
 @pytest.mark.asyncio
 async def test_battery_power_charge__handle_update_string_values():
     """Testet Konvertierung von String-Werten."""
-    
+
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "Pccu": "50.5",
-        "PV_power_total": "150.5",
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pccu": "50.5", "PV_power_total": "150.5", "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor = BatteryPowerCharge(dummy_config_entry)
 
     await sensor.handle_update(data)  # pylint: disable=protected-access
-    
+
     # Bei BaseWebhookSensor wird async_write_ha_state im Wrapper aufgerufen
     # Wir prüfen nur, ob der Wert korrekt gesetzt wurde
     assert sensor._attr_native_value == 100.0  # 150.5 - 50.5 = 100.0  # pylint: disable=protected-access
@@ -228,24 +190,18 @@ async def test_battery_power_charge__handle_update_string_values():
 @pytest.mark.asyncio
 async def test_battery_power_charge__handle_update_invalid_string_values():
     """Testet Verhalten bei ungültigen String-Werten."""
-    
+
     dummy_config_entry = MagicMock()
     dummy_config_entry.data = {}
 
-    data = {
-        "Pccu": "invalid",
-        "PV_power_total": "150.5",
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pccu": "invalid", "PV_power_total": "150.5", "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor = BatteryPowerCharge(dummy_config_entry)
 
-    with patch("custom_components.maxxi_charge_connect.devices.battery_power_charge.BatteryPowerCharge.async_write_ha_state", new_callable=MagicMock
-               ) as mock_write_ha_state:
+    with patch(
+        "custom_components.maxxi_charge_connect.devices.battery_power_charge.BatteryPowerCharge.async_write_ha_state",
+        new_callable=MagicMock,
+    ) as mock_write_ha_state:
         await sensor.handle_update(data)  # pylint: disable=protected-access
         mock_write_ha_state.assert_not_called()
 
@@ -254,7 +210,7 @@ async def test_battery_power_charge__handle_update_invalid_string_values():
 
 @pytest.mark.asyncio
 async def test_battery_power_charge__handle_update_pccu_nicht_ok():
-    """ _handle_update Methode der BatteryPowerCharge Entity testen, wenn die PCCU Bedingung nicht erfüllt ist."""
+    """_handle_update Methode der BatteryPowerCharge Entity testen, wenn die PCCU Bedingung nicht erfüllt ist."""
     # is_pccu_ok(ccu) == false
     # is_power_total_ok(pv_power, batteries) == true
 
@@ -263,15 +219,7 @@ async def test_battery_power_charge__handle_update_pccu_nicht_ok():
     pccu = 36500
     pv_power = 218
 
-    data = {
-        "Pccu": pccu,
-        "PV_power_total": pv_power,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pccu": pccu, "PV_power_total": pv_power, "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor1 = BatteryPowerCharge(dummy_config_entry)
 
@@ -279,20 +227,14 @@ async def test_battery_power_charge__handle_update_pccu_nicht_ok():
         patch(
             "custom_components.maxxi_charge_connect.devices.battery_power_charge."
             "BatteryPowerCharge.async_write_ha_state",
-            new_callable=MagicMock
+            new_callable=MagicMock,
         ) as mock_write_ha_state1,
-
         patch(
-            "custom_components.maxxi_charge_connect.devices.battery_power_charge."
-            "is_pccu_ok",
-            return_value=False
+            "custom_components.maxxi_charge_connect.devices.battery_power_charge.is_pccu_ok", return_value=False
         ) as mock_is_pccu_ok1,
-
         patch(
-            "custom_components.maxxi_charge_connect.devices.battery_power_charge."
-            "is_power_total_ok",
-            return_value=True
-        ) as mock_is_power_ok1
+            "custom_components.maxxi_charge_connect.devices.battery_power_charge.is_power_total_ok", return_value=True
+        ) as mock_is_power_ok1,
     ):
         await sensor1.handle_update(data)  # pylint: disable=protected-access
 
@@ -308,7 +250,7 @@ async def test_battery_power_charge__handle_update_pccu_nicht_ok():
 
 @pytest.mark.asyncio
 async def test_battery_power_charge__handle_update_alles_nicht_ok():
-    """ _handle_update Methode der BatteryPowerCharge Entity testen, wenn keine der Bedingungen erfüllt ist."""
+    """_handle_update Methode der BatteryPowerCharge Entity testen, wenn keine der Bedingungen erfüllt ist."""
     # is_pccu_ok(ccu) == false
     # is_power_total_ok(pv_power, batteries) == false
 
@@ -317,15 +259,7 @@ async def test_battery_power_charge__handle_update_alles_nicht_ok():
     pccu = 36500
     pv_power = 218
 
-    data = {
-        "Pccu": pccu,
-        "PV_power_total": pv_power,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pccu": pccu, "PV_power_total": pv_power, "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor1 = BatteryPowerCharge(dummy_config_entry)
 
@@ -333,20 +267,14 @@ async def test_battery_power_charge__handle_update_alles_nicht_ok():
         patch(
             "custom_components.maxxi_charge_connect.devices.battery_power_charge."
             "BatteryPowerCharge.async_write_ha_state",
-            new_callable=MagicMock
+            new_callable=MagicMock,
         ) as mock_write_ha_state1,
-
         patch(
-            "custom_components.maxxi_charge_connect.devices.battery_power_charge."
-            "is_pccu_ok",
-            return_value=False
+            "custom_components.maxxi_charge_connect.devices.battery_power_charge.is_pccu_ok", return_value=False
         ) as mock_is_pccu_ok1,
-
         patch(
-            "custom_components.maxxi_charge_connect.devices.battery_power_charge."
-            "is_power_total_ok",
-            return_value=False
-        ) as mock_is_power_ok1
+            "custom_components.maxxi_charge_connect.devices.battery_power_charge.is_power_total_ok", return_value=False
+        ) as mock_is_power_ok1,
     ):
         await sensor1.handle_update(data)  # pylint: disable=protected-access
 
@@ -362,7 +290,7 @@ async def test_battery_power_charge__handle_update_alles_nicht_ok():
 
 @pytest.mark.asyncio
 async def test_battery_power_charge__handle_update_power_total_nicht_ok():
-    """ _handle_update Methode der BatteryPowerCharge Entity testen, wenn die Power Total Bedingung nicht erfüllt ist."""
+    """_handle_update Methode der BatteryPowerCharge Entity testen, wenn die Power Total Bedingung nicht erfüllt ist."""
     # is_pccu_ok(ccu) == true
     # is_power_total_ok(pv_power, batteries) == false
 
@@ -371,36 +299,22 @@ async def test_battery_power_charge__handle_update_power_total_nicht_ok():
     pccu = 45.345
     pv_power = 218
 
-    data = {
-        "Pccu": pccu,
-        "PV_power_total": pv_power,
-        "batteriesInfo": [
-            {
-                "batteryCapacity": 1187.339966
-            }
-        ]
-    }
+    data = {"Pccu": pccu, "PV_power_total": pv_power, "batteriesInfo": [{"batteryCapacity": 1187.339966}]}
 
     sensor1 = BatteryPowerCharge(dummy_config_entry)
 
     with (
-            patch(
-                "custom_components.maxxi_charge_connect.devices.battery_power_charge."
-                "BatteryPowerCharge.async_write_ha_state",
-                new_callable=MagicMock
-            ) as mock_write_ha_state1,
-
-            patch(
-                "custom_components.maxxi_charge_connect.devices.battery_power_charge."
-                "is_pccu_ok",
-                return_value=True
-            ) as mock_is_pccu_ok1,
-
-            patch(
-                "custom_components.maxxi_charge_connect.devices.battery_power_charge."
-                "is_power_total_ok",
-                return_value=False
-            ) as mock_is_power_ok1
+        patch(
+            "custom_components.maxxi_charge_connect.devices.battery_power_charge."
+            "BatteryPowerCharge.async_write_ha_state",
+            new_callable=MagicMock,
+        ) as mock_write_ha_state1,
+        patch(
+            "custom_components.maxxi_charge_connect.devices.battery_power_charge.is_pccu_ok", return_value=True
+        ) as mock_is_pccu_ok1,
+        patch(
+            "custom_components.maxxi_charge_connect.devices.battery_power_charge.is_power_total_ok", return_value=False
+        ) as mock_is_power_ok1,
     ):
         await sensor1.handle_update(data)  # pylint: disable=protected-access
 

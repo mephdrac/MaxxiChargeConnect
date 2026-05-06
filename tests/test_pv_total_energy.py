@@ -34,7 +34,9 @@ async def test_pv_total_energy_init():
     assert sensor._attr_unique_id == "1234abcd_pvtotalenergy"  # pylint: disable=protected-access
 
     # 👉 Patch den super()-Call zur Elternmethode
-    with patch("custom_components.maxxi_charge_connect.devices.total_integral_sensor.TotalIntegralSensor.async_added_to_hass"):
+    with patch(
+        "custom_components.maxxi_charge_connect.devices.total_integral_sensor.TotalIntegralSensor.async_added_to_hass"
+    ):
         await sensor.async_added_to_hass()
 
     # device_info liefert Dict mit erwarteten Keys

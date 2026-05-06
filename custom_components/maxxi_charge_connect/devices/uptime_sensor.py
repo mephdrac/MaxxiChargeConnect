@@ -73,9 +73,7 @@ class UptimeSensor(BaseWebhookSensor):
         now_utc = datetime.now(tz=UTC)
 
         # State nur einmal am Tag aktualisieren
-        if (self._last_state_update is None) or (
-            now_utc - self._last_state_update >= timedelta(days=1)
-        ):
+        if (self._last_state_update is None) or (now_utc - self._last_state_update >= timedelta(days=1)):
             start_time_utc = now_utc - timedelta(milliseconds=uptime_ms)
             self._attr_native_value = start_time_utc
             self._last_state_update = now_utc

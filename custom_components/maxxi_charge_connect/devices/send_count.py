@@ -93,7 +93,7 @@ class SendCount(BaseWebhookSensor):
         self._last_delta = delta
 
         if delta > 1:
-            self._missing_packets += (delta - 1)
+            self._missing_packets += delta - 1
             _LOGGER.info("SendCount Lücke erkannt: %s fehlende Telegramme (Delta: %s)", delta - 1, delta)
         elif delta <= 0:
             self._resets += 1

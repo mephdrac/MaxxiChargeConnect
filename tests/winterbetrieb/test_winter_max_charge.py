@@ -17,8 +17,7 @@ from custom_components.maxxi_charge_connect.winterbetrieb.winter_max_charge impo
 
 @pytest.mark.asyncio
 async def test_winter_max_charge__init():
-    """ Konstruktortest von WinterMaxCharge
-    """
+    """Konstruktortest von WinterMaxCharge"""
 
     mock_config_entry = MagicMock()
     mock_config_entry.entry_id = "1234abcd"
@@ -38,10 +37,12 @@ async def test_winter_max_charge__init():
     assert sensor.max_value == 100
     assert sensor.step == 1
 
-    mock_config_entry.options.get.assert_has_calls([
-        call(CONF_WINTER_MIN_CHARGE, DEFAULT_WINTER_MIN_CHARGE),
-        call(CONF_WINTER_MAX_CHARGE, DEFAULT_WINTER_MAX_CHARGE),
-    ])
+    mock_config_entry.options.get.assert_has_calls(
+        [
+            call(CONF_WINTER_MIN_CHARGE, DEFAULT_WINTER_MIN_CHARGE),
+            call(CONF_WINTER_MAX_CHARGE, DEFAULT_WINTER_MAX_CHARGE),
+        ]
+    )
     assert sensor._attr_native_value == winter_max_value  # pylint: disable=protected-access
 
     assert sensor._remove_listener is None  # pylint: disable=protected-access
@@ -121,7 +122,7 @@ async def test_winter_max_charge__async_set_native_value1(mock_async_get_min_soc
         sensor.hass,
         sensor._entry.entry_id,  # pylint: disable=protected-access
     )
-    mock_entity.set_change_limitation.assert_awaited_once_with(new_value, 5)   # pylint: disable=protected-access
+    mock_entity.set_change_limitation.assert_awaited_once_with(new_value, 5)  # pylint: disable=protected-access
 
 
 @patch(
@@ -165,7 +166,7 @@ async def test_winter_max_charge__async_set_native_value2(mock_async_get_min_soc
         sensor.hass,
         sensor._entry.entry_id,  # pylint: disable=protected-access
     )
-    mock_entity.set_change_limitation.assert_awaited_once_with(new_value, 5)   # pylint: disable=protected-access
+    mock_entity.set_change_limitation.assert_awaited_once_with(new_value, 5)  # pylint: disable=protected-access
 
 
 @patch(
@@ -209,7 +210,7 @@ async def test_winter_max_charge__async_set_native_value3(mock_async_get_min_soc
         sensor.hass,
         sensor._entry.entry_id,  # pylint: disable=protected-access
     )
-    mock_entity.set_change_limitation.assert_not_awaited()   # pylint: disable=protected-access
+    mock_entity.set_change_limitation.assert_not_awaited()  # pylint: disable=protected-access
 
 
 @patch(
@@ -250,7 +251,7 @@ async def test_winter_max_charge__async_set_native_value4(mock_async_get_min_soc
         sensor.hass,
         sensor._entry.entry_id,  # pylint: disable=protected-access
     )
-    mock_entity.set_change_limitation.assert_not_awaited()   # pylint: disable=protected-access
+    mock_entity.set_change_limitation.assert_not_awaited()  # pylint: disable=protected-access
 
 
 @patch(
@@ -291,4 +292,4 @@ async def test_winter_max_charge__async_set_native_value5(mock_async_get_min_soc
         sensor.hass,
         sensor._entry.entry_id,  # pylint: disable=protected-access
     )
-    mock_entity.set_change_limitation.assert_not_awaited()   # pylint: disable=protected-access
+    mock_entity.set_change_limitation.assert_not_awaited()  # pylint: disable=protected-access

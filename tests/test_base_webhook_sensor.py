@@ -50,10 +50,7 @@ def hass():
     hass = MagicMock()
     hass.data = {
         DOMAIN: {
-            "test_entry_id": {
-                WEBHOOK_SIGNAL_UPDATE: "test_update_signal",
-                WEBHOOK_SIGNAL_STATE: "test_stale_signal"
-            }
+            "test_entry_id": {WEBHOOK_SIGNAL_UPDATE: "test_update_signal", WEBHOOK_SIGNAL_STATE: "test_stale_signal"}
         }
     }
     return hass
@@ -80,7 +77,7 @@ async def test_restore_state_float(entry, hass):
     old_state = MagicMock()
     old_state.state = "123.45"
 
-    with patch.object(sensor, 'async_get_last_state', return_value=old_state):
+    with patch.object(sensor, "async_get_last_state", return_value=old_state):
         await sensor.async_added_to_hass()
 
     assert sensor._attr_native_value == 123.45
@@ -97,7 +94,7 @@ async def test_restore_state_invalid(entry, hass):
     old_state = MagicMock()
     old_state.state = "invalid_number"
 
-    with patch.object(sensor, 'async_get_last_state', return_value=old_state):
+    with patch.object(sensor, "async_get_last_state", return_value=old_state):
         await sensor.async_added_to_hass()
 
     assert sensor._attr_native_value is None

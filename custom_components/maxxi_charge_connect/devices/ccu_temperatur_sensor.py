@@ -103,9 +103,7 @@ class CCUTemperaturSensor(BaseWebhookSensor):
 
             # Plausibilitätsprüfung für Durchschnitt
             if not -40 <= durchschnitt <= 85:
-                _LOGGER.warning(
-                    "Unplausible durchschnittliche CCU-Temperatur: %s°C", durchschnitt
-                )
+                _LOGGER.warning("Unplausible durchschnittliche CCU-Temperatur: %s°C", durchschnitt)
                 self._attr_native_value = None
                 return
 

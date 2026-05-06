@@ -33,6 +33,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+
 # pylint: disable=too-many-locals, too-many-return-statements, too-many-statements
 async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
     """Registriert einen Webhook für den angegebenen ConfigEntry.
@@ -70,9 +71,7 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
 
     # async def handle_webhook(webhook_id, request):
 
-    async def handle_webhook(
-        hass: HomeAssistant, webhook_id: str, request: web.Request
-    ):
+    async def handle_webhook(hass: HomeAssistant, webhook_id: str, request: web.Request):
         try:
             allowed_ip = entry.data.get(CONF_IP_ADDRESS, "")
             only_one_ip = entry.data.get(ONLY_ONE_IP, False)
@@ -86,9 +85,7 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
                     peername = request.transport.get_extra_info("peername")
 
                 if peername is None:
-                    _LOGGER.warning(
-                        "Konnte Peername nicht ermitteln – Zugriff verweigert"
-                    )
+                    _LOGGER.warning("Konnte Peername nicht ermitteln – Zugriff verweigert")
                     return web.Response(status=403, text="Forbidden")
 
                 remote_ip, _ = peername
@@ -127,9 +124,11 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
             _LOGGER.debug("Webhook [%s] last_process_time: %s", webhook_id, last_process_time)
 
             # Wenn gleicher sendCount innerhalb von 5 Sekunden → ignorieren
-            if (last_sendcount == send_count and
-                    last_process_time and
-                    (current_time - last_process_time).total_seconds() < 5):
+            if (
+                last_sendcount == send_count
+                and last_process_time
+                and (current_time - last_process_time).total_seconds() < 5
+            ):
                 _LOGGER.warning("Doppelte Webhook-Ausführung erkannt (sendCount: %s), ignoriere", send_count)
                 return web.Response(status=200, text="Duplicate request ignored")
 
@@ -166,9 +165,7 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
     )
 
 
-async def async_unregister_webhook(
-    hass: HomeAssistant, entry: ConfigEntry, old_webhook_id: str | None = None
-):
+async def async_unregister_webhook(hass: HomeAssistant, entry: ConfigEntry, old_webhook_id: str | None = None):
     """Meldet den Webhook für den angegebenen ConfigEntry ab."""
 
     task = hass.data[DOMAIN][entry.entry_id].get(WEBHOOK_WATCHDOG_TASK)

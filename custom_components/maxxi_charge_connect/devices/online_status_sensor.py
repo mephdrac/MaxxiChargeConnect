@@ -70,18 +70,12 @@ class OnlineStatusSensor(BinarySensorEntity):
 
         if self._enable_cloud_data:
             _LOGGER.info("Daten kommen vom Proxy")
-            self.hass.bus.async_listen(
-                PROXY_STATUS_EVENTNAME, self.async_update_from_event
-            )
+            self.hass.bus.async_listen(PROXY_STATUS_EVENTNAME, self.async_update_from_event)
         else:
             # Dispatcher abonnieren
-            self._unsub_update = async_dispatcher_connect(
-                self.hass, update_signal, self._wrapper_update
-            )
+            self._unsub_update = async_dispatcher_connect(self.hass, update_signal, self._wrapper_update)
 
-        self._unsub_stale = async_dispatcher_connect(
-            self.hass, stale_signal, self._wrapper_stale
-        )
+        self._unsub_stale = async_dispatcher_connect(self.hass, stale_signal, self._wrapper_stale)
 
         # # letzten Zustand wiederherstellen
         # old_state = await self.async_get_last_state()
@@ -111,9 +105,7 @@ class OnlineStatusSensor(BinarySensorEntity):
             self._attr_is_on = True
             self.async_write_ha_state()
         except Exception as err:  # pylint: disable=broad-except
-            _LOGGER.error(
-                "Fehler im Sensor %s beim Update: %s", self.__class__.__name__, err
-            )
+            _LOGGER.error("Fehler im Sensor %s beim Update: %s", self.__class__.__name__, err)
 
     async def _wrapper_stale(self, _):
         """Ablauf, wenn das Watchdog-Event 'stale' gesendet wird."""

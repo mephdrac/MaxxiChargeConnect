@@ -13,31 +13,20 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
-from homeassistant.helpers.issue_registry import (
-    IssueSeverity,
-    async_create_issue,
-    async_delete_issue,
-)
+
+from .connection.ccu_base_connection import CcuBaseConnection
+from .connection.ccu_v1_connection import ccuV1Connection
+from .connection.ccu_v2_connection import ccuV2Connection
 
 from .const import (
+    CONF_CCU_VERSION,
+    CCU_V1,
+    CCU_V2,
     CONF_DEVICE_ID,
-    CONF_ENABLE_LOCAL_CLOUD_PROXY,
-    CONF_NEEDS_DEVICE_ID,
-    CONF_SUMMER_MIN_CHARGE,
-    CONF_WINTER_MODE,
-    DEFAULT_ENABLE_LOCAL_CLOUD_PROXY,
-    DEFAULT_SUMMER_MIN_CHARGE,
-    DEFAULT_WINTER_MODE,
-    DOMAIN,
-    NEIN,
-    NOTIFY_MIGRATION,
-    OPTIONAL,
-    REQUIRED,
+    CONF_NEEDS_DEVICE_ID,    
+    DOMAIN    
 )
-from .http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
-from .migration.migration_from_yaml import MigrateFromYaml
-from .reverse_proxy.proxy_server import MaxxiProxyServer
-from .webhook import async_register_webhook, async_unregister_webhook
+from .webhook import async_unregister_webhook
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,28 +37,6 @@ PLATFORMS: list[Platform] = [
 ]
 
 
-async def check_device_id_issue(hass):
-    """Prüfen, ob die Device ID gesetzt wurde."""
-    _LOGGER.debug("CHECK Device_ID.....")
-    for entry in hass.config_entries.async_entries(DOMAIN):
-        device_id = entry.data.get(CONF_DEVICE_ID)
-        if not device_id:
-            _LOGGER.error("Device-ID fehlt für Entry %s (%s)", entry.entry_id, entry.title)
-            async_create_issue(
-                hass,
-                DOMAIN,
-                f"missing_device_id_{entry.entry_id}",
-                is_fixable=False,
-                severity=IssueSeverity.CRITICAL,
-                issue_domain=DOMAIN,
-                translation_key="missing_device_id",
-                translation_placeholders={"entry_title": entry.title},
-            )
-        else:
-            async_delete_issue(hass, DOMAIN, f"missing_device_id_{entry.entry_id}")
-    _LOGGER.debug("Device_ID checked.")
-
-
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:  # pylint: disable=unused-argument
     """Wird beim Start von Home Assistant einmalig aufgerufen."""
     hass.data.setdefault(DOMAIN, {})
@@ -77,136 +44,29 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:  # pylint: dis
     return True
 
 
-# pylint: disable=too-many-locals, too-many-statements, too-many-branches
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Initialisiert eine neue Instanz der Integration beim Hinzufügen über die UI."""
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = {}
+    """Setup einer MaxxiChargeConnect Config Entry."""
 
-    sensor_list = [
-        ("PowerMeterIp", "Messgerät IP:", REQUIRED),
-        ("PowerMeterType", "Messgerät Typ:", REQUIRED),
-        ("MaximumPower", "Maximale Leistung:", REQUIRED),
-        ("OfflineOutputPower", "Offline-Ausgangsleistung:", REQUIRED),
-        ("NumberOfBatteries", "Batterien im System:", REQUIRED),
-        ("OutputOffset", "Ausgabe korrigieren:", REQUIRED),
-        ("CcuSpeed", "CCU-Geschwindigkeit:", REQUIRED),
-        ("Microinverter", "Mikro-Wechselrichter-Typ:", REQUIRED),
-        ("ResponseTolerance", "Reaktionstoleranz:", REQUIRED),
-        ("MinimumBatteryDischarge", "Minimale Entladung der Batterie:", REQUIRED),
-        ("MaximumBatteryCharge", "Maximale Akkuladung:", REQUIRED),
-        ("DC/DC-Algorithmus", "DC/DC-Algorithmus:", REQUIRED),
-        ("Cloudservice", "Cloudservice:", REQUIRED),
-        ("LocalServer", "Lokalen Server nutzen:", NEIN),
-        ("APIRoute", "API-Route:", OPTIONAL),
-    ]
+    ccu_version = entry.data.get(CONF_CCU_VERSION, CCU_V1)
+    connection: CcuBaseConnection | None = None
+    
+    _LOGGER.warning("CCU-Version: %s", ccu_version)
 
-    # Initiale Werte für Winter- und Sommerbetrieb setzen
-    winter_mode = entry.options.get(
-        CONF_WINTER_MODE,
-        DEFAULT_WINTER_MODE,
-    )
+    if ccu_version == CCU_V1:
+        connection = ccuV1Connection(hass, entry)
 
-    summer_min_discharge = entry.options.get(CONF_SUMMER_MIN_CHARGE, DEFAULT_SUMMER_MIN_CHARGE)
-
-    hass.data[DOMAIN][CONF_WINTER_MODE] = winter_mode
-    hass.data[DOMAIN][CONF_SUMMER_MIN_CHARGE] = summer_min_discharge
-
-    coordinator = MaxxiDataUpdateCoordinator(hass, entry, sensor_list)
-
-    hass.data[DOMAIN][entry.entry_id]["coordinator"] = coordinator
-    await coordinator.async_config_entry_first_refresh()
-
-    # Webhook registrieren
-    await async_register_webhook(hass, entry)
-
-    try:
-        # Plattformen laden
-        await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        _LOGGER.error("Fehler beim Laden der Plattformen: %s", e)
-        return False
-
-    # Migration von YAML-Konfiguration
-    migrator = MigrateFromYaml(hass, entry)
-
-    async def handle_trigger_migration(call):
-        mappings = call.data.get("mappings", [])
-
-        try:
-            if not isinstance(mappings, list) or not all(isinstance(item, dict) for item in mappings):
-                raise ValueError("Mappings must be a list of dictionaries.")
-            for item in mappings:
-                if "old_sensor" not in item or "new_sensor" not in item:
-                    raise ValueError("Each mapping must contain 'old_sensor' and 'new_sensor'.")
-        except ValueError as e:
-            _LOGGER.error("Invalid mappings provided for migration: %s", e)
-            return
-
-        try:
-            await migrator.async_handle_trigger_migration(mappings)
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            _LOGGER.error("Fehler bei der Migration: %s", e)
-
-    hass.services.async_register(DOMAIN, "migration_von_yaml_konfiguration", handle_trigger_migration)
-
-    # Migration-Hinweis
-    notify_migration = entry.data.get(NOTIFY_MIGRATION, False)
-    if notify_migration:
-
-        async def sub_notify_migration():
-            try:
-                await asyncio.sleep(10)  # Warte 10 Sekunden nach Start
-                await migrator.async_notify_possible_migration()
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                _LOGGER.error("Fehler beim Migration-Hinweis: %s", e)
-
-        task = hass.async_create_task(sub_notify_migration())
-        task.add_done_callback(
-            lambda t: _LOGGER.error("Notify-Migration-Task beendet: %s", t.exception()) if t.exception() else None
-        )
-
-    # --- GLOBALEN PROXY starten ---
-    proxy_enabled = entry.data.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_ENABLE_LOCAL_CLOUD_PROXY)
-    if proxy_enabled:
-        if hass.data[DOMAIN]["proxy"] is None:
-            _LOGGER.info("Starte globalen Proxy-Server (Port 3001)")
-            proxy = MaxxiProxyServer(hass, listen_port=3001)
-
-            async def _start_proxy():
-                try:
-                    await proxy.start()
-                    hass.data[DOMAIN]["proxy"] = proxy
-                except Exception as e:  # pylint: disable=broad-exception-caught
-                    _LOGGER.error("Fehler beim Starten des Proxy-Servers: %s", e)
-                    hass.data[DOMAIN]["proxy"] = None
-
-            task = hass.loop.create_task(_start_proxy())
-            task.add_done_callback(
-                lambda t: _LOGGER.error("Proxy-Task beendet: %s", t.exception()) if t.exception() else None
-            )
-
-        else:
-            proxy = hass.data[DOMAIN]["proxy"]
-            _LOGGER.info("Proxy-Server läuft bereits – Gerät wird nur angebunden.")
-
-        # Registriere diesen Entry beim Proxy
-        try:
-            proxy.register_entry(entry)
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            _LOGGER.error("Fehler beim Registrieren des Proxy-Eintrags: %s", e)
+    elif ccu_version == CCU_V2:
+        connection = ccuV2Connection(hass, entry)
 
     else:
-        _LOGGER.info("Lokaler Cloud-Proxy für dieses Gerät deaktiviert.")
+        _LOGGER.error("Unbekannte CCU-Version: %s", ccu_version)
+        return False
 
-    try:
-        # Device-ID prüfen
-        await check_device_id_issue(hass)
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        _LOGGER.error("Fehler beim Prüfen der Device ID: %s", e)
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN].setdefault(entry.entry_id, {})
+    hass.data[DOMAIN][entry.entry_id]["connection"] = connection
 
-    return True
+    return await connection.async_setup_entry()
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -385,5 +245,5 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             return False
 
     _LOGGER.info("MaxxiChargeConnect - config v%s.%s installiert", version, minor_version)
-    await check_device_id_issue(hass)
+    # await check_device_id_issue(hass)
     return version == 3 and minor_version == 4

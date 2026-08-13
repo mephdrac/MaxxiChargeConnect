@@ -9,6 +9,10 @@ Attributes:
 
 """
 
+CONF_CCU_VERSION = "ccu_version"
+CCU_V1 = "v1"
+CCU_V2 = "v2"
+
 DOMAIN = "maxxi_charge_connect"
 WEBHOOK_NAME = "MaxxiCharge Webhook"
 ONLY_ONE_IP = "only_accept_one_ip"

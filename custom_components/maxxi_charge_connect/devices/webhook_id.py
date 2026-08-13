@@ -10,7 +10,7 @@ from homeassistant.components.text import TextEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
 
-from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+from ..const import DEVICE_INFO, DOMAIN, CONF_CCU_VERSION, CCU_V1  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -74,9 +74,10 @@ class WebhookId(TextEntity):
                   - model: Modellbezeichnung
 
         """
-
+        ccu_version = self._entry.data.get(CONF_CCU_VERSION, CCU_V1)
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,
             **DEVICE_INFO,
+            "model": f"CCU {ccu_version.upper()}",
         }

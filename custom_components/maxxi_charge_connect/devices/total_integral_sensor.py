@@ -26,7 +26,7 @@ from homeassistant.const import UnitOfEnergy
 from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 
-from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+from ..const import DEVICE_INFO, DOMAIN, CONF_CCU_VERSION, CCU_V1  # noqa: TID252
 from ..tools import clean_title
 
 _LOGGER = logging.getLogger(__name__)
@@ -164,9 +164,10 @@ class TotalIntegralSensor(IntegrationSensor):
                   - model: Modellbezeichnung
 
         """
-
+        ccu_version = self._entry.data.get(CONF_CCU_VERSION, CCU_V1)
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,
             **DEVICE_INFO,
+            "model": f"CCU {ccu_version.upper()}",
         }

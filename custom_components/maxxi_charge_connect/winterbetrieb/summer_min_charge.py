@@ -8,6 +8,8 @@ from homeassistant.const import PERCENTAGE, EntityCategory
 from homeassistant.core import callback
 
 from ..const import (
+    CONF_CCU_VERSION,
+    CCU_V1,
     CONF_SUMMER_MIN_CHARGE,
     CONF_WINTER_MODE,
     DEFAULT_SUMMER_MIN_CHARGE,
@@ -116,8 +118,10 @@ class SummerMinCharge(NumberEntity):
                   - manufacturer: Herstellername
                   - model: Modellbezeichnung
         """
+        ccu_version = self._entry.data.get(CONF_CCU_VERSION, CCU_V1)
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,
             **DEVICE_INFO,
+            "model": f"CCU {ccu_version.upper()}",
         }

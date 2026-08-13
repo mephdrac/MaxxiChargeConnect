@@ -16,6 +16,8 @@ from homeassistant.core import Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from ..const import (
+    CONF_CCU_VERSION,
+    CCU_V1,
     CONF_DEVICE_ID,
     CONF_ENABLE_CLOUD_DATA,
     DEVICE_INFO,
@@ -173,9 +175,11 @@ class OnlineStatusSensor(BinarySensorEntity):
                   - model: Modellbezeichnung
 
         """
+        ccu_version = self._entry.data.get(CONF_CCU_VERSION, CCU_V1)
 
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,
             **DEVICE_INFO,
+            "model": f"CCU {ccu_version.upper()}",
         }

@@ -38,7 +38,9 @@ class ccuV2Connection(CcuBaseConnection):
         self.hass.data[DOMAIN].setdefault(self.entry.entry_id, {})
 
         entry_data = self.hass.data[DOMAIN][self.entry.entry_id]
-        entry_data["v2_state"] = {}
+        entry_data["v2_state"] = {
+            "deviceId": self.base_topic,
+        }
 
         entry_data[WEBHOOK_SIGNAL_UPDATE] = (
             f"{DOMAIN}_{self.entry.entry_id}_update"

@@ -31,11 +31,22 @@ def parse_battery(data: dict) -> dict:
 
 def parse_inverter(data: dict) -> dict:
     power = float(data["power"])
+    temperature = data.get("temperature")
 
-    return {
+    result = {
         "Pccu": max(power, 0),
         "GridChargePower": abs(min(power, 0)),
     }
+
+    if temperature is not None:
+        result["convertersInfo"] = [
+            {
+                "ccuTemperature": temperature,
+            }
+        ]
+
+    return result
+
 
 SUBSCRIPTIONS = {
     "powermeter/telemetry": parse_powermeter,

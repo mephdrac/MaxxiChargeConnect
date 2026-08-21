@@ -4,12 +4,16 @@ import logging
 from homeassistant.components import mqtt
 from homeassistant.const import Platform
 from homeassistant.helpers.dispatcher import async_dispatcher_send
+from homeassistant.core import HomeAssistant
+from homeassistant.config_entries import ConfigEntry
+
 
 from .ccu_base_connection import CcuBaseConnection
 from ..const import (
     DOMAIN,
     WEBHOOK_SIGNAL_STATE,
     WEBHOOK_SIGNAL_UPDATE,
+    CONF_DEVICE_ID
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -17,14 +21,16 @@ _LOGGER = logging.getLogger(__name__)
 
 class ccuV2Connection(CcuBaseConnection):
 
-    base_topic = "CCU2-"
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
+            super().__init__(hass, entry)
+            self.base_topic = self.entry.data.get(CONF_DEVICE_ID)
 
-    async def async_setup(self) -> None:
+    async def async_setup(self) -> None:        
         raise NotImplementedError
 
     async def async_setup_entry(self) -> bool:
 
-        
+        _LOGGER.warning(self.base_topic)
 
         self.hass.data.setdefault(DOMAIN, {})
         self.hass.data[DOMAIN].setdefault(self.entry.entry_id, {})
@@ -39,9 +45,6 @@ class ccuV2Connection(CcuBaseConnection):
         entry_data[WEBHOOK_SIGNAL_STATE] = (
             f"{DOMAIN}_{self.entry.entry_id}_state"
         )
-
-        topic = "???/powermeter/telemetry"
-        battery_topic = "???/battery/telemetry"
 
         subscriptions = {
             "powermeter/telemetry": self._parse_powermeter,

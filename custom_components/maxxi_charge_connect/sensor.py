@@ -64,6 +64,7 @@ from .devices.status_sensor import StatusSensor
 from .devices.uptime_sensor import UptimeSensor
 from .devices.webhook_id import WebhookId
 from .http_scan.http_scan_text import HttpScanText
+from .devices.ccu_v2_sensor_manager import setup_v2_sensors
 
 SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
 
@@ -94,12 +95,8 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     ccu_version = entry.data.get(CONF_CCU_VERSION, CCU_V1)
 
     if ccu_version == CCU_V2:
-        async_add_entities(
-            [
-                PowerMeter(entry),
-            ]
-        )
-        return
+       setup_v2_sensors(entry, async_add_entities)
+       return
 
     # BatterySensorManager initialisieren
     manager = BatterySensorManager(hass, entry, async_add_entities)

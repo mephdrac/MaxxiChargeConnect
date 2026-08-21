@@ -8,6 +8,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 
 from .ccu_v2_parser import parse_battery, parse_powermeter
+from .ccu_v2_parser import SUBSCRIPTIONS
+
 from .ccu_base_connection import CcuBaseConnection
 from ..const import (
     DOMAIN,
@@ -44,16 +46,11 @@ class ccuV2Connection(CcuBaseConnection):
 
         entry_data[WEBHOOK_SIGNAL_STATE] = (
             f"{DOMAIN}_{self.entry.entry_id}_state"
-        )
-
-        subscriptions = {
-            "powermeter/telemetry": parse_powermeter,
-            "battery/telemetry": parse_battery,
-        }
+        )      
 
         entry_data["mqtt_unsubscribers"] = []
 
-        for topic_suffix, parser in subscriptions.items():
+        for topic_suffix, parser in SUBSCRIPTIONS.items():
             unsubscribe = await mqtt.async_subscribe(
                 self.hass,
                 f"{self.base_topic}/{topic_suffix}",

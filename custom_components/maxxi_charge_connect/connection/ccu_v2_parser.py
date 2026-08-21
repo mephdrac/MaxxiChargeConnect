@@ -1,6 +1,5 @@
 """Parser for CCU V2 MQTT messages."""
 
-
 def parse_powermeter(data: dict) -> dict:
     """Parse powermeter telemetry."""
     power = data.get("power")
@@ -29,3 +28,8 @@ def parse_battery(data: dict) -> dict:
     return {
         "SOC": sum(soc_values) / len(soc_values),
     }
+
+SUBSCRIPTIONS = {
+    "powermeter/telemetry": parse_powermeter,
+    "battery/telemetry": parse_battery,
+}

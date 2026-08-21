@@ -7,6 +7,7 @@ from .battery_soc import BatterySoc
 from .power_meter import PowerMeter
 from .ccu_power import CcuPower
 from .grid_import import GridImport
+from .grid_export import GridExport
 
 
 def setup_v2_sensors(
@@ -21,5 +22,6 @@ def setup_v2_sensors(
             BatterySoc(entry),
             CcuPower(entry),
             GridImport(entry),
+            GridExport(entry),
         ]
     )

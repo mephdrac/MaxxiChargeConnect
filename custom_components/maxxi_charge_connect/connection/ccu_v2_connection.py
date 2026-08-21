@@ -7,7 +7,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 
-
+from .ccu_v2_parser import parse_battery, parse_powermeter
 from .ccu_base_connection import CcuBaseConnection
 from ..const import (
     DOMAIN,
@@ -47,8 +47,8 @@ class ccuV2Connection(CcuBaseConnection):
         )
 
         subscriptions = {
-            "powermeter/telemetry": self._parse_powermeter,
-            "battery/telemetry": self._parse_battery,
+            "powermeter/telemetry": parse_powermeter,
+            "battery/telemetry": parse_battery,
         }
 
         entry_data["mqtt_unsubscribers"] = []
@@ -68,33 +68,7 @@ class ccuV2Connection(CcuBaseConnection):
             [Platform.SENSOR],
         )
 
-        return True
-
-    def _parse_powermeter(self, data: dict) -> dict:
-        power = data.get("power")
-
-        if power is None:
-            return {}
-
-        return {
-            "Pr": power,
-        }
-
-    def _parse_battery(self, data: dict) -> dict:
-        batteries = data.get("batteries", [])
-
-        soc_values = [
-            battery["soc"]
-            for battery in batteries
-            if battery.get("soc") is not None
-        ]
-
-        if not soc_values:
-            return {}
-
-        return {
-            "SOC": sum(soc_values) / len(soc_values),
-        }
+        return True    
 
     def _create_message_handler(self, entry_data, parser):
         async def message_received(msg):

@@ -29,7 +29,16 @@ def parse_battery(data: dict) -> dict:
         "SOC": sum(soc_values) / len(soc_values),
     }
 
+def parse_inverter(data: dict) -> dict:
+    power = float(data["power"])
+
+    return {
+        "Pccu": max(power, 0),
+        "GridChargePower": abs(min(power, 0)),
+    }
+
 SUBSCRIPTIONS = {
     "powermeter/telemetry": parse_powermeter,
     "battery/telemetry": parse_battery,
+    "inverter/telemetry": parse_inverter,
 }

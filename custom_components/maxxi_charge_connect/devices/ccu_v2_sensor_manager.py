@@ -5,6 +5,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .battery_soc import BatterySoc
 from .power_meter import PowerMeter
+from .ccu_power import CcuPower
+from .grid_import import GridImport
 
 
 def setup_v2_sensors(
@@ -17,5 +19,7 @@ def setup_v2_sensors(
         [
             PowerMeter(entry),
             BatterySoc(entry),
+            CcuPower(entry),
+            GridImport(entry),
         ]
     )

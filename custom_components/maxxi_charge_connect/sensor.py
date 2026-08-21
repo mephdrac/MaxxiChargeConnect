@@ -18,7 +18,13 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import (
+        CONF_CCU_VERSION,
+        CCU_V1,
+        CCU_V2,
+        DOMAIN,
+    )
+
 from .devices.battery_power import BatteryPower
 from .devices.battery_power_charge import BatteryPowerCharge
 from .devices.battery_power_discharge import BatteryPowerDischarge
@@ -84,6 +90,16 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
         None
 
     """
+
+    ccu_version = entry.data.get(CONF_CCU_VERSION, CCU_V1)
+
+    if ccu_version == CCU_V2:
+        async_add_entities(
+            [
+                PowerMeter(entry),
+            ]
+        )
+        return
 
     # BatterySensorManager initialisieren
     manager = BatterySensorManager(hass, entry, async_add_entities)

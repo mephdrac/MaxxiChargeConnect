@@ -30,6 +30,7 @@ from ..const import (
     PROXY_STATUS_EVENTNAME,
     WEBHOOK_SIGNAL_STATE,
     WEBHOOK_SIGNAL_UPDATE,
+    CCU_V2
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -139,6 +140,11 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
 
     async def check_valid(self, data: dict) -> bool:
         """Prüft, ob die empfangenen Daten gültig sind."""
+
+        ccu_version = self._entry.data.get(CONF_CCU_VERSION, CCU_V1)
+
+        if ccu_version == CCU_V2:
+            return True
 
         _LOGGER.debug("Sensor(check_valid) %s: Daten empfangen: %s", self.__class__.__name__, data)
 

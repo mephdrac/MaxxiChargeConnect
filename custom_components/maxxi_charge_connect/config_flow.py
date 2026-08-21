@@ -205,6 +205,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     # ----------------------------------------
     def _create_entry(self, entry=None):
         data = {
+            CONF_CCU_VERSION: self._ccu_version,
             CONF_NAME: self._name,
             CONF_DEVICE_ID: self._device_id or entry.data.get(CONF_DEVICE_ID),
             CONF_WEBHOOK_ID: self._webhook_id,

@@ -20,3 +20,5 @@ class BatteryTodayEnergyCharge(TodayIntegralSensor):
         _last_reset (datetime): Der letzte Zeitpunkt des Tagesresets (UTC).
 
     """
+    _attr_translation_key = "BatteryTodayEnergyCharge"
+    _attr_has_entity_name = True    

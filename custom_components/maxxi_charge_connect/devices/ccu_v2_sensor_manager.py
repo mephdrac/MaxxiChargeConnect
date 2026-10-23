@@ -15,6 +15,7 @@ from .online_status_sensor import OnlineStatusSensor
 from .ccu_v2_battery_sensor_manager import CCUV2BatterySensorManager
 from .battery_power_charge import BatteryPowerCharge
 from .battery_power_discharge import BatteryPowerDischarge
+from .battery_power import BatteryPower
 
 
 def setup_v2_sensors(
@@ -30,6 +31,7 @@ def setup_v2_sensors(
             BatterySoc(entry),
             BatteryPowerCharge(entry),
             BatteryPowerDischarge(entry),
+            BatteryPower(entry),
             CcuPower(entry),
             GridImport(entry),
             GridExport(entry),

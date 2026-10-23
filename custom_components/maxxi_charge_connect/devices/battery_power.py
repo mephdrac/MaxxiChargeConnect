@@ -31,6 +31,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfPower
 
 from ..tools import is_pccu_ok, is_power_total_ok  # noqa: TID252
+from ..const import CONF_CCU_VERSION, CCU_V1, CCU_V2
 from .base_webhook_sensor import BaseWebhookSensor
 
 _LOGGER = logging.getLogger(__name__)
@@ -73,54 +74,79 @@ class BatteryPower(BaseWebhookSensor):
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = UnitOfPower.WATT
 
-    async def handle_update(self, data):
-        """Verarbeitet empfangene Webhook-Daten und aktualisiert den Sensorwert.
+    async def handle_update(self, data: dict) -> None:
+        """Calculate net battery power for CCU V1 and V2."""
 
-        Args:
-            data (dict): Die empfangenen JSON-Daten vom Webhook.
-
-        Validiert die eingehenden Werte mit Hilfsfunktionen und berechnet
-        die Batterieleistung. Aktualisiert dann den Sensorstatus.
-
-        """
         try:
-            # CCU-Verbrauch sicher abfragen
-            pccu_raw = data.get("Pccu")
-            if pccu_raw is None:
-                _LOGGER.debug("BatteryPower: Pccu fehlt")
-                return
+            ccu_version = self._entry.data.get(
+                CONF_CCU_VERSION,
+                CCU_V1,
+            )
 
-            ccu = float(pccu_raw)
-
-            if not is_pccu_ok(ccu):
-                _LOGGER.warning("BatteryPower: PCCU-Wert nicht plausibel: %s W", ccu)
-                return
-
-            # PV-Leistung sicher abfragen
             pv_power_raw = data.get("PV_power_total")
+
             if pv_power_raw is None:
                 _LOGGER.debug("BatteryPower: PV_power_total fehlt")
                 return
 
             pv_power = float(pv_power_raw)
-            batteries = data.get("batteriesInfo", [])
 
-            if not is_power_total_ok(pv_power, batteries):
-                _LOGGER.warning("BatteryPower: PV-Leistung nicht plausibel: %s W", pv_power)
-                return
+            if ccu_version == CCU_V2:
+                # CCU V2: vorzeichenbehaftete Wechselrichterleistung
+                inverter_power_raw = data.get("InverterPowerSigned")
 
-            # Netto-Batterieleistung berechnen (kann positiv oder negativ sein)
-            battery_power = round(pv_power - ccu, 3)
+                if inverter_power_raw is None:
+                    _LOGGER.debug(
+                        "BatteryPower: InverterPowerSigned fehlt"
+                    )
+                    return
 
-            self._attr_native_value = battery_power
-            _LOGGER.debug(
-                "BatteryPower: Netto-Batterieleistung berechnet: %s W (PV: %s W, CCU: %s W)",
+                inverter_power = float(inverter_power_raw)
+
+                battery_power = pv_power - inverter_power
+
+            else:
+                # CCU V1: bisherige Berechnung
+                pccu_raw = data.get("Pccu")
+
+                if pccu_raw is None:
+                    _LOGGER.debug("BatteryPower: Pccu fehlt")
+                    return
+
+                ccu = float(pccu_raw)
+
+                if not is_pccu_ok(ccu):
+                    _LOGGER.warning(
+                        "BatteryPower: Pccu unplausibel: %s W",
+                        ccu,
+                    )
+                    return
+
+                batteries = data.get("batteriesInfo", [])
+
+                if not is_power_total_ok(pv_power, batteries):
+                    _LOGGER.warning(
+                        "BatteryPower: PV-Leistung unplausibel: %s W",
+                        pv_power,
+                    )
+                    return
+
+                battery_power = pv_power - ccu
+
+            self._attr_native_value = round(
                 battery_power,
+                2,
+            )
+
+            _LOGGER.debug(
+                "BatteryPower (%s): PV=%s W, Netto=%s W",
+                ccu_version,
                 pv_power,
-                ccu,
+                self._attr_native_value,
             )
 
         except (ValueError, TypeError) as err:
-            _LOGGER.warning("BatteryPower: Konvertierungsfehler: %s", err)
-        except Exception as err:  # pylint: disable=broad-except
-            _LOGGER.error("BatteryPower: Unerwarteter Fehler: %s", err)
+            _LOGGER.warning(
+                "BatteryPower: Ungültige Leistungsdaten: %s",
+                err,
+            )

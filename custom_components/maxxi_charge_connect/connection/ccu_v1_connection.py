@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 # from homeassistant.core import HomeAssistant
@@ -5,6 +6,7 @@ import logging
 
 from .ccu_base_connection import CcuBaseConnection
 from homeassistant.const import Platform
+from ..webhook import async_unregister_webhook
 
 from homeassistant.helpers.issue_registry import (
     IssueSeverity,
@@ -181,7 +183,41 @@ class ccuV1Connection(CcuBaseConnection):
         return True
 
     async def async_unload(self) -> None:
-        raise NotImplementedError
+        """Entlädt die Integration vollständig und deregistriert den Webhook."""
+
+        await async_unregister_webhook(self.hass, self.entry)
+
+        unload_ok = all(
+            await asyncio.gather(
+                *[self.hass.config_entries.async_forward_entry_unload(self.entry, platform) for platform in (PLATFORMS)]
+            )
+        )
+
+        # Proxy-Entry deregistrieren
+        proxy = self.hass.data[DOMAIN].get("proxy")
+        if proxy:
+            try:
+                proxy.unregister_entry(self.entry)
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                _LOGGER.error("Fehler beim Deregistrieren des Proxy-Eintrags: %s", e)
+
+        if unload_ok:
+            self.hass.data[DOMAIN].pop(self.entry.entry_id, None)
+
+        # Prüfen, ob noch andere Einträge aktiv sind, bevor der Proxy gestoppt wird
+        if proxy and not self.hass.config_entries.async_entries(DOMAIN):
+            _LOGGER.info("Stoppe globalen Proxy-Server")
+
+            try:
+                await proxy.stop()
+            except Exception as e:  # pylint: disable=broad-exception-caught
+                _LOGGER.error("Fehler beim Stoppen des Proxy-Servers: %s", e)
+            finally:
+                self.hass.data[DOMAIN]["proxy"] = None
+
+        return unload_ok
+
+
    
     async def check_device_id_issue(self) -> None:
         """Prüfen, ob die Device ID gesetzt wurde."""

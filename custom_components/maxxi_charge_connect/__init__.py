@@ -71,38 +71,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Entlädt die Integration vollständig und deregistriert den Webhook."""
-    await async_unregister_webhook(hass, entry)
+
+    _LOGGER.warning("async_unload_entry CALLED")
+    connection = hass.data[DOMAIN].get(entry.entry_id, {}).get("connection")
+
+    if connection is not None:
+        _LOGGER.debug("Unload connection for entry %s", entry.entry_id)
+        await connection.async_unload()
 
     unload_ok = all(
         await asyncio.gather(
-            *[hass.config_entries.async_forward_entry_unload(entry, platform) for platform in (PLATFORMS)]
+            *[
+                hass.config_entries.async_forward_entry_unload(entry, platform)
+                for platform in PLATFORMS
+            ]
         )
     )
-
-    # Proxy-Entry deregistrieren
-    proxy = hass.data[DOMAIN].get("proxy")
-    if proxy:
-        try:
-            proxy.unregister_entry(entry)
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            _LOGGER.error("Fehler beim Deregistrieren des Proxy-Eintrags: %s", e)
 
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id, None)
 
-    # Prüfen, ob noch andere Einträge aktiv sind, bevor der Proxy gestoppt wird
-    if proxy and not hass.config_entries.async_entries(DOMAIN):
-        _LOGGER.info("Stoppe globalen Proxy-Server")
-
-        try:
-            await proxy.stop()
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            _LOGGER.error("Fehler beim Stoppen des Proxy-Servers: %s", e)
-        finally:
-            hass.data[DOMAIN]["proxy"] = None
-
     return unload_ok
-
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:  # pylint: disable=too-many-locals,too-many-branches, too-many-statements
     """Migration eines Config-Eintrags auf neuere Versionen."""

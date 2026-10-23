@@ -13,21 +13,37 @@ def parse_powermeter(data: dict) -> dict:
 
 
 def parse_battery(data: dict) -> dict:
-    """Parse battery telemetry."""
+    """Parse CCU V2 battery telemetry."""
+
     batteries = data.get("batteries", [])
 
-    soc_values = [
-        battery["soc"]
-        for battery in batteries
-        if battery.get("soc") is not None
-    ]
+    batteries_info = []
+    soc_values = []
 
-    if not soc_values:
-        return {}
+    for battery in batteries:
+        battery_info = {}
 
-    return {
-        "SOC": sum(soc_values) / len(soc_values),
+        soc = battery.get("soc")
+        if soc is not None:
+            soc = float(soc)
+            soc_values.append(soc)
+            battery_info["soc"] = soc
+
+        voltage = battery.get("voltage")
+        if voltage is not None:
+            # CCU2 liefert V, BatteryVoltageSensor erwartet mV.
+            battery_info["batteryVoltage"] = float(voltage) * 1000
+
+        batteries_info.append(battery_info)
+
+    result = {
+        "batteriesInfo": batteries_info,
     }
+
+    if soc_values:
+        result["SOC"] = sum(soc_values) / len(soc_values)
+
+    return result
 
 def parse_inverter(data: dict) -> dict:
     power = float(data["power"])

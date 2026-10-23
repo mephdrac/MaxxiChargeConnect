@@ -95,7 +95,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     ccu_version = entry.data.get(CONF_CCU_VERSION, CCU_V1)
 
     if ccu_version == CCU_V2:
-       setup_v2_sensors(entry, async_add_entities)
+       setup_v2_sensors(hass, entry, async_add_entities)
        return
 
     # BatterySensorManager initialisieren

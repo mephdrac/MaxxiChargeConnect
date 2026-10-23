@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 
@@ -41,6 +42,8 @@ class ccuV2Connection(CcuBaseConnection):
         entry_data["v2_state"] = {
             "deviceId": self.base_topic,
         }
+        entry_data["mqtt_stale_task"] = None
+        entry_data["unloading"] = False
 
         entry_data[WEBHOOK_SIGNAL_UPDATE] = (
             f"{DOMAIN}_{self.entry.entry_id}_update"
@@ -72,6 +75,10 @@ class ccuV2Connection(CcuBaseConnection):
     def _create_message_handler(self, entry_data, parser):
         async def message_received(msg):
             try:
+
+                if entry_data.get("unloading"):
+                    return
+
                 data = json.loads(msg.payload)
 
                 values = parser(data)
@@ -80,6 +87,15 @@ class ccuV2Connection(CcuBaseConnection):
                     return
 
                 entry_data["v2_state"].update(values)
+
+                stale_task = entry_data.get("mqtt_stale_task")
+
+                if stale_task is not None:
+                    stale_task.cancel()
+
+                # entry_data["mqtt_stale_task"] = self.hass.async_create_task(
+                #     self._mark_stale_after_timeout(entry_data)
+                # )
 
                 async_dispatcher_send(
                     self.hass,
@@ -96,8 +112,34 @@ class ccuV2Connection(CcuBaseConnection):
 
         return message_received
 
+    async def _mark_stale_after_timeout(self, entry_data, timeout_seconds: int = 10):
+        try:
+            await asyncio.sleep(timeout_seconds)
+
+            async_dispatcher_send(
+                self.hass,
+                entry_data[WEBHOOK_SIGNAL_STATE],
+                None,
+            )
+        except asyncio.CancelledError:
+            pass
+
     async def async_unload(self) -> None:
+        _LOGGER.warning("async_unload_entry CALLED -- CCU2")
+
+
         entry_data = self.hass.data[DOMAIN][self.entry.entry_id]
+        entry_data["unloading"] = True
 
         for unsubscribe in entry_data.get("mqtt_unsubscribers", []):
             unsubscribe()
+
+        stale_task = entry_data.get("mqtt_stale_task")
+
+        if stale_task is not None:
+            stale_task.cancel()
+
+            try:
+                await stale_task
+            except asyncio.CancelledError:
+                pass

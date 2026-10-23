@@ -20,6 +20,8 @@ from .battery_power_charge import BatteryPowerCharge
 from .battery_power_discharge import BatteryPowerDischarge
 from .battery_power import BatteryPower
 from .power_consumption import PowerConsumption
+from .ccu_energy_today import CcuEnergyToday
+from .ccu_energy_total import CcuEnergyTotal
 
 from .battery_today_energy_charge import BatteryTodayEnergyCharge
 from .battery_today_energy_discharge import BatteryTodayEnergyDischarge
@@ -86,6 +88,10 @@ def setup_v2_battery_energy(
             "power_consumption": [
                 ConsumptionEnergyToday,
                 ConsumptionEnergyTotal
+            ],
+            "ccu_power": [
+                CcuEnergyToday,
+                CcuEnergyTotal
             ],
         }
 

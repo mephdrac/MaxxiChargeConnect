@@ -34,6 +34,10 @@ def parse_battery(data: dict) -> dict:
             # CCU2 liefert V, BatteryVoltageSensor erwartet mV.
             battery_info["batteryVoltage"] = float(voltage) * 1000
 
+        input_power = battery.get("inputPower")
+        if input_power is not None:
+            battery_info["pvPower"] = float(input_power)
+
         batteries_info.append(battery_info)
 
     result = {

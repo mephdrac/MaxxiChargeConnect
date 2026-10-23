@@ -10,6 +10,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from ..const import DOMAIN, WEBHOOK_SIGNAL_UPDATE
 from .battery_voltage_sensor import BatteryVoltageSensor
 from .battery_soc_sensor import BatterySOCSensor
+from .battery_pv_power_sensor import BatteryPVPowerSensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -19,7 +20,8 @@ class CCUV2BatterySensorManager:
 
     SENSOR_CLASSES = [
         BatteryVoltageSensor,
-        BatterySOCSensor
+        BatterySOCSensor,
+        BatteryPVPowerSensor
     ]
 
     def __init__(

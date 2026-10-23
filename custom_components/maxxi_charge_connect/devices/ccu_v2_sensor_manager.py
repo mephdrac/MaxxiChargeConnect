@@ -13,6 +13,8 @@ from .ccu_temperatur_sensor import CCUTemperaturSensor
 from .device_id import DeviceId
 from .online_status_sensor import OnlineStatusSensor
 from .ccu_v2_battery_sensor_manager import CCUV2BatterySensorManager
+from .battery_power_charge import BatteryPowerCharge
+from .battery_power_discharge import BatteryPowerDischarge
 
 
 def setup_v2_sensors(
@@ -25,7 +27,9 @@ def setup_v2_sensors(
     async_add_entities(
         [
             PowerMeter(entry),
-            BatterySoc(entry),            
+            BatterySoc(entry),
+            BatteryPowerCharge(entry),
+            BatteryPowerDischarge(entry),
             CcuPower(entry),
             GridImport(entry),
             GridExport(entry),

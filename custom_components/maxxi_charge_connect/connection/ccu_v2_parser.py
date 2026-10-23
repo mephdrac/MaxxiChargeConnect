@@ -43,6 +43,11 @@ def parse_battery(data: dict) -> dict:
     if soc_values:
         result["SOC"] = sum(soc_values) / len(soc_values)
 
+    input_power_total = data.get("inputPowerTotal")
+
+    if input_power_total is not None:
+        result["PV_power_total"] = float(input_power_total)
+
     return result
 
 def parse_inverter(data: dict) -> dict:
@@ -52,6 +57,7 @@ def parse_inverter(data: dict) -> dict:
     result = {
         "Pccu": max(power, 0),
         "GridChargePower": abs(min(power, 0)),
+        "InverterPowerSigned": power,
     }
 
     if temperature is not None:

@@ -29,6 +29,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfPower
 
 from ..tools import is_pccu_ok, is_power_total_ok  # noqa: TID252
+from ..const import CONF_CCU_VERSION, CCU_V1, CCU_V2
 from .base_webhook_sensor import BaseWebhookSensor
 
 _LOGGER = logging.getLogger(__name__)
@@ -72,65 +73,87 @@ class BatteryPowerCharge(BaseWebhookSensor):
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = UnitOfPower.WATT
 
-    async def handle_update(self, data):
-        """Verarbeitet eingehende Sensordaten und aktualisiert den Zustand der Entität.
+    async def handle_update(self, data: dict) -> None:
+        """Update battery charging power for CCU V1 and V2."""
 
-        Args:
-            data (dict): Die vom Webhook empfangenen Rohdaten
-            (z.B. 'Pccu', 'PV_power_total', 'batteriesInfo').
-
-        Berechnet die Ladeleistung der Batterie als Differenz zwischen
-        PV-Leistung und Verbrauch (Pccu). Negative Werte (Entladung) werden ignoriert.
-
-        """
         try:
-            # CCU-Verbrauch sicher abfragen
-            pccu_raw = data.get("Pccu")
-            if pccu_raw is None:
-                _LOGGER.debug("BatteryPowerCharge: Pccu fehlt")
-                return
+            ccu_version = self._entry.data.get(
+                CONF_CCU_VERSION,
+                CCU_V1,
+            )
 
-            ccu = float(pccu_raw)
-
-            if not is_pccu_ok(ccu):
-                _LOGGER.warning("BatteryPowerCharge: PCCU-Wert nicht plausibel: %s W", ccu)
-                return
-
-            # PV-Leistung sicher abfragen
             pv_power_raw = data.get("PV_power_total")
+
             if pv_power_raw is None:
                 _LOGGER.debug("BatteryPowerCharge: PV_power_total fehlt")
                 return
 
             pv_power = float(pv_power_raw)
-            batteries = data.get("batteriesInfo", [])
 
-            if not is_power_total_ok(pv_power, batteries):
-                _LOGGER.warning("BatteryPowerCharge: PV-Leistung nicht plausibel: %s W", pv_power)
-                return
+            if ccu_version == CCU_V2:
+                # CCU V2: Vorzeichenbehaftete Wechselrichterleistung
+                inverter_power_raw = data.get("InverterPowerSigned")
 
-            # Ladeleistung berechnen
-            battery_charge_power = round(pv_power - ccu, 3)
+                if inverter_power_raw is None:
+                    _LOGGER.debug(
+                        "BatteryPowerCharge: InverterPowerSigned fehlt"
+                    )
+                    return
 
-            # Nur positive Werte sind Ladeleistung
-            if battery_charge_power >= 0:
-                self._attr_native_value = battery_charge_power
-                _LOGGER.debug(
-                    "BatteryPowerCharge: Ladeleistung berechnet: %s W (PV: %s W, CCU: %s W)",
-                    battery_charge_power,
-                    pv_power,
-                    ccu,
+                inverter_power = float(inverter_power_raw)
+
+                # Positiv: Einspeisung ins Hausnetz
+                # Negativ: Netzbezug der CCU
+                battery_charge_power = max(
+                    pv_power - inverter_power,
+                    0,
                 )
+
             else:
-                _LOGGER.debug(
-                    "BatteryPowerCharge: Keine Ladeleistung (PV: %s W, CCU: %s W, Differenz: %s W)",
-                    pv_power,
-                    ccu,
-                    battery_charge_power,
+                # CCU V1: Bisherige Berechnung beibehalten
+                pccu_raw = data.get("Pccu")
+
+                if pccu_raw is None:
+                    _LOGGER.debug("BatteryPowerCharge: Pccu fehlt")
+                    return
+
+                ccu = float(pccu_raw)
+
+                if not is_pccu_ok(ccu):
+                    _LOGGER.warning(
+                        "BatteryPowerCharge: Pccu unplausibel: %s W",
+                        ccu,
+                    )
+                    return
+
+                batteries = data.get("batteriesInfo", [])
+
+                if not is_power_total_ok(pv_power, batteries):
+                    _LOGGER.warning(
+                        "BatteryPowerCharge: PV-Leistung unplausibel: %s W",
+                        pv_power,
+                    )
+                    return
+
+                battery_charge_power = max(
+                    pv_power - ccu,
+                    0,
                 )
-                self._attr_native_value = 0
+
+            self._attr_native_value = round(
+                battery_charge_power,
+                2,
+            )
+
+            _LOGGER.debug(
+                "BatteryPowerCharge (%s): PV=%s W, Ladeleistung=%s W",
+                ccu_version,
+                pv_power,
+                self._attr_native_value,
+            )
 
         except (ValueError, TypeError) as err:
-            _LOGGER.warning("BatteryPowerCharge: Konvertierungsfehler: %s", err)
-        except Exception as err:  # pylint: disable=broad-except
-            _LOGGER.error("BatteryPowerCharge: Unerwarteter Fehler: %s", err)
+            _LOGGER.warning(
+                "BatteryPowerCharge: Ungültige Leistungsdaten: %s",
+                err,
+            )

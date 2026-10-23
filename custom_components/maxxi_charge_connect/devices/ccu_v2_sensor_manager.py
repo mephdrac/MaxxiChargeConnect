@@ -5,6 +5,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers import entity_registry as er
 
+from ..const import DOMAIN
 
 from .battery_soc import BatterySoc
 from .power_meter import PowerMeter
@@ -18,11 +19,14 @@ from .ccu_v2_battery_sensor_manager import CCUV2BatterySensorManager
 from .battery_power_charge import BatteryPowerCharge
 from .battery_power_discharge import BatteryPowerDischarge
 from .battery_power import BatteryPower
+from .power_consumption import PowerConsumption
 
-from ..const import DOMAIN
 from .battery_today_energy_charge import BatteryTodayEnergyCharge
 from .battery_today_energy_discharge import BatteryTodayEnergyDischarge
 from .battery_total_energy_charge import BatteryTotalEnergyCharge
+from .battery_total_energy_discharge import BatteryTotalEnergyDischarge
+from .consumption_energy_today import ConsumptionEnergyToday
+from .consumption_energy_total import ConsumptionEnergyTotal
 
 
 def setup_v2_sensors(
@@ -35,6 +39,7 @@ def setup_v2_sensors(
     async_add_entities(
         [
             PowerMeter(entry),
+            PowerConsumption(entry),
             BatterySoc(entry),
             BatteryPowerCharge(entry),
             BatteryPowerDischarge(entry),
@@ -76,6 +81,11 @@ def setup_v2_battery_energy(
             ],
             "battery_power_discharge": [
                 BatteryTodayEnergyDischarge,
+                BatteryTotalEnergyDischarge
+            ],
+            "power_consumption": [
+                ConsumptionEnergyToday,
+                ConsumptionEnergyTotal
             ],
         }
 

@@ -93,10 +93,12 @@ class OnlineStatusSensor(BinarySensorEntity):
         #         pass
 
     async def async_will_remove_from_hass(self):
-        """Abmelden beim Dispatcher."""
-        if hasattr(self, "_unsub_update"):
+        """Dispatcher-Abonnements entfernen."""
+
+        if self._unsub_update is not None:
             self._unsub_update()
-        if hasattr(self, "_unsub_stale"):
+
+        if self._unsub_stale is not None:
             self._unsub_stale()
 
     async def _wrapper_update(self, data: dict):
@@ -121,38 +123,40 @@ class OnlineStatusSensor(BinarySensorEntity):
         self.async_write_ha_state()
 
     async def handle_update(self, data):
-        """Verarbeitet neue Webhook-Daten und aktualisiert den Sensorzustand.
+        """Verarbeitet neue Daten und aktualisiert den Online-Status."""
 
-        Und prüft auf Plausibilität.
+        now_utc = datetime.now(tz=UTC)
 
-        Args:
-            data (dict): Die per Webhook empfangenen Sensordaten.
+        self._attr_is_on = True
 
-        """
-        try:
-            uptime_ms = int(data.get("uptime", 0))
+        attributes = {
+            "received": now_utc.isoformat(),
+        }
 
-            now_utc = datetime.now(tz=UTC)
-            self._attr_is_on = True
+        uptime_raw = data.get("uptime")
 
-            seconds_total = uptime_ms / 1000
+        if uptime_raw is not None:
+            try:
+                uptime_ms = int(uptime_raw)
 
-            # lesbares Format als extra attribute
-            days, remainder = divmod(int(seconds_total), 86400)
-            hours, remainder = divmod(remainder, 3600)
-            minutes, seconds = divmod(remainder, 60)
+                seconds_total = uptime_ms / 1000
 
-            self._attr_extra_state_attributes = {
-                "received": now_utc.isoformat(),
-                "uptime": f"{days}d {hours}h {minutes}m {seconds}s",
-                "raw_ms": uptime_ms,
-                "─────────────": "────────────────────────",
-                "data:": data,
-            }
-            self.async_write_ha_state()
+                days, remainder = divmod(int(seconds_total), 86400)
+                hours, remainder = divmod(remainder, 3600)
+                minutes, seconds = divmod(remainder, 60)
 
-        except ValueError as e:
-            _LOGGER.warning("Uptime-Wert ungültig: %s", e)
+                attributes["uptime"] = (
+                    f"{days}d {hours}h {minutes}m {seconds}s"
+                )
+                attributes["raw_ms"] = uptime_ms
+
+            except (ValueError, TypeError):
+                _LOGGER.warning(
+                    "OnlineStatusSensor: Ungültiger Uptime-Wert: %s",
+                    uptime_raw,
+                )
+
+        self._attr_extra_state_attributes = attributes
 
     async def async_update_from_event(self, event: Event):
         """Aktualisiert Sensor von Proxy-Event."""

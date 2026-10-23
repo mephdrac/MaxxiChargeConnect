@@ -22,6 +22,8 @@ from .battery_power import BatteryPower
 from .power_consumption import PowerConsumption
 from .ccu_energy_today import CcuEnergyToday
 from .ccu_energy_total import CcuEnergyTotal
+from .pv_power import PvPower
+from .pv_self_consumption import PvSelfConsumption
 
 from .battery_today_energy_charge import BatteryTodayEnergyCharge
 from .battery_today_energy_discharge import BatteryTodayEnergyDischarge
@@ -33,6 +35,8 @@ from .grid_export_energy_today import GridExportEnergyToday
 from .grid_export_energy_total import GridExportEnergyTotal
 from .grid_import_energy_today import GridImportEnergyToday
 from .grid_import_energy_total import GridImportEnergyTotal
+from .pv_self_consumption_energy_today import PvSelfConsumptionEnergyToday
+from .pv_self_consumption_energy_total import PvSelfConsumptionEnergyTotal
 
 
 def setup_v2_sensors(
@@ -56,6 +60,8 @@ def setup_v2_sensors(
             CCUTemperaturSensor(entry),
             DeviceId(entry),
             OnlineStatusSensor(entry),
+            PvPower(entry),
+            PvSelfConsumption(entry),
         ]
     )
 
@@ -104,6 +110,10 @@ def setup_v2_battery_energy(
             "grid_import": [
                 GridImportEnergyToday,
                 GridImportEnergyTotal,
+            ],
+            "pv_consumption": [
+                PvSelfConsumptionEnergyToday,
+                PvSelfConsumptionEnergyTotal,
             ],
         }
 

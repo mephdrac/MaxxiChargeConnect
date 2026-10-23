@@ -18,6 +18,8 @@ from ..const import (
     CONF_WINTER_MIN_CHARGE,
     CONF_WINTER_MODE,
     DOMAIN,
+    CONF_CCU_VERSION,
+    CCU_V1
 )
 from ..tools import async_get_min_soc_entity
 from .base_webhook_sensor import BaseWebhookSensor
@@ -176,12 +178,12 @@ class BatterySoc(BaseWebhookSensor):
             wintermode,
         )
 
-        if wintermode:
+        ccu_version = self._entry.data.get(CONF_CCU_VERSION, CCU_V1)
+
+        if wintermode and ccu_version == CCU_V1:
             await self._do_wintermode(native_value_float)
         else:
-            _LOGGER.debug("Normalmodus - UI wird aktualisiert")
-
-        self.async_write_ha_state()
+            _LOGGER.debug("Normalmodus - UI wird aktualisiert")        
 
     @property
     def icon(self):

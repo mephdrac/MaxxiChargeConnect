@@ -27,7 +27,7 @@ def parse_battery(data: dict) -> dict:
         if soc is not None:
             soc = float(soc)
             soc_values.append(soc)
-            battery_info["soc"] = soc
+            battery_info["batterySOC"] = soc
 
         voltage = battery.get("voltage")
         if voltage is not None:

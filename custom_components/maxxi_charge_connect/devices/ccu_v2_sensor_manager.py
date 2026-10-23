@@ -21,6 +21,8 @@ from .battery_power import BatteryPower
 
 from ..const import DOMAIN
 from .battery_today_energy_charge import BatteryTodayEnergyCharge
+from .battery_today_energy_discharge import BatteryTodayEnergyDischarge
+from .battery_total_energy_charge import BatteryTotalEnergyCharge
 
 
 def setup_v2_sensors(
@@ -65,47 +67,60 @@ def setup_v2_battery_energy(
         entry: ConfigEntry,
         async_add_entities: AddEntitiesCallback,
     ) -> None:
-        """Register battery charge energy when the source entity exists."""
+        """Register CCU V2 battery energy sensors."""
 
-        source_unique_id = f"{entry.entry_id}_battery_power_charge"
+        energy_sensors = {
+            "battery_power_charge": [
+                BatteryTodayEnergyCharge,
+                BatteryTotalEnergyCharge,
+            ],
+            "battery_power_discharge": [
+                BatteryTodayEnergyDischarge,
+            ],
+        }
 
-        energy_added = False
+        registered_sensors = set()
 
         @callback
-        def try_add_energy_sensor() -> None:
-            nonlocal energy_added
-
-            if energy_added:
-                return
+        def try_add_energy_sensors() -> None:
+            """Create energy sensors when their sources exist."""
 
             registry = er.async_get(hass)
 
-            source_entity_id = registry.async_get_entity_id(
-                "sensor",
-                DOMAIN,
-                source_unique_id,
-            )
+            new_sensors = []
 
-            if source_entity_id is None:
-                return
+            for source_key, sensor_classes in energy_sensors.items():
+                source_entity_id = registry.async_get_entity_id(
+                    "sensor",
+                    DOMAIN,
+                    f"{entry.entry_id}_{source_key}",
+                )
 
-            energy_sensor = BatteryTodayEnergyCharge(
-                hass,
-                entry,
-                source_entity_id,
-            )
+                if source_entity_id is None:
+                    continue
 
-            energy_added = True
-            async_add_entities([energy_sensor])
+                for sensor_class in sensor_classes:
+                    sensor_key = sensor_class.__name__
+
+                    if sensor_key in registered_sensors:
+                        continue
+
+                    new_sensors.append(
+                        sensor_class(hass, entry, source_entity_id)
+                    )
+
+                    registered_sensors.add(sensor_key)
+
+            if new_sensors:
+                async_add_entities(new_sensors)
 
         @callback
         def handle_registry_update(event) -> None:
-            """Check whether the source entity has been registered."""
+            """React to newly registered entities."""
 
             if event.data.get("action") == "create":
-                try_add_energy_sensor()
+                try_add_energy_sensors()
 
-        # Auf neue Entity-Registry-Einträge reagieren
         unsubscribe = hass.bus.async_listen(
             er.EVENT_ENTITY_REGISTRY_UPDATED,
             handle_registry_update,
@@ -113,5 +128,5 @@ def setup_v2_battery_energy(
 
         entry.async_on_unload(unsubscribe)
 
-        # Falls die Quell-Entität bereits registriert ist
-        try_add_energy_sensor()
+        # Bereits vorhandene Quell-Entitäten berücksichtigen
+        try_add_energy_sensors()

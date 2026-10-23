@@ -29,6 +29,8 @@ from .battery_total_energy_charge import BatteryTotalEnergyCharge
 from .battery_total_energy_discharge import BatteryTotalEnergyDischarge
 from .consumption_energy_today import ConsumptionEnergyToday
 from .consumption_energy_total import ConsumptionEnergyTotal
+from .grid_export_energy_today import GridExportEnergyToday
+from .grid_export_energy_total import GridExportEnergyTotal
 
 
 def setup_v2_sensors(
@@ -92,6 +94,10 @@ def setup_v2_battery_energy(
             "ccu_power": [
                 CcuEnergyToday,
                 CcuEnergyTotal
+            ],
+            "grid_export": [
+                GridExportEnergyToday,
+                GridExportEnergyTotal,
             ],
         }
 

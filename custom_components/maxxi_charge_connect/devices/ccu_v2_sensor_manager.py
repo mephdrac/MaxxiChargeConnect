@@ -37,6 +37,8 @@ from .grid_import_energy_today import GridImportEnergyToday
 from .grid_import_energy_total import GridImportEnergyTotal
 from .pv_self_consumption_energy_today import PvSelfConsumptionEnergyToday
 from .pv_self_consumption_energy_total import PvSelfConsumptionEnergyTotal
+from .pv_today_energy import PvTodayEnergy
+from .pv_total_energy import PvTotalEnergy
 
 
 def setup_v2_sensors(
@@ -114,6 +116,10 @@ def setup_v2_battery_energy(
             "pv_consumption": [
                 PvSelfConsumptionEnergyToday,
                 PvSelfConsumptionEnergyTotal,
+            ],
+            "pv_power": [
+                PvTodayEnergy,
+                PvTotalEnergy,
             ],
         }
 

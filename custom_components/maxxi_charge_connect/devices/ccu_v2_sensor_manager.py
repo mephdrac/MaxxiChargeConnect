@@ -31,6 +31,8 @@ from .consumption_energy_today import ConsumptionEnergyToday
 from .consumption_energy_total import ConsumptionEnergyTotal
 from .grid_export_energy_today import GridExportEnergyToday
 from .grid_export_energy_total import GridExportEnergyTotal
+from .grid_import_energy_today import GridImportEnergyToday
+from .grid_import_energy_total import GridImportEnergyTotal
 
 
 def setup_v2_sensors(
@@ -98,6 +100,10 @@ def setup_v2_battery_energy(
             "grid_export": [
                 GridExportEnergyToday,
                 GridExportEnergyTotal,
+            ],
+            "grid_import": [
+                GridImportEnergyToday,
+                GridImportEnergyTotal,
             ],
         }
 

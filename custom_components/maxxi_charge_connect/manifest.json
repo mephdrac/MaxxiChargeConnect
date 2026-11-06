@@ -1,15 +1,26 @@
 {
   "domain": "maxxi_charge_connect",
   "name": "MaxxiChargeConnect",
-  "categories": ["energy.solar_batteries"],
-  "version": "2.9.0-beta.2",
-  "loggers": ["custom_components.maxxi_charge_connect"],
+  "after_dependencies": [
+    "mqtt",
+    "integration"
+  ],
+  "categories": [
+    "energy.solar_batteries"
+  ],
+  "codeowners": [
+    "@mephdrac"
+  ],
+  "config_flow": true,
   "documentation": "https://github.com/mephdrac/MaxxiChargeConnect",
+  "integration_type": "device",
+  "iot_class": "local_push",
   "issue_tracker": "https://github.com/mephdrac/MaxxiChargeConnect/issues",
-  "requirements": ["dnspython"],
-  "after_dependencies": ["mqtt", "integration"],
-  "codeowners": ["@mephdrac"],
-  "config_flow": true,  
-  "integration_type": "device",  
-  "iot_class": "local_push"
+  "loggers": [
+    "custom_components.maxxi_charge_connect"
+  ],
+  "requirements": [
+    "dnspython"
+  ],
+  "version": "2.9.0-beta.2"
 }

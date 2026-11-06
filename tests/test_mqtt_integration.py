@@ -30,6 +30,8 @@ from custom_components.maxxi_charge_connect.const import (
     WEBHOOK_SIGNAL_STATE,
     WEBHOOK_SIGNAL_UPDATE,
 )
+from custom_components.maxxi_charge_connect.devices.mqtt_discovery_entity import DiscoveryNumber
+from custom_components.maxxi_charge_connect.devices.pv_power import PvPower
 
 CONNECTION_MODULE = "custom_components.maxxi_charge_connect.connection.ccu_v2_connection"
 
@@ -116,6 +118,10 @@ class MqttConnectionTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.hass = make_hass()
         self.connections = []
+        storage_patch = patch("custom_components.maxxi_charge_connect.connection.mqtt_discovery.Store")
+        store = storage_patch.start().return_value
+        store.async_load = AsyncMock(return_value=None)
+        self.addCleanup(storage_patch.stop)
 
     async def asyncTearDown(self):
         for connection in self.connections:
@@ -192,17 +198,165 @@ class MqttConnectionTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_external_subscriptions_and_cleanup(self):
         connection = self.connection(make_entry())
-        unsubscribers = [MagicMock() for _ in range(3)]
+        unsubscribers = [MagicMock() for _ in range(5)]
         with (
             patch(f"{CONNECTION_MODULE}.mqtt.async_wait_for_mqtt_client", AsyncMock(return_value=True)),
             patch(f"{CONNECTION_MODULE}.mqtt.async_subscribe", AsyncMock(side_effect=unsubscribers)) as subscribe,
         ):
             await connection.async_setup_entry()
-        self.assertEqual(subscribe.await_count, 3)
+        self.assertEqual(subscribe.await_count, 5)
         self.assertNotIn(MQTT_BROKER_MANAGER, self.hass.data[DOMAIN])
         await connection.async_unload()
         for unsubscribe in unsubscribers:
             unsubscribe.assert_called_once()
+
+    async def test_real_discovery_command_and_ccu_confirmation(self):
+        with socket.socket() as listener:
+            listener.bind(("127.0.0.1", 0))
+            port = listener.getsockname()[1]
+        connection = self.connection(make_entry("one", True, port))
+        await connection.async_setup_entry()
+        peer = MQTTClient(config={"auto_reconnect": False})
+        await peer.connect(f"mqtt://ccu:secret@127.0.0.1:{port}/")
+        state_topic = "Maxxi-one/settings/state"
+        command_topic = "Maxxi-one/settings/set"
+        config_topic = "homeassistant/number/Maxxi-one/maximum/config"
+        ready = asyncio.Event()
+        config = {
+            "name": "Maximum Output",
+            "unique_id": "maximum",
+            "device": {"identifiers": ["Maxxi-one"], "sw_version": "2.43.0"},
+            "state_topic": state_topic,
+            "command_topic": command_topic,
+            "value_template": "{{ value_json.maximum }}",
+            "command_template": '{"maximum": {{ value }}}',
+            "min": 0,
+            "max": 2000,
+            "step": 10,
+        }
+        try:
+            await peer.subscribe([(command_topic, 0)])
+            with patch(f"{CONNECTION_MODULE}.async_dispatcher_send", side_effect=lambda *args: ready.set()):
+                # State arrives before discovery; the later subscription must replay it.
+                await peer.publish(state_topic, b'{"maximum": 100}', qos=1, retain=True)
+                await peer.publish(config_topic, json.dumps(config).encode(), qos=1, retain=True)
+                await asyncio.wait_for(ready.wait(), 3)
+                spec = next(iter(connection.discovery.specs.values()))
+                self.assertEqual(connection.discovery.values[spec.key], "100")
+
+                async def respond():
+                    message = await asyncio.wait_for(peer.deliver_message(), 3)
+                    self.assertEqual(message.topic, command_topic)
+                    self.assertEqual(json.loads(message.data), {"maximum": 500})
+                    await peer.publish(state_topic, b'{"maximum": 500}', qos=1, retain=True)
+
+                responder = asyncio.create_task(respond())
+                try:
+                    entity = DiscoveryNumber(connection.discovery, spec)
+                    await asyncio.wait_for(entity.async_set_native_value(500), 3)
+                    await responder
+                    self.assertEqual(entity.native_value, 500)
+                finally:
+                    if not responder.done():
+                        responder.cancel()
+                        await asyncio.gather(responder, return_exceptions=True)
+            retained = connection._broker_manager.retained_messages("one")
+            self.assertNotIn(command_topic, retained)
+        finally:
+            await peer.disconnect()
+
+    async def test_second_internal_ccu_replays_preexisting_discovery_and_state(self):
+        with socket.socket() as listener:
+            listener.bind(("127.0.0.1", 0))
+            port = listener.getsockname()[1]
+        first = self.connection(make_entry("one", True, port))
+        await first.async_setup_entry()
+        peer = MQTTClient(config={"auto_reconnect": False})
+        await peer.connect(f"mqtt://ccu:secret@127.0.0.1:{port}/")
+        config = {
+            "name": "New firmware value",
+            "unique_id": "new_value",
+            "device": {"identifiers": ["Maxxi-two"]},
+            "state_topic": "Maxxi-two/new_value",
+            "unit_of_measurement": "W",
+        }
+        try:
+            await peer.publish("Maxxi-two/new_value", b"123", qos=1, retain=True)
+            await peer.publish(
+                "homeassistant/sensor/Maxxi-two/new_value/config", json.dumps(config).encode(), qos=1, retain=True
+            )
+            second = self.connection(make_entry("two", True, port))
+            with patch(f"{CONNECTION_MODULE}.async_dispatcher_send"):
+                await second.async_setup_entry()
+            spec = next(iter(second.discovery.specs.values()))
+            self.assertEqual(second.discovery.values[spec.key], "123")
+            self.assertTrue(second.discovery.available(spec.key))
+            self.assertFalse(first.discovery.specs)
+        finally:
+            await peer.disconnect()
+
+    async def test_external_discovery_and_command_never_retains(self):
+        connection = self.connection(make_entry())
+        with (
+            patch(f"{CONNECTION_MODULE}.mqtt.async_wait_for_mqtt_client", AsyncMock(return_value=True)),
+            patch(f"{CONNECTION_MODULE}.mqtt.async_subscribe", AsyncMock(return_value=MagicMock())) as subscribe,
+        ):
+            await connection.async_setup_entry()
+            cfg = {
+                "name": "Output",
+                "device": {"identifiers": ["Maxxi-one"], "sw_version": "2.44.0"},
+                "state_topic": "Maxxi-one/limit",
+                "command_topic": "Maxxi-one/limit/set",
+                "max": 2000,
+                "step": 1,
+            }
+            with patch(f"{CONNECTION_MODULE}.async_dispatcher_send"):
+                await connection._external_message_received(
+                    SimpleNamespace(topic="homeassistant/number/Maxxi-one/limit/config", payload=json.dumps(cfg))
+                )
+                await connection._external_message_received(SimpleNamespace(topic="Maxxi-one/limit", payload="100"))
+                spec = next(iter(connection.discovery.specs.values()))
+                self.assertIn("Maxxi-one/limit", [call.args[1] for call in subscribe.await_args_list])
+
+                async def reply(hass, topic, payload, **kwargs):
+                    self.assertFalse(kwargs["retain"])
+                    await connection._external_message_received(SimpleNamespace(topic="Maxxi-one/limit", payload="500"))
+
+                with patch(f"{CONNECTION_MODULE}.mqtt.async_publish", AsyncMock(side_effect=reply)) as publish:
+                    await DiscoveryNumber(connection.discovery, spec).async_set_native_value(500)
+                publish.assert_awaited_once_with(self.hass, "Maxxi-one/limit/set", "500", qos=0, retain=False)
+
+    async def test_discovered_pv_value_updates_original_sensor_and_counts_once(self):
+        entry = make_entry()
+        connection = self.connection(entry)
+        with (
+            patch(f"{CONNECTION_MODULE}.mqtt.async_wait_for_mqtt_client", AsyncMock(return_value=True)),
+            patch(f"{CONNECTION_MODULE}.mqtt.async_subscribe", AsyncMock(return_value=MagicMock())),
+        ):
+            await connection.async_setup_entry()
+            self.hass.data[DOMAIN][entry.entry_id]["v2_state"]["batteriesInfo"] = [{}]
+            cfg = {
+                "name": "PV Power",
+                "device": {"identifiers": ["Maxxi-one"]},
+                "state_topic": "Maxxi-one/new/pv",
+                "value_template": "{{ value }}",
+                "unit_of_measurement": "kW",
+            }
+            with patch(f"{CONNECTION_MODULE}.async_dispatcher_send") as send:
+                await connection._external_message_received(
+                    SimpleNamespace(topic="homeassistant/sensor/Maxxi-one/newpv/config", payload=json.dumps(cfg))
+                )
+                await connection._external_message_received(SimpleNamespace(topic="Maxxi-one/new/pv", payload="1.25"))
+            state = self.hass.data[DOMAIN][entry.entry_id]["v2_state"]
+            self.assertEqual(state["PV_power_total"], 1250)
+            self.assertEqual(self.hass.data[DOMAIN][entry.entry_id][MQTT_RECEIVE_STATS]["received_count"], 1)
+            signal = self.hass.data[DOMAIN][entry.entry_id][WEBHOOK_SIGNAL_UPDATE]
+            send.assert_any_call(self.hass, signal, state)
+            original = PvPower(entry)
+            original.hass = self.hass
+            await original.handle_update(state)
+            self.assertEqual(original.unique_id, "one_pv_power")
+            self.assertEqual(original.native_value, 1250)
 
     async def test_partial_external_setup_failure_unsubscribes(self):
         connection = self.connection(make_entry())
@@ -220,9 +374,10 @@ class MqttConnectionTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_external_repeated_values_count_as_received_messages(self):
         connection = self.connection(make_entry())
-        with patch(f"{CONNECTION_MODULE}.mqtt.async_wait_for_mqtt_client", AsyncMock(return_value=True)), patch(
-            f"{CONNECTION_MODULE}.mqtt.async_subscribe", AsyncMock(return_value=MagicMock())
-        ) as subscribe:
+        with (
+            patch(f"{CONNECTION_MODULE}.mqtt.async_wait_for_mqtt_client", AsyncMock(return_value=True)),
+            patch(f"{CONNECTION_MODULE}.mqtt.async_subscribe", AsyncMock(return_value=MagicMock())) as subscribe,
+        ):
             await connection.async_setup_entry()
         handler = subscribe.await_args_list[0].args[2]
         message = SimpleNamespace(topic="Maxxi-one/powermeter/telemetry", payload='{"power": 100}')
@@ -287,7 +442,11 @@ class MqttConnectionTests(unittest.IsolatedAsyncioTestCase):
         self.hass.config_entries.async_forward_entry_unload.return_value = False
         self.assertFalse(await async_unload_entry(self.hass, entry))
         connection.async_unload.assert_not_awaited()
-        self.hass.config_entries.async_forward_entry_unload.assert_awaited_once_with(entry, Platform.SENSOR)
+        self.assertEqual(self.hass.config_entries.async_forward_entry_unload.await_count, 5)
+        self.assertIn(
+            Platform.SENSOR,
+            [call.args[1] for call in self.hass.config_entries.async_forward_entry_unload.await_args_list],
+        )
 
     async def test_migration_keeps_existing_devices_on_v1(self):
         entry = SimpleNamespace(version=3, minor_version=4, data={})

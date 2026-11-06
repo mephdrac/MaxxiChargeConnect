@@ -3,7 +3,7 @@
 from homeassistant.const import EVENT_HOMEASSISTANT_STOP
 from homeassistant.core import HomeAssistant
 
-from .const import DOMAIN, MQTT_BROKER_MANAGER
+from .const import DOMAIN, MQTT_BROKER_MANAGER, MQTT_DISCOVERY_COORDINATOR
 from .mqtt_broker_manager import MqttBrokerManager
 
 
@@ -14,6 +14,9 @@ def get_broker_manager(hass: HomeAssistant) -> MqttBrokerManager:
         manager = data[MQTT_BROKER_MANAGER] = MqttBrokerManager()
 
         async def stop_broker(event):
+            for entry_data in tuple(data.values()):
+                if isinstance(entry_data, dict) and (discovery := entry_data.get(MQTT_DISCOVERY_COORDINATOR)):
+                    discovery.stop()
             await manager.async_shutdown()
 
         hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, stop_broker)

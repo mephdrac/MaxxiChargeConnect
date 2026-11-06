@@ -8,12 +8,15 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
+    CCU_V2,
+    CONF_CCU_VERSION,
     CONF_WINTER_MAX_CHARGE,
     CONF_WINTER_MIN_CHARGE,
     DEFAULT_WINTER_MAX_CHARGE,
     DEFAULT_WINTER_MIN_CHARGE,
     DOMAIN,
 )
+from .devices.mqtt_discovery_entity import setup_discovery_entities
 from .http_post.number_config_entity import (
     NumberConfigEntity,
 )  # Importiere deine Entity-Klasse
@@ -30,6 +33,10 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Richte Number-Entities für MaxxiChargeConnect ein."""
+
+    if entry.data.get(CONF_CCU_VERSION) == CCU_V2:
+        setup_discovery_entities(hass, entry, async_add_entities, "number")
+        return
 
     entities = []
 

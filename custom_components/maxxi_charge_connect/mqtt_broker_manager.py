@@ -28,6 +28,8 @@ class CredentialsAuthPlugin(BaseAuthPlugin):
 
     async def on_broker_message_received(self, *, client_id: str, message) -> None:
         """Deliver telemetry published by authenticated clients to the integration."""
+        if message is None or not message.topic:
+            return
         _LOGGER.debug("Internal MQTT received topic %s (%s bytes)", message.topic, len(message.data))
         if self.config.message_callback is not None:
             await self.config.message_callback(message.topic, bytes(message.data))
@@ -156,6 +158,19 @@ class MqttBrokerManager:
                 await listener(topic, payload)
             except Exception:
                 _LOGGER.exception("Error processing internal MQTT telemetry on %s", topic)
+
+    async def async_publish(self, entry_id: str, topic: str, payload: bytes) -> None:
+        """Publish a non-retained command through aMQTT's public API."""
+        async with self._lock:
+            if self._broker is None or entry_id not in self._entries:
+                raise RuntimeError("Internal MQTT broker is not available for this entry")
+            await self._broker.internal_message_broadcast(topic, payload, qos=0)
+
+    def retained_messages(self, entry_id: str) -> dict[str, bytes]:
+        """Snapshot retained data for a newly attached CCU without private broker APIs."""
+        if self._broker is None or entry_id not in self._entries:
+            return {}
+        return {topic: bytes(message.data) for topic, message in self._broker.retained_messages.items()}
 
     async def _async_stop(self) -> None:
         if self._broker is not None:

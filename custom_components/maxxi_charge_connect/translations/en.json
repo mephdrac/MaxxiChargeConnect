@@ -279,6 +279,9 @@
       },
       "mqtt_received_count": {
         "name": "MQTT received messages"
+      },
+      "mqtt_discovered_entities": {
+        "name": "MQTT discovered entities"
       }
     },
     "switch": {

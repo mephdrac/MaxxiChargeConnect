@@ -17,6 +17,7 @@ from homeassistant.helpers.entity_registry import async_get as async_get_entity_
 from .connection.ccu_base_connection import CcuBaseConnection
 from .connection.ccu_v1_connection import ccuV1Connection
 from .connection.ccu_v2_connection import ccuV2Connection
+from .connection.mqtt_discovery import PLATFORMS as MQTT_PLATFORMS
 from .const import CCU_V1, CCU_V2, CONF_CCU_VERSION, CONF_DEVICE_ID, CONF_NEEDS_DEVICE_ID, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -72,7 +73,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Entlädt die Integration vollständig und deregistriert den Webhook."""
 
     connection = hass.data[DOMAIN].get(entry.entry_id, {}).get("connection")
-    platforms = [Platform.SENSOR] if entry.data.get(CONF_CCU_VERSION) == CCU_V2 else PLATFORMS
+    platforms = [Platform(name) for name in MQTT_PLATFORMS] if entry.data.get(CONF_CCU_VERSION) == CCU_V2 else PLATFORMS
 
     unload_ok = all(
         await asyncio.gather(

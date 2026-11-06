@@ -12,9 +12,11 @@ from custom_components.maxxi_charge_connect.const import (
     CONF_ENABLE_MQTT_BROKER,
     DOMAIN,
     MQTT_DIAGNOSTICS_SIGNAL,
+    MQTT_DISCOVERY_COORDINATOR,
     MQTT_RECEIVE_STATS,
 )
 from custom_components.maxxi_charge_connect.devices.mqtt_diagnostics import (
+    MqttDiscoveredEntitiesSensor,
     MqttLastReceivedSensor,
     MqttReceivedCountSensor,
 )
@@ -89,3 +91,26 @@ class MqttDiagnosticsTests(unittest.IsolatedAsyncioTestCase):
     async def test_external_broker_attribute(self):
         self.entry.data[CONF_ENABLE_MQTT_BROKER] = False
         self.assertEqual(self.sensors[0].extra_state_attributes["broker"], "external")
+
+    async def test_discovery_sensor_updates_without_new_telemetry(self):
+        discovery = MagicMock()
+        discovery.specs = {"cached": object()}
+        self.hass.data[DOMAIN]["one"][MQTT_DISCOVERY_COORDINATOR] = discovery
+        sensor = MqttDiscoveredEntitiesSensor(self.entry)
+        sensor.hass = self.hass
+        sensor.async_write_ha_state = MagicMock()
+        sensor.async_on_remove = MagicMock()
+        await sensor.async_added_to_hass()
+        self.assertEqual(sensor.native_value, 1)
+        self.assertTrue(sensor.entity_registry_enabled_default)
+        self.assertEqual(sensor.entity_category, EntityCategory.DIAGNOSTIC)
+        discovery.add_listener.assert_called_once_with(sensor._receive_update)
+        sensor.async_on_remove.assert_called_once_with(discovery.add_listener.return_value)
+        update = discovery.add_listener.call_args.args[0]
+        discovery.specs["new"] = object()
+        update()
+        self.assertEqual(sensor.native_value, 2)
+        discovery.specs.clear()
+        update()
+        self.assertEqual(sensor.native_value, 0)
+        self.assertEqual(self.stats["received_count"], 0)

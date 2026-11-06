@@ -19,12 +19,11 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
-        CONF_CCU_VERSION,
-        CCU_V1,
-        CCU_V2,
-        DOMAIN,
-    )
-
+    CCU_V1,
+    CCU_V2,
+    CONF_CCU_VERSION,
+    DOMAIN,
+)
 from .devices.battery_power import BatteryPower
 from .devices.battery_power_charge import BatteryPowerCharge
 from .devices.battery_power_discharge import BatteryPowerDischarge
@@ -39,6 +38,7 @@ from .devices.ccu_energy_today import CcuEnergyToday
 from .devices.ccu_energy_total import CcuEnergyTotal
 from .devices.ccu_power import CcuPower
 from .devices.ccu_temperatur_sensor import CCUTemperaturSensor
+from .devices.ccu_v2_sensor_manager import setup_v2_sensors
 from .devices.consumption_energy_today import ConsumptionEnergyToday
 from .devices.consumption_energy_total import ConsumptionEnergyTotal
 from .devices.device_id import DeviceId
@@ -49,6 +49,7 @@ from .devices.grid_export_energy_total import GridExportEnergyTotal
 from .devices.grid_import import GridImport
 from .devices.grid_import_energy_today import GridImportEnergyToday
 from .devices.grid_import_energy_total import GridImportEnergyTotal
+from .devices.mqtt_discovery_entity import setup_discovery_entities
 from .devices.online_status_sensor import OnlineStatusSensor
 from .devices.power_consumption import PowerConsumption
 from .devices.power_meter import PowerMeter
@@ -64,7 +65,6 @@ from .devices.status_sensor import StatusSensor
 from .devices.uptime_sensor import UptimeSensor
 from .devices.webhook_id import WebhookId
 from .http_scan.http_scan_text import HttpScanText
-from .devices.ccu_v2_sensor_manager import setup_v2_sensors
 
 SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
 
@@ -95,8 +95,9 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     ccu_version = entry.data.get(CONF_CCU_VERSION, CCU_V1)
 
     if ccu_version == CCU_V2:
-       setup_v2_sensors(hass, entry, async_add_entities)
-       return
+        setup_v2_sensors(hass, entry, async_add_entities)
+        setup_discovery_entities(hass, entry, async_add_entities, "sensor")
+        return
 
     # BatterySensorManager initialisieren
     manager = BatterySensorManager(hass, entry, async_add_entities)

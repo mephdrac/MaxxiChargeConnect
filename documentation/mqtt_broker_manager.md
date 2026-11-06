@@ -67,19 +67,114 @@ Fehlerhafte JSON-Nachrichten werden ignoriert. Nach dem ersten gültigen Empfang
 setzt der konfigurierbare Empfangs-Timeout die Sensoren bei ausbleibenden Daten
 auf nicht verfügbar; neue Nachrichten aktualisieren sie wieder.
 
+## MQTT-Discovery und zusätzliche Entitäten
+
+CCU-V2-Einträge lesen zusätzlich die Discovery-Beschreibungen unter
+`homeassistant/+/+/config` und `homeassistant/+/+/+/config`. Unterstützt werden
+Einzelbeschreibungen und Gerätebeschreibungen mit `components`/`cmps`, inklusive
+der MQTT-Discovery-Kurzschreibweisen und des Topic-Platzhalters `~`.
+
+Die Geräte-ID muss in `device.identifiers` bzw. `dev.ids` genau übereinstimmen.
+Zustands-, Verfügbarkeits- und Befehlstopics müssen diese Geräte-ID als eigenes
+Pfadsegment enthalten. Damit sind auch Topics wie `maxxi/<Geräte-ID>/state`
+möglich. Wildcards in diesen Topics werden nicht akzeptiert.
+
+Aus den Beschreibungen entstehen zusätzliche Sensoren, Binärsensoren,
+Zahlenfelder, Auswahllisten und Schalter am vorhandenen CCU-Gerät. Ihre Namen,
+Einheiten, Vorlagen, Wertebereiche und Optionen kommen aus der CCU-Beschreibung.
+Die vorhandenen Sensoren und ihre IDs bleiben erhalten. Bekannte Gegenstücke
+werden auf diese Sensoren abgebildet und nicht als zusätzliche Discovery-Sensoren
+angelegt. Der Abgleich berücksichtigt bekannte Messwertrollen sowie Topic und
+JSON-Wertepfad; Punkt- und Klammerschreibweise in einfachen Vorlagen werden
+gleich behandelt. Einheiten und Geräteklassen müssen passen. Die Zuordnung
+funktioniert auch nach einem Umbenennen der vorhandenen HA-Entitäten.
+
+Abgeglichen werden unter anderem Netz-, PV- und CCU-Leistung, SOC,
+CCU-Temperatur und Batteriesensoren mit ihrem Batterieindex. Passende aktuelle
+Discovery-Werte fließen in den bisherigen Sensor-Datenweg, einschließlich der
+Umrechnung von kW in W und von Batteriespannung in das bisherige Eingabeformat.
+Die Vorzeichenbehandlung der bestehenden CCU-Sensoren bleibt erhalten.
+Bereits berechnete Energiezähler werden weiterhin berechnet; native
+Discovery-Energiezähler ersetzen weder deren Historie noch deren Zählerstand.
+Eine eigene neue Entität entsteht für zusätzliche oder nicht eindeutig
+zuordenbare Messwerte. Gleiche Discovery-Quellen mit mehreren IDs werden
+zusätzlich anhand von Topic, Vorlage und Metadaten zusammengefasst.
+
+Falls eine frühere Version bereits eine zuordenbare Discovery-Dublette angelegt
+hat, wird nur diese von MaxxiChargeConnect erzeugte Kopie deaktiviert. Die
+ursprünglichen Sensoren und ihre Historien werden nicht gelöscht; andere
+Integrationseinträge und vom Nutzer deaktivierte Entitäten werden nicht geändert.
+
+Beschreibungen werden im Home-Assistant-Speicher pro Eintrag gesichert.
+Der Cache stellt nach einem Neustart die Entitäten wieder her; er ersetzt keine
+aktuellen Zustandsmeldungen. Beim internen Broker werden vorhandene retained
+Beschreibungen und Werte beim Anbinden einer weiteren CCU aus aMQTT übernommen.
+Geänderte Beschreibungen aktualisieren die Entitäten und ihre Abonnements.
+Eine leere Discovery-Nachricht zieht eine Beschreibung zurück; die zugehörige
+Entität bleibt mit ihrer bisherigen ID erhalten, wird aber nicht verfügbar.
+
+Die Implementierung unterstützt eine einzelne Verfügbarkeitsbeschreibung pro
+Entität. Komplexe Mehrfach-Verfügbarkeitsregeln werden derzeit nicht übernommen.
+Maximal 256 Discovery-Entitäten pro CCU und 64 KiB pro Beschreibung werden
+angenommen. Andere Discovery-Komponenten wie `button`, `light` und `climate`
+werden nicht eingerichtet.
+
+Beim externen Broker können zusätzlich die normalen, von Home Assistants
+MQTT-Integration erstellten Entitäten existieren. Diese werden von uns nicht
+automatisch deaktiviert. Für die hier beschriebene Befehlsbestätigung die
+Einstellungen am MaxxiChargeConnect-Gerät verwenden.
+
+## Bestätigte MQTT-Steuerung
+
+Die von der CCU entdeckten Zahlenfelder, Auswahllisten und Schalter verwenden
+deren `command_topic` und gegebenenfalls `command_template`. Die Steuerung:
+
+1. Prüft, ob eine aktuelle Zustandsmeldung vorliegt und die gemeldete
+   Verfügbarkeit einen Schreibzugriff zulässt.
+2. Verlangt eine bekannte Firmware ab `2.43.0`, entweder aus der
+   Gerätebeschreibung (`sw_version`/`sw`) oder einem entdeckten Firmware-Sensor
+   mit dem Namen `CCU ver`, `Firmware` oder `Firmware version`.
+3. Prüft Wertebereich, Schrittweite bzw. Auswahloptionen.
+4. Sendet den Befehl ohne retained-Flag und wartet bis zu zehn Sekunden auf
+   den passenden Wert am angekündigten Zustandstopic.
+
+Erst eine passende Rückmeldung bestätigt den Schreibzugriff. Bei einem Timeout
+wird ein Fehler angezeigt; die Entität zeigt weiterhin den tatsächlich gemeldeten
+Zustand. Eine gemeldete Offline-Verfügbarkeit, ein Empfangs-Timeout, das Zurückziehen einer
+Beschreibung oder das Entladen des Eintrags bricht wartende Befehle ab.
+Gleichzeitige Änderungen derselben Einstellung werden nacheinander ausgeführt.
+Zustands- und Befehlstopic müssen verschieden sein, damit ein bloßes Echo des
+eigenen Befehls nicht als Bestätigung gewertet werden kann.
+
+Für die Konzepte Discovery und bestätigte Steuerung wurde
+[ha-maxxicharge](https://github.com/DerSpletti/ha-maxxicharge/tree/d17423a5f888373d25ba391ef4c8b4e7c49099fa)
+als Vergleich herangezogen. Dessen Firmware-Untergrenze ist ebenfalls `2.43.0`.
+Der dortige MiniBroker wird nicht verwendet: MQTT-Protokoll und Zustellung
+übernimmt weiterhin aMQTT.
+
+Nach Übernahme der Änderungen Home Assistant neu starten. Falls die CCU bisher
+noch keine Discovery-Beschreibungen gesendet hat, deren MQTT-Verbindung neu
+aufbauen lassen. Die bloße Existenz eines Telemetrie-Topics reicht nicht aus,
+um daraus eine steuerbare Einstellung abzuleiten.
+
 ## Empfang in Home Assistant prüfen
 
 Auf der Geräteseite jeder CCU V2 erscheinen unter **Diagnose** standardmäßig
-zwei Sensoren:
+drei Sensoren:
 
 - **MQTT letzter Empfang**: Zeitpunkt der letzten gültigen, verarbeiteten
   MQTT-Nachricht. Vor der ersten Nachricht ist der Wert unbekannt.
 - **MQTT empfangene Nachrichten**: Anzahl gültiger Nachrichten seit dem Laden
   der CCU-Verbindung. Auch Nachrichten mit unveränderten Messwerten zählen.
   Bei einem Neustart oder Neuladen des Eintrags beginnt der Zähler wieder bei null.
+- **MQTT erkannte Entitäten**: Aktuelle Anzahl zugeordneter Discovery-Beschreibungen.
+  Auch Werte, die auf bestehende Sensoren abgebildet werden, zählen dazu. Der
+  Sensor aktualisiert sich beim Hinzufügen oder Zurückziehen einer Beschreibung,
+  auch ohne neue Telemetrie. Ohne erkannte Beschreibungen zeigt er `0`.
 
 In den Sensorattributen stehen `last_topic` (zuletzt verarbeitetes Topic),
-`counting_since` (Beginn der Zählung) und `broker` (`internal` oder `external`).
+`counting_since` (Beginn der Zählung), `broker` (`internal` oder `external`)
+und `discovered_entities` (Anzahl der zugeordneten Discovery-Entitäten).
 Die Sensoren funktionieren für beide Broker-Wege. Ungültige Nachrichten und
 Topics anderer CCUs zählen nicht. Auch nach einem Empfangs-Timeout bleiben
 Zeitpunkt und Zähler sichtbar, damit ein ausgefallener Empfang erkennbar bleibt.
@@ -99,12 +194,17 @@ Die Tests verwenden echte lokale Broker-/Client-Verbindungen und simulieren
 Home Assistants Konfigurations- und Dispatcher-Schnittstellen. Sie prüfen
 unter anderem Anmeldung, zwei getrennte CCUs, externe Abonnements,
 Konfigurationskonflikte, Setup-Rollback, Shutdown, Neustart und Empfangs-Timeout.
+Weitere Tests prüfen Discovery-Zuordnung, Cache, Vorlagen, Topics mit
+Herstellerpräfix, geänderte Beschreibungen, Befehlsbestätigung, falsche Antworten,
+parallele Schreibzugriffe, Firmware-Sperren und den vollständigen Befehlsweg
+über echte lokale aMQTT-Verbindungen.
 Die Integrationstests wurden mit Python 3.12 und Home Assistant 2025.1.4
 geprüft, zusätzlich mit aMQTT 0.12.1 und PyYAML 6.0.3. Die Paketauflösung
 für die Integrationsabhängigkeiten wurde gegen `homeassistant/package_constraints.txt`
 des lokalen Home-Assistant-2026.12-Entwicklungsstands geprüft.
-Ein vollständiger Lauf mit dieser Home-Assistant-Version und echter CCU
-steht noch aus.
+Broker und Telemetrie wurden bereits mit einer echten CCU verwendet. Die neue
+Discovery- und Steuerungsfunktion muss noch mit der echten CCU und deren
+Discovery-Beschreibungen geprüft werden.
 
 ## Installationsfehler durch PyYAML-Konflikt
 

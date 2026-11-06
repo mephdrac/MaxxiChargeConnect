@@ -1,0 +1,1938 @@
+{
+  "device_id": "CCU2-0000-0000-0001",
+  "descriptions": [
+    {
+      "topic": "homeassistant/number/CCU2-0000-0000-0001/entry_0/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/settings/get",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "name": "Minimum SOC",
+        "unit_of_measurement": "%",
+        "value_template": "{{ value_json.socMin }}",
+        "command_topic": "CCU2-0000-0000-0001/settings/set",
+        "command_template": "{\"socMin\": {{ value | int }}}",
+        "min": 0.0,
+        "max": 100.0,
+        "step": 1.0,
+        "entity_category": "config",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/number/CCU2-0000-0000-0001/entry_1/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/settings/get",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "name": "Maximum SOC",
+        "unit_of_measurement": "%",
+        "value_template": "{{ value_json.socMax }}",
+        "command_topic": "CCU2-0000-0000-0001/settings/set",
+        "command_template": "{\"socMax\": {{ value | int }}}",
+        "min": 0.0,
+        "max": 100.0,
+        "step": 1.0,
+        "entity_category": "config",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/number/CCU2-0000-0000-0001/entry_2/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/settings/get",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "name": "Maximum Output",
+        "unit_of_measurement": "W",
+        "value_template": "{{ value_json.maxPowerOut }}",
+        "command_topic": "CCU2-0000-0000-0001/settings/set",
+        "command_template": "{\"maxPowerOut\": {{ value | int }}}",
+        "min": 0.0,
+        "max": 2300.0,
+        "step": 1.0,
+        "entity_category": "config",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/number/CCU2-0000-0000-0001/entry_3/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/settings/get",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "name": "Meter Loss Output",
+        "unit_of_measurement": "W",
+        "value_template": "{{ value_json.fallbackPower }}",
+        "command_topic": "CCU2-0000-0000-0001/settings/set",
+        "command_template": "{\"fallbackPower\": {{ value | int }}}",
+        "min": 0.0,
+        "max": 2300.0,
+        "step": 1.0,
+        "entity_category": "config",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/number/CCU2-0000-0000-0001/entry_4/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/settings/get",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "name": "Maximum Charging Power",
+        "unit_of_measurement": "W",
+        "value_template": "{{ value_json.maxPowerIn }}",
+        "command_topic": "CCU2-0000-0000-0001/settings/set",
+        "command_template": "{\"maxPowerIn\": {{ value | int }}}",
+        "min": 0.0,
+        "max": 2300.0,
+        "step": 1.0,
+        "entity_category": "config",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/select/CCU2-0000-0000-0001/entry_5/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/settings/get",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "name": "Charging Strategy",
+        "value_template": "{{ {'none':'Automatic','time':'Time Plan','price':'Price Plan'}.get(value_json.chargePlan) }}",
+        "command_topic": "CCU2-0000-0000-0001/settings/set",
+        "command_template": "{\"chargePlan\": \"{{ {'Automatic':'none','Time Plan':'time','Price Plan':'price'}[value] }}\"}",
+        "options": [
+          "Automatic",
+          "Time Plan",
+          "Price Plan"
+        ],
+        "entity_category": "config",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/switch/CCU2-0000-0000-0001/entry_6/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/settings/get",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "name": "UPS Mode",
+        "command_topic": "CCU2-0000-0000-0001/settings/set",
+        "command_template": "{\"upsMode\": {{ value }}}",
+        "value_template": "{{ 'true' if value_json.upsMode else 'false' }}",
+        "payload_on": "true",
+        "payload_off": "false",
+        "entity_category": "config",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_7/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/settings/get",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "name": "Licence Type",
+        "value_template": "{{value_json.r2pLic}}",
+        "entity_category": "diagnostic",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_8/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/device/state",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "CCU ID",
+        "value_template": "{{value_json.CCU.ccuId}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_9/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/device/state",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "CCU ver",
+        "value_template": "{{value_json.CCU.ccuVersion}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_10/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/device/state",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "CCU IP",
+        "value_template": "{{value_json.CCU.ccuIpAddress}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_11/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/device/state",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "API ver",
+        "value_template": "{{value_json.CCU.apiVersion}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_12/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/device/state",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Inv variant",
+        "value_template": "{{value_json.Inverter.inverterVariant}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_13/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/device/state",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Inv DC",
+        "value_template": "{{value_json.Inverter.inverterVersion.dc}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_14/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/device/state",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Inv AC",
+        "value_template": "{{value_json.Inverter.inverterVersion.ac}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_15/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "CCU Publication Time",
+        "unit_of_measurement": "ms",
+        "value_template": "{{value_json.timestamp}}",
+        "entity_category": "diagnostic",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_16/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "CCU Temperature",
+        "device_class": "temperature",
+        "unit_of_measurement": "°C",
+        "value_template": "{{value_json.temperature}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_17/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "CCU AC Power",
+        "device_class": "power",
+        "unit_of_measurement": "W",
+        "value_template": "{{value_json.power}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_18/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "CCU AC Output Energy Today",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "value_template": "{{value_json.dailyEnergy.delivered}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_19/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "CCU AC Input Energy Today",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "value_template": "{{value_json.dailyEnergy.consumed}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_20/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "CCU AC Output Energy Total",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "state_class": "total_increasing",
+        "value_template": "{{value_json.totalEnergy.delivered}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_21/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "CCU AC Input Energy Total",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "state_class": "total_increasing",
+        "value_template": "{{value_json.totalEnergy.consumed}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_22/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "CCU Power Age",
+        "value_template": "{{value_json.powerAgeMs}}",
+        "unit_of_measurement": "ms",
+        "entity_category": "diagnostic",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_23/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Backup Outlet Power",
+        "value_template": "{{value_json.backupPower}}",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_24/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Effective Output Limit",
+        "value_template": "{{value_json.effectiveOutputLimit}}",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "state_class": "measurement",
+        "entity_category": "diagnostic",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_25/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Effective Input Limit",
+        "value_template": "{{value_json.effectiveInputLimit}}",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "state_class": "measurement",
+        "entity_category": "diagnostic",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_26/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Continuous Input Limit",
+        "value_template": "{{value_json.continuousInputLimit}}",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "state_class": "measurement",
+        "entity_category": "diagnostic",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_27/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Multiuse System Power",
+        "value_template": "{{value_json.systemPower}}",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_28/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Multiuse System SOC",
+        "value_template": "{{value_json.systemSoc}}",
+        "unit_of_measurement": "%",
+        "device_class": "battery",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_29/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Multiuse SOC Age",
+        "value_template": "{{value_json.systemSocAgeMs}}",
+        "unit_of_measurement": "ms",
+        "entity_category": "diagnostic",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_30/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "CCU Uptime",
+        "value_template": "{{value_json.uptime}}",
+        "unit_of_measurement": "s",
+        "device_class": "duration",
+        "state_class": "measurement",
+        "entity_category": "diagnostic",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_31/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Operating Mode",
+        "value_template": "{{value_json.operatingMode}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_32/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "CCU Status Bits 0",
+        "value_template": "{{value_json.status0}}",
+        "entity_category": "diagnostic",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_33/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "CCU Status Bits 1",
+        "value_template": "{{value_json.status1}}",
+        "entity_category": "diagnostic",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/binary_sensor/CCU2-0000-0000-0001/entry_34/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Inverter Fault",
+        "device_class": "problem",
+        "value_template": "{{ \"ON\" if value_json.inverterFault else \"OFF\" }}",
+        "entity_category": "diagnostic",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/binary_sensor/CCU2-0000-0000-0001/entry_35/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery Fault",
+        "device_class": "problem",
+        "value_template": "{{ \"ON\" if value_json.batteryFault else \"OFF\" }}",
+        "entity_category": "diagnostic",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/binary_sensor/CCU2-0000-0000-0001/entry_36/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Meter Timeout",
+        "device_class": "problem",
+        "value_template": "{{ \"ON\" if value_json.meterFault else \"OFF\" }}",
+        "entity_category": "diagnostic",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_37/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery Charging Energy",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "state_class": "total",
+        "value_template": "{{value_json.batteryEnergy.charged}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_38/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/system/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery Discharging Energy",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "state_class": "total",
+        "value_template": "{{value_json.batteryEnergy.discharged}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_39/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/powermeter/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Grid Publication Time",
+        "unit_of_measurement": "ms",
+        "value_template": "{{value_json.timestamp}}",
+        "entity_category": "diagnostic",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_40/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/powermeter/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Grid Power",
+        "device_class": "power",
+        "unit_of_measurement": "W",
+        "value_template": "{{value_json.power}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_41/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/powermeter/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Grid Export Energy Today",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "value_template": "{{value_json.dailyEnergy.delivered}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_42/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/powermeter/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Grid Import Energy Today",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "value_template": "{{value_json.dailyEnergy.consumed}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_43/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/powermeter/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Grid Export Energy Total",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "state_class": "total_increasing",
+        "value_template": "{{value_json.totalEnergy.delivered}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_44/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/powermeter/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Grid Import Energy Total",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "state_class": "total_increasing",
+        "value_template": "{{value_json.totalEnergy.consumed}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_45/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/powermeter/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Grid Power Age",
+        "value_template": "{{value_json.powerAgeMs}}",
+        "unit_of_measurement": "ms",
+        "entity_category": "diagnostic",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_46/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery Publication Time",
+        "unit_of_measurement": "ms",
+        "value_template": "{{value_json.timestamp}}",
+        "entity_category": "diagnostic",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_47/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Converter Input Power Total",
+        "device_class": "power",
+        "unit_of_measurement": "W",
+        "value_template": "{{value_json.inputPowerTotal}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_48/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Converter Output Power Total",
+        "device_class": "power",
+        "unit_of_measurement": "W",
+        "value_template": "{{value_json.outputPowerTotal}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_49/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "PV Energy Total",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "state_class": "total",
+        "value_template": "{{value_json.pvEnergy.total}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_50/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "PV Energy Today",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "value_template": "{{value_json.pvEnergy.today}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_51/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "PV Power",
+        "value_template": "{{value_json.pvPowerTotal}}",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_52/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery Charging Power",
+        "value_template": "{{value_json.chargePowerTotal}}",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_53/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery Discharging Power",
+        "value_template": "{{value_json.dischargePowerTotal}}",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_54/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Usable Energy Remaining",
+        "value_template": "{{value_json.remainWhTotal}}",
+        "unit_of_measurement": "Wh",
+        "device_class": "energy",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_55/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Design Energy Capacity",
+        "value_template": "{{value_json.designWhTotal}}",
+        "unit_of_measurement": "Wh",
+        "device_class": "energy",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_56/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Local Battery SOC",
+        "value_template": "{{value_json.socTotal}}",
+        "unit_of_measurement": "%",
+        "device_class": "battery",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_57/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Available Battery Count",
+        "value_template": "{{value_json.batteryCount}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_58/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Local Battery SOC Age",
+        "value_template": "{{value_json.socAgeMs}}",
+        "unit_of_measurement": "ms",
+        "entity_category": "diagnostic",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_59/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Converter 1 Input Power",
+        "device_class": "power",
+        "unit_of_measurement": "W",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',1)|first|d({})).get('inputPower')}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_60/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Converter 1 Output Power",
+        "device_class": "power",
+        "unit_of_measurement": "W",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',1)|first|d({})).get('outputPower')}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_61/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 1 SOC",
+        "device_class": "battery",
+        "unit_of_measurement": "%",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',1)|first|d({})).get('soc')}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_62/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 1 Voltage",
+        "device_class": "voltage",
+        "unit_of_measurement": "V",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',1)|first|d({})).get('voltage')}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_63/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 1 PV Energy Total",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "state_class": "total",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',1)|first|d({})).get('pvEnergy',{}).get('total')}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_64/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 1 PV Energy Today",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',1)|first|d({})).get('pvEnergy',{}).get('today')}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_65/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 1 PV Power",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',1)|first|d({})).get('pvPower')}}",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_66/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 1 DC Power",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',1)|first|d({})).get('dcPower')}}",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_67/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 1 Stored Energy",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',1)|first|d({})).get('remainWh')}}",
+        "unit_of_measurement": "Wh",
+        "device_class": "energy",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_68/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 1 Design Capacity",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',1)|first|d({})).get('designWh')}}",
+        "unit_of_measurement": "Wh",
+        "device_class": "energy",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_69/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Converter 2 Input Power",
+        "device_class": "power",
+        "unit_of_measurement": "W",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',2)|first|d({})).get('inputPower')}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_70/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Converter 2 Output Power",
+        "device_class": "power",
+        "unit_of_measurement": "W",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',2)|first|d({})).get('outputPower')}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_71/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 2 SOC",
+        "device_class": "battery",
+        "unit_of_measurement": "%",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',2)|first|d({})).get('soc')}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_72/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 2 Voltage",
+        "device_class": "voltage",
+        "unit_of_measurement": "V",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',2)|first|d({})).get('voltage')}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_73/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 2 PV Energy Total",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "state_class": "total",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',2)|first|d({})).get('pvEnergy',{}).get('total')}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_74/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 2 PV Energy Today",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',2)|first|d({})).get('pvEnergy',{}).get('today')}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_75/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 2 PV Power",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',2)|first|d({})).get('pvPower')}}",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_76/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 2 DC Power",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',2)|first|d({})).get('dcPower')}}",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_77/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 2 Stored Energy",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',2)|first|d({})).get('remainWh')}}",
+        "unit_of_measurement": "Wh",
+        "device_class": "energy",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_78/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 2 Design Capacity",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',2)|first|d({})).get('designWh')}}",
+        "unit_of_measurement": "Wh",
+        "device_class": "energy",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_79/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Converter 3 Input Power",
+        "device_class": "power",
+        "unit_of_measurement": "W",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',3)|first|d({})).get('inputPower')}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_80/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Converter 3 Output Power",
+        "device_class": "power",
+        "unit_of_measurement": "W",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',3)|first|d({})).get('outputPower')}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_81/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 3 SOC",
+        "device_class": "battery",
+        "unit_of_measurement": "%",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',3)|first|d({})).get('soc')}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_82/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 3 Voltage",
+        "device_class": "voltage",
+        "unit_of_measurement": "V",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',3)|first|d({})).get('voltage')}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_83/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 3 PV Energy Total",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "state_class": "total",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',3)|first|d({})).get('pvEnergy',{}).get('total')}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_84/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 3 PV Energy Today",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',3)|first|d({})).get('pvEnergy',{}).get('today')}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_85/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 3 PV Power",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',3)|first|d({})).get('pvPower')}}",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_86/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 3 DC Power",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',3)|first|d({})).get('dcPower')}}",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_87/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 3 Stored Energy",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',3)|first|d({})).get('remainWh')}}",
+        "unit_of_measurement": "Wh",
+        "device_class": "energy",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_88/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 3 Design Capacity",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',3)|first|d({})).get('designWh')}}",
+        "unit_of_measurement": "Wh",
+        "device_class": "energy",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_89/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Converter 4 Input Power",
+        "device_class": "power",
+        "unit_of_measurement": "W",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',4)|first|d({})).get('inputPower')}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_90/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Converter 4 Output Power",
+        "device_class": "power",
+        "unit_of_measurement": "W",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',4)|first|d({})).get('outputPower')}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_91/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 4 SOC",
+        "device_class": "battery",
+        "unit_of_measurement": "%",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',4)|first|d({})).get('soc')}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_92/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 4 Voltage",
+        "device_class": "voltage",
+        "unit_of_measurement": "V",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',4)|first|d({})).get('voltage')}}",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_93/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 4 PV Energy Total",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "state_class": "total",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',4)|first|d({})).get('pvEnergy',{}).get('total')}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_94/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 4 PV Energy Today",
+        "device_class": "energy",
+        "unit_of_measurement": "Wh",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',4)|first|d({})).get('pvEnergy',{}).get('today')}}",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_95/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 4 PV Power",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',4)|first|d({})).get('pvPower')}}",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_96/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 4 DC Power",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',4)|first|d({})).get('dcPower')}}",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "state_class": "measurement",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_97/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 4 Stored Energy",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',4)|first|d({})).get('remainWh')}}",
+        "unit_of_measurement": "Wh",
+        "device_class": "energy",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    },
+    {
+      "topic": "homeassistant/sensor/CCU2-0000-0000-0001/entry_98/config",
+      "payload": {
+        "state_topic": "CCU2-0000-0000-0001/battery/telemetry",
+        "availability_topic": "CCU2-0000-0000-0001/device/availability",
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "name": "Battery 4 Design Capacity",
+        "value_template": "{{(value_json.batteries|selectattr('id','eq',4)|first|d({})).get('designWh')}}",
+        "unit_of_measurement": "Wh",
+        "device_class": "energy",
+        "device": {
+          "identifiers": [
+            "CCU2-0000-0000-0001"
+          ],
+          "sw_version": "2.43.0"
+        }
+      }
+    }
+  ]
+}

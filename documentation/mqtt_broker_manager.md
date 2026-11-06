@@ -79,31 +79,61 @@ Zustands-, Verfügbarkeits- und Befehlstopics müssen diese Geräte-ID als eigen
 Pfadsegment enthalten. Damit sind auch Topics wie `maxxi/<Geräte-ID>/state`
 möglich. Wildcards in diesen Topics werden nicht akzeptiert.
 
-Aus den Beschreibungen entstehen zusätzliche Sensoren, Binärsensoren,
-Zahlenfelder, Auswahllisten und Schalter am vorhandenen CCU-Gerät. Ihre Namen,
-Einheiten, Vorlagen, Wertebereiche und Optionen kommen aus der CCU-Beschreibung.
-Die vorhandenen Sensoren und ihre IDs bleiben erhalten. Bekannte Gegenstücke
-werden auf diese Sensoren abgebildet und nicht als zusätzliche Discovery-Sensoren
-angelegt. Der Abgleich berücksichtigt bekannte Messwertrollen sowie Topic und
-JSON-Wertepfad; Punkt- und Klammerschreibweise in einfachen Vorlagen werden
-gleich behandelt. Einheiten und Geräteklassen müssen passen. Die Zuordnung
-funktioniert auch nach einem Umbenennen der vorhandenen HA-Entitäten.
+Messwerte verwenden ausschließlich die eigenen Sensorfabriken von
+MaxxiChargeConnect und deren bisherige Entity-IDs. Es werden keine generischen
+Discovery-Sensoren oder -Binärsensoren zusätzlich angelegt. Passende Werte für
+Firmware, Uptime und verbleibende Batterieenergie nutzen ebenfalls die dafür
+vorhandenen Sensorklassen. Die Ausnahme sind die ausdrücklich zusätzlichen,
+eigenen Sensoren für native CCU-Energiezähler (siehe unten).
 
-Abgeglichen werden unter anderem Netz-, PV- und CCU-Leistung, SOC,
-CCU-Temperatur und Batteriesensoren mit ihrem Batterieindex. Passende aktuelle
-Discovery-Werte fließen in den bisherigen Sensor-Datenweg, einschließlich der
-Umrechnung von kW in W und von Batteriespannung in das bisherige Eingabeformat.
-Die Vorzeichenbehandlung der bestehenden CCU-Sensoren bleibt erhalten.
-Bereits berechnete Energiezähler werden weiterhin berechnet; native
-Discovery-Energiezähler ersetzen weder deren Historie noch deren Zählerstand.
-Eine eigene neue Entität entsteht für zusätzliche oder nicht eindeutig
-zuordenbare Messwerte. Gleiche Discovery-Quellen mit mehreren IDs werden
-zusätzlich anhand von Topic, Vorlage und Metadaten zusammengefasst.
+Der Abgleich berücksichtigt Messwertrolle, Topic, JSON-Wertepfad, Einheit und
+Batterie-ID. Auch die von der CCU verwendeten `selectattr('id', 'eq', ...)`-
+Vorlagen werden einem stabilen Batterieindex zugeordnet. Die Reihenfolge der
+Batterien im Payload darf sich ändern, ohne deren Entity-IDs zu vertauschen.
+Explizite `pvPower`-/`pvPowerTotal`-Werte haben Vorrang vor alten Fallbacks.
+Converter-Eingangsleistung ist ein eigener Messwert und wird nicht als PV-Leistung
+behandelt. Berechnete Leistungswerte können direkt durch den passenden,
+angekündigten CCU-Messwert versorgt werden, ohne eine zweite Entität anzulegen.
 
-Falls eine frühere Version bereits eine zuordenbare Discovery-Dublette angelegt
-hat, wird nur diese von MaxxiChargeConnect erzeugte Kopie deaktiviert. Die
-ursprünglichen Sensoren und ihre Historien werden nicht gelöscht; andere
-Integrationseinträge und vom Nutzer deaktivierte Entitäten werden nicht geändert.
+Nicht zugeordnete Discovery-Messwerte bleiben im Diagnosebericht sichtbar und
+erzeugen keine zusätzlichen Sensoren. Früher automatisch erzeugte Discovery-
+Kopien werden deaktiviert, nicht gelöscht. Die ursprünglichen Sensoren, ihre
+IDs, Historien und vom Nutzer gesetzten Aktivierungszustände bleiben erhalten.
+
+### Vollständiger Sensor-Abgleich
+
+Jede Haupt-, Batterie- und Energie-Sensorfabrik registriert ihre tatsächlich
+erzeugten Entitäten beim Abgleich. Auch deaktivierte eigene Sensoren werden
+berücksichtigt. Der Diagnose-Sensor **MQTT Sensor-Abgleich** zeigt den Anteil
+der zugeordneten Sensoren in Prozent. Seine Attribute enthalten:
+
+- `sensors`: vollständige Liste mit ursprünglicher Unique-ID, Sensorklasse,
+  Discovery-Quellen, Abhängigkeiten und Zuordnungsart;
+- `missing`: eigene Sensoren, deren Discovery-Zuordnung noch fehlt;
+- `unmapped_discovery`: Discovery-Messwerte ohne eigenen passenden Sensor.
+
+Direkte Werte werden als `direct`, berechnete Werte als `calculated`,
+Geräteidentität als `identity` und Erreichbarkeit als `derived` ausgewiesen.
+Lokale MQTT-Diagnosen tragen `local` und benötigen keinen CCU-Gegenwert.
+**100 % bedeutet vollständige Quellenzuordnung, nicht Online-Verfügbarkeit oder
+numerisch gleiche berechnete und native Zählerstände.** Die Ankunft aktueller
+Daten wird weiterhin mit den Empfangsdiagnosen geprüft. Fügt eine Sensorfabrik
+eine Entität ohne passende Quelle hinzu, wird sie als fehlend ausgewiesen.
+
+### Berechnete Energie und native CCU-Zähler
+
+Die bisherigen Energie-Integrationssensoren behalten ihre Berechnung, Entity-IDs
+und gespeicherten Zählerstände. Zusätzlich werden die von der CCU angekündigten
+Energiezähler als eigene **„… CCU-Zähler“** angelegt. Zum Beispiel stehen
+**Netzeinspeisung gesamt** (berechnet) und **Netzeinspeisung gesamt CCU-Zähler**
+(nativ) nebeneinander. Wh werden für diese Vergleichssensoren in kWh umgerechnet.
+Diese Zähler überschreiben keine bestehende Energiehistorie.
+
+Die Zuordnung wurde mit 99 anonymisierten Beschreibungen aus einer tatsächlichen
+CCU mit vier Batterien geprüft: 53 eigene Haupt-, Batterie-, Energie- und
+Diagnosesensoren sowie 20 zusätzliche native CCU-Zähler. Die Testdatei enthält
+weder reale Gerätekennungen noch Zugangsdaten. Weitere Firmware-Versionen können
+abweichende Beschreibungen liefern; fehlende Zuordnungen werden sichtbar gemeldet.
 
 Beschreibungen werden im Home-Assistant-Speicher pro Eintrag gesichert.
 Der Cache stellt nach einem Neustart die Entitäten wieder her; er ersetzt keine
@@ -160,7 +190,7 @@ um daraus eine steuerbare Einstellung abzuleiten.
 ## Empfang in Home Assistant prüfen
 
 Auf der Geräteseite jeder CCU V2 erscheinen unter **Diagnose** standardmäßig
-drei Sensoren:
+vier Sensoren:
 
 - **MQTT letzter Empfang**: Zeitpunkt der letzten gültigen, verarbeiteten
   MQTT-Nachricht. Vor der ersten Nachricht ist der Wert unbekannt.
@@ -171,6 +201,9 @@ drei Sensoren:
   Auch Werte, die auf bestehende Sensoren abgebildet werden, zählen dazu. Der
   Sensor aktualisiert sich beim Hinzufügen oder Zurückziehen einer Beschreibung,
   auch ohne neue Telemetrie. Ohne erkannte Beschreibungen zeigt er `0`.
+
+- **MQTT Sensor-Abgleich**: Zuordnungsgrad der eigenen Sensoren in Prozent,
+  einschließlich der vollständigen Quellenliste und fehlender Zuordnungen.
 
 In den Sensorattributen stehen `last_topic` (zuletzt verarbeitetes Topic),
 `counting_since` (Beginn der Zählung), `broker` (`internal` oder `external`)
@@ -202,9 +235,10 @@ Die Integrationstests wurden mit Python 3.12 und Home Assistant 2025.1.4
 geprüft, zusätzlich mit aMQTT 0.12.1 und PyYAML 6.0.3. Die Paketauflösung
 für die Integrationsabhängigkeiten wurde gegen `homeassistant/package_constraints.txt`
 des lokalen Home-Assistant-2026.12-Entwicklungsstands geprüft.
-Broker und Telemetrie wurden bereits mit einer echten CCU verwendet. Die neue
-Discovery- und Steuerungsfunktion muss noch mit der echten CCU und deren
-Discovery-Beschreibungen geprüft werden.
+Broker, Telemetrie und Discovery wurden bereits im laufenden System verwendet.
+Der vollständige Abgleich ist zusätzlich mit anonymisierten echten Beschreibungen
+automatisiert geprüft. Die neu hinzugefügten CCU-Zähler und die aktualisierten
+Sensorquellen müssen nach dem Update noch im laufenden System geprüft werden.
 
 ## Installationsfehler durch PyYAML-Konflikt
 

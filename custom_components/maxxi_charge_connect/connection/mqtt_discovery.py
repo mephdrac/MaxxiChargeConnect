@@ -17,8 +17,10 @@ from homeassistant.exceptions import HomeAssistantError, TemplateError
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.template import Template
 
-from ..const import CONF_DEVICE_ID
-from .mqtt_sensor_bindings import apply_legacy_value
+from ..const import CONF_DEVICE_ID, MQTT_SENSOR_VALUES
+from .mqtt_errors import mqtt_error
+from .mqtt_sensor_bindings import apply_legacy_value, binding_priority, legacy_binding
+from .mqtt_sensor_catalog import DERIVED_SOURCES, LOCAL_SENSORS
 
 _LOGGER = logging.getLogger(__name__)
 PLATFORMS = ("sensor", "binary_sensor", "number", "select", "switch")
@@ -228,10 +230,13 @@ class MqttDiscovery:
         self.specs: dict[str, DiscoverySpec] = {}
         self.values: dict[str, str] = {}
         self.entity_claims: dict[tuple, str] = {}
+        self.existing_sensors: dict[str, dict] = {}
+        self.native_energy_bindings: dict[str, str] = {}
         self._accepted_keys: set[str] = set()
         self._sources: dict[str, str] = {}
         self._availability: dict[str, bool] = {}
         self._listeners: set[Callable] = set()
+        self._mapping_listeners: set[Callable] = set()
         self._platform_listeners: dict[str, Callable] = {}
         self._waiters: dict[str, tuple[str, asyncio.Future]] = {}
         self._locks: dict[str, asyncio.Lock] = {}
@@ -279,6 +284,14 @@ class MqttDiscovery:
         self._listeners.add(callback)
         return lambda: self._listeners.discard(callback)
 
+    def add_mapping_listener(self, callback: Callable) -> Callable:
+        self._mapping_listeners.add(callback)
+        return lambda: self._mapping_listeners.discard(callback)
+
+    def _notify_mapping(self):
+        for callback in tuple(self._mapping_listeners):
+            callback()
+
     def _notify(self) -> None:
         for callback in tuple(self._listeners):
             callback()
@@ -310,6 +323,7 @@ class MqttDiscovery:
         )
         for component, callback in tuple(self._platform_listeners.items()):
             callback([spec for spec in self.specs.values() if spec.component == component])
+        self._notify_mapping()
         self._notify()
         return True
 
@@ -376,14 +390,104 @@ class MqttDiscovery:
             self._notify()
         return accepted
 
-    def update_legacy_state(self, state: dict) -> bool:
+    def update_legacy_state(self, state: dict, *, only_accepted: bool = True) -> bool:
         """Feed only values accepted in this message to existing sensor entities."""
         updated = False
-        for key in self._accepted_keys:
+        preferred = {}
+        for spec in sorted(self.specs.values(), key=binding_priority):
+            binding = legacy_binding(spec)
+            if binding is not None:
+                preferred[binding.sensor_key] = spec.key
+        candidates = self._accepted_keys if only_accepted else self.values.keys()
+        for key in sorted(candidates):
             spec = self.specs.get(key)
-            if spec is not None:
+            binding = legacy_binding(spec) if spec else None
+            if spec is not None and binding and preferred.get(binding.sensor_key) == key:
                 updated = apply_legacy_value(state, spec, self.values[key]) or updated
+        direct = state.get(MQTT_SENSOR_VALUES, {})
+        if updated and "battery_power_charge" in direct and "battery_power_discharge" in direct:
+            direct["battery_power"] = direct["battery_power_charge"] - direct["battery_power_discharge"]
         return updated
+
+    def register_existing_sensors(self, entities, *, dependencies=None) -> None:
+        prefix = f"{self.entry.entry_id}_"
+        for entity in entities:
+            if entity.unique_id is None or not entity.unique_id.startswith(prefix):
+                raise ValueError("CCU sensor factory produced a sensor without its entry's stable unique ID")
+            key = entity.unique_id[len(prefix) :]
+            self.existing_sensors[key] = {
+                "unique_id": entity.unique_id,
+                "class": type(entity).__name__,
+                "dependencies": tuple(dependencies) if dependencies is not None else DERIVED_SOURCES.get(key, ()),
+                "calculated": dependencies is not None,
+                "native_role": getattr(entity, "native_counter_role", None),
+            }
+        self._notify_mapping()
+
+    def sensor_mapping_report(self) -> dict:
+        """Audit every registered sensor; missing metadata never counts as a match."""
+        direct = {}
+        for spec in self.specs.values():
+            binding = legacy_binding(spec)
+            if binding:
+                direct.setdefault(binding.sensor_key, []).append(spec.name)
+        report = {}
+
+        def resolve(key, visiting):
+            if key in report:
+                return report[key]
+            sensor = self.existing_sensors[key]
+            sources = direct.get(key, [])
+            status = "missing"
+            if key in LOCAL_SENSORS:
+                status = "local"
+            elif sensor["native_role"]:
+                native = self.specs.get(self.native_energy_bindings.get(sensor["native_role"]))
+                if native:
+                    status, sources = "direct", [native.name]
+            elif key == "deviceid" and self.specs:
+                status, sources = "identity", ["device.identifiers"]
+            elif key == "online_status_sensor" and self.specs:
+                sources = sorted(
+                    {
+                        s.state_topic
+                        for s in self.specs.values()
+                        if (binding := legacy_binding(s)) is not None
+                        and (binding.field is not None or binding.dimension == "power")
+                    }
+                )
+                if sources:
+                    status = "derived"
+            elif sources and not sensor["calculated"]:
+                status = "direct"
+            elif sensor["dependencies"]:
+                deps = sensor["dependencies"]
+                if key not in visiting and all(
+                    dep in self.existing_sensors and resolve(dep, visiting | {key})["status"] != "missing"
+                    for dep in deps
+                ):
+                    status = "calculated"
+            report[key] = {**sensor, "status": status, "discovery": sorted(set(sources))}
+            return report[key]
+
+        for key in self.existing_sensors:
+            resolve(key, set())
+        eligible = [item for item in report.values() if item["status"] != "local"]
+        covered = sum(item["status"] != "missing" for item in eligible)
+        return {
+            "coverage": round(100 * covered / len(eligible), 1) if eligible else 0,
+            "sensors": report,
+            "missing": [key for key, item in report.items() if item["status"] == "missing"],
+            "unmapped_discovery": sorted(
+                {
+                    s.name
+                    for s in self.specs.values()
+                    if s.component in ("sensor", "binary_sensor")
+                    and legacy_binding(s) is None
+                    and s.key not in self.native_energy_bindings.values()
+                }
+            ),
+        }
 
     def _render(self, source: str | None, payload: str) -> str | None:
         if source is None:
@@ -437,14 +541,16 @@ class MqttDiscovery:
         async with self._locks.setdefault(key, asyncio.Lock()):
             spec = self.specs.get(key)
             if not spec or not spec.config.get("command_topic"):
-                raise HomeAssistantError("The CCU does not advertise a command topic for this setting")
+                raise mqtt_error("mqtt_no_command", "The CCU does not advertise a command topic for this setting")
             if spec.config["command_topic"] == spec.state_topic:
-                raise HomeAssistantError("A separate state topic is required to confirm CCU commands")
+                raise mqtt_error("mqtt_no_separate_state", "A separate state topic is required to confirm CCU commands")
             firmware = self._firmware(spec)
             if firmware is None or firmware < MIN_WRITE_FIRMWARE:
-                raise HomeAssistantError("MQTT control requires a known CCU firmware version of at least 2.43.0")
+                raise mqtt_error(
+                    "mqtt_firmware_unsupported", "MQTT control requires a known CCU firmware version of at least 2.43.0"
+                )
             if not self.available(key):
-                raise HomeAssistantError("The CCU setting is not available; no command was sent")
+                raise mqtt_error("mqtt_setting_unavailable", "The CCU setting is not available; no command was sent")
             if self._equal(spec, self.values[key], expected):
                 return
             template = spec.config.get("command_template")
@@ -455,7 +561,9 @@ class MqttDiscovery:
                     else str(value)
                 )
             except (TemplateError, ValueError, TypeError) as err:
-                raise HomeAssistantError("The CCU command template could not be evaluated") from err
+                raise mqtt_error(
+                    "mqtt_command_template_invalid", "The CCU command template could not be evaluated"
+                ) from err
             future = asyncio.get_running_loop().create_future()
             self._waiters[key] = (expected, future)
             try:
@@ -465,11 +573,13 @@ class MqttDiscovery:
                     except HomeAssistantError:
                         raise
                     except Exception as err:
-                        raise HomeAssistantError("The MQTT command could not be sent") from err
+                        raise mqtt_error("mqtt_publish_failed", "The MQTT command could not be sent") from err
                     await future
             except TimeoutError as err:
-                raise HomeAssistantError(
-                    f"The CCU did not confirm '{spec.name}' within {COMMAND_TIMEOUT} seconds"
+                raise mqtt_error(
+                    "mqtt_confirmation_timeout",
+                    f"The CCU did not confirm '{spec.name}' within {COMMAND_TIMEOUT} seconds",
+                    seconds=COMMAND_TIMEOUT,
                 ) from err
             finally:
                 self._waiters.pop(key, None)
@@ -481,7 +591,7 @@ class MqttDiscovery:
     def _cancel_waiter(self, key: str, reason: str) -> None:
         waiter = self._waiters.get(key)
         if waiter and not waiter[1].done():
-            waiter[1].set_exception(HomeAssistantError(reason))
+            waiter[1].set_exception(mqtt_error("mqtt_command_aborted", reason))
 
     def stop(self) -> None:
         if self._stopped:

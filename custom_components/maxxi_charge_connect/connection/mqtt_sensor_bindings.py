@@ -7,6 +7,8 @@ from functools import lru_cache
 
 from jinja2 import Environment, TemplateSyntaxError, nodes
 
+from ..const import MQTT_SENSOR_VALUES
+
 _ENVIRONMENT = Environment()
 _MAX_LEGACY_BATTERIES = 16
 
@@ -31,6 +33,30 @@ def template_path(source: str | None) -> tuple | None:
     node = expressions[0]
     while isinstance(node, nodes.Filter) and node.name in ("float", "int"):
         node = node.node
+    # CCU firmware selects a battery by hardware ID, not list position.
+    if isinstance(node, nodes.Call) and isinstance(node.node, nodes.Getattr) and node.node.attr == "get" and node.args:
+        field = node.args[0]
+        selected = node.node.node
+        if isinstance(selected, nodes.Filter) and selected.name in ("d", "default"):
+            selected = selected.node
+        if isinstance(selected, nodes.Filter) and selected.name == "first":
+            selected = selected.node
+        if isinstance(selected, nodes.Filter) and selected.name == "selectattr" and len(selected.args) == 3:
+            args = selected.args
+            parent = selected.node
+            if (
+                all(isinstance(arg, nodes.Const) for arg in args)
+                and [args[0].value, args[1].value] == ["id", "eq"]
+                and type(args[2].value) is int
+                and 1 <= args[2].value <= 16
+                and isinstance(parent, nodes.Getattr)
+                and parent.attr == "batteries"
+                and isinstance(parent.node, nodes.Name)
+                and parent.node.name == "value_json"
+                and isinstance(field, nodes.Const)
+                and isinstance(field.value, str)
+            ):
+                return ("value_json", "batteries", args[2].value - 1, field.value)
     path = []
     while isinstance(node, (nodes.Getattr, nodes.Getitem)):
         if isinstance(node, nodes.Getattr):
@@ -62,6 +88,10 @@ _NAMED = {
     "ccu ac power": SensorBinding("ccu_power", "power", "inverter"),
     "ccu temperature": SensorBinding("ccu_temperatur_sensor", "temperature", "temperature"),
     "ccu id": SensorBinding("deviceid", "identity"),
+    "ccu ver": SensorBinding("firmware_version", "identity", "firmwareVersion"),
+    "firmware version": SensorBinding("firmware_version", "identity", "firmwareVersion"),
+    "ccu uptime": SensorBinding("uptime_sensor", "duration", "uptime"),
+    "usable energy remaining": SensorBinding("battery_soe", "stored_energy", "batteryCapacityTotal"),
     "battery charging power": SensorBinding("battery_power_charge", "power"),
     "battery discharging power": SensorBinding("battery_power_discharge", "power"),
     "battery power": SensorBinding("battery_power", "power"),
@@ -99,8 +129,10 @@ _UNITS = {
     "temperature": {None: 1, "°C": 1},
     "energy": {None: 1, "kWh": 1, "Wh": 0.001},
     "identity": {None: 1},
+    "duration": {None: 1000, "s": 1000, "ms": 1},
+    "stored_energy": {None: 1, "Wh": 1, "kWh": 1000},
 }
-_DEVICE_CLASSES = {"soc": "battery", "identity": None}
+_DEVICE_CLASSES = {"soc": "battery", "identity": None, "stored_energy": "energy"}
 
 
 def _compatible(spec, binding: SensorBinding) -> bool:
@@ -122,24 +154,33 @@ def legacy_binding(spec) -> SensorBinding | None:
     binding = None
     if suffix == "powermeter/telemetry" and path == ("value_json", "power"):
         binding = _NAMED["grid power"]
-    elif suffix == "inverter/telemetry":
+    elif suffix in ("inverter/telemetry", "system/telemetry"):
         if path == ("value_json", "power"):
             binding = _NAMED["ccu ac power"]
         elif path == ("value_json", "temperature"):
             binding = _NAMED["ccu temperature"]
     elif suffix == "battery/telemetry":
-        if path == ("value_json", "inputPowerTotal"):
+        if path == ("value_json", "pvPowerTotal"):
             binding = _NAMED["pv power"]
+        elif path == ("value_json", "socTotal"):
+            binding = _NAMED["local battery soc"]
         elif path and len(path) == 4 and path[:2] == ("value_json", "batteries") and isinstance(path[2], int):
             index, field = path[2:]
-            if 0 <= index < _MAX_LEGACY_BATTERIES and field in ("soc", "voltage", "inputPower"):
+            if 0 <= index < _MAX_LEGACY_BATTERIES and field in ("soc", "voltage", "pvPower", "remainWh"):
                 binding = _battery_binding(index, field)
+    elif suffix == "device/state":
+        if path == ("value_json", "CCU", "ccuVersion"):
+            binding = _NAMED["ccu ver"]
+        elif path == ("value_json", "CCU", "ccuId"):
+            binding = _NAMED["ccu id"]
     if binding is None:
         name = re.sub(r"[\s_-]+", " ", spec.name.casefold()).strip()
         binding = _NAMED.get(name)
-        battery = re.fullmatch(r"battery (\d+) (soc|voltage|pv power)", name)
+        battery = re.fullmatch(r"battery (\d+) (soc|voltage|pv power|stored energy)", name)
         if battery and 1 <= int(battery[1]) <= _MAX_LEGACY_BATTERIES:
-            binding = _battery_binding(int(battery[1]) - 1, {"pv power": "inputPower"}.get(battery[2], battery[2]))
+            binding = _battery_binding(
+                int(battery[1]) - 1, {"pv power": "pvPower", "stored energy": "remainWh"}.get(battery[2], battery[2])
+            )
     return binding if binding and _compatible(spec, binding) else None
 
 
@@ -148,6 +189,8 @@ def _battery_binding(index: int, field: str) -> SensorBinding:
         "soc": ("battery_soc_sensor", "soc", "batterySOC"),
         "voltage": ("battery_voltage_sensor", "voltage", "batteryVoltage"),
         "inputPower": ("battery_pv_power_sensor", "power", "pvPower"),
+        "pvPower": ("battery_pv_power_sensor", "power", "pvPower"),
+        "remainWh": ("battery_soe", "stored_energy", "batteryCapacity"),
     }[field]
     return SensorBinding(f"{suffix}_{index}", dimension, key, index)
 
@@ -155,7 +198,12 @@ def _battery_binding(index: int, field: str) -> SensorBinding:
 def apply_legacy_value(state: dict, spec, value: str) -> bool:
     """Project live discovery values into the old sensor input representation."""
     binding = legacy_binding(spec)
-    if binding is None or binding.field is None:
+    if binding is None or binding.dimension == "energy":
+        return False
+    if binding.dimension == "identity":
+        if binding.field:
+            state[binding.field] = str(value).strip()
+            return True
         return False
     try:
         value = float(value) * _UNITS[binding.dimension][spec.config.get("unit_of_measurement")]
@@ -163,6 +211,16 @@ def apply_legacy_value(state: dict, spec, value: str) -> bool:
         return False
     if not math.isfinite(value):
         return False
+    if binding.dimension in ("duration", "stored_energy") and value < 0:
+        return False
+    if binding.sensor_key in ("battery_power_charge", "battery_power_discharge") and value < 0:
+        return False
+    if binding.field is None:
+        state.setdefault(MQTT_SENSOR_VALUES, {})[binding.sensor_key] = value
+        return True
+    if binding.field == "batteryCapacityTotal":
+        state.setdefault(MQTT_SENSOR_VALUES, {})[binding.sensor_key] = value
+        return True
     if binding.index is not None:
         batteries = state.setdefault("batteriesInfo", [])
         while len(batteries) <= binding.index:
@@ -179,6 +237,31 @@ def apply_legacy_value(state: dict, spec, value: str) -> bool:
     else:
         state[binding.field] = value
     return True
+
+
+def binding_priority(spec) -> tuple:
+    """Prefer an explicitly named measurement over an old telemetry fallback."""
+    name = re.sub(r"[\s_-]+", " ", spec.name.casefold()).strip()
+    path = template_path(spec.config.get("value_template"))
+    return (
+        100 if name in _NAMED else 50 if path and path[-1] in ("pvPower", "pvPowerTotal", "socTotal") else 0,
+        spec.key,
+    )
+
+
+def native_energy_key(spec) -> str | None:
+    """Counter roles have separate identities from stored or remaining energy."""
+    if spec.component != "sensor" or spec.config.get("unit_of_measurement") not in ("Wh", "kWh", "MWh"):
+        return None
+    name = re.sub(r"[\s_-]+", " ", spec.name.casefold()).strip()
+    if name in _ENERGY:
+        return _ENERGY[name]
+    if name in ("ccu ac input energy today", "ccu ac input energy total"):
+        return "ccuinputenergytoday" if name.endswith("today") else "ccuinputenergytotal"
+    match = re.fullmatch(r"battery (\d+) pv energy (today|total)", name)
+    if match and 1 <= int(match[1]) <= _MAX_LEGACY_BATTERIES:
+        return f"battery_pv_energy_{match[2]}_{int(match[1]) - 1}"
+    return None
 
 
 def measurement_identity(spec) -> tuple:

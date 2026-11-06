@@ -7,10 +7,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from ..connection.mqtt_sensor_catalog import register_sensors
 from ..const import DOMAIN, WEBHOOK_SIGNAL_UPDATE
-from .battery_voltage_sensor import BatteryVoltageSensor
-from .battery_soc_sensor import BatterySOCSensor
 from .battery_pv_power_sensor import BatteryPVPowerSensor
+from .battery_soc_sensor import BatterySOCSensor
+from .battery_soe_sensor import BatterySoESensor
+from .battery_voltage_sensor import BatteryVoltageSensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -18,11 +20,7 @@ _LOGGER = logging.getLogger(__name__)
 class CCUV2BatterySensorManager:
     """Dynamically create battery sensors for CCU V2."""
 
-    SENSOR_CLASSES = [
-        BatteryVoltageSensor,
-        BatterySOCSensor,
-        BatteryPVPowerSensor
-    ]
+    SENSOR_CLASSES = [BatteryVoltageSensor, BatterySOCSensor, BatteryPVPowerSensor, BatterySoESensor]
 
     def __init__(
         self,
@@ -60,7 +58,6 @@ class CCUV2BatterySensorManager:
             data,
         )
 
-
     def _process_update(self, data: dict) -> None:
         """Create missing battery sensors on the HA event loop."""
 
@@ -73,7 +70,6 @@ class CCUV2BatterySensorManager:
 
         for index in range(len(batteries)):
             for sensor_class in self.SENSOR_CLASSES:
-
                 sensor_key = (sensor_class, index)
 
                 if sensor_key in self._created_sensors:
@@ -91,4 +87,5 @@ class CCUV2BatterySensorManager:
                 )
 
         if new_sensors:
+            register_sensors(self.hass, self.entry, new_sensors)
             self.async_add_entities(new_sensors)

@@ -10,13 +10,25 @@ from homeassistant.components.sensor import SensorDeviceClass, SensorEntity, Sen
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import EntityCategory
 from homeassistant.core import callback
-from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity import Entity
 from homeassistant.util import dt as dt_util
 
-from ..connection.mqtt_sensor_bindings import legacy_binding, measurement_identity
+from ..connection.mqtt_errors import mqtt_error
+from ..connection.mqtt_sensor_bindings import binding_priority, legacy_binding, measurement_identity, native_energy_key
+from ..connection.mqtt_sensor_catalog import register_sensors
 from ..const import DOMAIN, MQTT_DISCOVERY_COORDINATOR
+from .ccu_native_energy import CcuNativeEnergySensor
+
+_CONTROL_TRANSLATIONS = {
+    ("number", "minimum soc"): "mqtt_minimum_soc",
+    ("number", "maximum soc"): "mqtt_maximum_soc",
+    ("number", "maximum output"): "mqtt_maximum_output",
+    ("number", "meter loss output"): "mqtt_meter_loss_output",
+    ("number", "maximum charging power"): "mqtt_maximum_charging_power",
+    ("select", "charging strategy"): "mqtt_charging_strategy",
+    ("switch", "ups mode"): "mqtt_ups_mode",
+}
 
 
 def _unique_id(entry_id, spec):
@@ -51,6 +63,9 @@ class DiscoveryEntity(Entity):
         self.key = spec.key
         self._attr_unique_id = _unique_id(coordinator.entry.entry_id, spec)
         self._attr_device_info = {"identifiers": {(DOMAIN, coordinator.entry.entry_id)}}
+        key = _CONTROL_TRANSLATIONS.get((spec.component, spec.name.casefold().strip()))
+        if key is not None:
+            self._attr_translation_key = key
 
     @property
     def spec(self):
@@ -58,6 +73,11 @@ class DiscoveryEntity(Entity):
 
     @property
     def name(self):
+        if (
+            self.platform is not None
+            and (self.spec.component, self.spec.name.casefold().strip()) in _CONTROL_TRANSLATIONS
+        ):
+            return super().name
         return self.spec.name
 
     @property
@@ -162,10 +182,10 @@ class DiscoveryNumber(DiscoveryEntity, NumberEntity):
 
     async def async_set_native_value(self, value):
         if not math.isfinite(value) or not self.native_min_value <= value <= self.native_max_value:
-            raise HomeAssistantError("Requested value is outside the range advertised by the CCU")
+            raise mqtt_error("mqtt_value_out_of_range", "Requested value is outside the range advertised by the CCU")
         steps = (value - self.native_min_value) / self.native_step
         if not math.isclose(steps, round(steps), abs_tol=1e-6):
-            raise HomeAssistantError("Requested value does not match the step advertised by the CCU")
+            raise mqtt_error("mqtt_invalid_step", "Requested value does not match the step advertised by the CCU")
         await self.coordinator.async_write(self.key, value, str(value))
 
 
@@ -180,7 +200,7 @@ class DiscoverySelect(DiscoveryEntity, SelectEntity):
 
     async def async_select_option(self, option):
         if option not in self.options:
-            raise HomeAssistantError("Requested option is not advertised by the CCU")
+            raise mqtt_error("mqtt_invalid_option", "Requested option is not advertised by the CCU")
         await self.coordinator.async_write(self.key, option, option)
 
 
@@ -222,23 +242,25 @@ def setup_discovery_entities(hass, entry, async_add_entities, component):
     @callback
     def add_specs(specs):
         entities = []
-        for spec in specs:
-            if legacy_binding(spec) is not None:
-                _disable_old_duplicate(hass, entry, spec)
-                continue
+        for spec in sorted(specs, key=binding_priority):
             if component in ("sensor", "binary_sensor"):
-                identity = measurement_identity(spec)
-                owner = coordinator.entity_claims.get(identity)
-                current = coordinator.specs.get(owner)
-                if current is not None and measurement_identity(current) == identity and owner != spec.key:
-                    _disable_old_duplicate(hass, entry, spec)
-                    continue
-                coordinator.entity_claims[identity] = spec.key
-                _disable_old_duplicate(hass, entry, spec, duplicate=False)
+                # Readings always use our existing factories. Native CCU energy
+                # counters are the explicitly requested, separate exception.
+                _disable_old_duplicate(hass, entry, spec)
+                role = native_energy_key(spec)
+                if role is not None:
+                    coordinator.native_energy_bindings[role] = spec.key
+                    if role not in added:
+                        added.add(role)
+                        entity = CcuNativeEnergySensor(coordinator, role, spec)
+                        entities.append(entity)
+                continue
             if spec.key not in added:
                 added.add(spec.key)
                 entities.append(_ENTITY_TYPES[component](coordinator, spec))
         if entities:
+            if component == "sensor":
+                register_sensors(hass, entry, entities)
             async_add_entities(entities)
 
     entry.async_on_unload(coordinator.add_platform(component, add_specs))

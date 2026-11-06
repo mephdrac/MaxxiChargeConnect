@@ -44,6 +44,8 @@ class _MqttDiagnosticsSensor(SensorEntity):
         self._stats = dict(entry_data[MQTT_RECEIVE_STATS])
         discovery = entry_data.get(MQTT_DISCOVERY_COORDINATOR)
         self._stats["discovered_entities"] = len(discovery.specs) if discovery else 0
+        if self._stats_key == "sensor_coverage":
+            self._stats["sensor_coverage"] = discovery.sensor_mapping_report()["coverage"] if discovery else 0
         self._attr_native_value = self._stats[self._stats_key]
 
     @callback
@@ -99,3 +101,27 @@ class MqttDiscoveredEntitiesSensor(_MqttDiagnosticsSensor):
     @property
     def extra_state_attributes(self):
         return {"broker": "internal" if self._entry.data.get(CONF_ENABLE_MQTT_BROKER, False) else "external"}
+
+
+class MqttSensorCoverageSensor(_MqttDiagnosticsSensor):
+    """Visible, complete source audit for all sensors from our own CCU factories."""
+
+    _attr_translation_key = "mqtt_sensor_coverage"
+    _attr_icon = "mdi:clipboard-check-outline"
+    _attr_native_value = 0
+    _attr_native_unit_of_measurement = "%"
+    _stats_key = "sensor_coverage"
+
+    def _subscribe_updates(self, entry_data):
+        coordinator = entry_data.get(MQTT_DISCOVERY_COORDINATOR)
+        if coordinator is not None:
+            return coordinator.add_mapping_listener(self._receive_update)
+        return super()._subscribe_updates(entry_data)
+
+    @property
+    def extra_state_attributes(self):
+        coordinator = self.hass.data[DOMAIN][self._entry.entry_id].get(MQTT_DISCOVERY_COORDINATOR)
+        if coordinator is None:
+            return {"missing": [], "sensors": {}, "unmapped_discovery": []}
+        report = coordinator.sensor_mapping_report()
+        return {key: report[key] for key in ("missing", "sensors", "unmapped_discovery")}

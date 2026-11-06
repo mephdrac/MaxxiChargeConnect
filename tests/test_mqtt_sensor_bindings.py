@@ -133,21 +133,20 @@ class EntityDeduplicationTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(self.coordinator.update_legacy_state(old_state))
         self.assertEqual(old_state["Pr"], -80)
 
-    async def test_new_measurement_is_added_but_alias_does_not_create_another(self):
+    async def test_unmatched_measurements_are_reported_without_new_sensor_entities(self):
         await self.publish_config("new", state_topic=f"{DEVICE}/new/topic", value_template="{{ value_json.extra }}")
         await self.publish_config(
             "alias", state_topic=f"{DEVICE}/new/topic", value_template="{{ value_json['extra'] | float }}"
         )
-        self.add_entities.assert_called_once()
-        self.assertEqual(len(self.add_entities.call_args.args[0]), 1)
+        self.add_entities.assert_not_called()
+        self.assertIn("New reading", self.coordinator.sensor_mapping_report()["unmapped_discovery"])
 
-    async def test_duplicate_owner_is_promoted_after_withdrawal(self):
+    async def test_withdrawing_unmatched_description_does_not_create_a_fallback_sensor(self):
         for name in ("first", "second"):
             await self.publish_config(name, state_topic=f"{DEVICE}/new/topic", value_template="{{ value_json.extra }}")
-        first = self.add_entities.call_args.args[0][0]
         await self.coordinator.async_receive(f"homeassistant/sensor/{DEVICE}/first/config", b"")
-        self.assertEqual(self.add_entities.call_count, 2)
-        self.assertFalse(first.available)
+        self.add_entities.assert_not_called()
+        self.assertEqual(len(self.coordinator.specs), 1)
 
     async def test_only_our_prior_discovery_duplicate_is_disabled(self):
         registry = MagicMock()

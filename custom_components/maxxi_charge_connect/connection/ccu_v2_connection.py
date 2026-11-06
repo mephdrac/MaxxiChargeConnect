@@ -24,6 +24,7 @@ from ..const import (
     MQTT_DIAGNOSTICS_SIGNAL,
     MQTT_DISCOVERY_COORDINATOR,
     MQTT_RECEIVE_STATS,
+    MQTT_SENSOR_VALUES,
     WEBHOOK_SIGNAL_STATE,
     WEBHOOK_SIGNAL_UPDATE,
 )
@@ -206,7 +207,14 @@ class ccuV2Connection(CcuBaseConnection):
                 _LOGGER.warning("Invalid CCU V2 MQTT telemetry on %s", msg.topic)
                 return
 
+            direct = values.pop(MQTT_SENSOR_VALUES, None)
             entry_data["v2_state"].update(values)
+            if direct:
+                entry_data["v2_state"].setdefault(MQTT_SENSOR_VALUES, {}).update(direct)
+            if self.discovery:
+                # Discovery is authoritative for mapped values. A legacy
+                # fallback must not replace PV power with converter input, etc.
+                self.discovery.update_legacy_state(entry_data["v2_state"], only_accepted=False)
             self._record_received(msg.topic)
             async_dispatcher_send(self.hass, entry_data[WEBHOOK_SIGNAL_UPDATE], dict(entry_data["v2_state"]))
             return True

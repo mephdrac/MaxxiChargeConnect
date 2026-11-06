@@ -1,5 +1,10 @@
 """Parser for CCU V2 MQTT messages."""
 
+import math
+
+from ..const import MQTT_SENSOR_VALUES
+
+
 def parse_powermeter(data: dict) -> dict:
     """Parse powermeter telemetry."""
     power = data.get("power")
@@ -20,7 +25,16 @@ def parse_battery(data: dict) -> dict:
     batteries_info = []
     soc_values = []
 
-    for battery in batteries:
+    identifiers = [battery.get("id") for battery in batteries]
+    indexed = any(identifier is not None for identifier in identifiers)
+    if indexed:
+        if any(type(identifier) is not int or not 1 <= identifier <= 16 for identifier in identifiers) or len(
+            set(identifiers)
+        ) != len(identifiers):
+            raise ValueError("CCU battery IDs must be unique integers between 1 and 16")
+        batteries_info = [{} for _ in range(max(identifiers, default=0))]
+
+    for position, battery in enumerate(batteries):
         battery_info = {}
 
         soc = battery.get("soc")
@@ -34,25 +48,48 @@ def parse_battery(data: dict) -> dict:
             # CCU2 liefert V, BatteryVoltageSensor erwartet mV.
             battery_info["batteryVoltage"] = float(voltage) * 1000
 
-        input_power = battery.get("inputPower")
+        input_power = battery.get("pvPower", battery.get("inputPower"))
         if input_power is not None:
             battery_info["pvPower"] = float(input_power)
 
-        batteries_info.append(battery_info)
+        if battery.get("remainWh") is not None:
+            battery_info["batteryCapacity"] = float(battery["remainWh"])
+        if indexed:
+            batteries_info[battery["id"] - 1] = battery_info
+        else:
+            batteries_info.append(battery_info)
 
     result = {
         "batteriesInfo": batteries_info,
     }
 
-    if soc_values:
+    if data.get("socTotal") is not None:
+        result["SOC"] = float(data["socTotal"])
+    elif soc_values:
         result["SOC"] = sum(soc_values) / len(soc_values)
 
-    input_power_total = data.get("inputPowerTotal")
+    input_power_total = data.get("pvPowerTotal", data.get("inputPowerTotal"))
 
     if input_power_total is not None:
         result["PV_power_total"] = float(input_power_total)
 
+    native = {}
+    for field, key in (
+        ("chargePowerTotal", "battery_power_charge"),
+        ("dischargePowerTotal", "battery_power_discharge"),
+        ("remainWhTotal", "battery_soe"),
+    ):
+        if data.get(field) is not None:
+            value = float(data[field])
+            if math.isfinite(value) and value >= 0:
+                native[key] = value
+    if "battery_power_charge" in native and "battery_power_discharge" in native:
+        native["battery_power"] = native["battery_power_charge"] - native["battery_power_discharge"]
+    if native:
+        result[MQTT_SENSOR_VALUES] = native
+
     return result
+
 
 def parse_inverter(data: dict) -> dict:
     power = float(data["power"])

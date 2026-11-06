@@ -19,18 +19,19 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from ..const import (
-    CONF_CCU_VERSION,
     CCU_V1,
+    CCU_V2,
+    CONF_CCU_VERSION,
     CONF_DEVICE_ID,
     CONF_ENABLE_CLOUD_DATA,
     DEVICE_INFO,
     DOMAIN,
     HTTP_SCAN_EVENTNAME,
+    MQTT_SENSOR_VALUES,
     PROXY_ERROR_DEVICE_ID,
     PROXY_STATUS_EVENTNAME,
     WEBHOOK_SIGNAL_STATE,
     WEBHOOK_SIGNAL_UPDATE,
-    CCU_V2
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -180,7 +181,13 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
                 return
 
             old_value = self._attr_native_value
-            await self.handle_update(data)
+            prefix = f"{self._entry.entry_id}_"
+            key = self.unique_id.removeprefix(prefix) if self.unique_id else ""
+            direct = data.get(MQTT_SENSOR_VALUES, {}) if self._entry.data.get(CONF_CCU_VERSION) == CCU_V2 else {}
+            if key in direct:
+                self._attr_native_value = direct[key]
+            else:
+                await self.handle_update(data)
             # Nur aktualisieren, wenn sich der Wert tatsächlich geändert hat oder zuvor ein Stale war
             if old_value != self._attr_native_value or self._after_stale:
                 _LOGGER.debug("Sensor %s: Wert aktualisiert: %s", self.__class__.__name__, self._attr_native_value)

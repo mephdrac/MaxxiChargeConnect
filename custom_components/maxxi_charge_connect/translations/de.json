@@ -279,11 +279,297 @@
       },
       "mqtt_discovered_entities": {
         "name": "MQTT erkannte Entitäten"
+      },
+      "mqtt_sensor_coverage": {
+        "name": "MQTT Sensor-Abgleich"
+      },
+      "ccu_counter_ccuenergytoday": {
+        "name": "CCU-Energieabgabe heute (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
+      },
+      "ccu_counter_ccuenergytotal": {
+        "name": "CCU-Energieabgabe gesamt (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
+      },
+      "ccu_counter_ccuinputenergytoday": {
+        "name": "CCU-Energieaufnahme heute (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
+      },
+      "ccu_counter_ccuinputenergytotal": {
+        "name": "CCU-Energieaufnahme gesamt (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
+      },
+      "ccu_counter_gridexportenergytoday": {
+        "name": "Netzeinspeisung heute (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
+      },
+      "ccu_counter_gridexportenergytotal": {
+        "name": "Netzeinspeisung gesamt (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
+      },
+      "ccu_counter_gridimportenergytoday": {
+        "name": "Netzbezug heute (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
+      },
+      "ccu_counter_gridimportenergytotal": {
+        "name": "Netzbezug gesamt (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
+      },
+      "ccu_counter_pvtodayenergy": {
+        "name": "PV Produktion heute (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
+      },
+      "ccu_counter_pvtotalenergy": {
+        "name": "PV Produktion gesamt (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
+      },
+      "ccu_counter_batterytotalenergycharge": {
+        "name": "Batterie Laden gesamt (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
+      },
+      "ccu_counter_batterytotalenergydischarge": {
+        "name": "Batterie Entladen gesamt (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
+      },
+      "ccu_counter_batterytodayenergycharge": {
+        "name": "Batterie Laden heute (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
+      },
+      "ccu_counter_batterytodayenergydischarge": {
+        "name": "Batterie Entladen heute (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
+      },
+      "ccu_counter_consumptionenergytoday": {
+        "name": "Hausverbrauch heute (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
+      },
+      "ccu_counter_consumptionenergytotal": {
+        "name": "Hausverbrauch gesamt (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
+      },
+      "ccu_counter_pvselfconsumptionenergytoday": {
+        "name": "PV Eigenverbrauch heute (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
+      },
+      "ccu_counter_pvselfconsumptionenergytotal": {
+        "name": "PV Eigenverbrauch gesamt (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
+      },
+      "ccu_counter_battery_pv_energy_today": {
+        "name": "Batterie {index} PV-Ertrag heute (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
+      },
+      "ccu_counter_battery_pv_energy_total": {
+        "name": "Batterie {index} PV-Ertrag gesamt (CCU-Zähler)",
+        "state_attributes": {
+          "source": {
+            "name": "Quelle",
+            "state": {
+              "ccu": "CCU"
+            }
+          },
+          "state_topic": {
+            "name": "MQTT-Zustandstopic"
+          }
+        }
       }
     },
     "switch": {
       "Winterbetrieb": {
         "name": "Winterbetrieb"
+      },
+      "mqtt_ups_mode": {
+        "name": "USV-Modus"
       }
     },
     "number": {
@@ -313,7 +599,67 @@
       },
       "summer_min_charge": {
         "name": "S.-betr: Min. Ladung"
+      },
+      "mqtt_minimum_soc": {
+        "name": "Minimaler Ladestand"
+      },
+      "mqtt_maximum_soc": {
+        "name": "Maximaler Ladestand"
+      },
+      "mqtt_maximum_output": {
+        "name": "Maximale Ausgangsleistung"
+      },
+      "mqtt_meter_loss_output": {
+        "name": "Ausgangsleistung bei Zählerausfall"
+      },
+      "mqtt_maximum_charging_power": {
+        "name": "Maximale Ladeleistung"
       }
+    },
+    "select": {
+      "mqtt_charging_strategy": {
+        "name": "Ladestrategie",
+        "state": {
+          "Automatic": "Automatisch",
+          "Time Plan": "Zeitplan",
+          "Price Plan": "Preisplan"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "mqtt_value_out_of_range": {
+      "message": "Der Wert liegt außerhalb des von der CCU vorgegebenen Bereichs."
+    },
+    "mqtt_invalid_step": {
+      "message": "Der Wert entspricht nicht der von der CCU vorgegebenen Schrittweite."
+    },
+    "mqtt_invalid_option": {
+      "message": "Diese Auswahl wird von der CCU nicht unterstützt."
+    },
+    "mqtt_no_command": {
+      "message": "Die CCU stellt für diese Einstellung keinen MQTT-Steuerbefehl bereit."
+    },
+    "mqtt_no_separate_state": {
+      "message": "Zur Bestätigung des Befehls wird ein eigener Rückmeldekanal der CCU benötigt."
+    },
+    "mqtt_firmware_unsupported": {
+      "message": "Für die MQTT-Steuerung muss eine CCU-Firmware ab Version 2.43.0 erkannt werden."
+    },
+    "mqtt_setting_unavailable": {
+      "message": "Die CCU-Einstellung ist derzeit nicht verfügbar. Es wurde kein Befehl gesendet."
+    },
+    "mqtt_command_template_invalid": {
+      "message": "Der von der CCU beschriebene Steuerbefehl konnte nicht erstellt werden."
+    },
+    "mqtt_publish_failed": {
+      "message": "Der MQTT-Steuerbefehl konnte nicht an die CCU gesendet werden."
+    },
+    "mqtt_confirmation_timeout": {
+      "message": "Die CCU hat den neuen Wert nicht innerhalb von {seconds} Sekunden bestätigt."
+    },
+    "mqtt_command_aborted": {
+      "message": "Die Änderung wurde abgebrochen, weil die CCU nicht mehr erreichbar ist oder ihre MQTT-Beschreibung geändert wurde."
     }
   }
 }

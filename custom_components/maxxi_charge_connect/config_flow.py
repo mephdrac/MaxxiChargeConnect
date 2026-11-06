@@ -5,16 +5,20 @@ import logging
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_IP_ADDRESS, CONF_NAME, CONF_WEBHOOK_ID
-from homeassistant.helpers.selector import BooleanSelector
+from homeassistant.helpers.selector import BooleanSelector, TextSelector, TextSelectorConfig, TextSelectorType
 
 from .const import (
-    CONF_CCU_VERSION,
     CCU_V1,
     CCU_V2,
+    CONF_CCU_VERSION,
     CONF_DEVICE_ID,
     CONF_ENABLE_CLOUD_DATA,
     CONF_ENABLE_FORWARD_TO_CLOUD,
     CONF_ENABLE_LOCAL_CLOUD_PROXY,
+    CONF_ENABLE_MQTT_BROKER,
+    CONF_MQTT_PASSWORD,
+    CONF_MQTT_PORT,
+    CONF_MQTT_USERNAME,
     CONF_REFRESH_CONFIG_FROM_CLOUD,
     CONF_TIMEOUT_RECEIVE,
     DEFAULT_ENABLE_FORWARD_TO_CLOUD,
@@ -52,6 +56,59 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     _entry: config_entries.ConfigEntry | None = None  # nur beim Reconfigure
 
+    def __init__(self):
+        self._enable_mqtt_broker = False
+        self._mqtt_settings = {}
+
+    async def async_step_mqtt(self, user_input=None):
+        """Configure the shared, opt-in broker; never log credentials."""
+        if not self._enable_mqtt_broker:
+            return self._create_entry(entry=self._entry)
+
+        others = [
+            entry
+            for entry in self._async_current_entries()
+            if entry.data.get(CONF_ENABLE_MQTT_BROKER, False)
+            and (self._entry is None or entry.entry_id != self._entry.entry_id)
+        ]
+        shared = others[0].data if others else {}
+        defaults = self._mqtt_settings or {
+            CONF_MQTT_PORT: shared.get(CONF_MQTT_PORT, 1883),
+            CONF_MQTT_USERNAME: shared.get(CONF_MQTT_USERNAME, ""),
+            CONF_MQTT_PASSWORD: shared.get(CONF_MQTT_PASSWORD, ""),
+        }
+        errors = {}
+        if user_input is not None:
+            settings = {
+                CONF_MQTT_PORT: user_input[CONF_MQTT_PORT],
+                CONF_MQTT_USERNAME: user_input[CONF_MQTT_USERNAME],
+                CONF_MQTT_PASSWORD: user_input.get(CONF_MQTT_PASSWORD) or defaults.get(CONF_MQTT_PASSWORD, ""),
+            }
+            if not settings[CONF_MQTT_USERNAME].strip():
+                errors[CONF_MQTT_USERNAME] = "required"
+            if not settings[CONF_MQTT_PASSWORD]:
+                errors[CONF_MQTT_PASSWORD] = "required"
+            if shared and any(settings[key] != shared.get(key) for key in settings):
+                errors["base"] = "mqtt_settings_conflict"
+            if not errors:
+                self._mqtt_settings = settings
+                return self._create_entry(entry=self._entry)
+            defaults = {**defaults, **settings}
+
+        return self.async_show_form(
+            step_id="mqtt",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_MQTT_PORT, default=defaults[CONF_MQTT_PORT]): vol.All(
+                        vol.Coerce(int), vol.Range(min=1, max=65535)
+                    ),
+                    vol.Required(CONF_MQTT_USERNAME, default=defaults[CONF_MQTT_USERNAME]): str,
+                    vol.Optional(CONF_MQTT_PASSWORD): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD)),
+                }
+            ),
+            errors=errors,
+        )
+
     async def async_step_user(self, user_input=None):
         """Select CCU version."""
 
@@ -62,6 +119,8 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 return await self.async_step_v1()
 
             if self._ccu_version == CCU_V2:
+                if self._entry is None:
+                    self._timeout_receive = 30
                 return await self.async_step_v2()
 
         return self.async_show_form(
@@ -70,7 +129,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 {
                     vol.Required(
                         CONF_CCU_VERSION,
-                        default=CCU_V1,
+                        default=self._ccu_version or CCU_V1,
                     ): vol.In(
                         {
                             CCU_V1: "CCU V1",
@@ -82,22 +141,38 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def async_step_v2(self, user_input=None):
-        """Configure CCU V2."""
-
+        """Configure the CCU identity and select internal or existing HA MQTT."""
+        errors = {}
         if user_input is not None:
             self._name = user_input[CONF_NAME]
             self._device_id = user_input[CONF_DEVICE_ID]
-
-            return self._create_entry(entry=self._entry)
+            self._enable_mqtt_broker = user_input.get(CONF_ENABLE_MQTT_BROKER, False)
+            self._timeout_receive = user_input.get(CONF_TIMEOUT_RECEIVE, 30)
+            if not self._name.strip():
+                errors[CONF_NAME] = "required"
+            if not self._device_id.strip() or any(char in self._device_id for char in "+#\x00"):
+                errors[CONF_DEVICE_ID] = "invalid_device_id"
+            for entry in self._async_current_entries():
+                if entry.data.get(CONF_DEVICE_ID) == self._device_id and (
+                    self._entry is None or entry.entry_id != self._entry.entry_id
+                ):
+                    errors[CONF_DEVICE_ID] = "device_exists"
+            if not errors:
+                return await self.async_step_mqtt()
 
         return self.async_show_form(
             step_id="v2",
             data_schema=vol.Schema(
                 {
-                    vol.Required(CONF_NAME): str,
-                    vol.Required(CONF_DEVICE_ID): str,
+                    vol.Required(CONF_NAME, default=self._name or ""): str,
+                    vol.Required(CONF_DEVICE_ID, default=self._device_id or ""): str,
+                    vol.Optional(CONF_ENABLE_MQTT_BROKER, default=self._enable_mqtt_broker): BooleanSelector(),
+                    vol.Required(CONF_TIMEOUT_RECEIVE, default=self._timeout_receive or 30): vol.All(
+                        vol.Coerce(int), vol.Range(min=5)
+                    ),
                 }
             ),
+            errors=errors,
         )
 
     async def async_step_v1(self, user_input=None):  # für CCU v1
@@ -139,9 +214,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             return await self.async_step_optional()
 
-        return self.async_show_form(
-            step_id="v1", data_schema=self._schema_user(defaults)
-        )
+        return self.async_show_form(step_id="v1", data_schema=self._schema_user(defaults))
 
     async def async_step_optional(self, user_input=None):
         """Step 2: optionale Felder + Proxy aktivieren."""
@@ -152,13 +225,9 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input:
             self._host_ip = user_input.get(CONF_IP_ADDRESS)
             self._only_ip = user_input.get(ONLY_ONE_IP, False)
-            self._timeout_receive = user_input.get(
-                CONF_TIMEOUT_RECEIVE, DEFAULT_TIMEOUT_RECEIVE
-            )
+            self._timeout_receive = user_input.get(CONF_TIMEOUT_RECEIVE, DEFAULT_TIMEOUT_RECEIVE)
             self._notify_migration = user_input.get(NOTIFY_MIGRATION, False)
-            self._enable_local_cloud_proxy = user_input.get(
-                CONF_ENABLE_LOCAL_CLOUD_PROXY, False
-            )
+            self._enable_local_cloud_proxy = user_input.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, False)
 
             # Pflichtfeldprüfung
             if not self._timeout_receive:
@@ -168,7 +237,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if errors:
                 return self.async_show_form(
                     step_id="optional",
-                    data_schema=self._schema_user(defaults),
+                    data_schema=self._schema_optional(defaults),
                     errors=errors,
                 )
 
@@ -177,9 +246,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             return self._create_entry(entry=self._entry)
 
-        return self.async_show_form(
-            step_id="optional", data_schema=self._schema_optional(defaults)
-        )
+        return self.async_show_form(step_id="optional", data_schema=self._schema_optional(defaults))
 
     async def async_step_proxy_options(self, user_input=None):
         """Step 3: Proxy-Optionen."""
@@ -191,14 +258,10 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
             )
             self._enable_cloud_data = user_input.get(CONF_ENABLE_CLOUD_DATA, False)
-            self._refresh_cloud_data = user_input.get(
-                CONF_REFRESH_CONFIG_FROM_CLOUD, False
-            )
+            self._refresh_cloud_data = user_input.get(CONF_REFRESH_CONFIG_FROM_CLOUD, False)
             return self._create_entry(entry=self._entry)
 
-        return self.async_show_form(
-            step_id="proxy_options", data_schema=self._schema_proxy_options(defaults)
-        )
+        return self.async_show_form(step_id="proxy_options", data_schema=self._schema_proxy_options(defaults))
 
     # ----------------------------------------
     # Entry erstellen / aktualisieren
@@ -218,12 +281,12 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_ENABLE_CLOUD_DATA: self._enable_cloud_data,
             CONF_REFRESH_CONFIG_FROM_CLOUD: self._refresh_cloud_data,
         }
-        _LOGGER.debug("Creating entry with data: %s", data)
+        data[CONF_ENABLE_MQTT_BROKER] = self._ccu_version == CCU_V2 and self._enable_mqtt_broker
+        if data[CONF_ENABLE_MQTT_BROKER]:
+            data.update(self._mqtt_settings)
 
         if entry is not None:
-            self.hass.config_entries.async_update_entry(
-                entry, data=data, title=self._name
-            )
+            self.hass.config_entries.async_update_entry(entry, data=data, title=self._name)
             return self.async_update_reload_and_abort(entry, data_updates=data)
 
         return self.async_create_entry(title=self._name, data=data)
@@ -236,12 +299,8 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return vol.Schema(
             {
                 vol.Required(CONF_NAME, default=defaults.get(CONF_NAME, "")): str,
-                vol.Required(
-                    CONF_DEVICE_ID, default=defaults.get(CONF_DEVICE_ID, "")
-                ): str,
-                vol.Required(
-                    CONF_WEBHOOK_ID, default=defaults.get(CONF_WEBHOOK_ID, "")
-                ): str,
+                vol.Required(CONF_DEVICE_ID, default=defaults.get(CONF_DEVICE_ID, "")): str,
+                vol.Required(CONF_WEBHOOK_ID, default=defaults.get(CONF_WEBHOOK_ID, "")): str,
             }
         )
 
@@ -249,24 +308,16 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         defaults = defaults or {}
         return vol.Schema(
             {
-                vol.Optional(
-                    CONF_IP_ADDRESS, default=defaults.get(CONF_IP_ADDRESS, "")
-                ): str,
-                vol.Optional(
-                    ONLY_ONE_IP, default=defaults.get(ONLY_ONE_IP, False)
-                ): BooleanSelector(),
+                vol.Optional(CONF_IP_ADDRESS, default=defaults.get(CONF_IP_ADDRESS, "")): str,
+                vol.Optional(ONLY_ONE_IP, default=defaults.get(ONLY_ONE_IP, False)): BooleanSelector(),
                 vol.Required(
                     CONF_TIMEOUT_RECEIVE,
                     default=defaults.get(CONF_TIMEOUT_RECEIVE, DEFAULT_TIMEOUT_RECEIVE),
                 ): int,
-                vol.Optional(
-                    NOTIFY_MIGRATION, default=defaults.get(NOTIFY_MIGRATION, False)
-                ): BooleanSelector(),
+                vol.Optional(NOTIFY_MIGRATION, default=defaults.get(NOTIFY_MIGRATION, False)): BooleanSelector(),
                 vol.Optional(
                     CONF_ENABLE_LOCAL_CLOUD_PROXY,
-                    default=defaults.get(
-                        CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_ENABLE_LOCAL_CLOUD_PROXY
-                    ),
+                    default=defaults.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_ENABLE_LOCAL_CLOUD_PROXY),
                 ): BooleanSelector(),
             }
         )
@@ -277,9 +328,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             {
                 vol.Optional(
                     CONF_ENABLE_FORWARD_TO_CLOUD,
-                    default=defaults.get(
-                        CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
-                    ),
+                    default=defaults.get(CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD),
                 ): BooleanSelector(),
                 vol.Optional(
                     CONF_ENABLE_CLOUD_DATA,
@@ -323,6 +372,17 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="entry_not_found")
 
         self._entry = entry
+        self._ccu_version = entry.data.get(CONF_CCU_VERSION, CCU_V1)
+        self._enable_mqtt_broker = entry.data.get(CONF_ENABLE_MQTT_BROKER, False)
+        self._mqtt_settings = (
+            {
+                CONF_MQTT_PORT: entry.data.get(CONF_MQTT_PORT, 1883),
+                CONF_MQTT_USERNAME: entry.data.get(CONF_MQTT_USERNAME, ""),
+                CONF_MQTT_PASSWORD: entry.data.get(CONF_MQTT_PASSWORD, ""),
+            }
+            if entry.data.get(CONF_MQTT_PASSWORD)
+            else {}
+        )
 
         self._name = entry.data.get(CONF_NAME)
         self._device_id = entry.data.get(CONF_DEVICE_ID)
@@ -331,12 +391,8 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._host_ip = entry.data.get(CONF_IP_ADDRESS)
         self._only_ip = entry.data.get(ONLY_ONE_IP, False)
         self._notify_migration = entry.data.get(NOTIFY_MIGRATION, False)
-        self._enable_local_cloud_proxy = entry.data.get(
-            CONF_ENABLE_LOCAL_CLOUD_PROXY, False
-        )
-        self._enable_forward_to_cloud = entry.data.get(
-            CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
-        )
+        self._enable_local_cloud_proxy = entry.data.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, False)
+        self._enable_forward_to_cloud = entry.data.get(CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD)
         self._enable_cloud_data = entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
         self._refresh_cloud_data = entry.data.get(CONF_REFRESH_CONFIG_FROM_CLOUD, False)
 
@@ -356,7 +412,9 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 "timeout_receive": self._timeout_receive,
             },
         )
-        return await self.async_step_user(user_input)
+        if self._ccu_version == CCU_V2:
+            return await self.async_step_v2(user_input)
+        return await self.async_step_v1(user_input)
 
     def is_matching(self, other_flow: config_entries.ConfigFlow) -> bool:
         return (

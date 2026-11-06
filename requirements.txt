@@ -3,3 +3,4 @@
 #voluptuous>=0.13.1
 dnspython
 beautifulsoup4==4.12.3
+amqtt==0.12.1

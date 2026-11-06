@@ -39,6 +39,7 @@ from .pv_self_consumption_energy_today import PvSelfConsumptionEnergyToday
 from .pv_self_consumption_energy_total import PvSelfConsumptionEnergyTotal
 from .pv_today_energy import PvTodayEnergy
 from .pv_total_energy import PvTotalEnergy
+from .mqtt_diagnostics import MqttLastReceivedSensor, MqttReceivedCountSensor
 
 
 def setup_v2_sensors(
@@ -64,6 +65,8 @@ def setup_v2_sensors(
             OnlineStatusSensor(entry),
             PvPower(entry),
             PvSelfConsumption(entry),
+            MqttLastReceivedSensor(entry),
+            MqttReceivedCountSensor(entry),
         ]
     )
 

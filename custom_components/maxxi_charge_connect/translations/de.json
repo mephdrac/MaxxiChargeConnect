@@ -2,12 +2,9 @@
   "config": {
     "step": {
       "user": {
-        "title": "Gerät einrichten",
-        "description": "Grunddaten für dein MaxxiCharge-Gerät",
+        "title": "CCU-Version",
         "data": {
-          "webhook_id": "Webhook-ID",
-          "name": "Name des Gerätes",
-          "CONF_DEVICE_ID": "Geräte-ID (z.B. Maxxi-xxxxxxx-xxx)"
+          "ccu_version": "CCU-Version"
         }
       },
       "optional": {
@@ -29,14 +26,47 @@
           "CONF_ENABLE_CLOUD_DATA": "Messdaten abfangen statt an Cloud zu senden?",
           "CONF_REFRESH_CONFIG_FROM_CLOUD": "Konfiguration einmalig aus der Cloud holen?"
         }
+      },
+      "v2": {
+        "title": "CCU V2: MQTT",
+        "description": "Internen Broker aktivieren oder den externen Broker der Home-Assistant-MQTT-Integration verwenden. Trage in der CCU bei internem Betrieb die LAN-IP von Home Assistant und den gewählten Port sowie Benutzername und Passwort ein.",
+        "data": {
+          "name": "Name",
+          "CONF_DEVICE_ID": "Geräte-ID / MQTT-Basistopic",
+          "enable_mqtt_broker": "Internen MQTT-Broker verwenden",
+          "CONF_TIMEOUT_RECEIVE": "Empfangs-Timeout (Sekunden)"
+        }
+      },
+      "mqtt": {
+        "title": "Interner MQTT-Broker",
+        "description": "Alle internen CCUs teilen Port und Zugangsdaten. Ein leeres Passwortfeld behält das bereits konfigurierte Passwort bei. MQTT über TCP ohne TLS; die CCU-Konfiguration wird nicht automatisch geändert.",
+        "data": {
+          "mqtt_port": "Port",
+          "mqtt_username": "Benutzername",
+          "mqtt_password": "Passwort"
+        }
+      },
+      "v1": {
+        "title": "CCU V1",
+        "data": {
+          "name": "Name",
+          "CONF_DEVICE_ID": "Geräte-ID",
+          "webhook_id": "Webhook-ID"
+        }
       }
+    },
+    "error": {
+      "required": "Pflichtfeld ausfüllen.",
+      "device_exists": "Diese Geräte-ID ist bereits eingerichtet.",
+      "invalid_device_id": "Gültige Geräte-ID ohne MQTT-Platzhalter (+ oder #) eingeben.",
+      "mqtt_settings_conflict": "Andere CCUs verwenden bereits einen internen Broker. Port und Zugangsdaten müssen übereinstimmen. Zum Ändern zuerst bei den anderen CCUs den internen Broker deaktivieren."
     }
   },
   "issues": {
     "missing_device_id": {
-    "title": "Fehlende Geräte-ID",
-    "description": "Die Geräte-ID ist nicht gesetzt. Bitte öffne die Konfiguration und trage eine gültige Geräte-ID ein, damit die Integration korrekt funktioniert.",
-    "fix_title": "Geräte-ID hinzufügen"
+      "title": "Fehlende Geräte-ID",
+      "description": "Die Geräte-ID ist nicht gesetzt. Bitte öffne die Konfiguration und trage eine gültige Geräte-ID ein, damit die Integration korrekt funktioniert.",
+      "fix_title": "Geräte-ID hinzufügen"
     },
     "unknown_device": {
       "title": "Unbekanntes Gerät",
@@ -55,146 +85,145 @@
       "rssi": {
         "name": "WiFi Signalstärke"
       },
-      "device_id":{
+      "device_id": {
         "name": "Gerätenummer"
       },
-      "PvPower":{
+      "PvPower": {
         "name": "PV Leistung"
       },
-      "BatterySoc":{
+      "BatterySoc": {
         "name": "Batterie Ladestand"
       },
-      "BatteryPowerCharge":{
+      "BatteryPowerCharge": {
         "name": "Batterie Ladeleistung"
       },
-      "BatteryPowerDischarge":{
+      "BatteryPowerDischarge": {
         "name": "Batterie Entladeleistung"
       },
-      "CcuPower":{
+      "CcuPower": {
         "name": "CCU Leistung"
       },
-      "GridExport":{
+      "GridExport": {
         "name": "Netzeinspeisung"
       },
-      "GridImport":{
+      "GridImport": {
         "name": "Netzbezug"
       },
-      "PowerConsumption":{
+      "PowerConsumption": {
         "name": "Hausverbrauch"
       },
-      "ConsumptionEnergyToday":{
+      "ConsumptionEnergyToday": {
         "name": "Hausverbrauch heute"
       },
-      "ConsumptionEnergyTotal":{
+      "ConsumptionEnergyTotal": {
         "name": "Hausverbrauch gesamt"
       },
-      "PvSelfConsumption":{
+      "PvSelfConsumption": {
         "name": "PV Eigenverbrauch"
       },
-      "PowerMeter":{
+      "PowerMeter": {
         "name": "Stromzähler"
       },
-      "BatterySoE":{
+      "BatterySoE": {
         "name": "Batterie Kapazität"
       },
-      "BatterySoESensor":{
+      "BatterySoESensor": {
         "name": "Batterie ({index}) Kapazität"
       },
-      "BatterySOCSensor":{
+      "BatterySOCSensor": {
         "name": "Batterie ({index}) SOC"
       },
-      "BatteryVoltageSensor":{
+      "BatteryVoltageSensor": {
         "name": "Batterie ({index}) Spannung"
       },
-      "BatteryPVVoltageSensor":{
+      "BatteryPVVoltageSensor": {
         "name": "Batterie ({index}) PV-Spannung"
       },
-      "BatteryMpptVoltageSensor":
-      {
+      "BatteryMpptVoltageSensor": {
         "name": "Batterie ({index}) MPPT-Spannung"
       },
-      "BatteryAmpereSensor":{
+      "BatteryAmpereSensor": {
         "name": "Batterie ({index}) Stromstärke"
       },
-      "BatteryChargeSensor":{
+      "BatteryChargeSensor": {
         "name": "Batterie ({index}) Ladeleistung"
       },
-      "BatteryDischargeSensor":{
+      "BatteryDischargeSensor": {
         "name": "Batterie ({index}) Entladeleistung"
       },
-      "BatteryPVAmpereSensor":{
+      "BatteryPVAmpereSensor": {
         "name": "Batterie ({index}) PV-Stromstärke"
       },
-      "BatteryMpptAmpereSensor":{
+      "BatteryMpptAmpereSensor": {
         "name": "Batterie ({index}) MPPT-Stromstärke"
       },
-      "BatteryPVPowerSensor":{
+      "BatteryPVPowerSensor": {
         "name": "Batterie ({index}) PV-Leistung"
       },
-      "APIRoute":{
+      "APIRoute": {
         "name": "API-Route"
       },
-      "LocalServer":{
+      "LocalServer": {
         "name": "Nutze lokalen Server"
       },
-      "Cloudservice":{
+      "Cloudservice": {
         "name": "Cloudservice aktiv"
       },
-      "DC/DC-Algorithmus":{
+      "DC/DC-Algorithmus": {
         "name": "DC/DC-Algorithmus"
       },
-      "PowerMeterIp":{
+      "PowerMeterIp": {
         "name": "Messgerät IP"
       },
-      "PowerMeterType":{
+      "PowerMeterType": {
         "name": "Messgerät Typ"
       },
-      "MaximumPower":{
+      "MaximumPower": {
         "name": "Maximale Leistung"
       },
-      "OfflineOutputPower":{
+      "OfflineOutputPower": {
         "name": "Offline-Ausgangsleistung"
       },
-      "NumberOfBatteries":{
+      "NumberOfBatteries": {
         "name": "Batterien im System"
       },
-      "OutputOffset":{
+      "OutputOffset": {
         "name": "Ausgabe korrigieren"
       },
-      "CcuSpeed":{
+      "CcuSpeed": {
         "name": "CCU-Geschwindigkeit"
       },
-      "Microinverter":{
+      "Microinverter": {
         "name": "Mikro-Wechselrichter-Typ"
       },
-      "ResponseTolerance":{
+      "ResponseTolerance": {
         "name": "Reaktionstoleranz"
       },
-       "MinimumBatteryDischarge":{
+      "MinimumBatteryDischarge": {
         "name": "Minimale Entladung der Batterie"
       },
-       "MaximumBatteryCharge":{
+      "MaximumBatteryCharge": {
         "name": "Maximale Akkuladung"
       },
-      "FirmwareVersion":{
+      "FirmwareVersion": {
         "name": "Firmware Version"
       },
-      "WebhookId":{
+      "WebhookId": {
         "name": "Webhook ID"
       },
       "BatteryTotalEnergyCharge": {
         "name": "Batterie Laden gesamt"
       },
       "BatteryTotalEnergyDischarge": {
-        "name":  "Batterie Entladen gesamt"
+        "name": "Batterie Entladen gesamt"
       },
       "BatteryTodayEnergyCharge": {
-        "name":  "Batterie Laden heute"
+        "name": "Batterie Laden heute"
       },
       "BatteryTodayEnergyDischarge": {
         "name": "Batterie Entladen heute"
       },
-      "CcuEnergyToday":  {
+      "CcuEnergyToday": {
         "name": "CCU Energie heute"
       },
       "CcuEnergyTotal": {
@@ -215,7 +244,7 @@
       "PvSelfConsumptionEnergyToday": {
         "name": "PV Eigenverbrauch heute"
       },
-      "PvSelfConsumptionEnergyTotal":  {
+      "PvSelfConsumptionEnergyTotal": {
         "name": "PV Eigenverbrauch gesamt"
       },
       "PvTodayEnergy": {
@@ -241,7 +270,13 @@
       },
       "SendCount": {
         "name": "Telegramme"
-      }      
+      },
+      "mqtt_last_received": {
+        "name": "MQTT letzter Empfang"
+      },
+      "mqtt_received_count": {
+        "name": "MQTT empfangene Nachrichten"
+      }
     },
     "switch": {
       "Winterbetrieb": {
@@ -252,19 +287,19 @@
       "maxOutputPower": {
         "name": "Maximale Leistung"
       },
-      "offlinePower":{
+      "offlinePower": {
         "name": "Offline-Ausgangsleistung"
       },
-      "max_soc":{
+      "max_soc": {
         "name": "Maximale Akkuladung"
       },
-      "min_soc":{
+      "min_soc": {
         "name": "Minimale Entladung der Batterie"
       },
-      "baseLoad":{
+      "baseLoad": {
         "name": "Ausgabe korrigieren"
       },
-      "threshold":{
+      "threshold": {
         "name": "Reaktionstoleranz"
       },
       "winter_min_charge": {

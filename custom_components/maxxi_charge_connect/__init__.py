@@ -17,16 +17,7 @@ from homeassistant.helpers.entity_registry import async_get as async_get_entity_
 from .connection.ccu_base_connection import CcuBaseConnection
 from .connection.ccu_v1_connection import ccuV1Connection
 from .connection.ccu_v2_connection import ccuV2Connection
-
-from .const import (
-    CONF_CCU_VERSION,
-    CCU_V1,
-    CCU_V2,
-    CONF_DEVICE_ID,
-    CONF_NEEDS_DEVICE_ID,    
-    DOMAIN    
-)
-from .webhook import async_unregister_webhook
+from .const import CCU_V1, CCU_V2, CONF_CCU_VERSION, CONF_DEVICE_ID, CONF_NEEDS_DEVICE_ID, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -66,29 +57,35 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[DOMAIN].setdefault(entry.entry_id, {})
     hass.data[DOMAIN][entry.entry_id]["connection"] = connection
 
-    return await connection.async_setup_entry()
+    try:
+        setup_ok = await connection.async_setup_entry()
+    except BaseException:
+        hass.data[DOMAIN].pop(entry.entry_id, None)
+        raise
+    if not setup_ok:
+        await connection.async_unload()
+        hass.data[DOMAIN].pop(entry.entry_id, None)
+    return setup_ok
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Entlädt die Integration vollständig und deregistriert den Webhook."""
 
-    _LOGGER.warning("async_unload_entry CALLED")
     connection = hass.data[DOMAIN].get(entry.entry_id, {}).get("connection")
-
-    if connection is not None:
-        _LOGGER.debug("Unload connection for entry %s", entry.entry_id)
-        await connection.async_unload()
+    platforms = [Platform.SENSOR] if entry.data.get(CONF_CCU_VERSION) == CCU_V2 else PLATFORMS
 
     unload_ok = all(
         await asyncio.gather(
             *[
                 hass.config_entries.async_forward_entry_unload(entry, platform)
-                for platform in PLATFORMS
+                for platform in platforms
             ]
         )
     )
 
     if unload_ok:
+        if connection is not None:
+            await connection.async_unload()
         hass.data[DOMAIN].pop(entry.entry_id, None)
 
     return unload_ok
@@ -233,6 +230,14 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             _LOGGER.error("Fehler beim Migrieren der Konfiguration: %s", e)
             return False
 
+    if version == 3 and minor_version == 4:
+        data = dict(config_entry.data)
+        data.setdefault(CONF_CCU_VERSION, CCU_V1)
+        version, minor_version = 4, 0
+        hass.config_entries.async_update_entry(
+            config_entry, data=data, version=version, minor_version=minor_version
+        )
+
     _LOGGER.info("MaxxiChargeConnect - config v%s.%s installiert", version, minor_version)
     # await check_device_id_issue(hass)
-    return version == 3 and minor_version == 4
+    return version == 4 and minor_version == 0

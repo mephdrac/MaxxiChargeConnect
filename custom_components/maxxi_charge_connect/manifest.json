@@ -5,7 +5,7 @@
   "loggers": ["custom_components.maxxi_charge_connect"],
   "documentation": "https://github.com/mephdrac/MaxxiChargeConnect",
   "issue_tracker": "https://github.com/mephdrac/MaxxiChargeConnect/issues",
-  "requirements": ["beautifulsoup4==4.12.3", "dnspython"],
+  "requirements": ["beautifulsoup4==4.12.3", "dnspython", "amqtt==0.12.1"],
   "after_dependencies": ["mqtt"],
   "codeowners": ["@mephdrac"],
   "config_flow": true,

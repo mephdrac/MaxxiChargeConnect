@@ -18,3 +18,4 @@ cryptography>=44.0.1
 jinja2>=3.1.5
 requests>=2.32.3
 urllib3>=2.5.0
+amqtt==0.12.1

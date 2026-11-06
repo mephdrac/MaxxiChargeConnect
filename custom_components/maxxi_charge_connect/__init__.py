@@ -11,6 +11,7 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 
@@ -21,6 +22,7 @@ from .connection.mqtt_discovery import PLATFORMS as MQTT_PLATFORMS
 from .const import CCU_V1, CCU_V2, CONF_CCU_VERSION, CONF_DEVICE_ID, CONF_NEEDS_DEVICE_ID, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,

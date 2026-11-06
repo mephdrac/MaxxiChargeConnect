@@ -618,12 +618,7 @@
     },
     "select": {
       "mqtt_charging_strategy": {
-        "name": "Ladestrategie",
-        "state": {
-          "Automatic": "Automatisch",
-          "Time Plan": "Zeitplan",
-          "Price Plan": "Preisplan"
-        }
+        "name": "Ladestrategie"
       }
     }
   },

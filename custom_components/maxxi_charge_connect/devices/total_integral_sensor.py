@@ -63,12 +63,12 @@ class TotalIntegralSensor(IntegrationSensor):
             unique_id=(
                 f"{entry.entry_id}_"
                 f"{clean_title(self.__class__.__name__)}"
-            ),
-            device_class=SensorDeviceClass.ENERGY,
+            ),            
             unit_prefix="k",
             unit_time=UnitOfTime.HOURS,
             max_sub_interval=timedelta(seconds=120),
         )
+        self._attr_device_class = SensorDeviceClass.ENERGY
 
         # IntegrationSensor setzt einen eigenen Namen.
         # Entfernen, damit Home Assistant unsere Übersetzung verwendet.

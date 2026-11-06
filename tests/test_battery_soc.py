@@ -77,12 +77,12 @@ async def test_battery_soc__handle_update_alles_ok():
     sensor = BatterySoc(dummy_config_entry)
     sensor.hass = hass  # <<< WICHTIG
 
-    with patch(
-        "custom_components.maxxi_charge_connect.devices.battery_soc.BatterySoc.async_write_ha_state",
-        new_callable=MagicMock,
-    ) as mock_write_ha_state:
-        await sensor.handle_update(data)
-        mock_write_ha_state.assert_called_once()
+    sensor.check_valid = AsyncMock(return_value=True)
+    sensor.async_write_ha_state = MagicMock()
+
+    await sensor._wrapper_update(data)
+
+    sensor.async_write_ha_state.assert_called_once()
 
     assert sensor._attr_native_value == soc  # pylint: disable=protected-access
 

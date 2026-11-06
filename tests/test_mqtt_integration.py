@@ -62,6 +62,8 @@ def make_entry(entry_id="one", internal=False, port=1883):
 class MqttFlowTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.flow = MaxxiChargeConnectConfigFlow()
+        self.flow.async_set_unique_id = AsyncMock()
+        self.flow._abort_if_unique_id_configured = MagicMock()
         self.flow.hass = make_hass()
         self.flow._ccu_version = CCU_V2
         self.flow._name = "CCU"

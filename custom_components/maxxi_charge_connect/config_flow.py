@@ -158,6 +158,10 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ):
                     errors[CONF_DEVICE_ID] = "device_exists"
             if not errors:
+                if self._entry is None:
+                    await self.async_set_unique_id(self._device_id)
+                    self._abort_if_unique_id_configured()
+
                 return await self.async_step_mqtt()
 
         return self.async_show_form(
@@ -211,6 +215,10 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     data_schema=self._schema_user(defaults),
                     errors=errors,
                 )
+
+            if self._entry is None:
+                await self.async_set_unique_id(self._device_id)
+                self._abort_if_unique_id_configured()
 
             return await self.async_step_optional()
 

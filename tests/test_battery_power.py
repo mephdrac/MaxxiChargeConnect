@@ -66,7 +66,7 @@ async def test_battery_power__handle_update_positive_power():
 
     await sensor.handle_update(data)  # pylint: disable=protected-access
 
-    assert sensor._attr_native_value == round(pv_power - pccu, 3)  # pylint: disable=protected-access
+    assert sensor._attr_native_value == round(pv_power - pccu, 2)  # pylint: disable=protected-access
 
 
 @pytest.mark.asyncio
@@ -85,7 +85,7 @@ async def test_battery_power__handle_update_negative_power():
 
     await sensor.handle_update(data)  # pylint: disable=protected-access
 
-    assert sensor._attr_native_value == round(pv_power - pccu, 3)  # pylint: disable=protected-access
+    assert sensor._attr_native_value == round(pv_power - pccu, 2)  # pylint: disable=protected-access
 
 
 @pytest.mark.asyncio

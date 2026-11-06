@@ -66,12 +66,13 @@ class TodayIntegralSensor(IntegrationSensor):
             unique_id=(
                 f"{entry.entry_id}_"
                 f"{clean_title(self.__class__.__name__)}"
-            ),
-            device_class=SensorDeviceClass.ENERGY,
+            ),            
             unit_prefix="k",
             unit_time=UnitOfTime.HOURS,
             max_sub_interval=timedelta(seconds=120),
         )
+        self._attr_device_class = SensorDeviceClass.ENERGY
+
         del self._attr_name
 
         self._attr_translation_key = self.__class__.__name__

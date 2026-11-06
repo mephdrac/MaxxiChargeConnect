@@ -87,9 +87,10 @@ class MqttTranslationTests(unittest.TestCase):
             self.assertEqual(entity.name, expected[spec.name])
             self.assertEqual(entity.unique_id, identity)
             if component == "select":
-                self.assertEqual(entity.options, ["Automatic", "Time Plan", "Price Plan"])
-                labels = TRANSLATIONS["de"]["entity"]["select"][entity.translation_key]["state"]
-                self.assertEqual([labels[value] for value in entity.options], ["Automatisch", "Zeitplan", "Preisplan"])
+                self.assertEqual(
+                    entity.options,
+                    ["Automatic", "Time Plan", "Price Plan"],
+                )
             count += 1
         self.assertEqual(count, 7)
 

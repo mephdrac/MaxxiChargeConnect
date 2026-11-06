@@ -9,8 +9,7 @@
   "requirements": ["dnspython"],
   "after_dependencies": ["mqtt", "integration"],
   "codeowners": ["@mephdrac"],
-  "config_flow": true,
-  "reconfigure_flow": true,
+  "config_flow": true,  
   "integration_type": "device",  
   "iot_class": "local_push"
 }

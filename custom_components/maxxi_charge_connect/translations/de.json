@@ -65,8 +65,7 @@
   "issues": {
     "missing_device_id": {
       "title": "Fehlende Geräte-ID",
-      "description": "Die Geräte-ID ist nicht gesetzt. Bitte öffne die Konfiguration und trage eine gültige Geräte-ID ein, damit die Integration korrekt funktioniert.",
-      "fix_title": "Geräte-ID hinzufügen"
+      "description": "Die Geräte-ID ist nicht gesetzt. Bitte öffne die Konfiguration und trage eine gültige Geräte-ID ein, damit die Integration korrekt funktioniert."
     },
     "unknown_device": {
       "title": "Unbekanntes Gerät",

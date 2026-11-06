@@ -11,7 +11,6 @@
   "codeowners": ["@mephdrac"],
   "config_flow": true,
   "reconfigure_flow": true,
-  "integration_type": "device",
-  "platforms": ["sensor", "binary_sensor", "number", "select", "switch"],
+  "integration_type": "device",  
   "iot_class": "local_push"
 }

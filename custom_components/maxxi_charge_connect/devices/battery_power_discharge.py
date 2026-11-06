@@ -38,8 +38,7 @@ class BatteryPowerDischarge(BaseWebhookSensor):
     Die Entität wird standardmäßig im Entity-Registry aktiviert und nutzt
     standardisierte Geräteeigenschaften für Darstellung und Klassifikation.
     """
-
-    _attr_translation_key = "BatteryPowerDischarge"
+    
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry) -> None:

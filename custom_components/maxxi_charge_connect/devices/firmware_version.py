@@ -20,8 +20,7 @@ class FirmwareVersion(BaseWebhookSensor):
     Dieser Sensor zeigt die aktuelle Firmware-Version des Systems an.
     Die Daten werden vom Webhook-Datenstrom extrahiert und auf Plausibilität geprüft.
     """
-
-    _attr_translation_key = "FirmwareVersion"
+    
     _attr_has_entity_name = True
     _attr_entity_registry_enabled_default = False
     _attr_entity_category = EntityCategory.DIAGNOSTIC

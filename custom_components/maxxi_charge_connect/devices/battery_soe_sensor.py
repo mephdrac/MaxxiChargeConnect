@@ -27,8 +27,7 @@ class BatterySoESensor(BaseWebhookSensor):
     und auf Plausibilität geprüft.
     """
 
-    _attr_entity_registry_enabled_default = True
-    _attr_translation_key = "BatterySoESensor"
+    _attr_entity_registry_enabled_default = True    
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry, index: int) -> None:

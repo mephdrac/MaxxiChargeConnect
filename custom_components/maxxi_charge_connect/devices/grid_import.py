@@ -28,7 +28,6 @@ class GridImport(BaseWebhookSensor):
     Leistungswert (Watt).
     """
 
-    _attr_translation_key = "GridImport"
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry) -> None:

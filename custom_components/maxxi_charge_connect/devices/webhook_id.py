@@ -27,9 +27,9 @@ class WebhookId(TextEntity):
         _attr_entity_category (EntityCategory): Kategorie der Entity, hier DIAGNOSTIC.
 
     """
-
-    _attr_translation_key = "WebhookId"
+    
     _attr_has_entity_name = True
+    _attr_translation_key = "webhookid"
 
     def __init__(self, entry: ConfigEntry) -> None:
         """Initialisiert die WebhookId-TextEntity.

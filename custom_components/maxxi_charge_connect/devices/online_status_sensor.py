@@ -37,9 +37,9 @@ class OnlineStatusSensor(BinarySensorEntity):
     Diese Entität zeigt umgerechnet in Tage, Stunden, Minuten und Sekunden an.
     """
 
-    _attr_entity_registry_enabled_default = False
-    _attr_translation_key = "OnlineStatusSensor"
+    _attr_entity_registry_enabled_default = False    
     _attr_has_entity_name = True
+    _attr_translation_key = "onlinestatussensor"
 
     def __init__(self, entry: ConfigEntry) -> None:
         """Initialisiert den LastMessageSensor.

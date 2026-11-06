@@ -27,8 +27,7 @@ _LOGGER = logging.getLogger(__name__)
 class StatusSensor(BaseWebhookSensor):
     """Sensor für MaxxiCloud-Daten vom Proxy."""
 
-    _attr_entity_registry_enabled_default = True
-    _attr_translation_key = "StatusSensor"
+    _attr_entity_registry_enabled_default = True    
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry):

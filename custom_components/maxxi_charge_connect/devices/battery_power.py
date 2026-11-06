@@ -49,8 +49,7 @@ class BatteryPower(BaseWebhookSensor):
 
     """
 
-    _attr_entity_registry_enabled_default = True
-    _attr_translation_key = "battery_power"
+    _attr_entity_registry_enabled_default = True    
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry) -> None:
@@ -64,6 +63,8 @@ class BatteryPower(BaseWebhookSensor):
 
         """
         super().__init__(entry)
+
+        self._attr_translation_key = "battery_power"
         self._attr_suggested_display_precision = 2
         self._entry = entry
         # self._attr_name = "Battery Power"

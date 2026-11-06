@@ -46,8 +46,7 @@ class BatteryPowerCharge(BaseWebhookSensor):
     Die Entität registriert sich automatisch bei einem Dispatcher-Signal, das
     vom Webhook ausgelöst wird, um aktuelle Sensordaten zu erhalten.
     """
-
-    _attr_translation_key = "BatteryPowerCharge"
+    
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry) -> None:

@@ -75,7 +75,7 @@ class TodayIntegralSensor(IntegrationSensor):
 
         del self._attr_name
 
-        self._attr_translation_key = self.__class__.__name__
+        self._attr_translation_key = self.__class__.__name__.lower()
         self._attr_has_entity_name = True
 
         self.hass = hass

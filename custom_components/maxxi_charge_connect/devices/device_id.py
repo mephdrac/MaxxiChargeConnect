@@ -21,8 +21,7 @@ class DeviceId(BaseWebhookSensor):
     Dieser Sensor zeigt die eindeutige Geräte-ID des Systems an.
     Die Daten werden vom Webhook-Datenstrom extrahiert und auf Plausibilität geprüft.
     """
-
-    _attr_translation_key = "device_id"
+    
     _attr_has_entity_name = True
     _attr_entity_registry_enabled_default = False
     _attr_entity_category = EntityCategory.DIAGNOSTIC
@@ -38,6 +37,7 @@ class DeviceId(BaseWebhookSensor):
         self._attr_unique_id = f"{entry.entry_id}_deviceid"
         self._attr_icon = "mdi:identifier"
         self._attr_native_value = None
+        self._attr_translation_key = "device_id"
 
     async def handle_update(self, data):
         """Verarbeitet eingehende Webhook-Daten und aktualisiert die Geräte-ID.

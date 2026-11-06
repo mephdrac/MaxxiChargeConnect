@@ -28,8 +28,7 @@ class CcuPower(BaseWebhookSensor):
     Diese Entität zeigt die aktuell gemessene Leistung in Watt an,
     wenn die empfangenen Daten als gültig eingestuft werden.
     """
-
-    _attr_translation_key = "CcuPower"
+    
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry) -> None:

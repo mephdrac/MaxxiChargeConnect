@@ -23,7 +23,7 @@ async def test_ccu_temperatur_sensor__init():
 
     # Grundlegende Attribute prüfen
     assert sensor._attr_entity_registry_enabled_default is False  # pylint: disable=protected-access
-    assert sensor._attr_translation_key == "CCUTemperaturSensor"  # pylint: disable=protected-access
+    assert sensor._attr_translation_key == "ccutemperatursensor"  # pylint: disable=protected-access
     assert sensor._attr_has_entity_name is True  # pylint: disable=protected-access
     assert sensor._attr_unique_id == "1234abcd_ccu_temperatur_sensor"  # pylint: disable=protected-access
     assert sensor.icon == "mdi:temperature-celsius"

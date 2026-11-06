@@ -64,9 +64,15 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
         self._after_stale = True
         self._entry = entry
         self._attr_available = False  # bis erstes gültiges Update kommt
+        self._attr_translation_key = (
+            getattr(self, "_attr_translation_key", None)
+            or self.__class__.__name__.lower()
+        )
 
         self._unsub_update = None
         self._unsub_stale = None
+
+        BaseWebhookSensor
 
         self._enable_cloud_data = self._entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
 

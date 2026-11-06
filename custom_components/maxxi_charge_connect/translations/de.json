@@ -88,187 +88,187 @@
       "device_id": {
         "name": "Gerätenummer"
       },
-      "PvPower": {
+      "pvpower": {
         "name": "PV Leistung"
       },
-      "BatterySoc": {
+      "batterysoc": {
         "name": "Batterie Ladestand"
       },
-      "BatteryPowerCharge": {
+      "batterypowercharge": {
         "name": "Batterie Ladeleistung"
       },
-      "BatteryPowerDischarge": {
+      "batterypowerdischarge": {
         "name": "Batterie Entladeleistung"
       },
-      "CcuPower": {
+      "ccupower": {
         "name": "CCU Leistung"
       },
-      "GridExport": {
+      "gridexport": {
         "name": "Netzeinspeisung"
       },
-      "GridImport": {
+      "gridimport": {
         "name": "Netzbezug"
       },
-      "PowerConsumption": {
+      "powerconsumption": {
         "name": "Hausverbrauch"
       },
-      "ConsumptionEnergyToday": {
+      "consumptionenergytoday": {
         "name": "Hausverbrauch heute"
       },
-      "ConsumptionEnergyTotal": {
+      "consumptionenergytotal": {
         "name": "Hausverbrauch gesamt"
       },
-      "PvSelfConsumption": {
+      "pvselfconsumption": {
         "name": "PV Eigenverbrauch"
       },
-      "PowerMeter": {
+      "powermeter": {
         "name": "Stromzähler"
       },
-      "BatterySoE": {
+      "batterysoe": {
         "name": "Batterie Kapazität"
       },
-      "BatterySoESensor": {
+      "batterysoesensor": {
         "name": "Batterie ({index}) Kapazität"
       },
-      "BatterySOCSensor": {
+      "batterysocsensor": {
         "name": "Batterie ({index}) SOC"
       },
-      "BatteryVoltageSensor": {
+      "batteryvoltagesensor": {
         "name": "Batterie ({index}) Spannung"
       },
-      "BatteryPVVoltageSensor": {
+      "batterypvvoltagesensor": {
         "name": "Batterie ({index}) PV-Spannung"
       },
-      "BatteryMpptVoltageSensor": {
+      "batterympptvoltagesensor": {
         "name": "Batterie ({index}) MPPT-Spannung"
       },
-      "BatteryAmpereSensor": {
+      "batteryamperesensor": {
         "name": "Batterie ({index}) Stromstärke"
       },
-      "BatteryChargeSensor": {
+      "batterychargesensor": {
         "name": "Batterie ({index}) Ladeleistung"
       },
-      "BatteryDischargeSensor": {
+      "batterydischargesensor": {
         "name": "Batterie ({index}) Entladeleistung"
       },
-      "BatteryPVAmpereSensor": {
+      "batterypvamperesensor": {
         "name": "Batterie ({index}) PV-Stromstärke"
       },
-      "BatteryMpptAmpereSensor": {
+      "batterympptamperesensor": {
         "name": "Batterie ({index}) MPPT-Stromstärke"
       },
-      "BatteryPVPowerSensor": {
+      "batterypvpowersensor": {
         "name": "Batterie ({index}) PV-Leistung"
       },
-      "APIRoute": {
+      "apiroute": {
         "name": "API-Route"
       },
-      "LocalServer": {
+      "localserver": {
         "name": "Nutze lokalen Server"
       },
-      "Cloudservice": {
+      "cloudservice": {
         "name": "Cloudservice aktiv"
       },
-      "DC/DC-Algorithmus": {
+      "dc_dc-algorithmus": {
         "name": "DC/DC-Algorithmus"
       },
-      "PowerMeterIp": {
+      "powermeterip": {
         "name": "Messgerät IP"
       },
-      "PowerMeterType": {
+      "powermetertype": {
         "name": "Messgerät Typ"
       },
-      "MaximumPower": {
+      "maximumpower": {
         "name": "Maximale Leistung"
       },
-      "OfflineOutputPower": {
+      "offlineoutputpower": {
         "name": "Offline-Ausgangsleistung"
       },
-      "NumberOfBatteries": {
+      "numberofbatteries": {
         "name": "Batterien im System"
       },
-      "OutputOffset": {
+      "outputoffset": {
         "name": "Ausgabe korrigieren"
       },
-      "CcuSpeed": {
+      "ccuspeed": {
         "name": "CCU-Geschwindigkeit"
       },
-      "Microinverter": {
+      "microinverter": {
         "name": "Mikro-Wechselrichter-Typ"
       },
-      "ResponseTolerance": {
+      "responsetolerance": {
         "name": "Reaktionstoleranz"
       },
-      "MinimumBatteryDischarge": {
+      "minimumbatterydischarge": {
         "name": "Minimale Entladung der Batterie"
       },
-      "MaximumBatteryCharge": {
+      "maximumbatterycharge": {
         "name": "Maximale Akkuladung"
       },
-      "FirmwareVersion": {
+      "firmwareversion": {
         "name": "Firmware Version"
       },
-      "WebhookId": {
+      "webhookid": {
         "name": "Webhook ID"
       },
-      "BatteryTotalEnergyCharge": {
+      "batterytotalenergycharge": {
         "name": "Batterie Laden gesamt"
       },
-      "BatteryTotalEnergyDischarge": {
+      "batterytotalenergydischarge": {
         "name": "Batterie Entladen gesamt"
       },
-      "BatteryTodayEnergyCharge": {
+      "batterytodayenergycharge": {
         "name": "Batterie Laden heute"
       },
-      "BatteryTodayEnergyDischarge": {
+      "batterytodayenergydischarge": {
         "name": "Batterie Entladen heute"
       },
-      "CcuEnergyToday": {
+      "ccuenergytoday": {
         "name": "CCU Energie heute"
       },
-      "CcuEnergyTotal": {
+      "ccuenergytotal": {
         "name": "CCU Energie gesamt"
       },
-      "GridImportEnergyToday": {
+      "gridimportenergytoday": {
         "name": "Netzbezug heute"
       },
-      "GridImportEnergyTotal": {
+      "gridimportenergytotal": {
         "name": "Netzbezug gesamt"
       },
-      "GridExportEnergyToday": {
+      "gridexportenergytoday": {
         "name": "Netzeinspeisung heute"
       },
-      "GridExportEnergyTotal": {
+      "gridexportenergytotal": {
         "name": "Netzeinspeisung gesamt"
       },
-      "PvSelfConsumptionEnergyToday": {
+      "pvselfconsumptionenergytoday": {
         "name": "PV Eigenverbrauch heute"
       },
-      "PvSelfConsumptionEnergyTotal": {
+      "pvselfconsumptionenergytotal": {
         "name": "PV Eigenverbrauch gesamt"
       },
-      "PvTodayEnergy": {
+      "pvtodayenergy": {
         "name": "PV Produktion heute"
       },
-      "PvTotalEnergy": {
+      "pvtotalenergy": {
         "name": "PV Produktion gesamt"
       },
-      "ErrorSensor": {
+      "errorsensor": {
         "name": "Fehler"
       },
-      "StatusSensor": {
+      "statussensor": {
         "name": "Status"
       },
-      "UptimeSensor": {
+      "uptimesensor": {
         "name": "Läuft seit"
       },
-      "OnlineStatusSensor": {
+      "onlinestatussensor": {
         "name": "CCU-Online"
       },
-      "CCUTemperaturSensor": {
+      "ccutemperatursensor": {
         "name": "CCU-Temperatur"
       },
-      "SendCount": {
+      "sendcount": {
         "name": "Telegramme"
       },
       "mqtt_last_received": {
@@ -565,7 +565,7 @@
       }
     },
     "switch": {
-      "Winterbetrieb": {
+      "winterbetrieb": {
         "name": "Winterbetrieb"
       },
       "mqtt_ups_mode": {
@@ -573,10 +573,10 @@
       }
     },
     "number": {
-      "maxOutputPower": {
+      "maxoutputpower": {
         "name": "Maximale Leistung"
       },
-      "offlinePower": {
+      "offlinepower": {
         "name": "Offline-Ausgangsleistung"
       },
       "max_soc": {
@@ -585,7 +585,7 @@
       "min_soc": {
         "name": "Minimale Entladung der Batterie"
       },
-      "baseLoad": {
+      "baseload": {
         "name": "Ausgabe korrigieren"
       },
       "threshold": {

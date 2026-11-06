@@ -36,8 +36,7 @@ class BatterySoc(BaseWebhookSensor):
     Der Sensor verwendet Dispatcher-Signale, um sich automatisch zu aktualisieren,
     sobald neue Daten über den konfigurierten Webhook empfangen werden.
     """
-
-    _attr_translation_key = "BatterySoc"
+    
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry) -> None:

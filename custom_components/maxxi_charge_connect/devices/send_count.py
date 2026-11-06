@@ -23,7 +23,6 @@ _LOGGER = logging.getLogger(__name__)
 class SendCount(BaseWebhookSensor):
     """Sensor-Entität zur Anzeige der (`sendCount`)"""
 
-    _attr_translation_key = "SendCount"
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry) -> None:

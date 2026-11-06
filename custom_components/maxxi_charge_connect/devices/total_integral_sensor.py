@@ -77,7 +77,7 @@ class TotalIntegralSensor(IntegrationSensor):
         self.hass = hass
         self._entry = entry
 
-        self._attr_translation_key = self.__class__.__name__
+        self._attr_translation_key = self.__class__.__name__.lower()
         self._attr_has_entity_name = True
 
         self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR

@@ -21,8 +21,7 @@ class CCUTemperaturSensor(BaseWebhookSensor):
     Die Daten werden von den Converter-Informationen im Webhook-Datenstrom extrahiert
     und auf Plausibilität geprüft.
     """
-
-    _attr_translation_key = "CCUTemperaturSensor"
+    
     _attr_has_entity_name = True
     _attr_entity_registry_enabled_default = False
 

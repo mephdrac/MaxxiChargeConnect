@@ -14,7 +14,7 @@ _LOGGER = logging.getLogger(__name__)
 class Winterbetrieb(SwitchEntity):
     """SwitchEntity für den Winterbetrieb."""
 
-    _attr_translation_key = "Winterbetrieb"
+    _attr_translation_key = "winterbetrieb"
     _attr_has_entity_name = True
     _attr_should_poll = False  # Switches sollten in der Regel nicht pollen
 

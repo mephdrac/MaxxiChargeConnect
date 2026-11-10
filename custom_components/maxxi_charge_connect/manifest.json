@@ -20,7 +20,8 @@
     "custom_components.maxxi_charge_connect"
   ],
   "requirements": [
-    "dnspython"
+    "dnspython",
+    "amqtt==0.12.1"
   ],
-  "version": "2.9.0-beta.4"
+  "version": "2.9.0-beta.5"
 }

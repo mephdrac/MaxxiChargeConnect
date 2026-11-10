@@ -4,6 +4,7 @@ ruff
 
 voluptuous
 beautifulsoup4==4.12.3
+amqtt==0.12.1
 types-beautifulsoup4
 homeassistant>=2025.1.0
 dnspython

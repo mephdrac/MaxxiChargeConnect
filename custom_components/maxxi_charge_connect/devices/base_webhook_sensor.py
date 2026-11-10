@@ -72,8 +72,6 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
         self._unsub_update = None
         self._unsub_stale = None
 
-        BaseWebhookSensor
-
         self._enable_cloud_data = self._entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
 
     #

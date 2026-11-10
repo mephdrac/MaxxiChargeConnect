@@ -14,7 +14,7 @@ from homeassistant.exceptions import ConfigEntryNotReady
 
 from custom_components.maxxi_charge_connect import async_migrate_entry, async_unload_entry
 from custom_components.maxxi_charge_connect.config_flow import MaxxiChargeConnectConfigFlow
-from custom_components.maxxi_charge_connect.connection.ccu_v2_connection import ccuV2Connection
+from custom_components.maxxi_charge_connect.connection.ccu_v2_connection import CCUv2Connection
 from custom_components.maxxi_charge_connect.const import (
     CCU_V1,
     CCU_V2,
@@ -133,7 +133,7 @@ class MqttConnectionTests(unittest.IsolatedAsyncioTestCase):
             await manager.async_shutdown()
 
     def connection(self, entry):
-        connection = ccuV2Connection(self.hass, entry)
+        connection = CCUv2Connection(self.hass, entry)
         self.connections.append(connection)
         return connection
 

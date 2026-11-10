@@ -17,7 +17,7 @@ from .battery_voltage_sensor import BatteryVoltageSensor
 _LOGGER = logging.getLogger(__name__)
 
 
-class CCUV2BatterySensorManager:
+class CCUV2BatterySensorManager:  # pylint: disable=too-few-public-methods
     """Dynamically create battery sensors for CCU V2."""
 
     SENSOR_CLASSES = [BatteryVoltageSensor, BatterySOCSensor, BatteryPVPowerSensor, BatterySoESensor]

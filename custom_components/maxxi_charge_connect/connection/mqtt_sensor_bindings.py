@@ -44,18 +44,21 @@ def template_path(source: str | None) -> tuple | None:
         if isinstance(selected, nodes.Filter) and selected.name == "selectattr" and len(selected.args) == 3:
             args = selected.args
             parent = selected.node
-            if (
+            valid_selector = (
                 all(isinstance(arg, nodes.Const) for arg in args)
                 and [args[0].value, args[1].value] == ["id", "eq"]
-                and type(args[2].value) is int
-                and 1 <= args[2].value <= 16
-                and isinstance(parent, nodes.Getattr)
+                and isinstance(args[2].value, int)
+                and not isinstance(args[2].value, bool)
+                and 1 <= args[2].value <= _MAX_LEGACY_BATTERIES
+            )
+            valid_parent = (
+                isinstance(parent, nodes.Getattr)
                 and parent.attr == "batteries"
                 and isinstance(parent.node, nodes.Name)
                 and parent.node.name == "value_json"
-                and isinstance(field, nodes.Const)
-                and isinstance(field.value, str)
-            ):
+            )
+            valid_field = isinstance(field, nodes.Const) and isinstance(field.value, str)
+            if valid_selector and valid_parent and valid_field:
                 return ("value_json", "batteries", args[2].value - 1, field.value)
     path = []
     while isinstance(node, (nodes.Getattr, nodes.Getitem)):

@@ -16,8 +16,8 @@ from homeassistant.core import Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 
 from ..const import (
-    CONF_CCU_VERSION,
     CCU_V1,
+    CONF_CCU_VERSION,
     CONF_DEVICE_ID,
     CONF_ENABLE_CLOUD_DATA,
     DEVICE_INFO,
@@ -37,7 +37,7 @@ class OnlineStatusSensor(BinarySensorEntity):
     Diese Entität zeigt umgerechnet in Tage, Stunden, Minuten und Sekunden an.
     """
 
-    _attr_entity_registry_enabled_default = False    
+    _attr_entity_registry_enabled_default = False
     _attr_has_entity_name = True
     _attr_translation_key = "onlinestatussensor"
 

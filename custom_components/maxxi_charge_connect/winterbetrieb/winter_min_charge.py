@@ -8,8 +8,8 @@ from homeassistant.const import PERCENTAGE, EntityCategory
 from homeassistant.core import callback
 
 from ..const import (
-    CONF_CCU_VERSION,
     CCU_V1,
+    CONF_CCU_VERSION,
     CONF_WINTER_MAX_CHARGE,
     CONF_WINTER_MIN_CHARGE,
     CONF_WINTER_MODE,

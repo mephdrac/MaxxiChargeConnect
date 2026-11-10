@@ -49,7 +49,7 @@ class GridExport(BaseWebhookSensor):
         entry (ConfigEntry): Konfigurationseintrag der Integration.
 
     """
-    
+
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry) -> None:

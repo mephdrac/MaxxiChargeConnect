@@ -34,7 +34,7 @@ class Rssi(BaseWebhookSensor):
 
     """
 
-    _attr_entity_registry_enabled_default = False    
+    _attr_entity_registry_enabled_default = False
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry) -> None:
@@ -44,7 +44,7 @@ class Rssi(BaseWebhookSensor):
             entry (ConfigEntry): Die Konfigurationseintrag der Integration.
 
         """
-        super().__init__(entry)        
+        super().__init__(entry)
         self._unsub_dispatcher = None
         self._attr_unique_id = f"{entry.entry_id}_rssi"
         self._attr_icon = "mdi:wifi"

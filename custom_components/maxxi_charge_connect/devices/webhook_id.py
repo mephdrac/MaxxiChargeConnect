@@ -10,7 +10,7 @@ from homeassistant.components.text import TextEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_WEBHOOK_ID, EntityCategory
 
-from ..const import DEVICE_INFO, DOMAIN, CONF_CCU_VERSION, CCU_V1  # noqa: TID252
+from ..const import CCU_V1, CONF_CCU_VERSION, DEVICE_INFO, DOMAIN  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ class WebhookId(TextEntity):
         _attr_entity_category (EntityCategory): Kategorie der Entity, hier DIAGNOSTIC.
 
     """
-    
+
     _attr_has_entity_name = True
     _attr_translation_key = "webhookid"
 

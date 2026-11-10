@@ -10,20 +10,17 @@ Classes:
 """
 
 import logging
-from datetime import UTC, timedelta
+from datetime import timedelta
 from decimal import Decimal
 
-from homeassistant.components.integration.sensor import (    
-    IntegrationSensor,
-    UnitOfTime    
-)
+from homeassistant.components.integration.sensor import IntegrationSensor, UnitOfTime
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfEnergy
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.util import dt as dt_util
 
-from ..const import DEVICE_INFO, DOMAIN, CONF_CCU_VERSION, CCU_V1  # noqa: TID252
+from ..const import CCU_V1, CONF_CCU_VERSION, DEVICE_INFO, DOMAIN  # noqa: TID252
 from ..tools import clean_title
 
 _LOGGER = logging.getLogger(__name__)
@@ -66,7 +63,7 @@ class TodayIntegralSensor(IntegrationSensor):
             unique_id=(
                 f"{entry.entry_id}_"
                 f"{clean_title(self.__class__.__name__)}"
-            ),            
+            ),
             unit_prefix="k",
             unit_time=UnitOfTime.HOURS,
             max_sub_interval=timedelta(seconds=120),

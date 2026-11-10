@@ -30,8 +30,8 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfPower
 
+from ..const import CCU_V1, CCU_V2, CONF_CCU_VERSION
 from ..tools import is_pccu_ok, is_power_total_ok  # noqa: TID252
-from ..const import CONF_CCU_VERSION, CCU_V1, CCU_V2
 from .base_webhook_sensor import BaseWebhookSensor
 
 _LOGGER = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class BatteryPower(BaseWebhookSensor):
 
     """
 
-    _attr_entity_registry_enabled_default = True    
+    _attr_entity_registry_enabled_default = True
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry) -> None:

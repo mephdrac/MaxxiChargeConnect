@@ -24,8 +24,8 @@ from homeassistant.const import CONF_IP_ADDRESS, EntityCategory
 from homeassistant.core import HomeAssistant, callback
 
 from ..const import (
-    CONF_CCU_VERSION,
     CCU_V1,
+    CONF_CCU_VERSION,
     DEVICE_INFO,
     DOMAIN,
     EVENT_SUMMER_MIN_CHARGE_CHANGED,

@@ -52,7 +52,7 @@ def test_initialization(summer_min_charge, entry):
     assert summer_min_charge._attr_icon == "mdi:battery-lock"
     assert summer_min_charge._attr_entity_category.name == "CONFIG"
     assert summer_min_charge._attr_native_unit_of_measurement == "%"
-    assert summer_min_charge.attr_native_min_value == 0
+    assert summer_min_charge._attr_native_min_value == 0
     assert summer_min_charge._attr_native_step == 1
     assert summer_min_charge._attr_native_max_value == 100
     assert summer_min_charge._attr_native_value == 25

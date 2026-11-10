@@ -22,7 +22,7 @@ _LOGGER = logging.getLogger(__name__)
 
 class PowerMeter(BaseWebhookSensor):
     """Sensor-Entität zur Anzeige der Rohleistung (`Pr`) am Hausanschluss in Watt."""
-    
+
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry) -> None:

@@ -27,7 +27,7 @@ class BatteryChargeSensor(BaseWebhookSensor):
 
     """
 
-    _attr_entity_registry_enabled_default = True    
+    _attr_entity_registry_enabled_default = True
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry, index: int) -> None:

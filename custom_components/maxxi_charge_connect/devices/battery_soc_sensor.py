@@ -21,7 +21,7 @@ _LOGGER = logging.getLogger(__name__)
 class BatterySOCSensor(BaseWebhookSensor):
     """Sensor-Entität zur Darstellung des SOC einer bestimmten Batterie."""
 
-    _attr_entity_registry_enabled_default = False    
+    _attr_entity_registry_enabled_default = False
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry, index: int) -> None:

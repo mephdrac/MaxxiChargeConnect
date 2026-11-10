@@ -12,7 +12,7 @@ from homeassistant.components.text import TextEntity
 from homeassistant.const import EntityCategory
 from homeassistant.helpers.entity import DeviceInfo
 
-from ..const import DEVICE_INFO, DOMAIN, CONF_CCU_VERSION, CCU_V1  # noqa: TID252
+from ..const import CCU_V1, CONF_CCU_VERSION, DEVICE_INFO, DOMAIN  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
 

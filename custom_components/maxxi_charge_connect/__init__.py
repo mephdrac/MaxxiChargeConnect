@@ -11,18 +11,19 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 
 from .connection.ccu_base_connection import CcuBaseConnection
-from .connection.ccu_v1_connection import ccuV1Connection
-from .connection.ccu_v2_connection import ccuV2Connection
+from .connection.ccu_v1_connection import CCCv1Connection
+from .connection.ccu_v2_connection import CCUv2Connection
 from .connection.mqtt_discovery import PLATFORMS as MQTT_PLATFORMS
 from .const import CCU_V1, CCU_V2, CONF_CCU_VERSION, CONF_DEVICE_ID, CONF_NEEDS_DEVICE_ID, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
-CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+# from homeassistant.helpers import config_validation as cv
+# CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
@@ -43,14 +44,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     ccu_version = entry.data.get(CONF_CCU_VERSION, CCU_V1)
     connection: CcuBaseConnection | None = None
-    
+
     _LOGGER.warning("CCU-Version: %s", ccu_version)
 
     if ccu_version == CCU_V1:
-        connection = ccuV1Connection(hass, entry)
+        connection = CCCv1Connection(hass, entry)
 
     elif ccu_version == CCU_V2:
-        connection = ccuV2Connection(hass, entry)
+        connection = CCUv2Connection(hass, entry)
 
     else:
         _LOGGER.error("Unbekannte CCU-Version: %s", ccu_version)

@@ -6,8 +6,11 @@ ignore-paths=tests
 disable=duplicate-code
 
 [DESIGN]
-# Maximum number of attributes for a class (see R0902).
-max-attributes=15
+max-attributes=30
+max-returns=10
+max-branches=35
+max-locals=25
+max-statements=85
 
 [FORMAT]
 max-line-length=190

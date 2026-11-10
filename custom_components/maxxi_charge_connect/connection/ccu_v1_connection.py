@@ -1,20 +1,16 @@
+"""CCU V1 telemetry through webhook-server"""
+
 import asyncio
 import logging
 
-# from homeassistant.core import HomeAssistant
-# from homeassistant.config_entries import ConfigEntry
-
-from .ccu_base_connection import CcuBaseConnection
 from homeassistant.const import Platform
-from ..webhook import async_unregister_webhook
-
 from homeassistant.helpers.issue_registry import (
     IssueSeverity,
     async_create_issue,
     async_delete_issue,
 )
 
-from ..const import (    
+from ..const import (
     CONF_DEVICE_ID,
     CONF_ENABLE_LOCAL_CLOUD_PROXY,
     CONF_SUMMER_MIN_CHARGE,
@@ -28,11 +24,12 @@ from ..const import (
     OPTIONAL,
     REQUIRED,
 )
-
 from ..http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
+
 # from ..migration.migration_from_yaml import MigrateFromYaml
 from ..reverse_proxy.proxy_server import MaxxiProxyServer
-from ..webhook import async_register_webhook
+from ..webhook import async_register_webhook, async_unregister_webhook
+from .ccu_base_connection import CcuBaseConnection
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,13 +40,11 @@ PLATFORMS: list[Platform] = [
 ]
 
 
-class ccuV1Connection(CcuBaseConnection):
-
-    # def __init__(self, hass: HomeAssistant, entry: ConfigEntry):
-    #     super().__init__(hass, entry)
+class CCCv1Connection(CcuBaseConnection):
+    """Route only this CCU's telemetry to its sensor dispatcher."""
 
     async def async_setup(self) -> None:
-        raise NotImplementedError    
+        raise NotImplementedError
 
     # pylint: disable=too-many-locals, too-many-statements, too-many-branches
     async def async_setup_entry(self) -> bool:
@@ -96,7 +91,7 @@ class ccuV1Connection(CcuBaseConnection):
 
         try:
             # Plattformen laden
-            await self.hass.config_entries.async_forward_entry_setups(self. entry, PLATFORMS)
+            await self.hass.config_entries.async_forward_entry_setups(self.entry, PLATFORMS)
 
         except Exception as e:  # pylint: disable=broad-exception-caught
             _LOGGER.error("Fehler beim Laden der Plattformen: %s", e)
@@ -104,10 +99,10 @@ class ccuV1Connection(CcuBaseConnection):
 
         # # Migration von YAML-Konfiguration
         # migrator = MigrateFromYaml(self.hass, self.entry)
-    
+
         # async def handle_trigger_migration(call):
         #     mappings = call.data.get("mappings", [])
-    
+
         #     try:
         #         if not isinstance(mappings, list) or not all(isinstance(item, dict) for item in mappings):
         #             raise ValueError("Mappings must be a list of dictionaries.")
@@ -117,30 +112,30 @@ class ccuV1Connection(CcuBaseConnection):
         #     except ValueError as e:
         #         _LOGGER.error("Invalid mappings provided for migration: %s", e)
         #         return
-    
+
         #     try:
         #         await migrator.async_handle_trigger_migration(mappings)
         #     except Exception as e:  # pylint: disable=broad-exception-caught
         #         _LOGGER.error("Fehler bei der Migration: %s", e)
-    
+
         # hass.services.async_register(DOMAIN, "migration_von_yaml_konfiguration", handle_trigger_migration)
-    
+
         # # Migration-Hinweis
         # notify_migration = entry.data.get(NOTIFY_MIGRATION, False)
         # if notify_migration:
-    
+
         #     async def sub_notify_migration():
         #         try:
         #             await asyncio.sleep(10)  # Warte 10 Sekunden nach Start
         #             await migrator.async_notify_possible_migration()
         #         except Exception as e:  # pylint: disable=broad-exception-caught
         #             _LOGGER.error("Fehler beim Migration-Hinweis: %s", e)
-    
+
         #     task = hass.async_create_task(sub_notify_migration())
         #     task.add_done_callback(
         #         lambda t: _LOGGER.error("Notify-Migration-Task beendet: %s", t.exception()) if t.exception() else None
         #     )
-    
+
         # --- GLOBALEN PROXY starten ---
         proxy_enabled = self.entry.data.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_ENABLE_LOCAL_CLOUD_PROXY)
         if proxy_enabled:
@@ -217,8 +212,6 @@ class ccuV1Connection(CcuBaseConnection):
 
         return unload_ok
 
-
-   
     async def check_device_id_issue(self) -> None:
         """Prüfen, ob die Device ID gesetzt wurde."""
         _LOGGER.debug("CHECK Device_ID.....")

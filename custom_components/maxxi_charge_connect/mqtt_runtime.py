@@ -13,7 +13,7 @@ def get_broker_manager(hass: HomeAssistant) -> MqttBrokerManager:
     if MQTT_BROKER_MANAGER not in data:
         manager = data[MQTT_BROKER_MANAGER] = MqttBrokerManager()
 
-        async def stop_broker(event):
+        async def stop_broker(_event):
             for entry_data in tuple(data.values()):
                 if isinstance(entry_data, dict) and (discovery := entry_data.get(MQTT_DISCOVERY_COORDINATOR)):
                     discovery.stop()

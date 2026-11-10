@@ -6,7 +6,7 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 
-from ..const import CONF_WINTER_MODE, DEVICE_INFO, DOMAIN, WINTER_MODE_CHANGED_EVENT, CONF_CCU_VERSION, CCU_V1  # noqa: TID252
+from ..const import CCU_V1, CONF_CCU_VERSION, CONF_WINTER_MODE, DEVICE_INFO, DOMAIN, WINTER_MODE_CHANGED_EVENT  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
 

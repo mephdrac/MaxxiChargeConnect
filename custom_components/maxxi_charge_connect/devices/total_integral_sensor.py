@@ -10,8 +10,8 @@ Classes:
 """
 
 import logging
-from decimal import Decimal
 from datetime import timedelta
+from decimal import Decimal
 
 from homeassistant.components.integration.sensor import (
     IntegrationSensor,
@@ -21,8 +21,7 @@ from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfEnergy
 from homeassistant.core import HomeAssistant
 
-
-from ..const import DEVICE_INFO, DOMAIN, CONF_CCU_VERSION, CCU_V1  # noqa: TID252
+from ..const import CCU_V1, CONF_CCU_VERSION, DEVICE_INFO, DOMAIN  # noqa: TID252
 from ..tools import clean_title
 
 _LOGGER = logging.getLogger(__name__)
@@ -45,7 +44,7 @@ class TotalIntegralSensor(IntegrationSensor):
         _attr_state_class (str): Gibt die Art des Sensorzustands an (TOTAL_INCREASING).
         _attr_native_unit_of_measurement (str): Die verwendete Energieeinheit (kWh).
 
-    """    
+    """
 
     def __init__(
         self,
@@ -63,7 +62,7 @@ class TotalIntegralSensor(IntegrationSensor):
             unique_id=(
                 f"{entry.entry_id}_"
                 f"{clean_title(self.__class__.__name__)}"
-            ),            
+            ),
             unit_prefix="k",
             unit_time=UnitOfTime.HOURS,
             max_sub_interval=timedelta(seconds=120),
@@ -119,7 +118,7 @@ class TotalIntegralSensor(IntegrationSensor):
 
         Registriert einen täglichen Reset der Energiewerte um 0:00 Uhr lokale Zeit.
         """
-        await super().async_added_to_hass()        
+        await super().async_added_to_hass()
 
     @property
     def icon(self):

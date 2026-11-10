@@ -60,7 +60,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._enable_mqtt_broker = False
         self._mqtt_settings = {}
 
-    async def async_step_mqtt(self, user_input=None):
+    async def async_step_mqtt(self, discovery_info=None):
         """Configure the shared, opt-in broker; never log credentials."""
         if not self._enable_mqtt_broker:
             return self._create_entry(entry=self._entry)
@@ -78,17 +78,17 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_MQTT_PASSWORD: shared.get(CONF_MQTT_PASSWORD, ""),
         }
         errors = {}
-        if user_input is not None:
+        if discovery_info is not None:
             settings = {
-                CONF_MQTT_PORT: user_input[CONF_MQTT_PORT],
-                CONF_MQTT_USERNAME: user_input[CONF_MQTT_USERNAME],
-                CONF_MQTT_PASSWORD: user_input.get(CONF_MQTT_PASSWORD) or defaults.get(CONF_MQTT_PASSWORD, ""),
+                CONF_MQTT_PORT: discovery_info[CONF_MQTT_PORT],
+                CONF_MQTT_USERNAME: discovery_info[CONF_MQTT_USERNAME],
+                CONF_MQTT_PASSWORD: discovery_info.get(CONF_MQTT_PASSWORD) or defaults.get(CONF_MQTT_PASSWORD, ""),
             }
             if not settings[CONF_MQTT_USERNAME].strip():
                 errors[CONF_MQTT_USERNAME] = "required"
             if not settings[CONF_MQTT_PASSWORD]:
                 errors[CONF_MQTT_PASSWORD] = "required"
-            if shared and any(settings[key] != shared.get(key) for key in settings):
+            if shared and any(value != shared.get(key) for key, value in settings.items()):
                 errors["base"] = "mqtt_settings_conflict"
             if not errors:
                 self._mqtt_settings = settings

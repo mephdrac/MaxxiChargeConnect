@@ -27,7 +27,7 @@ class BatteryMpptVoltageSensor(BaseWebhookSensor):
 
     """
 
-    _attr_entity_registry_enabled_default = False    
+    _attr_entity_registry_enabled_default = False
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry, index: int) -> None:

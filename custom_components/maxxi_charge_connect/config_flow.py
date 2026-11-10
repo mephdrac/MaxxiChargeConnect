@@ -187,14 +187,14 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
         defaults = self._get_defaults_for_user_step()
 
-        if user_input:
+        if user_input is not None:
             self._device_id = user_input.get(CONF_DEVICE_ID)
             self._name = user_input.get(CONF_NAME)
             self._webhook_id = user_input.get(CONF_WEBHOOK_ID)
 
             # Pflichtfeldprüfung
             if not self._device_id:
-                errors["device_id"] = "required"
+                errors[CONF_DEVICE_ID] = "required"
             if not self._name:
                 errors["name"] = "required"
             if not self._webhook_id:
@@ -204,7 +204,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if self._entry is None:
                 for entry in self._async_current_entries():
                     if entry.data.get(CONF_DEVICE_ID) == self._device_id:
-                        errors["device_id"] = "device_exists"
+                        errors[CONF_DEVICE_ID] = "device_exists"
                         break
 
             _LOGGER.debug("Defaults in user step: %s", defaults)
@@ -230,7 +230,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
         defaults = self._get_defaults_for_optional_step()
 
-        if user_input:
+        if user_input is not None:
             self._host_ip = user_input.get(CONF_IP_ADDRESS)
             self._only_ip = user_input.get(ONLY_ONE_IP, False)
             self._timeout_receive = user_input.get(CONF_TIMEOUT_RECEIVE, DEFAULT_TIMEOUT_RECEIVE)
@@ -238,8 +238,8 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._enable_local_cloud_proxy = user_input.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, False)
 
             # Pflichtfeldprüfung
-            if not self._timeout_receive:
-                errors["timeout_receive"] = "required"
+            if self._timeout_receive is None or self._timeout_receive < 2:
+                errors[CONF_TIMEOUT_RECEIVE] = "required"
             # Ende Pflichtfeldprüfung
 
             if errors:
@@ -261,7 +261,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         defaults = self._get_defaults_for_proxy_step()
 
-        if user_input:
+        if user_input is not None:
             self._enable_forward_to_cloud = user_input.get(
                 CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
             )
@@ -278,7 +278,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         data = {
             CONF_CCU_VERSION: self._ccu_version,
             CONF_NAME: self._name,
-            CONF_DEVICE_ID: self._device_id or entry.data.get(CONF_DEVICE_ID),
+            CONF_DEVICE_ID: self._device_id or (entry.data.get(CONF_DEVICE_ID) if entry is not None else None),
             CONF_WEBHOOK_ID: self._webhook_id,
             CONF_TIMEOUT_RECEIVE: self._timeout_receive or DEFAULT_TIMEOUT_RECEIVE,
             CONF_IP_ADDRESS: self._host_ip or None,
@@ -306,9 +306,9 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         defaults = defaults or {}
         return vol.Schema(
             {
-                vol.Required(CONF_NAME, default=defaults.get(CONF_NAME, "")): str,
-                vol.Required(CONF_DEVICE_ID, default=defaults.get(CONF_DEVICE_ID, "")): str,
-                vol.Required(CONF_WEBHOOK_ID, default=defaults.get(CONF_WEBHOOK_ID, "")): str,
+                vol.Required(CONF_NAME, default=defaults.get(CONF_NAME) or ""): str,
+                vol.Required(CONF_DEVICE_ID, default=defaults.get(CONF_DEVICE_ID) or ""): str,
+                vol.Required(CONF_WEBHOOK_ID, default=defaults.get(CONF_WEBHOOK_ID) or ""): str,
             }
         )
 
@@ -316,11 +316,11 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         defaults = defaults or {}
         return vol.Schema(
             {
-                vol.Optional(CONF_IP_ADDRESS, default=defaults.get(CONF_IP_ADDRESS, "")): str,
+                vol.Optional(CONF_IP_ADDRESS, default=defaults.get(CONF_IP_ADDRESS) or ""): str,
                 vol.Optional(ONLY_ONE_IP, default=defaults.get(ONLY_ONE_IP, False)): BooleanSelector(),
                 vol.Required(
                     CONF_TIMEOUT_RECEIVE,
-                    default=defaults.get(CONF_TIMEOUT_RECEIVE, DEFAULT_TIMEOUT_RECEIVE),
+                    default=defaults.get(CONF_TIMEOUT_RECEIVE) or DEFAULT_TIMEOUT_RECEIVE,
                 ): int,
                 vol.Optional(NOTIFY_MIGRATION, default=defaults.get(NOTIFY_MIGRATION, False)): BooleanSelector(),
                 vol.Optional(

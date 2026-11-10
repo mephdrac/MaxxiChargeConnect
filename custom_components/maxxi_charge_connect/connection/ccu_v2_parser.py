@@ -69,9 +69,10 @@ def parse_battery(data: dict) -> dict:
     if indexed:
         # Require a valid, unique ID for every battery in indexed mode.
         # Exclude booleans, which subclass int.
-        if any(not isinstance(identifier, int) or isinstance(identifier, bool) or not 1 <= identifier <= 16 for identifier in identifiers) or len(
-            set(identifiers)
-        ) != len(identifiers):
+        if any(
+            not isinstance(identifier, int) or isinstance(identifier, bool) or not 1 <= identifier <= 16
+            for identifier in identifiers
+        ) or len(set(identifiers)) != len(identifiers):
             raise ValueError("CCU battery IDs must be unique integers between 1 and 16")
 
         # Preserve ID-based positions, including gaps between reported IDs.

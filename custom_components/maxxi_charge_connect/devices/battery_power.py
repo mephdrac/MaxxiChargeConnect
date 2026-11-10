@@ -97,9 +97,7 @@ class BatteryPower(BaseWebhookSensor):
                 inverter_power_raw = data.get("InverterPowerSigned")
 
                 if inverter_power_raw is None:
-                    _LOGGER.debug(
-                        "BatteryPower: InverterPowerSigned fehlt"
-                    )
+                    _LOGGER.debug("BatteryPower: InverterPowerSigned fehlt")
                     return
 
                 inverter_power = float(inverter_power_raw)

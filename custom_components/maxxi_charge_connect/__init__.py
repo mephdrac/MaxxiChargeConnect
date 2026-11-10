@@ -80,10 +80,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     unload_ok = all(
         await asyncio.gather(
-            *[
-                hass.config_entries.async_forward_entry_unload(entry, platform)
-                for platform in platforms
-            ]
+            *[hass.config_entries.async_forward_entry_unload(entry, platform) for platform in platforms]
         )
     )
 
@@ -93,6 +90,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.data[DOMAIN].pop(entry.entry_id, None)
 
     return unload_ok
+
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:  # pylint: disable=too-many-locals,too-many-branches, too-many-statements
     """Migration eines Config-Eintrags auf neuere Versionen."""
@@ -238,9 +236,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         data = dict(config_entry.data)
         data.setdefault(CONF_CCU_VERSION, CCU_V1)
         version, minor_version = 4, 0
-        hass.config_entries.async_update_entry(
-            config_entry, data=data, version=version, minor_version=minor_version
-        )
+        hass.config_entries.async_update_entry(config_entry, data=data, version=version, minor_version=minor_version)
 
     _LOGGER.info("MaxxiChargeConnect - config v%s.%s installiert", version, minor_version)
     # await check_device_id_issue(hass)

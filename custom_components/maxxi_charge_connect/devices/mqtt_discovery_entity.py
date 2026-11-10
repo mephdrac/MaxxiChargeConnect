@@ -167,13 +167,9 @@ class DiscoveryEntity(Entity):
             spec,
         )
 
-        self._attr_device_info = {
-            "identifiers": {(DOMAIN, coordinator.entry.entry_id)}
-        }
+        self._attr_device_info = {"identifiers": {(DOMAIN, coordinator.entry.entry_id)}}
 
-        key = _CONTROL_TRANSLATIONS.get(
-            (spec.component, spec.name.casefold().strip())
-        )
+        key = _CONTROL_TRANSLATIONS.get((spec.component, spec.name.casefold().strip()))
 
         if key is not None:
             self._attr_translation_key = key
@@ -215,7 +211,8 @@ class DiscoveryEntity(Entity):
             and (
                 self.spec.component,
                 self.spec.name.casefold().strip(),
-            ) in _CONTROL_TRANSLATIONS
+            )
+            in _CONTROL_TRANSLATIONS
         ):
             return super().name
 
@@ -322,9 +319,7 @@ class DiscoveryEntity(Entity):
         """
         await super().async_added_to_hass()
 
-        self.async_on_remove(
-            self.coordinator.add_listener(self._update)
-        )
+        self.async_on_remove(self.coordinator.add_listener(self._update))
 
     @callback
     def _update(self):
@@ -376,18 +371,13 @@ class DiscoverySensor(DiscoveryEntity, SensorEntity):
         """
         value = self.value
 
-        if value is not None and (
-            self.native_unit_of_measurement or self.state_class
-        ):
+        if value is not None and (self.native_unit_of_measurement or self.state_class):
             try:
                 return float(value)
             except ValueError:
                 return None
 
-        if (
-            value is not None
-            and self.device_class == SensorDeviceClass.TIMESTAMP
-        ):
+        if value is not None and self.device_class == SensorDeviceClass.TIMESTAMP:
             return dt_util.parse_datetime(value)
 
         return value
@@ -415,11 +405,7 @@ class DiscoverySensor(DiscoveryEntity, SensorEntity):
         """
         value = self.spec.config.get("device_class")
 
-        return (
-            SensorDeviceClass(value)
-            if value in SensorDeviceClass
-            else None
-        )
+        return SensorDeviceClass(value) if value in SensorDeviceClass else None
 
     @property
     def state_class(self):
@@ -434,11 +420,7 @@ class DiscoverySensor(DiscoveryEntity, SensorEntity):
         """
         value = self.spec.config.get("state_class")
 
-        return (
-            SensorStateClass(value)
-            if value in SensorStateClass
-            else None
-        )
+        return SensorStateClass(value) if value in SensorStateClass else None
 
 
 class DiscoveryBinarySensor(DiscoveryEntity, BinarySensorEntity):
@@ -461,11 +443,7 @@ class DiscoveryBinarySensor(DiscoveryEntity, BinarySensorEntity):
         """
         value = self.spec.config.get("device_class")
 
-        return (
-            BinarySensorDeviceClass(value)
-            if value in BinarySensorDeviceClass
-            else None
-        )
+        return BinarySensorDeviceClass(value) if value in BinarySensorDeviceClass else None
 
     @property
     def is_on(self):
@@ -481,17 +459,14 @@ class DiscoveryBinarySensor(DiscoveryEntity, BinarySensorEntity):
             bool | None: True for the active payload, False for
             the inactive payload, or None for an unknown value.
         """
-        if self.value == str(
-            self.spec.config.get("payload_on", "ON")
-        ):
+        if self.value == str(self.spec.config.get("payload_on", "ON")):
             return True
 
-        if self.value == str(
-            self.spec.config.get("payload_off", "OFF")
-        ):
+        if self.value == str(self.spec.config.get("payload_off", "OFF")):
             return False
 
         return None
+
 
 # Home Assistant supports asynchronous entity control methods.
 # The synchronous abstract methods are intentionally not implemented.
@@ -516,11 +491,7 @@ class DiscoveryNumber(DiscoveryEntity, NumberEntity):
             float | None: Current numeric value, or None if
             no value has been received.
         """
-        return (
-            float(self.value)
-            if self.value is not None
-            else None
-        )
+        return float(self.value) if self.value is not None else None
 
     @property
     def native_min_value(self):
@@ -583,18 +554,13 @@ class DiscoveryNumber(DiscoveryEntity, NumberEntity):
                 the permitted range or does not match the step size.
                 The exception is created by mqtt_error().
         """
-        if (
-            not math.isfinite(value)
-            or not self.native_min_value <= value <= self.native_max_value
-        ):
+        if not math.isfinite(value) or not self.native_min_value <= value <= self.native_max_value:
             raise mqtt_error(
                 "mqtt_value_out_of_range",
                 "Requested value is outside the range advertised by the CCU",
             )
 
-        steps = (
-            value - self.native_min_value
-        ) / self.native_step
+        steps = (value - self.native_min_value) / self.native_step
 
         if not math.isclose(
             steps,
@@ -611,6 +577,7 @@ class DiscoveryNumber(DiscoveryEntity, NumberEntity):
             value,
             str(value),
         )
+
 
 # Home Assistant supports asynchronous entity control methods.
 # The synchronous abstract methods are intentionally not implemented.
@@ -642,11 +609,7 @@ class DiscoverySelect(DiscoveryEntity, SelectEntity):
             str | None: Current option, or None if the received
             value is not included in the available options.
         """
-        return (
-            self.value
-            if self.value in self.options
-            else None
-        )
+        return self.value if self.value in self.options else None
 
     async def async_select_option(self, option):
         """Validate and transmit a selected option to the CCU.
@@ -673,6 +636,7 @@ class DiscoverySelect(DiscoveryEntity, SelectEntity):
             option,
             option,
         )
+
 
 # Home Assistant supports asynchronous entity control methods.
 # The synchronous abstract methods are intentionally not implemented.
@@ -820,9 +784,7 @@ def setup_discovery_entities(
         component: Target Home Assistant platform, such as
             "sensor", "number", "select", or "switch".
     """
-    coordinator = hass.data[
-        DOMAIN
-    ][entry.entry_id][MQTT_DISCOVERY_COORDINATOR]
+    coordinator = hass.data[DOMAIN][entry.entry_id][MQTT_DISCOVERY_COORDINATOR]
 
     # Track identities already created for this platform.
     # This prevents duplicate entities when discovery messages
@@ -860,9 +822,7 @@ def setup_discovery_entities(
         # Process specifications in priority order to ensure
         # consistent ownership and entity registration.
         for spec in sorted(specs, key=binding_priority):
-
             if component in ("sensor", "binary_sensor"):
-
                 # Regular telemetry measurements are handled by
                 # existing sensor factories.
                 #
@@ -881,7 +841,6 @@ def setup_discovery_entities(
                 role = native_energy_key(spec)
 
                 if role is not None:
-
                     # Store the discovery key associated with this
                     # native energy role for coordinator lookups.
                     coordinator.native_energy_bindings[role] = spec.key
@@ -917,7 +876,6 @@ def setup_discovery_entities(
 
         # Register newly created entities with Home Assistant.
         if entities:
-
             # Sensor entities are additionally registered with
             # the integration's internal sensor catalog.
             if component == "sensor":

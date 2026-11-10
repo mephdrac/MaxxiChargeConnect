@@ -60,10 +60,7 @@ class TodayIntegralSensor(IntegrationSensor):
             name=None,
             round_digits=3,
             source_entity=source_entity_id,
-            unique_id=(
-                f"{entry.entry_id}_"
-                f"{clean_title(self.__class__.__name__)}"
-            ),
+            unique_id=(f"{entry.entry_id}_{clean_title(self.__class__.__name__)}"),
             unit_prefix="k",
             unit_time=UnitOfTime.HOURS,
             max_sub_interval=timedelta(seconds=120),

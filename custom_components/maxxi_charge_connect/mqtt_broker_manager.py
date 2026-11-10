@@ -102,9 +102,9 @@ class CredentialsAuthPlugin(BaseAuthPlugin):
             _LOGGER.warning("Internal MQTT login rejected: username or password missing")
             return False
 
-        authenticated = hmac.compare_digest(session.username.encode(), self.config.username.encode()) and hmac.compare_digest(
-            session.password.encode(), self.config.password.encode()
-        )
+        authenticated = hmac.compare_digest(
+            session.username.encode(), self.config.username.encode()
+        ) and hmac.compare_digest(session.password.encode(), self.config.password.encode())
 
         if not authenticated:
             _LOGGER.warning("Internal MQTT login rejected: credentials do not match")

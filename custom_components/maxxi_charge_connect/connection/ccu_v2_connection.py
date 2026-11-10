@@ -37,7 +37,7 @@ from .mqtt_discovery import DISCOVERY_FILTERS, PLATFORMS, MqttDiscovery
 _LOGGER = logging.getLogger(__name__)
 
 
-class CCUv2Connection (CcuBaseConnection):
+class CCUv2Connection(CcuBaseConnection):
     """Route only this CCU's telemetry to its sensor dispatcher."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:

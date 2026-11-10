@@ -145,9 +145,7 @@ class OnlineStatusSensor(BinarySensorEntity):
                 hours, remainder = divmod(remainder, 3600)
                 minutes, seconds = divmod(remainder, 60)
 
-                attributes["uptime"] = (
-                    f"{days}d {hours}h {minutes}m {seconds}s"
-                )
+                attributes["uptime"] = f"{days}d {hours}h {minutes}m {seconds}s"
                 attributes["raw_ms"] = uptime_ms
 
             except (ValueError, TypeError):

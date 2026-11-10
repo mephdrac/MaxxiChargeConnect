@@ -1,9 +1,9 @@
 """Tests für die CcuEnergyTotal Entity im MaxxiChargeConnect Integration."""
 
 from unittest.mock import AsyncMock, MagicMock, patch
-from homeassistant.components.sensor import SensorDeviceClass
 
 import pytest
+from homeassistant.components.sensor import SensorDeviceClass
 
 from custom_components.maxxi_charge_connect.devices.ccu_energy_total import (
     CcuEnergyTotal,

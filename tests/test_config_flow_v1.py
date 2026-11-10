@@ -39,9 +39,7 @@ async def test_v1_setup_with_default_network_settings(flow, proxy):
     assert result["step_id"] == "v1"
     fields = voluptuous_serialize.convert(result["data_schema"], custom_serializer=cv.custom_serializer)
     assert all(field["default"] == "" for field in fields)
-    user_input = result["data_schema"](
-        {CONF_NAME: "CCU V1", CONF_DEVICE_ID: "123", CONF_WEBHOOK_ID: "hook"}
-    )
+    user_input = result["data_schema"]({CONF_NAME: "CCU V1", CONF_DEVICE_ID: "123", CONF_WEBHOOK_ID: "hook"})
     result = await flow.async_step_v1(user_input)
     assert result["step_id"] == "optional"
     user_input = result["data_schema"]({CONF_ENABLE_LOCAL_CLOUD_PROXY: proxy})

@@ -133,7 +133,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     ): vol.In(
                         {
                             CCU_V1: "CCU V1",
-                            CCU_V2: "CCU V2",
+                            CCU_V2: "CCU V2/V2+",
                         }
                     )
                 }

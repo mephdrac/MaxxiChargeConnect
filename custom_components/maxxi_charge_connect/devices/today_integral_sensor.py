@@ -12,6 +12,7 @@ Classes:
 import logging
 from datetime import timedelta
 from decimal import Decimal
+from inspect import signature
 
 from homeassistant.components.integration.sensor import IntegrationSensor, UnitOfTime
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
@@ -55,6 +56,12 @@ class TodayIntegralSensor(IntegrationSensor):
     ) -> None:
         """Initialize daily energy integration sensor."""
 
+        # Older Home Assistant releases do not accept device_class here.
+        device_class_kwargs = (
+            {"device_class": SensorDeviceClass.ENERGY}
+            if "device_class" in signature(IntegrationSensor).parameters
+            else {}
+        )
         super().__init__(
             integration_method="trapezoidal",
             name=None,
@@ -64,6 +71,7 @@ class TodayIntegralSensor(IntegrationSensor):
             unit_prefix="k",
             unit_time=UnitOfTime.HOURS,
             max_sub_interval=timedelta(seconds=120),
+            **device_class_kwargs,
         )
         self._attr_device_class = SensorDeviceClass.ENERGY
 

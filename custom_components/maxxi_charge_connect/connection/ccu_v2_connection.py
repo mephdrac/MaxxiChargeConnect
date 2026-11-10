@@ -203,8 +203,9 @@ class CCUv2Connection(CcuBaseConnection):
                 if not values:
                     _LOGGER.debug("MQTT topic %s contained no recognized telemetry fields", msg.topic)
                     return
-            except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError, KeyError, AttributeError):
-                _LOGGER.warning("Invalid CCU V2 MQTT telemetry on %s", msg.topic)
+            except (UnicodeDecodeError, json.JSONDecodeError, TypeError, ValueError, KeyError, AttributeError) as err:
+                _LOGGER.warning("Invalid CCU V2 MQTT telemetry on %s (%s)", msg.topic, type(err).__name__)
+                _LOGGER.debug("CCU V2 telemetry parsing failed on %s", msg.topic, exc_info=True)
                 return
 
             direct = values.pop(MQTT_SENSOR_VALUES, None)

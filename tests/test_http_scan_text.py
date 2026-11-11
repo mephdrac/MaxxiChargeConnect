@@ -21,7 +21,7 @@ async def test_http_scan_text__init():
 
     sensor = HttpScanText(coordinator=coordinator, keyname=keyname, name=testname, icon=icon)
 
-    assert sensor._attr_translation_key == keyname  # pylint: disable=protected-access
+    assert sensor._attr_translation_key == keyname.lower()  # pylint: disable=protected-access
     assert sensor.coordinator == coordinator
     assert sensor._keyname == keyname  # pylint: disable=protected-access
     assert sensor._entry == coordinator.entry  # pylint: disable=protected-access

@@ -139,7 +139,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
         HttpScanText(coordinator, "APIRoute", "API - Route", "mdi:link"),
         HttpScanText(coordinator, "LocalServer", "Use Local Server", "mdi:server-off"),
         HttpScanText(coordinator, "Cloudservice", "Cloudservice", "mdi:cloud-outline"),
-        HttpScanText(coordinator, "DC/DC-Algorithmus", "DC/DC algorithm", "mdi:source-branch"),
+        HttpScanText(coordinator, "dc_dc_algorithmus", "DC/DC algorithm", "mdi:source-branch"),
         HttpScanText(coordinator, "PowerMeterIp", "Power Meter IP", "mdi:ip"),
         HttpScanText(coordinator, "PowerMeterType", "Power Meter Type", "mdi:chip"),
         HttpScanText(coordinator, "MaximumPower", "Maximum Power", "mdi:flash"),

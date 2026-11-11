@@ -168,7 +168,7 @@
       "cloudservice": {
         "name": "Cloudservice aktiv"
       },
-      "dc_dc-algorithmus": {
+      "dc_dc_algorithmus": {
         "name": "DC/DC-Algorithmus"
       },
       "powermeterip": {

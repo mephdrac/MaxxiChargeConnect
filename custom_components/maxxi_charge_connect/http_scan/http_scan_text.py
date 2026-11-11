@@ -34,7 +34,8 @@ class HttpScanText(TextEntity):
 
         """
 
-        self._attr_translation_key = keyname
+        self._attr_translation_key = getattr(self, "_attr_translation_key", None) or keyname.lower()
+
         self.coordinator = coordinator
         self._keyname = keyname
         # self._attr_name = name

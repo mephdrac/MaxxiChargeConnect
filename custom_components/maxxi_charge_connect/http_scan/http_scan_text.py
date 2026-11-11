@@ -22,7 +22,7 @@ class HttpScanText(TextEntity):
 
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator, keyname, name, icon) -> None:  # pylint: disable=unused-argument
+    def __init__(self, coordinator, translate_key, keyname, name, icon) -> None:  # pylint: disable=unused-argument
         """Initialisiert eine neue HttpScanText-Entität.
 
         Args:
@@ -34,7 +34,7 @@ class HttpScanText(TextEntity):
 
         """
 
-        self._attr_translation_key = getattr(self, "_attr_translation_key", None) or keyname.lower()
+        self._attr_translation_key = translate_key
 
         self.coordinator = coordinator
         self._keyname = keyname

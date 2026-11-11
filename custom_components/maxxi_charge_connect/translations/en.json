@@ -91,7 +91,7 @@
         "name": "PV Power"
       },
       "batterysoc": {
-        "name": "Battery SOC"
+        "name": "Battery - SOC"
       },
       "batterypowercharge": {
         "name": "Battery Power Charge"

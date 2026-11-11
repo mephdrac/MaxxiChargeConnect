@@ -79,7 +79,7 @@
   "entity": {
     "sensor": {
       "battery_power": {
-        "name": "Batterie Leistung"
+        "name": "Batterie - Leistung"
       },
       "rssi": {
         "name": "WiFi Signalstärke"
@@ -91,13 +91,13 @@
         "name": "PV Leistung"
       },
       "batterysoc": {
-        "name": "Batterie Ladestand"
+        "name": "Batterie - Ladestand"
       },
       "batterypowercharge": {
-        "name": "Batterie Ladeleistung"
+        "name": "Batterie - Ladeleistung"
       },
       "batterypowerdischarge": {
-        "name": "Batterie Entladeleistung"
+        "name": "Batterie - Entladeleistung"
       },
       "ccupower": {
         "name": "CCU Leistung"
@@ -124,7 +124,7 @@
         "name": "Stromzähler"
       },
       "batterysoe": {
-        "name": "Batterie Kapazität"
+        "name": "Batterie - Kapazität"
       },
       "batterysoesensor": {
         "name": "Batterie ({index}) Kapazität"
@@ -211,16 +211,16 @@
         "name": "Webhook ID"
       },
       "batterytotalenergycharge": {
-        "name": "Batterie Laden gesamt"
+        "name": "Batterie - Laden gesamt"
       },
       "batterytotalenergydischarge": {
-        "name": "Batterie Entladen gesamt"
+        "name": "Batterie - Entladen gesamt"
       },
       "batterytodayenergycharge": {
-        "name": "Batterie Laden heute"
+        "name": "Batterie - Laden heute"
       },
       "batterytodayenergydischarge": {
-        "name": "Batterie Entladen heute"
+        "name": "Batterie - Entladen heute"
       },
       "ccuenergytoday": {
         "name": "CCU Energie heute"

@@ -7,6 +7,7 @@ dynamische Aktualisierungen verarbeitet und Geräteinformationen für Home Assis
 import logging
 
 from homeassistant.components.sensor import (
+    SensorDeviceClass,
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
@@ -29,6 +30,7 @@ class BatterySOCSensor(BaseWebhookSensor):
         self._index = index
         self._attr_translation_placeholders = {"index": str(index + 1)}
         self._attr_suggested_display_precision = 2
+        self._attr_device_class = SensorDeviceClass.BATTERY
         self._attr_unique_id = f"{entry.entry_id}_battery_soc_sensor_{index}"
         self._attr_icon = "mdi:home-battery"
         self._attr_state_class = SensorStateClass.MEASUREMENT

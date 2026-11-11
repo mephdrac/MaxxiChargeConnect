@@ -15,13 +15,14 @@ async def test_http_scan_text__init():
     """Testet die Initialisierung der HttpScanText Entity."""
 
     testname = "TestName"
+    translate_key = "TestKeyname"
     keyname = "TestKeyname"
     coordinator = MagicMock()
     icon = "mdi:flash"
 
-    sensor = HttpScanText(coordinator=coordinator, keyname=keyname, name=testname, icon=icon)
+    sensor = HttpScanText(coordinator=coordinator, translate_key=translate_key, keyname=keyname, name=testname, icon=icon)
 
-    assert sensor._attr_translation_key == keyname.lower()  # pylint: disable=protected-access
+    assert sensor._attr_translation_key == translate_key  # pylint: disable=protected-access
     assert sensor.coordinator == coordinator
     assert sensor._keyname == keyname  # pylint: disable=protected-access
     assert sensor._entry == coordinator.entry  # pylint: disable=protected-access
@@ -38,12 +39,13 @@ async def test_http_scan_text__native_value():
 
     testvalue = "MeinTest"
     testname = "TestName"
+    translate_key = "TestName"
     keyname = "TestKeyname"
     coordinator = MagicMock()
     coordinator.data = {keyname: testvalue}
     icon = "mdi:flash"
 
-    sensor = HttpScanText(coordinator=coordinator, keyname=keyname, name=testname, icon=icon)
+    sensor = HttpScanText(coordinator=coordinator, translate_key=translate_key, keyname=keyname, name=testname, icon=icon)
 
     assert sensor.native_value == testvalue
 
@@ -55,11 +57,12 @@ async def test_http_scan_text__native_value2():
     testvalue = "MeinTest"
     testname = "TestName"
     keyname = "Keyname"
+    translate_key =  "keyname"
     coordinator = MagicMock()
     coordinator.data = {"key": testvalue}
     icon = "mdi:flash"
 
-    sensor = HttpScanText(coordinator=coordinator, keyname=keyname, name=testname, icon=icon)
+    sensor = HttpScanText(coordinator=coordinator, translate_key=translate_key, keyname=keyname, name=testname, icon=icon)
 
     assert sensor.native_value is None
 
@@ -71,10 +74,11 @@ async def test_http_scan_text__set_value():
     testvalue = "MeinTest"
     testname = "TestName"
     keyname = "Keyname"
+    translate_key =  "keyname"
     coordinator = MagicMock()
     icon = "mdi:flash"
 
-    sensor = HttpScanText(coordinator=coordinator, keyname=keyname, name=testname, icon=icon)
+    sensor = HttpScanText(coordinator=coordinator, translate_key=translate_key, keyname=keyname, name=testname, icon=icon)
     sensor.set_value(testvalue)
 
     assert sensor._attr_native_value == testvalue  # pylint: disable=protected-access
@@ -87,11 +91,12 @@ async def test_http_scan_text__device_info():
     title = "TestTitle"
     testname = "TestName"
     keyname = "Keyname"
+    translate_key =  "keyname"
     coordinator = MagicMock()
     coordinator.entry.title = title
     icon = "mdi:flash"
 
-    sensor = HttpScanText(coordinator=coordinator, keyname=keyname, name=testname, icon=icon)
+    sensor = HttpScanText(coordinator=coordinator, translate_key=translate_key, keyname=keyname, name=testname, icon=icon)
 
     # device_info liefert Dict mit erwarteten Keys
     device_info = sensor.device_info

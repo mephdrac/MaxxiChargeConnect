@@ -99,8 +99,6 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
         setup_discovery_entities(hass, entry, async_add_entities, "sensor")
         return
 
-    battery_soc = BatterySoc(entry)
-
     # BatterySensorManager initialisieren
     manager = BatterySensorManager(hass, entry, async_add_entities)
     SENSOR_MANAGER[entry.entry_id] = manager
@@ -121,7 +119,7 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     pv_power_sensor = PvPower(entry)
     battery_power_charge = BatteryPowerCharge(entry)
     battery_power_discharge = BatteryPowerDischarge(entry)
-    
+    battery_soc = BatterySoc(entry)
     battery_soe = BatterySoE(entry)
     power_meter = PowerMeter(entry)
     firmware_version = FirmwareVersion(entry)

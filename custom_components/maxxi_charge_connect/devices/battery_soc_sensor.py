@@ -22,7 +22,6 @@ class BatterySOCSensor(BaseWebhookSensor):
     """Sensor-Entität zur Darstellung des SOC einer bestimmten Batterie."""
 
     _attr_entity_registry_enabled_default = False
-    _attr_translation_key = "BatterySOCSensor"
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry, index: int) -> None:
@@ -31,9 +30,9 @@ class BatterySOCSensor(BaseWebhookSensor):
         self._index = index
         self._attr_translation_placeholders = {"index": str(index + 1)}
         self._attr_suggested_display_precision = 2
+        self._attr_device_class = SensorDeviceClass.BATTERY
         self._attr_unique_id = f"{entry.entry_id}_battery_soc_sensor_{index}"
         self._attr_icon = "mdi:home-battery"
-        self._attr_device_class = SensorDeviceClass.BATTERY
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._attr_native_unit_of_measurement = PERCENTAGE
 

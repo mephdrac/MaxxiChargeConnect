@@ -5,13 +5,20 @@ import logging
 import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.const import CONF_IP_ADDRESS, CONF_NAME, CONF_WEBHOOK_ID
-from homeassistant.helpers.selector import BooleanSelector
+from homeassistant.helpers.selector import BooleanSelector, TextSelector, TextSelectorConfig, TextSelectorType
 
 from .const import (
+    CCU_V1,
+    CCU_V2,
+    CONF_CCU_VERSION,
     CONF_DEVICE_ID,
     CONF_ENABLE_CLOUD_DATA,
     CONF_ENABLE_FORWARD_TO_CLOUD,
     CONF_ENABLE_LOCAL_CLOUD_PROXY,
+    CONF_ENABLE_MQTT_BROKER,
+    CONF_MQTT_PASSWORD,
+    CONF_MQTT_PORT,
+    CONF_MQTT_USERNAME,
     CONF_REFRESH_CONFIG_FROM_CLOUD,
     CONF_TIMEOUT_RECEIVE,
     DEFAULT_ENABLE_FORWARD_TO_CLOUD,
@@ -28,8 +35,10 @@ _LOGGER = logging.getLogger(__name__)
 class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """ConfigFlow für MaxxiChargeConnect mit Duplicate-Prüfung."""
 
-    VERSION = 3
-    MINOR_VERSION = 4
+    VERSION = 4
+    MINOR_VERSION = 0
+
+    _ccu_version: str | None = None
 
     reconfigure_supported = True
 
@@ -47,20 +56,145 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     _entry: config_entries.ConfigEntry | None = None  # nur beim Reconfigure
 
+    def __init__(self):
+        self._enable_mqtt_broker = False
+        self._mqtt_settings = {}
+
+    async def async_step_mqtt(self, discovery_info=None):
+        """Configure the shared, opt-in broker; never log credentials."""
+        if not self._enable_mqtt_broker:
+            return self._create_entry(entry=self._entry)
+
+        others = [
+            entry
+            for entry in self._async_current_entries()
+            if entry.data.get(CONF_ENABLE_MQTT_BROKER, False)
+            and (self._entry is None or entry.entry_id != self._entry.entry_id)
+        ]
+        shared = others[0].data if others else {}
+        defaults = self._mqtt_settings or {
+            CONF_MQTT_PORT: shared.get(CONF_MQTT_PORT, 1883),
+            CONF_MQTT_USERNAME: shared.get(CONF_MQTT_USERNAME, ""),
+            CONF_MQTT_PASSWORD: shared.get(CONF_MQTT_PASSWORD, ""),
+        }
+        errors = {}
+        if discovery_info is not None:
+            settings = {
+                CONF_MQTT_PORT: discovery_info[CONF_MQTT_PORT],
+                CONF_MQTT_USERNAME: discovery_info[CONF_MQTT_USERNAME],
+                CONF_MQTT_PASSWORD: discovery_info.get(CONF_MQTT_PASSWORD) or defaults.get(CONF_MQTT_PASSWORD, ""),
+            }
+            if not settings[CONF_MQTT_USERNAME].strip():
+                errors[CONF_MQTT_USERNAME] = "required"
+            if not settings[CONF_MQTT_PASSWORD]:
+                errors[CONF_MQTT_PASSWORD] = "required"
+            if shared and any(value != shared.get(key) for key, value in settings.items()):
+                errors["base"] = "mqtt_settings_conflict"
+            if not errors:
+                self._mqtt_settings = settings
+                return self._create_entry(entry=self._entry)
+            defaults = {**defaults, **settings}
+
+        return self.async_show_form(
+            step_id="mqtt",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_MQTT_PORT, default=defaults[CONF_MQTT_PORT]): vol.All(
+                        vol.Coerce(int), vol.Range(min=1, max=65535)
+                    ),
+                    vol.Required(CONF_MQTT_USERNAME, default=defaults[CONF_MQTT_USERNAME]): str,
+                    vol.Optional(CONF_MQTT_PASSWORD): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD)),
+                }
+            ),
+            errors=errors,
+        )
+
     async def async_step_user(self, user_input=None):
-        """Step 1: Pflichtfelder."""
+        """Select CCU version."""
+
+        if user_input is not None:
+            self._ccu_version = user_input.get(CONF_CCU_VERSION, CCU_V1)
+
+            if self._ccu_version == CCU_V1:
+                return await self.async_step_v1()
+
+            if self._ccu_version == CCU_V2:
+                if self._entry is None:
+                    self._timeout_receive = 30
+                return await self.async_step_v2()
+
+        return self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_CCU_VERSION,
+                        default=self._ccu_version or CCU_V1,
+                    ): vol.In(
+                        {
+                            CCU_V1: "CCU V1",
+                            CCU_V2: "CCU V2/V2+",
+                        }
+                    )
+                }
+            ),
+        )
+
+    async def async_step_v2(self, user_input=None):
+        """Configure the CCU identity and select internal or existing HA MQTT."""
+        errors = {}
+        if user_input is not None:
+            self._name = user_input[CONF_NAME]
+            self._device_id = user_input[CONF_DEVICE_ID]
+            self._enable_mqtt_broker = user_input.get(CONF_ENABLE_MQTT_BROKER, False)
+            self._timeout_receive = user_input.get(CONF_TIMEOUT_RECEIVE, 30)
+            if not self._name.strip():
+                errors[CONF_NAME] = "required"
+            if not self._device_id.strip() or any(char in self._device_id for char in "+#\x00"):
+                errors[CONF_DEVICE_ID] = "invalid_device_id"
+            for entry in self._async_current_entries():
+                if entry.data.get(CONF_DEVICE_ID) == self._device_id and (
+                    self._entry is None or entry.entry_id != self._entry.entry_id
+                ):
+                    errors[CONF_DEVICE_ID] = "device_exists"
+            if not errors:
+                if self._entry is None:
+                    await self.async_set_unique_id(self._device_id)
+                    self._abort_if_unique_id_configured()
+
+                return await self.async_step_mqtt()
+
+        return self.async_show_form(
+            step_id="v2",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_NAME, default=self._name or ""): str,
+                    vol.Required(CONF_DEVICE_ID, default=self._device_id or ""): str,
+                    vol.Optional(CONF_ENABLE_MQTT_BROKER, default=self._enable_mqtt_broker): BooleanSelector(),
+                    vol.Required(CONF_TIMEOUT_RECEIVE, default=self._timeout_receive or 30): vol.All(
+                        vol.Coerce(int), vol.Range(min=5)
+                    ),
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_v1(self, user_input=None):  # für CCU v1
+        """Configure CCU V1.
+
+        Step 1: Pflichtfelder."""
 
         errors = {}
         defaults = self._get_defaults_for_user_step()
 
-        if user_input:
+        if user_input is not None:
             self._device_id = user_input.get(CONF_DEVICE_ID)
             self._name = user_input.get(CONF_NAME)
             self._webhook_id = user_input.get(CONF_WEBHOOK_ID)
 
             # Pflichtfeldprüfung
             if not self._device_id:
-                errors["device_id"] = "required"
+                errors[CONF_DEVICE_ID] = "required"
             if not self._name:
                 errors["name"] = "required"
             if not self._webhook_id:
@@ -70,21 +204,25 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if self._entry is None:
                 for entry in self._async_current_entries():
                     if entry.data.get(CONF_DEVICE_ID) == self._device_id:
-                        errors["device_id"] = "device_exists"
+                        errors[CONF_DEVICE_ID] = "device_exists"
                         break
 
             _LOGGER.debug("Defaults in user step: %s", defaults)
 
             if errors:
                 return self.async_show_form(
-                    step_id="user",
+                    step_id="v1",
                     data_schema=self._schema_user(defaults),
                     errors=errors,
                 )
 
+            if self._entry is None:
+                await self.async_set_unique_id(self._device_id)
+                self._abort_if_unique_id_configured()
+
             return await self.async_step_optional()
 
-        return self.async_show_form(step_id="user", data_schema=self._schema_user(defaults))
+        return self.async_show_form(step_id="v1", data_schema=self._schema_user(defaults))
 
     async def async_step_optional(self, user_input=None):
         """Step 2: optionale Felder + Proxy aktivieren."""
@@ -92,7 +230,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
         defaults = self._get_defaults_for_optional_step()
 
-        if user_input:
+        if user_input is not None:
             self._host_ip = user_input.get(CONF_IP_ADDRESS)
             self._only_ip = user_input.get(ONLY_ONE_IP, False)
             self._timeout_receive = user_input.get(CONF_TIMEOUT_RECEIVE, DEFAULT_TIMEOUT_RECEIVE)
@@ -100,14 +238,14 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._enable_local_cloud_proxy = user_input.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, False)
 
             # Pflichtfeldprüfung
-            if not self._timeout_receive:
-                errors["timeout_receive"] = "required"
+            if self._timeout_receive is None or self._timeout_receive < 2:
+                errors[CONF_TIMEOUT_RECEIVE] = "required"
             # Ende Pflichtfeldprüfung
 
             if errors:
                 return self.async_show_form(
                     step_id="optional",
-                    data_schema=self._schema_user(defaults),
+                    data_schema=self._schema_optional(defaults),
                     errors=errors,
                 )
 
@@ -123,7 +261,7 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         defaults = self._get_defaults_for_proxy_step()
 
-        if user_input:
+        if user_input is not None:
             self._enable_forward_to_cloud = user_input.get(
                 CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD
             )
@@ -138,8 +276,9 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     # ----------------------------------------
     def _create_entry(self, entry=None):
         data = {
+            CONF_CCU_VERSION: self._ccu_version,
             CONF_NAME: self._name,
-            CONF_DEVICE_ID: self._device_id or entry.data.get(CONF_DEVICE_ID),
+            CONF_DEVICE_ID: self._device_id or (entry.data.get(CONF_DEVICE_ID) if entry is not None else None),
             CONF_WEBHOOK_ID: self._webhook_id,
             CONF_TIMEOUT_RECEIVE: self._timeout_receive or DEFAULT_TIMEOUT_RECEIVE,
             CONF_IP_ADDRESS: self._host_ip or None,
@@ -150,7 +289,9 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_ENABLE_CLOUD_DATA: self._enable_cloud_data,
             CONF_REFRESH_CONFIG_FROM_CLOUD: self._refresh_cloud_data,
         }
-        _LOGGER.debug("Creating entry with data: %s", data)
+        data[CONF_ENABLE_MQTT_BROKER] = self._ccu_version == CCU_V2 and self._enable_mqtt_broker
+        if data[CONF_ENABLE_MQTT_BROKER]:
+            data.update(self._mqtt_settings)
 
         if entry is not None:
             self.hass.config_entries.async_update_entry(entry, data=data, title=self._name)
@@ -165,9 +306,9 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         defaults = defaults or {}
         return vol.Schema(
             {
-                vol.Required(CONF_NAME, default=defaults.get(CONF_NAME, "")): str,
-                vol.Required(CONF_DEVICE_ID, default=defaults.get(CONF_DEVICE_ID, "")): str,
-                vol.Required(CONF_WEBHOOK_ID, default=defaults.get(CONF_WEBHOOK_ID, "")): str,
+                vol.Required(CONF_NAME, default=defaults.get(CONF_NAME) or ""): str,
+                vol.Required(CONF_DEVICE_ID, default=defaults.get(CONF_DEVICE_ID) or ""): str,
+                vol.Required(CONF_WEBHOOK_ID, default=defaults.get(CONF_WEBHOOK_ID) or ""): str,
             }
         )
 
@@ -175,11 +316,11 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         defaults = defaults or {}
         return vol.Schema(
             {
-                vol.Optional(CONF_IP_ADDRESS, default=defaults.get(CONF_IP_ADDRESS, "")): str,
+                vol.Optional(CONF_IP_ADDRESS, default=defaults.get(CONF_IP_ADDRESS) or ""): str,
                 vol.Optional(ONLY_ONE_IP, default=defaults.get(ONLY_ONE_IP, False)): BooleanSelector(),
                 vol.Required(
                     CONF_TIMEOUT_RECEIVE,
-                    default=defaults.get(CONF_TIMEOUT_RECEIVE, DEFAULT_TIMEOUT_RECEIVE),
+                    default=defaults.get(CONF_TIMEOUT_RECEIVE) or DEFAULT_TIMEOUT_RECEIVE,
                 ): int,
                 vol.Optional(NOTIFY_MIGRATION, default=defaults.get(NOTIFY_MIGRATION, False)): BooleanSelector(),
                 vol.Optional(
@@ -239,6 +380,17 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             return self.async_abort(reason="entry_not_found")
 
         self._entry = entry
+        self._ccu_version = entry.data.get(CONF_CCU_VERSION, CCU_V1)
+        self._enable_mqtt_broker = entry.data.get(CONF_ENABLE_MQTT_BROKER, False)
+        self._mqtt_settings = (
+            {
+                CONF_MQTT_PORT: entry.data.get(CONF_MQTT_PORT, 1883),
+                CONF_MQTT_USERNAME: entry.data.get(CONF_MQTT_USERNAME, ""),
+                CONF_MQTT_PASSWORD: entry.data.get(CONF_MQTT_PASSWORD, ""),
+            }
+            if entry.data.get(CONF_MQTT_PASSWORD)
+            else {}
+        )
 
         self._name = entry.data.get(CONF_NAME)
         self._device_id = entry.data.get(CONF_DEVICE_ID)
@@ -268,7 +420,9 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 "timeout_receive": self._timeout_receive,
             },
         )
-        return await self.async_step_user(user_input)
+        if self._ccu_version == CCU_V2:
+            return await self.async_step_v2(user_input)
+        return await self.async_step_v1(user_input)
 
     def is_matching(self, other_flow: config_entries.ConfigFlow) -> bool:
         return (

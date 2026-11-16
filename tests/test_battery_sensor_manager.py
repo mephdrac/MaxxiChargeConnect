@@ -43,8 +43,8 @@ def entry():
 
 @pytest.fixture
 def async_add_entities():
-    """Mock async_add_entities callback."""
-    return AsyncMock()
+    """Mock the synchronous callback used to add entities on the event loop."""
+    return MagicMock()
 
 
 @pytest.fixture

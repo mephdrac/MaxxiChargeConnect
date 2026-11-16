@@ -24,6 +24,8 @@ from homeassistant.const import CONF_IP_ADDRESS, EntityCategory
 from homeassistant.core import HomeAssistant, callback
 
 from ..const import (
+    CCU_V1,
+    CONF_CCU_VERSION,
     DEVICE_INFO,
     DOMAIN,
     EVENT_SUMMER_MIN_CHARGE_CHANGED,
@@ -86,7 +88,7 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
         self._coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
         self._rest_key = rest_key
         self._value_key = value_key
-        self._attr_translation_key = translation_key
+        self._attr_translation_key = getattr(self, "_attr_translation_key", None) or translation_key.lower()
         self._attr_unique_id = f"{self._coordinator.entry.entry_id}_{rest_key}"
         self._attr_native_min_value = min_value
         self._attr_native_max_value = max_value
@@ -291,8 +293,10 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
                   - manufacturer: Herstellername
                   - model: Modellbezeichnung
         """
+        ccu_version = self._entry.data.get(CONF_CCU_VERSION, CCU_V1)
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,
             **DEVICE_INFO,
+            "model": f"CCU {ccu_version.upper()}",
         }

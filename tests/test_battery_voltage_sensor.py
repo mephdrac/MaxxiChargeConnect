@@ -22,7 +22,7 @@ async def test_battery_voltage_sensor__init():
 
     # Grundlegende Attribute prüfen
     assert sensor._attr_entity_registry_enabled_default is False  # pylint: disable=protected-access
-    assert sensor._attr_translation_key == "BatteryVoltageSensor"  # pylint: disable=protected-access
+    assert sensor._attr_translation_key == "batteryvoltagesensor"  # pylint: disable=protected-access
     assert sensor._attr_has_entity_name is True  # pylint: disable=protected-access
     assert sensor._index == 0  # pylint: disable=protected-access
     assert sensor._attr_translation_placeholders == {"index": str(0 + 1)}  # pylint: disable=protected-access

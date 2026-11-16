@@ -103,5 +103,5 @@ def test_device_info(sensor):  # pylint: disable=redefined-outer-name
     info = sensor.device_info
     assert info["identifiers"] == {(DOMAIN, "abc123")}
     assert info["name"] == "My Device"
-    assert info["manufacturer"] == "mephdrac"
-    assert info["model"] == "CCU - Maxxicharge"
+    assert info["manufacturer"] == "Maxxisun"
+    assert info["model"] == "CCU V1"

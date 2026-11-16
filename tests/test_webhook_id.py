@@ -22,7 +22,7 @@ async def test_webhook_id__init():
 
     # Grundlegende Attribute prüfen
     assert sensor._attr_native_value == dummy_config_entry.data[CONF_WEBHOOK_ID]  # pylint: disable=protected-access
-    assert sensor._attr_translation_key == "WebhookId"  # pylint: disable=protected-access
+    assert sensor._attr_translation_key == "webhookid"  # pylint: disable=protected-access
     assert sensor._entry == dummy_config_entry  # pylint: disable=protected-access
     assert sensor._attr_entity_category == EntityCategory.DIAGNOSTIC  # pylint: disable=protected-access
     assert sensor.icon == "mdi:webhook"

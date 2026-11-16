@@ -50,7 +50,6 @@ class GridExport(BaseWebhookSensor):
 
     """
 
-    _attr_translation_key = "GridExport"
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry) -> None:

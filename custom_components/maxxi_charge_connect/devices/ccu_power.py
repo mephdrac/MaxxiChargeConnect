@@ -29,7 +29,6 @@ class CcuPower(BaseWebhookSensor):
     wenn die empfangenen Daten als gültig eingestuft werden.
     """
 
-    _attr_translation_key = "CcuPower"
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry) -> None:

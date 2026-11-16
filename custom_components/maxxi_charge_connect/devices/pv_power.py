@@ -22,7 +22,6 @@ _LOGGER = logging.getLogger(__name__)
 class PvPower(BaseWebhookSensor):
     """Sensor-Entität zur Anzeige der PV-Gesamtleistung (`PV_power_total`)."""
 
-    _attr_translation_key = "PvPower"
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry) -> None:

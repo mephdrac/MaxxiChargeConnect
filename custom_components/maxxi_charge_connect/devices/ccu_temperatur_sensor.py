@@ -22,7 +22,6 @@ class CCUTemperaturSensor(BaseWebhookSensor):
     und auf Plausibilität geprüft.
     """
 
-    _attr_translation_key = "CCUTemperaturSensor"
     _attr_has_entity_name = True
     _attr_entity_registry_enabled_default = False
 

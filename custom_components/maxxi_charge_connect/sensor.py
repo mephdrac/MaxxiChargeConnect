@@ -18,7 +18,12 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN
+from .const import (
+    CCU_V1,
+    CCU_V2,
+    CONF_CCU_VERSION,
+    DOMAIN,
+)
 from .devices.battery_power import BatteryPower
 from .devices.battery_power_charge import BatteryPowerCharge
 from .devices.battery_power_discharge import BatteryPowerDischarge
@@ -33,6 +38,7 @@ from .devices.ccu_energy_today import CcuEnergyToday
 from .devices.ccu_energy_total import CcuEnergyTotal
 from .devices.ccu_power import CcuPower
 from .devices.ccu_temperatur_sensor import CCUTemperaturSensor
+from .devices.ccu_v2_sensor_manager import setup_v2_sensors
 from .devices.consumption_energy_today import ConsumptionEnergyToday
 from .devices.consumption_energy_total import ConsumptionEnergyTotal
 from .devices.device_id import DeviceId
@@ -43,6 +49,7 @@ from .devices.grid_export_energy_total import GridExportEnergyTotal
 from .devices.grid_import import GridImport
 from .devices.grid_import_energy_today import GridImportEnergyToday
 from .devices.grid_import_energy_total import GridImportEnergyTotal
+from .devices.mqtt_discovery_entity import setup_discovery_entities
 from .devices.online_status_sensor import OnlineStatusSensor
 from .devices.power_consumption import PowerConsumption
 from .devices.power_meter import PowerMeter
@@ -85,6 +92,13 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
 
     """
 
+    ccu_version = entry.data.get(CONF_CCU_VERSION, CCU_V1)
+
+    if ccu_version == CCU_V2:
+        setup_v2_sensors(hass, entry, async_add_entities)
+        setup_discovery_entities(hass, entry, async_add_entities, "sensor")
+        return
+
     # BatterySensorManager initialisieren
     manager = BatterySensorManager(hass, entry, async_add_entities)
     SENSOR_MANAGER[entry.entry_id] = manager
@@ -122,27 +136,29 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
 
     # Http-Scan Sensoren
     http_scan_sensor_list = [
-        HttpScanText(coordinator, "APIRoute", "API - Route", "mdi:link"),
-        HttpScanText(coordinator, "LocalServer", "Use Local Server", "mdi:server-off"),
-        HttpScanText(coordinator, "Cloudservice", "Cloudservice", "mdi:cloud-outline"),
-        HttpScanText(coordinator, "DC/DC-Algorithmus", "DC/DC algorithm", "mdi:source-branch"),
-        HttpScanText(coordinator, "PowerMeterIp", "Power Meter IP", "mdi:ip"),
-        HttpScanText(coordinator, "PowerMeterType", "Power Meter Type", "mdi:chip"),
-        HttpScanText(coordinator, "MaximumPower", "Maximum Power", "mdi:flash"),
-        HttpScanText(coordinator, "OfflineOutputPower", "Offline Output Power", "mdi:flash"),
-        HttpScanText(coordinator, "NumberOfBatteries", "Number of Batteries", "mdi:layers"),
-        HttpScanText(coordinator, "OutputOffset", "Output Offset", "mdi:flash"),
-        HttpScanText(coordinator, "CcuSpeed", "CCU - Speed", "mdi:flash"),
-        HttpScanText(coordinator, "Microinverter", "Microinverter", "mdi:current-ac"),
-        HttpScanText(coordinator, "ResponseTolerance", "Response tolerance", "mdi:current-ac"),
+        HttpScanText(coordinator, "apiroute", "APIRoute", "API - Route", "mdi:link"),
+        HttpScanText(coordinator, "localserver", "LocalServer", "Use Local Server", "mdi:server-off"),
+        HttpScanText(coordinator, "cloudservice", "Cloudservice", "Cloudservice", "mdi:cloud-outline"),
+        HttpScanText(coordinator, "dc_dc_algorithmus", "DC/DC-Algorithmus", "DC/DC algorithm", "mdi:source-branch"),
+        HttpScanText(coordinator, "powermeterip", "PowerMeterIp", "Power Meter IP", "mdi:ip"),
+        HttpScanText(coordinator, "powermetertype", "PowerMeterType", "Power Meter Type", "mdi:chip"),
+        HttpScanText(coordinator, "maximumpower", "MaximumPower", "Maximum Power", "mdi:flash"),
+        HttpScanText(coordinator, "offlineoutputpower", "OfflineOutputPower", "Offline Output Power", "mdi:flash"),
+        HttpScanText(coordinator, "numberofbatteries", "NumberOfBatteries", "Number of Batteries", "mdi:layers"),
+        HttpScanText(coordinator, "outputoffset", "OutputOffset", "Output Offset", "mdi:flash"),
+        HttpScanText(coordinator, "ccuspeed", "CcuSpeed", "CCU - Speed", "mdi:flash"),
+        HttpScanText(coordinator, "microinverter", "Microinverter", "Microinverter", "mdi:current-ac"),
+        HttpScanText(coordinator, "responsetolerance", "ResponseTolerance", "Response tolerance", "mdi:current-ac"),
         HttpScanText(
             coordinator,
+            "minimumbatterydischarge",
             "MinimumBatteryDischarge",
             "Minimum Battery Discharge ",
             "mdi:battery-low",
         ),
         HttpScanText(
             coordinator,
+            "maximumbatterycharge",
             "MaximumBatteryCharge",
             "Maximum Battery Charge ",
             "mdi:battery-high",

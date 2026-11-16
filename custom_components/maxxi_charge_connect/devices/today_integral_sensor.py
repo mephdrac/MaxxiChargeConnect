@@ -10,24 +10,18 @@ Classes:
 """
 
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import timedelta
 from decimal import Decimal
+from inspect import signature
 
-from homeassistant.components.integration.sensor import (
-    UNIT_PREFIXES,
-    UNIT_TIME,
-    IntegrationSensor,
-    UnitOfTime,
-    _IntegrationMethod,
-    _IntegrationTrigger,
-)
+from homeassistant.components.integration.sensor import IntegrationSensor, UnitOfTime
 from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.const import UnitOfEnergy
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.event import async_track_time_change
 from homeassistant.util import dt as dt_util
 
-from ..const import DEVICE_INFO, DOMAIN  # noqa: TID252
+from ..const import CCU_V1, CONF_CCU_VERSION, DEVICE_INFO, DOMAIN  # noqa: TID252
 from ..tools import clean_title
 
 _LOGGER = logging.getLogger(__name__)
@@ -54,53 +48,50 @@ class TodayIntegralSensor(IntegrationSensor):
 
     _attr_has_entity_name = True
 
-    # pylint: disable=super-init-not-called
-    def __init__(self, hass: HomeAssistant, entry, source_entity_id: str) -> None:
-        """Initialisiert die Sensorentität für den gesamten Tag.
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        entry,
+        source_entity_id: str,
+    ) -> None:
+        """Initialize daily energy integration sensor."""
 
-        Args:
-            hass (HomeAssistant): Die Home Assistant-Instanz.
-            entry (ConfigEntry): Der Konfigurationseintrag mit den Einstellungen dieser Entität.
-            source_entity_id (str): Die Quell-Entity-ID, die den Wert in Watt liefert.
+        # Older Home Assistant releases do not accept device_class here.
+        device_class_kwargs = (
+            {"device_class": SensorDeviceClass.ENERGY}
+            if "device_class" in signature(IntegrationSensor).parameters
+            else {}
+        )
+        super().__init__(
+            integration_method="trapezoidal",
+            name=None,
+            round_digits=3,
+            source_entity=source_entity_id,
+            unique_id=(f"{entry.entry_id}_{clean_title(self.__class__.__name__)}"),
+            unit_prefix="k",
+            unit_time=UnitOfTime.HOURS,
+            max_sub_interval=timedelta(seconds=120),
+            **device_class_kwargs,
+        )
+        self._attr_device_class = SensorDeviceClass.ENERGY
 
-        """
+        del self._attr_name
+
+        self._attr_translation_key = self.__class__.__name__.lower()
+        self._attr_has_entity_name = True
 
         self.hass = hass
-        self._attr_translation_key = self.__class__.__name__
-        self._attr_unique_id = f"{entry.entry_id}_{clean_title(self.__class__.__name__)}"
-        self._source_entity = source_entity_id
-        self._sensor_source_id = source_entity_id
-        self._round_digits = 3
-        self._state = None
-        self._integration_method = self._method = _IntegrationMethod.from_name("trapezoidal")
-
-        self._unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
-        self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
-        self.unit_prefix = "k"
-        self._unit_prefix_string = "" if self.unit_prefix is None else self.unit_prefix
-        self._unit_prefix = UNIT_PREFIXES[self.unit_prefix]
-        self.unit_time = UnitOfTime.HOURS
-        self._unit_time = UNIT_TIME[self.unit_time]
-        self._unit_time_str = self.unit_time
-        self._last_valid_state = None
-
-        self._max_sub_interval = timedelta(seconds=120)
-        self._last_integration_time = datetime.now(tz=UTC)
-        self._last_integration_trigger = _IntegrationTrigger.StateEvent
-        self._attr_suggested_display_precision = self._round_digits or 2
-
-        # Zuweisung
-        self._max_sub_interval_exceeded_callback = self._handle_max_sub_interval_exceeded
-
-        # Setzte neue Attribute
         self._entry = entry
-        self._attr_device_class = SensorDeviceClass.ENERGY
+
+        self._attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
         self._attr_state_class = SensorStateClass.TOTAL
+
         self.my_icon = "mdi:counter"
         self._attr_icon = self.my_icon
 
-        # Setze initialen Reset-Zeitpunkt auf heutige Mitternacht lokal
+        # Zeitpunkt des letzten Tagesresets
         self._unsub_time_reset = None
+
         local_midnight = dt_util.start_of_local_day()
         self._last_reset = dt_util.as_utc(local_midnight)
 
@@ -197,9 +188,10 @@ class TodayIntegralSensor(IntegrationSensor):
                   - model: Modellbezeichnung
 
         """
-
+        ccu_version = self._entry.data.get(CONF_CCU_VERSION, CCU_V1)
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,
             **DEVICE_INFO,
+            "model": f"CCU {ccu_version.upper()}",
         }

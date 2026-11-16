@@ -2,19 +2,16 @@ pytest
 pytest-asyncio
 pytest-mock
 pytest-cov
-pytest-homeassistant-custom-component
-#homeassistant>=2025.10.0,<2026.0.0
+
+homeassistant==2026.11.1
+voluptuous
+paho-mqtt
+amqtt==0.12.1
+dnspython
 
 pylint
 pylint-per-file-ignores
 
+async-timeout
+voluptuous-serialize
 beautifulsoup4==4.12.3
-dnspython>=2.4
-#pydantic==1.10.5
-
-
-# Sicherheitsfixes erzwingen:
-cryptography>=44.0.1
-jinja2>=3.1.5
-requests>=2.32.3
-urllib3>=2.5.0

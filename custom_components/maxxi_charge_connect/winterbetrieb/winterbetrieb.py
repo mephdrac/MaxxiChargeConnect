@@ -6,7 +6,7 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 
-from ..const import CONF_WINTER_MODE, DEVICE_INFO, DOMAIN, WINTER_MODE_CHANGED_EVENT
+from ..const import CCU_V1, CONF_CCU_VERSION, CONF_WINTER_MODE, DEVICE_INFO, DOMAIN, WINTER_MODE_CHANGED_EVENT  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -14,7 +14,7 @@ _LOGGER = logging.getLogger(__name__)
 class Winterbetrieb(SwitchEntity):
     """SwitchEntity für den Winterbetrieb."""
 
-    _attr_translation_key = "Winterbetrieb"
+    _attr_translation_key = "winterbetrieb"
     _attr_has_entity_name = True
     _attr_should_poll = False  # Switches sollten in der Regel nicht pollen
 
@@ -90,8 +90,10 @@ class Winterbetrieb(SwitchEntity):
                   - manufacturer: Herstellername
                   - model: Modellbezeichnung
         """
+        ccu_version = self._entry.data.get(CONF_CCU_VERSION, CCU_V1)
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,
             **DEVICE_INFO,
+            "model": f"CCU {ccu_version.upper()}",
         }

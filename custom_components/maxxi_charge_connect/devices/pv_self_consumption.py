@@ -23,7 +23,6 @@ class PvSelfConsumption(BaseWebhookSensor):
     """Sensor-Entität zur Anzeige des PV-Eigenverbrauchs (PV Self-Consumption)."""
 
     _attr_entity_registry_enabled_default = False
-    _attr_translation_key = "PvSelfConsumption"
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry) -> None:

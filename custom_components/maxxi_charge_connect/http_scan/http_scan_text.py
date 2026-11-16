@@ -12,7 +12,7 @@ from homeassistant.components.text import TextEntity
 from homeassistant.const import EntityCategory
 from homeassistant.helpers.entity import DeviceInfo
 
-from ..const import DEVICE_INFO, DOMAIN
+from ..const import CCU_V1, CONF_CCU_VERSION, DEVICE_INFO, DOMAIN  # noqa: TID252
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ class HttpScanText(TextEntity):
 
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator, keyname, name, icon) -> None:  # pylint: disable=unused-argument
+    def __init__(self, coordinator, translate_key, keyname, name, icon) -> None:  # pylint: disable=unused-argument
         """Initialisiert eine neue HttpScanText-Entität.
 
         Args:
@@ -34,7 +34,8 @@ class HttpScanText(TextEntity):
 
         """
 
-        self._attr_translation_key = keyname
+        self._attr_translation_key = translate_key
+
         self.coordinator = coordinator
         self._keyname = keyname
         # self._attr_name = name
@@ -73,8 +74,10 @@ class HttpScanText(TextEntity):
                         z.B. Name, Hersteller, Modell.
 
         """
+        ccu_version = self._entry.data.get(CONF_CCU_VERSION, CCU_V1)
         return {
             "identifiers": {(DOMAIN, self._entry.entry_id)},
             "name": self._entry.title,
             **DEVICE_INFO,
+            "model": f"CCU {ccu_version.upper()}",
         }

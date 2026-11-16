@@ -13,12 +13,7 @@ from homeassistant.components.sensor import SensorDeviceClass, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import PERCENTAGE
 
-from ..const import (
-    CONF_WINTER_MAX_CHARGE,
-    CONF_WINTER_MIN_CHARGE,
-    CONF_WINTER_MODE,
-    DOMAIN,
-)
+from ..const import CCU_V1, CONF_CCU_VERSION, CONF_WINTER_MAX_CHARGE, CONF_WINTER_MIN_CHARGE, CONF_WINTER_MODE, DOMAIN
 from ..tools import async_get_min_soc_entity
 from .base_webhook_sensor import BaseWebhookSensor
 
@@ -35,7 +30,6 @@ class BatterySoc(BaseWebhookSensor):
     sobald neue Daten über den konfigurierten Webhook empfangen werden.
     """
 
-    _attr_translation_key = "BatterySoc"
     _attr_has_entity_name = True
 
     def __init__(self, entry: ConfigEntry) -> None:
@@ -176,12 +170,12 @@ class BatterySoc(BaseWebhookSensor):
             wintermode,
         )
 
-        if wintermode:
+        ccu_version = self._entry.data.get(CONF_CCU_VERSION, CCU_V1)
+
+        if wintermode and ccu_version == CCU_V1:
             await self._do_wintermode(native_value_float)
         else:
             _LOGGER.debug("Normalmodus - UI wird aktualisiert")
-
-        self.async_write_ha_state()
 
     @property
     def icon(self):

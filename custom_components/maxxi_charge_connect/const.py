@@ -9,7 +9,20 @@ Attributes:
 
 """
 
+CONF_CCU_VERSION = "ccu_version"
+CCU_V1 = "v1"
+CCU_V2 = "v2"
+
 DOMAIN = "maxxi_charge_connect"
+CONF_ENABLE_MQTT_BROKER = "enable_mqtt_broker"
+CONF_MQTT_PORT = "mqtt_port"
+CONF_MQTT_USERNAME = "mqtt_username"
+CONF_MQTT_PASSWORD = "mqtt_password"
+MQTT_BROKER_MANAGER = "mqtt_broker_manager"
+MQTT_RECEIVE_STATS = "mqtt_receive_stats"
+MQTT_DIAGNOSTICS_SIGNAL = "mqtt_diagnostics_signal"
+MQTT_DISCOVERY_COORDINATOR = "mqtt_discovery"
+MQTT_SENSOR_VALUES = "mqtt_sensor_values"
 WEBHOOK_NAME = "MaxxiCharge Webhook"
 ONLY_ONE_IP = "only_accept_one_ip"
 CONF_ENABLE_LOCAL_CLOUD_PROXY = "enable_local_cloud_proxy"
@@ -20,10 +33,7 @@ CONF_NEEDS_DEVICE_ID = "CONF_NEEDS_DEVICE_ID"
 DEFAULT_ENABLE_FORWARD_TO_CLOUD = False
 DEFAULT_ENABLE_LOCAL_CLOUD_PROXY = False
 
-DEVICE_INFO = {
-    "manufacturer": "mephdrac",
-    "model": "CCU - Maxxicharge",
-}
+DEVICE_INFO = {"manufacturer": "Maxxisun"}
 NOTIFY_MIGRATION = "notify_migration"
 
 # Fehler die per Reverse-Proxy reinkommen

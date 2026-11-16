@@ -76,7 +76,7 @@ async def test_battery_power_charge__handle_update_alles_ok():
 
     # Bei BaseWebhookSensor wird async_write_ha_state im Wrapper aufgerufen
     # Wir prüfen nur, ob der Wert korrekt gesetzt wurde
-    assert sensor._attr_native_value == round(pv_power - pccu, 3)  # pylint: disable=protected-access
+    assert sensor._attr_native_value == round(pv_power - pccu, 2)  # pylint: disable=protected-access
 
 
 @pytest.mark.asyncio

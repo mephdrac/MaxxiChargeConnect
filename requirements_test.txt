@@ -1,19 +1,12 @@
-
-pytest==9.2.0
-pytest-asyncio==1.4.1.post1
-pytest-mock==3.17.0
+pytest
+pytest-asyncio
+pytest-mock
 pytest-cov
 
-homeassistant==2025.1.4
+homeassistant==2026.11.1
 voluptuous
-beautifulsoup4==4.12.3
-dnspython>=2.4
 amqtt==0.12.1
+dnspython
 
 pylint
 pylint-per-file-ignores
-
-#cryptography>=44.0.1
-jinja2>=3.1.5
-requests>=2.32.3
-urllib3>=2.5.0

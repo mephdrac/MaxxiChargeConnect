@@ -5,8 +5,13 @@ pytest-cov
 
 homeassistant==2026.11.1
 voluptuous
+paho-mqtt
 amqtt==0.12.1
 dnspython
 
 pylint
 pylint-per-file-ignores
+
+async-timeout
+voluptuous-serialize
+beautifulsoup4==4.12.3

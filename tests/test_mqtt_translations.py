@@ -51,7 +51,7 @@ class MqttTranslationTests(unittest.TestCase):
             entry=self.entry, specs={spec.key: spec}, native_energy_bindings={"gridexportenergytotal": spec.key}
         )
         entity = CcuNativeEnergySensor(coordinator, "gridexportenergytotal", spec)
-        entity.platform = platform_for("sensor")
+        entity.platform_data = platform_for("sensor")
         self.assertEqual(entity.name, "Netzeinspeisung gesamt (CCU-Zähler)")
         self.assertEqual(entity.extra_state_attributes["source"], "ccu")
         self.assertEqual(entity.unique_id, "translated_gridexportenergytotal_ccu_counter")
@@ -60,7 +60,7 @@ class MqttTranslationTests(unittest.TestCase):
         spec = SimpleNamespace(key="battery", config={}, state_topic="ccu/battery")
         coordinator = SimpleNamespace(entry=self.entry, specs={}, native_energy_bindings={})
         entity = CcuNativeEnergySensor(coordinator, "battery_pv_energy_today_1", spec)
-        entity.platform = platform_for("sensor")
+        entity.platform_data = platform_for("sensor")
         self.assertEqual(entity.name, "Batterie 2 PV-Ertrag heute (CCU-Zähler)")
 
     def test_actual_ccu_controls_use_german_names_without_changing_ids_or_options(self):
@@ -83,7 +83,8 @@ class MqttTranslationTests(unittest.TestCase):
             cls = {"number": DiscoveryNumber, "select": DiscoverySelect, "switch": DiscoverySwitch}[component]
             entity = cls(coordinator, spec)
             identity = entity.unique_id
-            entity.platform = platform_for(component)
+            entity.platform_data = platform_for(component)
+            entity.platform = entity.platform_data
             self.assertEqual(entity.name, expected[spec.name])
             self.assertEqual(entity.unique_id, identity)
             if component == "select":

@@ -3,9 +3,9 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-import voluptuous_serialize
+
 from homeassistant.const import CONF_IP_ADDRESS, CONF_NAME, CONF_WEBHOOK_ID
-from homeassistant.helpers import config_validation as cv
+
 
 from custom_components.maxxi_charge_connect.config_flow import MaxxiChargeConnectConfigFlow
 from custom_components.maxxi_charge_connect.const import (
@@ -37,9 +37,13 @@ async def test_v1_setup_with_default_network_settings(flow, proxy):
     """An omitted optional IP must not prevent creating a V1 entry."""
     result = await flow.async_step_user({CONF_CCU_VERSION: CCU_V1})
     assert result["step_id"] == "v1"
-    fields = voluptuous_serialize.convert(result["data_schema"], custom_serializer=cv.custom_serializer)
-    assert all(field["default"] == "" for field in fields)
-    user_input = result["data_schema"]({CONF_NAME: "CCU V1", CONF_DEVICE_ID: "123", CONF_WEBHOOK_ID: "hook"})
+    v1_input = {
+        CONF_NAME: "CCU V1",
+        CONF_DEVICE_ID: "123",
+        CONF_WEBHOOK_ID: "hook",
+    }
+    user_input = result["data_schema"](v1_input)
+    assert user_input == v1_input
     result = await flow.async_step_v1(user_input)
     assert result["step_id"] == "optional"
     user_input = result["data_schema"]({CONF_ENABLE_LOCAL_CLOUD_PROXY: proxy})

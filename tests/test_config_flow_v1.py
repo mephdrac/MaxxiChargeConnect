@@ -3,9 +3,7 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from homeassistant.const import CONF_IP_ADDRESS, CONF_NAME, CONF_WEBHOOK_ID
-
 
 from custom_components.maxxi_charge_connect.config_flow import MaxxiChargeConnectConfigFlow
 from custom_components.maxxi_charge_connect.const import (

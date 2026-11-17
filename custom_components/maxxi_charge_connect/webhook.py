@@ -57,9 +57,9 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
     # Vorherigen Handler entfernen, falls vorhanden
     try:
         async_unregister(hass, webhook_id)
-        _LOGGER.warning("Alter Webhook mit ID %s wurde entfernt", webhook_id)
+        _LOGGER.debug("Alter Webhook wurde entfernt")
     except Exception:  # pylint: disable=broad-exception-caught
-        _LOGGER.debug("Kein bestehender Webhook für ID %s gefunden", webhook_id)
+        _LOGGER.debug("Kein bestehender Webhook gefunden")
 
     signal_sensor = f"{DOMAIN}_{webhook_id}_update_sensor"
     signal_stale = f"{DOMAIN}_{webhook_id}_sensor_stale"
@@ -69,9 +69,7 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
 
     _LOGGER.info("Registering webhook '%s'", WEBHOOK_NAME)
 
-    # async def handle_webhook(webhook_id, request):
-
-    async def handle_webhook(hass: HomeAssistant, webhook_id: str, request: web.Request):
+    async def handle_webhook(hass: HomeAssistant, _webhook_id: str, request: web.Request):
         try:
             allowed_ip = entry.data.get(CONF_IP_ADDRESS, "")
             only_one_ip = entry.data.get(ONLY_ONE_IP, False)
@@ -95,7 +93,7 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
                     return web.Response(status=403, text="Forbidden")
 
             data = await request.json()
-            _LOGGER.debug("Webhook [%s] received data: %s", webhook_id, data)
+            _LOGGER.debug("Webhook-Daten empfangen")
 
             # JSON-Validierung
             if not isinstance(data, dict):
@@ -112,16 +110,16 @@ async def async_register_webhook(hass: HomeAssistant, entry: ConfigEntry):
             # Doppelte Ausführung verhindern (basierend auf sendCount und Zeitstempel)
             send_count = data.get("sendCount")
             current_time = datetime.now(tz=UTC)
-            _LOGGER.debug("Webhook [%s] sendCount: %s", webhook_id, send_count)
-            _LOGGER.debug("Webhook [%s] current_time: %s", webhook_id, current_time)
+            _LOGGER.debug("Webhook sendCount: %s", send_count)
+            _LOGGER.debug("Webhook current_time: %s", current_time)
 
             # Cache für letzte Verarbeitung
             cache_key = f"{entry.entry_id}_last_sendcount"
             last_sendcount = hass.data[DOMAIN][entry.entry_id].get(cache_key)
             last_process_time = hass.data[DOMAIN][entry.entry_id].get(f"{cache_key}_time")
 
-            _LOGGER.debug("Webhook [%s] last_sendcount: %s", webhook_id, last_sendcount)
-            _LOGGER.debug("Webhook [%s] last_process_time: %s", webhook_id, last_process_time)
+            _LOGGER.debug("Webhook last_sendcount: %s", last_sendcount)
+            _LOGGER.debug("Webhook last_process_time: %s", last_process_time)
 
             # Wenn gleicher sendCount innerhalb von 5 Sekunden → ignorieren
             if (
@@ -174,7 +172,7 @@ async def async_unregister_webhook(hass: HomeAssistant, entry: ConfigEntry, old_
         hass.data[DOMAIN][entry.entry_id][WEBHOOK_WATCHDOG_TASK] = None
 
     webhook_id = old_webhook_id or entry.data[CONF_WEBHOOK_ID]
-    _LOGGER.info("Unregistering webhook with ID: %s", webhook_id)
+    _LOGGER.info("Unregistering webhook")
 
     async_unregister(hass, webhook_id)
 

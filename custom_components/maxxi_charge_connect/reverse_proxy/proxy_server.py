@@ -107,6 +107,10 @@ class MaxxiProxyServer:
                 refresh_cloud = e.data.get(CONF_REFRESH_CONFIG_FROM_CLOUD, False)
                 break
 
+        if entry is None:
+            _LOGGER.warning("Konfigurationsanfrage für unbekanntes Gerät abgelehnt")
+            return web.Response(status=403, text="Forbidden")
+
         if refresh_cloud or enable_forward or device_id not in self._device_config_cache:
             _LOGGER.debug("Konfiguration wird von der Cloud gelesen für %s", device_id)
             config_data = await self.fetch_cloud_config(device_id)
@@ -141,8 +145,14 @@ class MaxxiProxyServer:
             _LOGGER.error("Ungültige JSON-Daten empfangen: %s", e)
             return web.Response(status=400, text="Invalid JSON")
 
+        if not isinstance(data, dict):
+            return web.Response(status=400, text="Invalid JSON structure")
+
         device_id = data.get(CONF_DEVICE_ID)
-        _LOGGER.debug("Gerät(%s) hat Proxy-Daten empfangen: %s", device_id, data)
+        if not isinstance(device_id, str) or not device_id:
+            return web.Response(status=400, text="Missing deviceId")
+
+        _LOGGER.debug("Gerät(%s) hat Proxy-Daten empfangen", device_id)
 
         issue_id = f"unknown_device_{device_id}"
 
@@ -151,20 +161,12 @@ class MaxxiProxyServer:
         try:
             found_entry = False
             enable_forward = False
+            enable_cloud_data = False
 
             for cur_entry in self.hass.config_entries.async_entries(DOMAIN):
                 if cur_entry.data.get(CONF_DEVICE_ID) == device_id:
                     enable_forward = cur_entry.data.get(CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD)
-
                     enable_cloud_data = cur_entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
-
-                    _LOGGER.warning(
-                        "Forward-Check für Device %s: cur_entry=%s, enable_forward=%s, enable_cloud_data=%s",
-                        device_id,
-                        cur_entry.data if cur_entry else None,
-                        enable_forward,
-                        enable_cloud_data,
-                    )
                     found_entry = True
                     break
 
@@ -175,7 +177,7 @@ class MaxxiProxyServer:
                 _LOGGER.error(
                     "Eingehender Webhook mit unbekannter deviceId: %s. Bekannte IDs: %s",
                     device_id,
-                    ", ".join(known_devices),
+                    ", ".join(filter(None, known_devices)) or "keine",
                 )
 
                 # Repair Issue (nur einmal pro unbekannter ID)
@@ -188,9 +190,10 @@ class MaxxiProxyServer:
                     translation_key="unknown_device",
                     translation_placeholders={
                         "device_id": device_id,
-                        "known_devices": ", ".join(known_devices) or "keine",
+                        "known_devices": ", ".join(filter(None, known_devices)) or "keine",
                     },
                 )
+                return web.Response(status=403, text="Forbidden")
 
             forwarded = await self._forward_to_cloud(device_id, enable_cloud_data, data, enable_forward)
             await self._on_reverse_proxy_message(data, forwarded)
@@ -204,8 +207,6 @@ class MaxxiProxyServer:
         forwarded = False
 
         if enable_forward:
-            _LOGGER.debug("Leite an Cloud (%s)", data)
-
             try:
                 if enable_cloud_data:
                     # Externe Auflösung erzwingen
@@ -316,7 +317,7 @@ class MaxxiProxyServer:
             self._dispatcher_unsub[webhook_id] = unsub
             self._webhook_to_entry_id[webhook_id] = entry.entry_id
 
-            _LOGGER.info("Proxy hört auf Webhook: %s", webhook_id)
+            _LOGGER.info("Proxy hört auf Webhook")
 
     def unregister_entry(self, entry):
         """Dregistriert einen Entry für den Proxy-Server."""
@@ -325,13 +326,11 @@ class MaxxiProxyServer:
         unsub = self._dispatcher_unsub.pop(webhook_id, None)
         if unsub:
             unsub()
-            _LOGGER.info("Proxy hört nicht mehr auf Webhook: %s", webhook_id)
+            _LOGGER.info("Proxy hört nicht mehr auf Webhook")
         self._webhook_to_entry_id.pop(webhook_id, None)
 
     async def _handle_webhook_signal(self, data: dict, webhook_id: str | None = None):
         payload_device_id = data.get(PROXY_ERROR_DEVICE_ID)
-
-        _LOGGER.debug("Proxy empfängt Webhook-Daten (%s): %s", webhook_id, data)
 
         # Exakten Entry über den Webhook bestimmen
         entry = None
@@ -342,7 +341,8 @@ class MaxxiProxyServer:
 
         if not entry:
             _LOGGER.warning(
-                "Webhook %s ohne zugeordneten Entry – fallback auf deviceId-Suche (%s).", webhook_id, payload_device_id
+                "Webhook ohne zugeordneten Entry – Fallback auf deviceId-Suche (%s)",
+                payload_device_id,
             )
             entry = next(
                 (
@@ -357,8 +357,7 @@ class MaxxiProxyServer:
         if not entry and payload_device_id != ERRORS:
             known_devices = [e.data.get(CONF_DEVICE_ID) for e in self.hass.config_entries.async_entries(DOMAIN)]
             _LOGGER.error(
-                "Unbekannte deviceId vom Webhook %s: %s. Bekannte IDs: %s",
-                webhook_id,
+                "Unbekannte deviceId vom Webhook: %s. Bekannte IDs: %s",
                 payload_device_id,
                 ", ".join(filter(None, known_devices)) or "keine",
             )
@@ -381,8 +380,7 @@ class MaxxiProxyServer:
         # **Mismatch-Check**: Webhook gehört zu Entry X, aber Payload nennt anderes deviceId
         if payload_device_id != ERRORS and payload_device_id and cfg_device_id and payload_device_id != cfg_device_id:
             _LOGGER.error(
-                "Geräte-Mismatch für Webhook %s: payload=%s, config=%s (entry_id=%s)",
-                webhook_id,
+                "Geräte-Mismatch: payload=%s, config=%s (entry_id=%s)",
                 payload_device_id,
                 cfg_device_id,
                 entry.entry_id,
@@ -391,51 +389,32 @@ class MaxxiProxyServer:
             ir.async_create_issue(
                 self.hass,
                 DOMAIN,
-                f"device_mismatch_{webhook_id}",
+                f"device_mismatch_{entry.entry_id}",
                 is_fixable=False,
                 severity=ir.IssueSeverity.CRITICAL,
                 issue_domain=DOMAIN,
                 translation_key="device_mismatch",
                 translation_placeholders={
-                    "webhook_id": webhook_id or "unbekannt",
+                    "webhook_id": f"***{webhook_id[-4:]}" if webhook_id else "unbekannt",
                     "payload_device_id": payload_device_id,
                     "config_device_id": cfg_device_id,
                 },
             )
-            return  # bewusst nicht forwarden
+            return  # Do not forward mismatched device data.
 
         # Mismatch ist weg? → alte Issue aufräumen (kein Repair-Spam)
         if webhook_id:
             ir.async_delete_issue(self.hass, DOMAIN, f"device_mismatch_{webhook_id}")
 
+        ir.async_delete_issue(self.hass, DOMAIN, f"device_mismatch_{entry.entry_id}")
+
         # Jetzt flags **sicher** aus dem richtigen Entry
         enable_forward = entry.data.get(CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD)
         enable_cloud_data = entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
 
-        _LOGGER.debug(
-            "Forward-Check OK (entry_id=%s, deviceId=%s, enable_forward=%s, enable_cloud_data=%s)",
-            entry.entry_id,
-            cfg_device_id,
-            enable_forward,
-            enable_cloud_data,
-        )
-
         forwarded = await self._forward_to_cloud(cfg_device_id, enable_cloud_data, data, enable_forward)
-        _LOGGER.debug("Webhook %s forwarded=%s", webhook_id, forwarded)
+        _LOGGER.debug("Webhook forwarded=%s", forwarded)
         await self._on_reverse_proxy_message(data, forwarded)
 
     async def _on_reverse_proxy_message(self, json_data: dict, forwarded: bool):
         await fire_status_event(self.hass, json_data, forwarded)
-        # self.hass.bus.async_fire(
-        #     PROXY_STATUS_EVENTNAME,
-        #     {
-        #         PROXY_ERROR_DEVICE_ID: json_data.get(PROXY_ERROR_DEVICE_ID),
-        #         PROXY_ERROR_CCU: json_data.get(PROXY_ERROR_CCU),
-        #         PROXY_ERROR_IP: json_data.get(PROXY_ERROR_IP),
-        #         PROXY_ERROR_CODE: json_data.get(PROXY_ERROR_CODE),
-        #         PROXY_ERROR_MESSAGE: json_data.get(PROXY_ERROR_MESSAGE),
-        #         PROXY_ERROR_TOTAL: json_data.get(PROXY_ERROR_TOTAL),
-        #         PROXY_PAYLOAD: json_data,
-        #         PROXY_FORWARDED: forwarded,
-        #     },
-        # )

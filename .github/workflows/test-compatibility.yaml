@@ -1,0 +1,60 @@
+
+name: Home Assistant Compatibility
+
+on:
+  push:
+    branches:
+      - main
+      - "fix/**"
+      - "feat/**"
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-minimum-version:
+    name: HA 2025.5.0 / Python 3.13
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: requirements_test.txt
+
+      - name: Install Home Assistant 2025.5.0
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "homeassistant==2025.5.0"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install \
+            pytest \
+            pytest-asyncio \
+            pytest-mock \
+            pytest-cov \
+            paho-mqtt \
+            "amqtt==0.12.1" \
+            dnspython \
+            "beautifulsoup4==4.12.3"
+
+      - name: Verify dependencies
+        run: |
+          python --version
+          python -m pip check
+          python -m pip show homeassistant
+
+      - name: Run compatibility tests
+        run: |
+          python -m pytest tests -q --tb=short --disable-warnings

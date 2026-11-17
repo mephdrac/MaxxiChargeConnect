@@ -25,8 +25,6 @@ from ..const import (
     REQUIRED,
 )
 from ..http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
-
-# from ..migration.migration_from_yaml import MigrateFromYaml
 from ..reverse_proxy.proxy_server import MaxxiProxyServer
 from ..webhook import async_register_webhook, async_unregister_webhook
 from .ccu_base_connection import CcuBaseConnection

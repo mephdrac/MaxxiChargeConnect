@@ -155,6 +155,21 @@ Die bisherige Unterstützung für **CCU V1 per Webhook** bleibt erhalten. Versio
 
 Weitere Änderungen und Korrekturen findest du in den [GitHub Releases](https://github.com/mephdrac/MaxxiChargeConnect/releases).
 
+### ⚠️ YAML-Migration ab Version 2.9.1 nicht mehr unterstützt
+
+Mit **MaxxiChargeConnect v2.9.1** wird die Unterstützung für die Migration älterer YAML-basierter Konfigurationen (von Jörn R.) eingestellt.
+
+Die bisherige Migrationsfunktion wurde vollständig entfernt und steht ab dieser Version nicht mehr zur Verfügung.
+
+**Was bedeutet das für bestehende Nutzer?**
+
+- Bereits über die Home-Assistant-Benutzeroberfläche eingerichtete Integrationen sind von dieser Änderung nicht betroffen.
+- Bestehende Geräte und Entitäten bleiben erhalten.
+- Eine Übernahme alter YAML-Konfigurationen wird nicht mehr unterstützt.
+- Wer noch eine YAML-basierte Konfiguration verwendet, muss MaxxiChargeConnect über **Einstellungen → Geräte & Dienste** neu einrichten.
+
+**Hinweis:** Diese Änderung betrifft ausschließlich die veraltete YAML-Migration. Die regulären Aktualisierungen bestehender Konfigurationseinträge sowie die Unterstützung für CCU V1 und CCU V2 bleiben erhalten.
+
 ## Fehler melden und mitwirken
 
 Fehlerberichte, Verbesserungsvorschläge, Tests mit unterschiedlichen Firmware-Ständen und Pull Requests sind willkommen.

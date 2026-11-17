@@ -20,7 +20,7 @@
     "custom_components.maxxi_charge_connect"
   ],
   "requirements": [
-    "beautifulsoup4==4.15.0",
+    "beautifulsoup4>=4.15.0",
     "dnspython",
     "amqtt==0.12.1"
   ],

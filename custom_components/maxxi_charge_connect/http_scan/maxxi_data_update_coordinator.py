@@ -5,11 +5,11 @@ eine Web-Oberfläche per HTTP abruft, HTML parst und definierte Werte extrahiert
 um sie als Sensordaten in Home Assistant bereitzustellen.
 """
 
+import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
 
 import aiohttp
-import async_timeout
 from bs4 import BeautifulSoup
 from homeassistant.const import CONF_IP_ADDRESS
 from homeassistant.core import HomeAssistant
@@ -97,7 +97,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.debug("Abfrage - HOST: %s", self._resource)
             try:
                 async with aiohttp.ClientSession() as session:
-                    async with async_timeout.timeout(10):
+                    async with asyncio.timeout(10):
                         async with session.get(self._resource) as response:
                             if response.status != 200:
                                 raise UpdateFailed(f"Fehler beim Abruf: HTTP {response.status}")

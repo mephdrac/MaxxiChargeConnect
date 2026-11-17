@@ -4,11 +4,13 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from aiohttp import ClientConnectorError
+from homeassistant.const import CONF_IP_ADDRESS
 
 from custom_components.maxxi_charge_connect.const import (
     CONF_DEVICE_ID,
     CONF_ENABLE_CLOUD_DATA,
     CONF_ENABLE_FORWARD_TO_CLOUD,
+    CONF_ENABLE_LOCAL_CLOUD_PROXY,
     PROXY_ERROR_DEVICE_ID,
 )
 from custom_components.maxxi_charge_connect.reverse_proxy.proxy_server import (
@@ -32,11 +34,13 @@ def proxy_server(hass):
 
 @pytest.fixture
 def sample_entry():
-    """Mock ConfigEntry."""
+    """Create a configured CCU with an enabled and IP-restricted proxy."""
     entry = MagicMock()
     entry.entry_id = "test_entry"
     entry.data = {
         CONF_DEVICE_ID: "test_device",
+        CONF_IP_ADDRESS: "192.168.1.100",
+        CONF_ENABLE_LOCAL_CLOUD_PROXY: True,
         CONF_ENABLE_FORWARD_TO_CLOUD: True,
         CONF_ENABLE_CLOUD_DATA: False,
     }
@@ -158,6 +162,7 @@ async def test_handle_config_fetch_from_cloud(proxy_server, sample_entry):
 
         request = MagicMock()
         request.query = {PROXY_ERROR_DEVICE_ID: "test_device"}
+        request.transport.get_extra_info.return_value = ("192.168.1.100", 54321)
 
         response = await proxy_server._handle_config(request)
         assert response.status == 200
@@ -195,6 +200,7 @@ async def test_handle_text_known_device(proxy_server, sample_entry):
     data = {CONF_DEVICE_ID: "test_device"}
     request = MagicMock()
     request.json = AsyncMock(return_value=data)
+    request.transport.get_extra_info.return_value = ("192.168.1.100", 54321)
 
     with patch.object(proxy_server, "_forward_to_cloud") as mock_forward:
         mock_forward.return_value = True

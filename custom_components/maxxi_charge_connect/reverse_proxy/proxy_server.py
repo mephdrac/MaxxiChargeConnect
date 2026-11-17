@@ -9,10 +9,11 @@ import asyncio
 import json
 import logging
 from collections.abc import Callable
+from ipaddress import ip_address
 
 import dns.resolver
 from aiohttp import ClientConnectorError, ClientSession, ClientTimeout, web
-from homeassistant.const import CONF_WEBHOOK_ID
+from homeassistant.const import CONF_IP_ADDRESS, CONF_WEBHOOK_ID
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
@@ -22,6 +23,7 @@ from ..const import (
     CONF_DEVICE_ID,
     CONF_ENABLE_CLOUD_DATA,
     CONF_ENABLE_FORWARD_TO_CLOUD,
+    CONF_ENABLE_LOCAL_CLOUD_PROXY,
     CONF_REFRESH_CONFIG_FROM_CLOUD,
     DEFAULT_ENABLE_FORWARD_TO_CLOUD,
     DOMAIN,
@@ -92,34 +94,88 @@ class MaxxiProxyServer:
             )
         return None
 
+    def _get_authorized_entry(self, request: web.Request, device_id: str):
+        """Return the matching CCU entry only for an authorized request.
+
+        A request is authorized when the device ID belongs to a configured
+        CCU with the local cloud proxy enabled and the request originates
+        from that CCU's configured IP address.
+
+        The remote address is obtained from the underlying TCP connection,
+        not from client-controlled forwarding headers.
+
+        Args:
+            request: Incoming HTTP request.
+            device_id: Device identifier provided by the requesting CCU.
+
+        Returns:
+            The matching configuration entry or None if access is denied.
+
+        """
+        if not isinstance(device_id, str) or not device_id:
+            return None
+
+        transport = request.transport
+        if transport is None:
+            return None
+
+        peer = transport.get_extra_info("peername")
+        if not peer:
+            return None
+
+        try:
+            remote_ip = ip_address(peer[0])
+        except (ValueError, TypeError):
+            return None
+
+        for entry in self.hass.config_entries.async_entries(DOMAIN):
+            if entry.data.get(CONF_DEVICE_ID) != device_id:
+                continue
+
+            if not entry.data.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, False):
+                return None
+
+            configured_ip = entry.data.get(CONF_IP_ADDRESS)
+            if not configured_ip:
+                return None
+
+            try:
+                allowed_ip = ip_address(configured_ip)
+            except ValueError:
+                return None
+
+            if remote_ip == allowed_ip:
+                return entry
+
+            return None
+
+        return None
+
     async def _handle_config(self, request):
         device_id = request.query.get(PROXY_ERROR_DEVICE_ID)
         if not device_id:
             return web.Response(status=400, text="Missing deviceId")
 
-        entry = None
-        enable_forward = False
-        refresh_cloud = False
-        for e in self.hass.config_entries.async_entries(DOMAIN):
-            if e.data.get(CONF_DEVICE_ID) == device_id:
-                entry = e
-                enable_forward = e.data.get(CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD)
-                refresh_cloud = e.data.get(CONF_REFRESH_CONFIG_FROM_CLOUD, False)
-                break
+        entry = self._get_authorized_entry(request, device_id)
 
         if entry is None:
-            _LOGGER.warning("Konfigurationsanfrage für unbekanntes Gerät abgelehnt")
+            _LOGGER.warning("Unberechtigte Proxy-Konfigurationsanfrage abgelehnt")
             return web.Response(status=403, text="Forbidden")
+
+        enable_forward = entry.data.get(
+            CONF_ENABLE_FORWARD_TO_CLOUD,
+            DEFAULT_ENABLE_FORWARD_TO_CLOUD,
+        )
+        refresh_cloud = entry.data.get(CONF_REFRESH_CONFIG_FROM_CLOUD, False)
 
         if refresh_cloud or enable_forward or device_id not in self._device_config_cache:
             _LOGGER.debug("Konfiguration wird von der Cloud gelesen für %s", device_id)
             config_data = await self.fetch_cloud_config(device_id)
             if not config_data:
                 return web.Response(status=500, text="Cannot fetch config from cloud")
-            if entry:
-                data = dict(entry.data)
-                data[CONF_REFRESH_CONFIG_FROM_CLOUD] = False
-                self.hass.config_entries.async_update_entry(entry, data=data)
+            data = dict(entry.data)
+            data[CONF_REFRESH_CONFIG_FROM_CLOUD] = False
+            self.hass.config_entries.async_update_entry(entry, data=data)
         else:
             config_data = self._device_config_cache[device_id]
             _LOGGER.debug("Konfiguration kommt aus dem Proxy Cache für %s", device_id)
@@ -139,6 +195,7 @@ class MaxxiProxyServer:
         )
 
     async def _handle_text(self, request):
+        """Accept and optionally forward data from an authorized CCU."""
         try:
             data = await request.json()
         except Exception as e:  # pylint: disable=broad-exception-caught
@@ -152,56 +209,22 @@ class MaxxiProxyServer:
         if not isinstance(device_id, str) or not device_id:
             return web.Response(status=400, text="Missing deviceId")
 
-        _LOGGER.debug("Gerät(%s) hat Proxy-Daten empfangen", device_id)
+        entry = self._get_authorized_entry(request, device_id)
+        if entry is None:
+            _LOGGER.warning("Unberechtigte Proxy-Datenanfrage abgelehnt")
+            return web.Response(status=403, text="Forbidden")
 
-        issue_id = f"unknown_device_{device_id}"
-
-        # Entscheiden, ob Transformation nötig ist
+        enable_forward = entry.data.get(CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD)
+        enable_cloud_data = entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
 
         try:
-            found_entry = False
-            enable_forward = False
-            enable_cloud_data = False
-
-            for cur_entry in self.hass.config_entries.async_entries(DOMAIN):
-                if cur_entry.data.get(CONF_DEVICE_ID) == device_id:
-                    enable_forward = cur_entry.data.get(CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD)
-                    enable_cloud_data = cur_entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
-                    found_entry = True
-                    break
-
-            if not found_entry and device_id != ERRORS:
-                known_devices = [
-                    entry.data.get(CONF_DEVICE_ID) for entry in self.hass.config_entries.async_entries(DOMAIN)
-                ]
-                _LOGGER.error(
-                    "Eingehender Webhook mit unbekannter deviceId: %s. Bekannte IDs: %s",
-                    device_id,
-                    ", ".join(filter(None, known_devices)) or "keine",
-                )
-
-                # Repair Issue (nur einmal pro unbekannter ID)
-                ir.async_create_issue(
-                    self.hass,
-                    DOMAIN,
-                    issue_id,
-                    is_fixable=False,
-                    severity=ir.IssueSeverity.CRITICAL,
-                    translation_key="unknown_device",
-                    translation_placeholders={
-                        "device_id": device_id,
-                        "known_devices": ", ".join(filter(None, known_devices)) or "keine",
-                    },
-                )
-                return web.Response(status=403, text="Forbidden")
-
             forwarded = await self._forward_to_cloud(device_id, enable_cloud_data, data, enable_forward)
             await self._on_reverse_proxy_message(data, forwarded)
-            return web.Response(status=200, text="OK")
+        except Exception:  # pylint: disable=broad-exception-caught
+            _LOGGER.exception("Fehler bei der Verarbeitung der Proxy-Daten")
+            return web.Response(status=500, text="An internal error has occurred")
 
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            _LOGGER.error("Error (%s)", e)
-            return web.Response(status=400, text="An internal error has occurred")
+        return web.Response(status=200, text="OK")
 
     async def _forward_to_cloud(self, device_id, enable_cloud_data: bool, data, enable_forward: bool) -> bool:
         forwarded = False
@@ -374,6 +397,10 @@ class MaxxiProxyServer:
                 },
             )
             return  # hier abbrechen
+
+        if entry is None:
+            _LOGGER.warning("Webhook-Signal ohne zugeordneten Config Entry verworfen")
+            return
 
         cfg_device_id = entry.data.get(CONF_DEVICE_ID)
 

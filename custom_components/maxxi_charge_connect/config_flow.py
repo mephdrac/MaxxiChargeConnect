@@ -240,6 +240,9 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             # Pflichtfeldprüfung
             if self._timeout_receive is None or self._timeout_receive < 2:
                 errors[CONF_TIMEOUT_RECEIVE] = "required"
+
+            if self._enable_local_cloud_proxy and not self._host_ip:
+                errors[CONF_IP_ADDRESS] = "required"
             # Ende Pflichtfeldprüfung
 
             if errors:

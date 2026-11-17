@@ -32,9 +32,10 @@ def flow():
 @pytest.mark.asyncio
 @pytest.mark.parametrize("proxy", [False, True])
 async def test_v1_setup_with_default_network_settings(flow, proxy):
-    """An omitted optional IP must not prevent creating a V1 entry."""
+    """Require a CCU IP for the local proxy while keeping it optional for webhooks."""
     result = await flow.async_step_user({CONF_CCU_VERSION: CCU_V1})
     assert result["step_id"] == "v1"
+
     v1_input = {
         CONF_NAME: "CCU V1",
         CONF_DEVICE_ID: "123",
@@ -42,21 +43,55 @@ async def test_v1_setup_with_default_network_settings(flow, proxy):
     }
     user_input = result["data_schema"](v1_input)
     assert user_input == v1_input
+
     result = await flow.async_step_v1(user_input)
     assert result["step_id"] == "optional"
-    user_input = result["data_schema"]({CONF_ENABLE_LOCAL_CLOUD_PROXY: proxy})
-    assert user_input[CONF_IP_ADDRESS] == ""
+
+    ccu_ip = "192.168.1.100" if proxy else ""
+    user_input = result["data_schema"](
+        {
+            CONF_ENABLE_LOCAL_CLOUD_PROXY: proxy,
+            CONF_IP_ADDRESS: ccu_ip,
+        }
+    )
+
     result = await flow.async_step_optional(user_input)
+
     if proxy:
         assert result["step_id"] == "proxy_options"
         result = await flow.async_step_proxy_options(result["data_schema"]({}))
+
     assert result["type"] == "create_entry"
     assert result["data"][CONF_CCU_VERSION] == CCU_V1
     assert result["data"][CONF_WEBHOOK_ID] == "hook"
     assert result["data"][CONF_TIMEOUT_RECEIVE] == DEFAULT_TIMEOUT_RECEIVE
-    assert result["data"][CONF_IP_ADDRESS] is None
+    assert result["data"][CONF_IP_ADDRESS] == (ccu_ip or None)
     assert result["data"][CONF_ENABLE_LOCAL_CLOUD_PROXY] is proxy
     assert not result["data"][CONF_ENABLE_MQTT_BROKER]
+
+
+@pytest.mark.asyncio
+async def test_v1_proxy_requires_ccu_ip(flow):
+    """Reject proxy activation without a CCU IP address."""
+    await flow.async_step_user({CONF_CCU_VERSION: CCU_V1})
+    await flow.async_step_v1(
+        {
+            CONF_NAME: "CCU V1",
+            CONF_DEVICE_ID: "123",
+            CONF_WEBHOOK_ID: "hook",
+        }
+    )
+
+    result = await flow.async_step_optional(
+        {
+            CONF_ENABLE_LOCAL_CLOUD_PROXY: True,
+            CONF_IP_ADDRESS: "",
+        }
+    )
+
+    assert result["type"] == "form"
+    assert result["step_id"] == "optional"
+    assert result["errors"] == {CONF_IP_ADDRESS: "required"}
 
 
 @pytest.mark.asyncio

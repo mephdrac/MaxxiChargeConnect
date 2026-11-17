@@ -52,6 +52,7 @@ class MqttTranslationTests(unittest.TestCase):
         )
         entity = CcuNativeEnergySensor(coordinator, "gridexportenergytotal", spec)
         entity.platform_data = platform_for("sensor")
+        entity.platform = entity.platform_data
         self.assertEqual(entity.name, "Netzeinspeisung gesamt (CCU-Zähler)")
         self.assertEqual(entity.extra_state_attributes["source"], "ccu")
         self.assertEqual(entity.unique_id, "translated_gridexportenergytotal_ccu_counter")
@@ -61,6 +62,7 @@ class MqttTranslationTests(unittest.TestCase):
         coordinator = SimpleNamespace(entry=self.entry, specs={}, native_energy_bindings={})
         entity = CcuNativeEnergySensor(coordinator, "battery_pv_energy_today_1", spec)
         entity.platform_data = platform_for("sensor")
+        entity.platform = entity.platform_data
         self.assertEqual(entity.name, "Batterie 2 PV-Ertrag heute (CCU-Zähler)")
 
     def test_actual_ccu_controls_use_german_names_without_changing_ids_or_options(self):

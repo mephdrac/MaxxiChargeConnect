@@ -32,6 +32,21 @@ PLATFORMS: list[Platform] = [
 ]
 
 
+def _remove_legacy_webhook_entity(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Remove the obsolete webhook ID entity from the entity registry."""
+    registry = er.async_get(hass)
+    old_unique_id = f"{entry.entry_id}_webhook_id"
+
+    for entity_id, registry_entry in list(registry.entities.items()):
+        if (
+            registry_entry.config_entry_id == entry.entry_id
+            and registry_entry.platform == DOMAIN
+            and registry_entry.unique_id == old_unique_id
+        ):
+            registry.async_remove(entity_id)
+            _LOGGER.info("Removed obsolete webhook ID entity: %s", entity_id)
+
+
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:  # pylint: disable=unused-argument
     """Wird beim Start von Home Assistant einmalig aufgerufen."""
     hass.data.setdefault(DOMAIN, {})
@@ -41,6 +56,8 @@ async def async_setup(hass: HomeAssistant, config: dict) -> bool:  # pylint: dis
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Setup einer MaxxiChargeConnect Config Entry."""
+
+    _remove_legacy_webhook_entity(hass, entry)
 
     ccu_version = entry.data.get(CONF_CCU_VERSION, CCU_V1)
     connection: CcuBaseConnection | None = None

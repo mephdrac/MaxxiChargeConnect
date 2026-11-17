@@ -63,7 +63,6 @@ from .devices.rssi import Rssi
 from .devices.send_count import SendCount
 from .devices.status_sensor import StatusSensor
 from .devices.uptime_sensor import UptimeSensor
-from .devices.webhook_id import WebhookId
 from .http_scan.http_scan_text import HttpScanText
 
 SENSOR_MANAGER = {}  # key: entry_id → value: BatterySensorManager
@@ -123,7 +122,6 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
     battery_soe = BatterySoE(entry)
     power_meter = PowerMeter(entry)
     firmware_version = FirmwareVersion(entry)
-    webhook_id = WebhookId(entry)
     battery_power = BatteryPower(entry)
     power_consumption = PowerConsumption(entry)
     grid_export = GridExport(entry)
@@ -179,7 +177,6 @@ async def async_setup_entry(  # pylint: disable=too-many-locals, too-many-statem
             power_meter,
             firmware_version,
             battery_soe,
-            webhook_id,
             power_consumption,
             grid_export,
             grid_import,

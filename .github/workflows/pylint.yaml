@@ -30,4 +30,3 @@ jobs:
       run: |
          ruff check
          ruff format --exit-non-zero-on-format
-

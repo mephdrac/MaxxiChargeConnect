@@ -5,9 +5,9 @@ on:
     - cron: '0 8 * * 1'  # Jeden Montag um 08:00 UTC
   workflow_dispatch:      # Manuell auslösbar
   pull_request:
-    branches: 
+    branches:
       - main
-      - dev 
+      - dev
   push:
     branches:
       - main

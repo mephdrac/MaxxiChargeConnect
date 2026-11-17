@@ -1,7 +1,7 @@
 # 🚀 Release vX.Y.Z
 
-🗓 **Veröffentlichungsdatum:** YYYY-MM-DD  
-🔧 **HA-Integration:** MaxxiChargeConnect  
+🗓 **Veröffentlichungsdatum:** YYYY-MM-DD
+🔧 **HA-Integration:** MaxxiChargeConnect
 
 ---
 

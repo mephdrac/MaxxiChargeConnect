@@ -1,0 +1,52 @@
+
+# Pre-commit configuration for MaxxiChargeConnect.
+# All checks run before every commit.
+# Python tools are executed from the active virtual environment.
+
+default_stages: [pre-commit]
+
+repos:
+  # Basic repository checks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-yaml
+        args: [--unsafe]
+      - id: check-json
+      - id: check-added-large-files
+
+  # Project-specific Python checks
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: Ruff - Lint
+        entry: ruff check --fix
+        language: system
+        types: [python]
+        stages: [pre-commit]
+
+      - id: ruff-format
+        name: Ruff - Format
+        entry: ruff format
+        language: system
+        types: [python]
+        stages: [pre-commit]
+
+      - id: pylint
+        name: Pylint - Code Quality
+        entry: python -m pylint custom_components/maxxi_charge_connect
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]
+
+      - id: pytest
+        name: Pytest - All Tests
+        entry: python -m pytest tests -q --tb=short
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [pre-commit]

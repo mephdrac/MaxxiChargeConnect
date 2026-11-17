@@ -14,7 +14,7 @@ Typ: Integration
 - Repository klonen oder ZIP herunterladen
 - Inhalt in das Verzeichnis custom_components/maxxi_charge_connect kopieren
 - Home Assistant neu starten
-- Integration wie gewohnt 
+- Integration wie gewohnt
 
 ## Einrichten auf Maxxicharge
 Zunächst muss in der maxxisun.app unter Cloudservice "nein" eingestellt ist. Und die Einstellung für "Lokalen Server nutzen" auf "Ja" steht.
@@ -32,4 +32,3 @@ Zunächst über HACS installieren (siehe [Installation](# 🛠️ Installation))
 
 Danach ein Gerät hinzufügen:
 - [Konfiguration von MaxxiChargeConnect](https://github.com/mephdrac/MaxxiChargeConnect/wiki/B.2.2-MaxxiChargeConnect-konfigurieren)
-

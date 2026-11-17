@@ -1,8 +1,10 @@
-"""
-Initialisierung der MaxxiChargeConnect-Integration in Home Assistant.
+"""Initialisierung und Migration der MaxxiChargeConnect-Integration.
 
-Dieses Modul registriert beim Setup den Webhook und leitet den
-Konfigurations-Flow an die zuständigen Plattformen weiter.
+Das Modul initialisiert den Integrationsspeicher und richtet für jeden
+Konfigurationseintrag die passende Verbindung zur CCU V1 oder CCU V2 ein.
+Es entlädt die zugehörigen Plattformen und Verbindungen und migriert
+vorhandene Konfigurationseinträge sowie ausgewählte Entitätskennungen.
+Der Webhook wird durch die zuständige CCU-V1-Verbindung registriert.
 """
 
 import asyncio
@@ -11,6 +13,7 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_registry import async_get as async_get_entity_registry
 
@@ -22,8 +25,7 @@ from .const import CCU_V1, CCU_V2, CONF_CCU_VERSION, CONF_DEVICE_ID, CONF_NEEDS_
 
 _LOGGER = logging.getLogger(__name__)
 
-# from homeassistant.helpers import config_validation as cv
-# CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)  # pylint: disable=invalid-name
 
 PLATFORMS: list[Platform] = [
     Platform.SENSOR,
@@ -33,7 +35,19 @@ PLATFORMS: list[Platform] = [
 
 
 def _remove_legacy_webhook_entity(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Remove the obsolete webhook ID entity from the entity registry."""
+    """Entferne die veraltete Webhook-ID-Entität des Konfigurationseintrags.
+
+    Die Bereinigung prüft die Zugehörigkeit zum aktuellen Config Entry,
+    die Integrationsplattform und die bisherige Unique ID. Andere
+    Entitäten und die intern gespeicherte Webhook-ID bleiben erhalten.
+
+    Args:
+        hass: Laufende Home-Assistant-Instanz mit Entity Registry.
+        entry: Konfigurationseintrag der betreffenden CCU.
+
+    Returns:
+        None. Die Entity Registry wird bei einem Treffer direkt geändert.
+    """
     registry = er.async_get(hass)
     old_unique_id = f"{entry.entry_id}_webhook_id"
 
@@ -48,14 +62,45 @@ def _remove_legacy_webhook_entity(hass: HomeAssistant, entry: ConfigEntry) -> No
 
 
 async def async_setup(hass: HomeAssistant, config: dict) -> bool:  # pylint: disable=unused-argument
-    """Wird beim Start von Home Assistant einmalig aufgerufen."""
+    """Initialisiere den globalen Datenspeicher der Integration.
+
+    Legt den Domain-Schlüssel an und initialisiert den Platzhalter für
+    den optionalen Reverse-Proxy. Der eigentliche Geräteaufbau erfolgt
+    erst in ``async_setup_entry``.
+
+    Args:
+        hass: Laufende Home-Assistant-Instanz.
+        config: Vollständige Home-Assistant-Konfiguration; wird hier
+            nicht ausgewertet, da die Einrichtung über Config Entries läuft.
+
+    Returns:
+        Immer ``True`` nach der Initialisierung.
+    """
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN]["proxy"] = None  # Platz für globale Proxy-Instanz
     return True
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Setup einer MaxxiChargeConnect Config Entry."""
+    """Richte eine CCU-Verbindung für den angegebenen Config Entry ein.
+
+    Entfernt zunächst die veraltete Webhook-ID-Entität, wählt anhand
+    der konfigurierten CCU-Version die passende Verbindung und speichert
+    diese unter der Entry-ID. Bei einem fehlgeschlagenen Setup wird
+    die Verbindung entladen und aus dem Datenspeicher entfernt.
+
+    Args:
+        hass: Laufende Home-Assistant-Instanz.
+        entry: Einzurichtender Konfigurationseintrag mit CCU-Version.
+
+    Returns:
+        ``True`` bei erfolgreichem Setup, andernfalls ``False``.
+        Auch eine unbekannte CCU-Version führt zu ``False``.
+
+    Raises:
+        BaseException: Fehler aus dem Verbindungs-Setup werden nach dem
+            Entfernen des zwischengespeicherten Eintrags weitergereicht.
+    """
 
     _remove_legacy_webhook_entity(hass, entry)
 
@@ -90,7 +135,22 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Entlädt die Integration vollständig und deregistriert den Webhook."""
+    """Entlade die Plattformen und die Verbindung eines Config Entries.
+
+    Ermittelt die zu entladenden Plattformen abhängig von der CCU-Version.
+    Erst wenn alle Plattformen erfolgreich entladen wurden, wird die
+    Verbindung entladen und aus ``hass.data`` entfernt. Die zuständige
+    Verbindung übernimmt dabei auch ihre Kommunikationsressourcen.
+
+    Args:
+        hass: Laufende Home-Assistant-Instanz.
+        entry: Konfigurationseintrag, dessen Ressourcen freizugeben sind.
+
+    Returns:
+        ``True``, wenn sämtliche Plattformen erfolgreich entladen
+        wurden; sonst ``False``. Bei ``False`` wird die Verbindung
+        nicht aus dem Integrationsspeicher entfernt.
+    """
 
     connection = hass.data[DOMAIN].get(entry.entry_id, {}).get("connection")
     platforms = [Platform(name) for name in MQTT_PLATFORMS] if entry.data.get(CONF_CCU_VERSION) == CCU_V2 else PLATFORMS
@@ -110,7 +170,30 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:  # pylint: disable=too-many-locals,too-many-branches, too-many-statements
-    """Migration eines Config-Eintrags auf neuere Versionen."""
+    """Migriere einen vorhandenen Config Entry schrittweise auf Version 4.0.
+
+    Führt nur die für die gespeicherte Version notwendigen Schritte aus:
+
+    * v1 → v2: Übernahme der bestehenden Konfigurationsdaten.
+    * v2 → v3: Entfernen ausgewählter veralteter Entitäten.
+    * v3.0 → v3.1: Umbenennung der Unique IDs mehrerer Energiesensoren.
+    * v3.1 → v3.2: Markierung einer fehlenden Device-ID zur Nacharbeit.
+    * v3.2 → v3.3: Entfernen des alten Error-Sensors.
+    * v3.3 → v3.4: Entfernen des alten Last-Message-Sensors.
+    * v3.4 → v4.0: Ergänzung der CCU-Versionsangabe, falls sie fehlt.
+
+    Die Migration verändert vorhandene Config Entries und gegebenenfalls
+    zugehörige Entity-Registry-Einträge. Sie ist von der entfernten
+    YAML-Konfigurationsmigration unabhängig.
+
+    Args:
+        hass: Laufende Home-Assistant-Instanz einschließlich Entity Registry.
+        config_entry: Zu aktualisierender Konfigurationseintrag.
+
+    Returns:
+        ``True``, wenn am Ende Version 4.0 erreicht wurde; ``False``
+        bei einem abgefangenen Migrationsfehler oder abweichender Version.
+    """
     version = config_entry.version or 1
     minor_version = getattr(config_entry, "minor_version", 0)
 

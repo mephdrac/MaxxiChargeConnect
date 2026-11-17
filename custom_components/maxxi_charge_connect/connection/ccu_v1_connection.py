@@ -95,45 +95,6 @@ class CCCv1Connection(CcuBaseConnection):
             _LOGGER.error("Fehler beim Laden der Plattformen: %s", e)
             return False
 
-        # # Migration von YAML-Konfiguration
-        # migrator = MigrateFromYaml(self.hass, self.entry)
-
-        # async def handle_trigger_migration(call):
-        #     mappings = call.data.get("mappings", [])
-
-        #     try:
-        #         if not isinstance(mappings, list) or not all(isinstance(item, dict) for item in mappings):
-        #             raise ValueError("Mappings must be a list of dictionaries.")
-        #         for item in mappings:
-        #             if "old_sensor" not in item or "new_sensor" not in item:
-        #                 raise ValueError("Each mapping must contain 'old_sensor' and 'new_sensor'.")
-        #     except ValueError as e:
-        #         _LOGGER.error("Invalid mappings provided for migration: %s", e)
-        #         return
-
-        #     try:
-        #         await migrator.async_handle_trigger_migration(mappings)
-        #     except Exception as e:  # pylint: disable=broad-exception-caught
-        #         _LOGGER.error("Fehler bei der Migration: %s", e)
-
-        # hass.services.async_register(DOMAIN, "migration_von_yaml_konfiguration", handle_trigger_migration)
-
-        # # Migration-Hinweis
-        # notify_migration = entry.data.get(NOTIFY_MIGRATION, False)
-        # if notify_migration:
-
-        #     async def sub_notify_migration():
-        #         try:
-        #             await asyncio.sleep(10)  # Warte 10 Sekunden nach Start
-        #             await migrator.async_notify_possible_migration()
-        #         except Exception as e:  # pylint: disable=broad-exception-caught
-        #             _LOGGER.error("Fehler beim Migration-Hinweis: %s", e)
-
-        #     task = hass.async_create_task(sub_notify_migration())
-        #     task.add_done_callback(
-        #         lambda t: _LOGGER.error("Notify-Migration-Task beendet: %s", t.exception()) if t.exception() else None
-        #     )
-
         # --- GLOBALEN PROXY starten ---
         proxy_enabled = self.entry.data.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_ENABLE_LOCAL_CLOUD_PROXY)
         if proxy_enabled:

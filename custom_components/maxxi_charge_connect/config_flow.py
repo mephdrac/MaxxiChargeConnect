@@ -404,22 +404,6 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._enable_cloud_data = entry.data.get(CONF_ENABLE_CLOUD_DATA, False)
         self._refresh_cloud_data = entry.data.get(CONF_REFRESH_CONFIG_FROM_CLOUD, False)
 
-        _LOGGER.debug(
-            "Reconfigure internal state: %s",
-            {
-                "name": self._name,
-                "device_id": self._device_id,
-                "webhook_id": self._webhook_id,
-                "host_ip": self._host_ip,
-                "only_ip": self._only_ip,
-                "notify_migration": self._notify_migration,
-                "enable_local_cloud_proxy": self._enable_local_cloud_proxy,
-                "enable_forward_to_cloud": self._enable_forward_to_cloud,
-                "enable_cloud_data": self._enable_cloud_data,
-                "refresh_cloud_data": self._refresh_cloud_data,
-                "timeout_receive": self._timeout_receive,
-            },
-        )
         if self._ccu_version == CCU_V2:
             return await self.async_step_v2(user_input)
         return await self.async_step_v1(user_input)

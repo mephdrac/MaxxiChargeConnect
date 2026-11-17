@@ -23,6 +23,7 @@ pytest
 pytest-asyncio
 pytest-mock
 pytest-cov
+pre-commit
 
 homeassistant==2026.11.1
 voluptuous

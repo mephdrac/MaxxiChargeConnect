@@ -59,16 +59,17 @@ async def test_battery_soc__device_info():
 async def test_battery_soc__handle_update_alles_ok():
     """_handle_update Methode der BatterySoc Entity testen, wenn alle Bedingungen erfüllt sind."""
 
+    dummy_config_entry = MagicMock()
+    dummy_config_entry.entry_id = "1234abcd"
+    dummy_config_entry.data = {}
+
     hass = MagicMock()
     hass.async_add_job = AsyncMock()
     hass.data = {
         DOMAIN: {
-            CONF_WINTER_MODE: False,
+            dummy_config_entry.entry_id: {CONF_WINTER_MODE: False},
         }
     }
-
-    dummy_config_entry = MagicMock()
-    dummy_config_entry.data = {}
 
     soc = 37.623
 
@@ -147,11 +148,12 @@ async def test_battery_soc__check_upper_limit_reached1():  # pylint: disable=inv
     """
 
     dummy_config_entry = MagicMock()
+    dummy_config_entry.entry_id = "1234abcd"
     dummy_config_entry.data = {}
 
     hass = MagicMock()
 
-    hass.data = {DOMAIN: {CONF_WINTER_MAX_CHARGE: 60, CONF_WINTER_MIN_CHARGE: 20}}
+    hass.data = {DOMAIN: {dummy_config_entry.entry_id: {CONF_WINTER_MAX_CHARGE: 60, CONF_WINTER_MIN_CHARGE: 20}}}
 
     cur_value = float(60)
     cur_min_limit = float(60)  # aktuelles Entladelimmit der CCU
@@ -172,11 +174,12 @@ async def test_battery_soc__check_upper_limit_reached2():  # pylint: disable=inv
     """
 
     dummy_config_entry = MagicMock()
+    dummy_config_entry.entry_id = "1234abcd"
     dummy_config_entry.data = {}
 
     hass = MagicMock()
 
-    hass.data = {DOMAIN: {CONF_WINTER_MAX_CHARGE: 60, CONF_WINTER_MIN_CHARGE: 20}}
+    hass.data = {DOMAIN: {dummy_config_entry.entry_id: {CONF_WINTER_MAX_CHARGE: 60, CONF_WINTER_MIN_CHARGE: 20}}}
 
     cur_value = float(46)
     cur_min_limit = float(60)  # aktuelles Entladelimmit der CCU
@@ -198,11 +201,12 @@ async def test_battery_soc__check_upper_limit_reached3():  # pylint: disable=inv
     """
 
     dummy_config_entry = MagicMock()
+    dummy_config_entry.entry_id = "1234abcd"
     dummy_config_entry.data = {}
 
     hass = MagicMock()
 
-    hass.data = {DOMAIN: {CONF_WINTER_MAX_CHARGE: 60, CONF_WINTER_MIN_CHARGE: 20}}
+    hass.data = {DOMAIN: {dummy_config_entry.entry_id: {CONF_WINTER_MAX_CHARGE: 60, CONF_WINTER_MIN_CHARGE: 20}}}
 
     cur_value = float(61)
     cur_min_limit = float(20)  # aktuelles Entladelimmit der CCU
@@ -223,11 +227,12 @@ async def test_battery_soc__check_lower_limit_reached1():  # pylint: disable=inv
     """
 
     dummy_config_entry = MagicMock()
+    dummy_config_entry.entry_id = "1234abcd"
     dummy_config_entry.data = {}
 
     hass = MagicMock()
 
-    hass.data = {DOMAIN: {CONF_WINTER_MAX_CHARGE: 60, CONF_WINTER_MIN_CHARGE: 20}}
+    hass.data = {DOMAIN: {dummy_config_entry.entry_id: {CONF_WINTER_MAX_CHARGE: 60, CONF_WINTER_MIN_CHARGE: 20}}}
 
     cur_value = float(20)
     cur_min_limit = float(20)  # aktuelles Entladelimmit der CCU
@@ -248,11 +253,12 @@ async def test_battery_soc__check_lower_limit_reached2():  # pylint: disable=inv
     """
 
     dummy_config_entry = MagicMock()
+    dummy_config_entry.entry_id = "1234abcd"
     dummy_config_entry.data = {}
 
     hass = MagicMock()
 
-    hass.data = {DOMAIN: {CONF_WINTER_MAX_CHARGE: 60, CONF_WINTER_MIN_CHARGE: 20}}
+    hass.data = {DOMAIN: {dummy_config_entry.entry_id: {CONF_WINTER_MAX_CHARGE: 60, CONF_WINTER_MIN_CHARGE: 20}}}
 
     cur_value = float(41)
     cur_min_limit = float(20)  # aktuelles Entladelimmit der CCU
@@ -274,11 +280,12 @@ async def test_battery_soc__check_lower_limit_reached3():  # pylint: disable=inv
     """
 
     dummy_config_entry = MagicMock()
+    dummy_config_entry.entry_id = "1234abcd"
     dummy_config_entry.data = {}
 
     hass = MagicMock()
 
-    hass.data = {DOMAIN: {CONF_WINTER_MAX_CHARGE: 60, CONF_WINTER_MIN_CHARGE: 20}}
+    hass.data = {DOMAIN: {dummy_config_entry.entry_id: {CONF_WINTER_MAX_CHARGE: 60, CONF_WINTER_MIN_CHARGE: 20}}}
 
     cur_value = float(61)
     cur_min_limit = float(20)  # aktuelles Entladelimmit der CCU
@@ -306,7 +313,14 @@ async def test_battery_soc___do_wintermode1(mock_async_get_min_soc_entity):  # p
     winter_max_charge = float(60)
     winter_min_charge = float(20)
 
-    mock_hass.data = {DOMAIN: {CONF_WINTER_MAX_CHARGE: winter_max_charge, CONF_WINTER_MIN_CHARGE: winter_min_charge}}
+    mock_hass.data = {
+        DOMAIN: {
+            mock_config_entry.entry_id: {
+                CONF_WINTER_MAX_CHARGE: winter_max_charge,
+                CONF_WINTER_MIN_CHARGE: winter_min_charge,
+            }
+        }
+    }
     mock_entity = MagicMock()
     mock_entity.set_change_limitation = AsyncMock()
 
@@ -355,7 +369,14 @@ async def test_battery_soc___do_wintermode2(mock_async_get_min_soc_entity):  # p
     winter_max_charge = float(60)
     winter_min_charge = float(20)
 
-    mock_hass.data = {DOMAIN: {CONF_WINTER_MAX_CHARGE: winter_max_charge, CONF_WINTER_MIN_CHARGE: winter_min_charge}}
+    mock_hass.data = {
+        DOMAIN: {
+            mock_config_entry.entry_id: {
+                CONF_WINTER_MAX_CHARGE: winter_max_charge,
+                CONF_WINTER_MIN_CHARGE: winter_min_charge,
+            }
+        }
+    }
     mock_entity = MagicMock()
     mock_entity.set_change_limitation = AsyncMock()
 
@@ -460,7 +481,14 @@ async def test_battery_soc___do_wintermode3(mock_async_get_min_soc_entity):  # p
     winter_max_charge = float(60)
     winter_min_charge = float(20)
 
-    mock_hass.data = {DOMAIN: {CONF_WINTER_MAX_CHARGE: winter_max_charge, CONF_WINTER_MIN_CHARGE: winter_min_charge}}
+    mock_hass.data = {
+        DOMAIN: {
+            mock_config_entry.entry_id: {
+                CONF_WINTER_MAX_CHARGE: winter_max_charge,
+                CONF_WINTER_MIN_CHARGE: winter_min_charge,
+            }
+        }
+    }
     mock_entity = MagicMock()
     mock_entity.set_change_limitation = AsyncMock()
 

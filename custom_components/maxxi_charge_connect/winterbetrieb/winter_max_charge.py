@@ -51,8 +51,14 @@ class WinterMaxCharge(NumberEntity):
         self._remove_listener = None
 
     def _notify_dependents(self, value: float):
-        _LOGGER.debug("Feuer WinterMaxCharge changed event mit Wert: %s", value)
-        self.hass.bus.async_fire(EVENT_WINTER_MAX_CHARGE_CHANGED, {"value": value})
+        """Notify dependent entities of this CCU's maximum charge limit."""
+        self.hass.bus.async_fire(
+            EVENT_WINTER_MAX_CHARGE_CHANGED,
+            {
+                "entry_id": self._entry.entry_id,
+                "value": value,
+            },
+        )
 
     def set_native_value(self, value):
         async def runner():
@@ -74,7 +80,7 @@ class WinterMaxCharge(NumberEntity):
                 # in hass.data spiegeln (für Logik / Availability)
                 self.hass.data.setdefault(DOMAIN, {})
 
-                self.hass.data[DOMAIN][CONF_WINTER_MAX_CHARGE] = value
+                self.hass.data[DOMAIN][self._entry.entry_id][CONF_WINTER_MAX_CHARGE] = value
 
                 # persistent speichern
                 self.hass.config_entries.async_update_entry(
@@ -95,10 +101,8 @@ class WinterMaxCharge(NumberEntity):
 
     @property
     def available(self) -> bool:
-        _LOGGER.debug(
-            "WinterMaxCharge available abgefragt: %s", not self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False)
-        )
-        return self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False)
+        """Return whether winter mode is active for this CCU."""
+        return self.hass.data[DOMAIN][self._entry.entry_id].get(CONF_WINTER_MODE, False)
 
     async def async_added_to_hass(self):
         """Registriert den Listener, wenn die Entität hinzugefügt wird."""
@@ -113,8 +117,11 @@ class WinterMaxCharge(NumberEntity):
             self._remove_listener()
 
     @callback
-    def _handle_winter_mode_changed(self, event):  # pylint: disable=unused-argument
-        """Handle winter mode changed event."""
+    def _handle_winter_mode_changed(self, event):
+        """Update the entity only for its own CCU's winter mode changes."""
+        if event.data.get("entry_id") != self._entry.entry_id:
+            return
+
         self.async_write_ha_state()
 
     @property

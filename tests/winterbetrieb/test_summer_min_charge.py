@@ -31,7 +31,7 @@ def entry():
 def hass():
     """Mock Home Assistant instance."""
     hass = MagicMock()
-    hass.data = {DOMAIN: {}}
+    hass.data = {DOMAIN: {"test_entry": {}}}
     hass.bus = MagicMock()
     hass.config_entries = MagicMock()
     return hass
@@ -88,7 +88,7 @@ async def test_async_set_native_value(summer_min_charge, hass, entry):
     await summer_min_charge.async_set_native_value(value)
 
     assert summer_min_charge._attr_native_value == value
-    assert hass.data[DOMAIN][CONF_SUMMER_MIN_CHARGE] == value
+    assert hass.data[DOMAIN][entry.entry_id][CONF_SUMMER_MIN_CHARGE] == value
     hass.config_entries.async_update_entry.assert_called_once_with(
         entry,
         options={
@@ -133,7 +133,9 @@ def test_notify_dependents(summer_min_charge, hass):
 
     summer_min_charge._notify_dependents()
 
-    hass.bus.async_fire.assert_called_once_with(EVENT_SUMMER_MIN_CHARGE_CHANGED, {"value": 40})
+    hass.bus.async_fire.assert_called_once_with(
+        EVENT_SUMMER_MIN_CHARGE_CHANGED, {"entry_id": "test_entry", "value": 40}
+    )
 
 
 def test_notify_dependents_no_value(summer_min_charge, hass):
@@ -147,21 +149,21 @@ def test_notify_dependents_no_value(summer_min_charge, hass):
 
 def test_available_winter_mode_disabled(summer_min_charge, hass):
     """Test available property when winter mode is disabled."""
-    hass.data[DOMAIN][CONF_WINTER_MODE] = False
+    hass.data[DOMAIN]["test_entry"][CONF_WINTER_MODE] = False
 
     assert summer_min_charge.available is True
 
 
 def test_available_winter_mode_enabled(summer_min_charge, hass):
     """Test available property when winter mode is enabled."""
-    hass.data[DOMAIN][CONF_WINTER_MODE] = True
+    hass.data[DOMAIN]["test_entry"][CONF_WINTER_MODE] = True
 
     assert summer_min_charge.available is False
 
 
 def test_available_winter_mode_missing(summer_min_charge, hass):
     """Test available property when winter mode key is missing."""
-    # CONF_WINTER_MODE not in hass.data[DOMAIN]
+    # CONF_WINTER_MODE not in hass.data[DOMAIN]["test_entry"]
 
     assert summer_min_charge.available is True
 
@@ -169,7 +171,7 @@ def test_available_winter_mode_missing(summer_min_charge, hass):
 def test_handle_winter_mode_changed_winter_disabled(summer_min_charge, hass):
     """Test _handle_winter_mode_changed when winter mode is disabled."""
     event = MagicMock()
-    event.data = {"enabled": False}
+    event.data = {"entry_id": "test_entry", "enabled": False}
 
     # Mock async_write_ha_state to avoid HA integration issues
     summer_min_charge.async_write_ha_state = MagicMock()
@@ -184,7 +186,7 @@ def test_handle_winter_mode_changed_winter_disabled(summer_min_charge, hass):
 def test_handle_winter_mode_changed_winter_enabled(summer_min_charge, hass):
     """Test _handle_winter_mode_changed when winter mode is enabled."""
     event = MagicMock()
-    event.data = {"enabled": True}
+    event.data = {"entry_id": "test_entry", "enabled": True}
 
     # Mock async_write_ha_state to avoid HA integration issues
     summer_min_charge.async_write_ha_state = MagicMock()
@@ -207,8 +209,8 @@ def test_handle_winter_mode_changed_no_data(summer_min_charge, hass):
     with patch.object(summer_min_charge, "_notify_dependents") as mock_notify:
         summer_min_charge._handle_winter_mode_changed(event)
 
-        mock_notify.assert_called_once()
-        summer_min_charge.async_write_ha_state.assert_called_once()
+        mock_notify.assert_not_called()
+        summer_min_charge.async_write_ha_state.assert_not_called()
 
 
 def test_device_info(summer_min_charge, entry):

@@ -128,7 +128,7 @@ class SummerMinCharge(NumberEntity):
         # Mirror the value in shared integration data so that other
         # components can access it without reading configuration options.
         self.hass.data.setdefault(DOMAIN, {})
-        self.hass.data[DOMAIN][CONF_SUMMER_MIN_CHARGE] = value
+        self.hass.data[DOMAIN][self._entry.entry_id][CONF_SUMMER_MIN_CHARGE] = value
 
         # Persist the value in the configuration entry while preserving
         # all unrelated configuration options.
@@ -194,7 +194,10 @@ class SummerMinCharge(NumberEntity):
         # Broadcast the current minimum charge value.
         self.hass.bus.async_fire(
             EVENT_SUMMER_MIN_CHARGE_CHANGED,
-            {"value": self._attr_native_value},
+            {
+                "entry_id": self._entry.entry_id,
+                "value": self._attr_native_value,
+            },
         )
 
     @property
@@ -210,15 +213,8 @@ class SummerMinCharge(NumberEntity):
         Returns:
             bool: True when winter mode is disabled, otherwise False.
         """
-        _LOGGER.debug(
-            "WinterMinCharge available abgefragt: %s",
-            self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False),
-        )
-
-        return not self.hass.data[DOMAIN].get(
-            CONF_WINTER_MODE,
-            False,
-        )
+        winter_mode = self.hass.data[DOMAIN][self._entry.entry_id].get(CONF_WINTER_MODE, False)
+        return not winter_mode
 
     @callback
     def _handle_winter_mode_changed(self, event):  # pylint: disable=unused-argument
@@ -236,6 +232,9 @@ class SummerMinCharge(NumberEntity):
             event: Home Assistant event containing the new winter
                 mode state in its "enabled" data field.
         """
+        if event.data.get("entry_id") != self._entry.entry_id:
+            return
+
         winter_enabled = event.data.get("enabled", False)
 
         # Notify dependent components when summer operation resumes.

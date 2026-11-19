@@ -258,6 +258,9 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
     def _handle_summer_charge_changed(self, event):
         """Handle summer min charge changed event."""
 
+        if event.data.get("entry_id") != self._entry.entry_id:
+            return
+
         if self._depends_on_winter_mode:
             value = event.data.get("value")
 
@@ -277,8 +280,11 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
             self.async_write_ha_state()
 
     @callback
-    def _handle_winter_mode_changed(self, event):  # pylint: disable=unused-argument
-        """Handle winter mode changed event."""
+    def _handle_winter_mode_changed(self, event):
+        """Refresh this entity only when its own CCU changes winter mode."""
+        if event.data.get("entry_id") != self._entry.entry_id:
+            return
+
         self.async_write_ha_state()
 
     @property

@@ -107,14 +107,14 @@ async def test_winter_max_charge__async_set_native_value1(mock_async_get_min_soc
     sensor.hass = mock_hass
     sensor.hass.config_entries = MagicMock()
     sensor.hass.config_entries.async_update_entry = MagicMock()
-    sensor.hass.data = {}
+    sensor.hass.data = {DOMAIN: {"1234abcd": {}}}
 
     await sensor.async_set_native_value(new_value)  # zu testende Methode
 
     # Checks
     assert sensor._attr_native_value == new_value  # pylint: disable=protected-access
     assert DOMAIN in sensor.hass.data
-    assert sensor.hass.data[DOMAIN][CONF_WINTER_MAX_CHARGE] == new_value
+    assert sensor.hass.data[DOMAIN]["1234abcd"][CONF_WINTER_MAX_CHARGE] == new_value
 
     sensor.hass.config_entries.async_update_entry.assert_called_once()
 

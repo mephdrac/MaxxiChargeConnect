@@ -58,8 +58,10 @@ class BatterySoc(BaseWebhookSensor):
         Returns:
             bool: True, wenn der SOC den oberen Grenzwert erreicht oder überschritten hat, sonst False.
         """
-        winter_min_charge = float(self.hass.data[DOMAIN].get(CONF_WINTER_MIN_CHARGE, 20))
-        winter_max_charge = float(self.hass.data[DOMAIN].get(CONF_WINTER_MAX_CHARGE, 60))
+        entry_data = self.hass.data[DOMAIN][self._entry.entry_id]
+
+        winter_min_charge = float(entry_data.get(CONF_WINTER_MIN_CHARGE, 20))
+        winter_max_charge = float(entry_data.get(CONF_WINTER_MAX_CHARGE, 60))
 
         _LOGGER.debug(
             "Wintermodus - Upper Limit Check: cur_value=%s, cur_min_limit=%s, winter_min=%s, winter_max=%s",
@@ -81,8 +83,10 @@ class BatterySoc(BaseWebhookSensor):
         Returns:
             bool: True, wenn der SOC den unteren Grenzwert erreicht oder unterschritten hat, sonst False.
         """
-        winter_min_charge = float(self.hass.data[DOMAIN].get(CONF_WINTER_MIN_CHARGE, 20))
-        winter_max_charge = float(self.hass.data[DOMAIN].get(CONF_WINTER_MAX_CHARGE, 60))
+        entry_data = self.hass.data[DOMAIN][self._entry.entry_id]
+
+        winter_min_charge = float(entry_data.get(CONF_WINTER_MIN_CHARGE, 20))
+        winter_max_charge = float(entry_data.get(CONF_WINTER_MAX_CHARGE, 60))
 
         _LOGGER.debug(
             "Wintermodus - Lower Limit Check: cur_value=%s, cur_min_limit=%s, winter_min=%s, winter_max=%s",
@@ -100,8 +104,10 @@ class BatterySoc(BaseWebhookSensor):
         Args:
             native_value: Aktueller SOC-Wert
         """
-        winter_min_charge = float(self.hass.data[DOMAIN].get(CONF_WINTER_MIN_CHARGE, 20))
-        winter_max_charge = float(self.hass.data[DOMAIN].get(CONF_WINTER_MAX_CHARGE, 60))
+        entry_data = self.hass.data[DOMAIN][self._entry.entry_id]
+
+        winter_min_charge = float(entry_data.get(CONF_WINTER_MIN_CHARGE, 20))
+        winter_max_charge = float(entry_data.get(CONF_WINTER_MAX_CHARGE, 60))
 
         _LOGGER.debug(
             "Wintermodus aktiv - SOC=%s, winter_min=%s, winter_max=%s",
@@ -163,7 +169,7 @@ class BatterySoc(BaseWebhookSensor):
             self._attr_available = False
             return
 
-        wintermode = self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False)
+        wintermode = self.hass.data[DOMAIN][self._entry.entry_id].get(CONF_WINTER_MODE, False)
         _LOGGER.debug(
             "BatterySoc Update: SOC=%s%%, Wintermode=%s, updating state.",
             self._attr_native_value,

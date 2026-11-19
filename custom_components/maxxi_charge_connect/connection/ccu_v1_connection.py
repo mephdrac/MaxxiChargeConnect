@@ -14,9 +14,13 @@ from ..const import (
     CONF_DEVICE_ID,
     CONF_ENABLE_LOCAL_CLOUD_PROXY,
     CONF_SUMMER_MIN_CHARGE,
+    CONF_WINTER_MAX_CHARGE,
+    CONF_WINTER_MIN_CHARGE,
     CONF_WINTER_MODE,
     DEFAULT_ENABLE_LOCAL_CLOUD_PROXY,
     DEFAULT_SUMMER_MIN_CHARGE,
+    DEFAULT_WINTER_MAX_CHARGE,
+    DEFAULT_WINTER_MIN_CHARGE,
     DEFAULT_WINTER_MODE,
     DOMAIN,
     NEIN,
@@ -68,16 +72,28 @@ class CCCv1Connection(CcuBaseConnection):
             ("APIRoute", "API-Route:", OPTIONAL),
         ]
 
-        # Initiale Werte für Winter- und Sommerbetrieb setzen
-        winter_mode = self.entry.options.get(
+        # Restore operating settings for this CCU from its configuration entry.
+        entry_data = self.hass.data[DOMAIN][self.entry.entry_id]
+
+        entry_data[CONF_WINTER_MODE] = self.entry.options.get(
             CONF_WINTER_MODE,
             DEFAULT_WINTER_MODE,
         )
 
-        summer_min_discharge = self.entry.options.get(CONF_SUMMER_MIN_CHARGE, DEFAULT_SUMMER_MIN_CHARGE)
+        entry_data[CONF_SUMMER_MIN_CHARGE] = self.entry.options.get(
+            CONF_SUMMER_MIN_CHARGE,
+            DEFAULT_SUMMER_MIN_CHARGE,
+        )
 
-        self.hass.data[DOMAIN][CONF_WINTER_MODE] = winter_mode
-        self.hass.data[DOMAIN][CONF_SUMMER_MIN_CHARGE] = summer_min_discharge
+        entry_data[CONF_WINTER_MIN_CHARGE] = self.entry.options.get(
+            CONF_WINTER_MIN_CHARGE,
+            DEFAULT_WINTER_MIN_CHARGE,
+        )
+
+        entry_data[CONF_WINTER_MAX_CHARGE] = self.entry.options.get(
+            CONF_WINTER_MAX_CHARGE,
+            DEFAULT_WINTER_MAX_CHARGE,
+        )
 
         coordinator = MaxxiDataUpdateCoordinator(self.hass, self.entry, sensor_list)
 

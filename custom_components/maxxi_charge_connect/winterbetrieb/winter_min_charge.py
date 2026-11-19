@@ -68,7 +68,7 @@ class WinterMinCharge(NumberEntity):
 
                 # in hass.data spiegeln (für Logik / Availability)
                 self.hass.data.setdefault(DOMAIN, {})
-                self.hass.data[DOMAIN][CONF_WINTER_MIN_CHARGE] = value
+                self.hass.data[DOMAIN][self._entry.entry_id][CONF_WINTER_MIN_CHARGE] = value
 
                 # persistent speichern
                 self.hass.config_entries.async_update_entry(
@@ -87,10 +87,8 @@ class WinterMinCharge(NumberEntity):
 
     @property
     def available(self) -> bool:
-        _LOGGER.debug(
-            "WinterMinCharge available abgefragt: %s", not self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False)
-        )
-        return self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False)
+        """Return whether winter mode is active for this CCU."""
+        return self.hass.data[DOMAIN][self._entry.entry_id].get(CONF_WINTER_MODE, False)
 
     async def async_added_to_hass(self):
         """Registriert den Listener, wenn die Entität hinzugefügt wird."""
@@ -113,12 +111,19 @@ class WinterMinCharge(NumberEntity):
             self._remove_listener()
 
     @callback
-    def _handle_winter_mode_changed(self, event):  # pylint: disable=unused-argument
-        """Handle winter mode changed event."""
+    def _handle_winter_mode_changed(self, event):
+        """Update the entity only for its own CCU's winter mode changes."""
+        if event.data.get("entry_id") != self._entry.entry_id:
+            return
+
         self.async_write_ha_state()
 
     @callback
     async def _handle_winter_max_charge_changed(self, event):
+        """Handle maximum charge changes originating from the same CCU."""
+        if event.data.get("entry_id") != self._entry.entry_id:
+            return
+
         value = event.data.get("value")
 
         _LOGGER.info("WinterMinCharge received max charge changed event: %s", value)

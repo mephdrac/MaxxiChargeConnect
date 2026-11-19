@@ -29,7 +29,7 @@ class Winterbetrieb(SwitchEntity):
     async def async_added_to_hass(self):
         """Wird aufgerufen, sobald die Entität registriert ist."""
         # Sicherstellen, dass der Switch initialen Wert korrekt anzeigt
-        self._state = self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False)
+        self._state = self.hass.data[DOMAIN][self._entry.entry_id].get(CONF_WINTER_MODE, False)
         self.async_write_ha_state()
 
     @property
@@ -59,7 +59,7 @@ class Winterbetrieb(SwitchEntity):
     async def _save_state(self, value: bool):
         """Speichert den aktuellen Zustand des Winterbetriebs in den Eintragsoptionen."""
         self._state = value
-        self.hass.data[DOMAIN][CONF_WINTER_MODE] = value
+        self.hass.data[DOMAIN][self._entry.entry_id][CONF_WINTER_MODE] = value
 
         self.hass.config_entries.async_update_entry(
             self._entry,
@@ -72,10 +72,13 @@ class Winterbetrieb(SwitchEntity):
         self.async_write_ha_state()
 
     def _notify_dependents(self):
-        """Benachrichtigt abhängige Entitäten über den Wechsel des Winterbetriebs."""
+        """Notify dependent entities about this CCU's winter mode change."""
         self.hass.bus.async_fire(
             WINTER_MODE_CHANGED_EVENT,
-            {"enabled": self._state},
+            {
+                "entry_id": self._entry.entry_id,
+                "enabled": self._state,
+            },
         )
 
     @property

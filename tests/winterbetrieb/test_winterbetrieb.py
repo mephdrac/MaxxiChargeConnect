@@ -28,7 +28,7 @@ def entry():
 def hass():
     """Mock Home Assistant instance."""
     hass = MagicMock()
-    hass.data = {DOMAIN: {CONF_WINTER_MODE: False}}
+    hass.data = {DOMAIN: {"test_entry": {CONF_WINTER_MODE: False}}}
     hass.bus = MagicMock()
     hass.config_entries = MagicMock()
     return hass
@@ -88,7 +88,7 @@ async def test_async_turn_on(winterbetrieb_entity, hass, entry):
     await winterbetrieb_entity.async_turn_on()
 
     assert winterbetrieb_entity._state is True
-    assert hass.data[DOMAIN][CONF_WINTER_MODE] is True
+    assert hass.data[DOMAIN]["test_entry"][CONF_WINTER_MODE] is True
     hass.config_entries.async_update_entry.assert_called_once_with(
         entry,
         options={
@@ -96,7 +96,7 @@ async def test_async_turn_on(winterbetrieb_entity, hass, entry):
             CONF_WINTER_MODE: True,
         },
     )
-    hass.bus.async_fire.assert_called_once_with(WINTER_MODE_CHANGED_EVENT, {"enabled": True})
+    hass.bus.async_fire.assert_called_once_with(WINTER_MODE_CHANGED_EVENT, {"entry_id": "test_entry", "enabled": True})
     winterbetrieb_entity.async_write_ha_state.assert_called_once()
 
 
@@ -109,7 +109,7 @@ async def test_async_turn_off(winterbetrieb_entity, hass, entry):
     await winterbetrieb_entity.async_turn_off()
 
     assert winterbetrieb_entity._state is False
-    assert hass.data[DOMAIN][CONF_WINTER_MODE] is False
+    assert hass.data[DOMAIN]["test_entry"][CONF_WINTER_MODE] is False
     hass.config_entries.async_update_entry.assert_called_once_with(
         entry,
         options={
@@ -117,7 +117,7 @@ async def test_async_turn_off(winterbetrieb_entity, hass, entry):
             CONF_WINTER_MODE: False,
         },
     )
-    hass.bus.async_fire.assert_called_once_with(WINTER_MODE_CHANGED_EVENT, {"enabled": False})
+    hass.bus.async_fire.assert_called_once_with(WINTER_MODE_CHANGED_EVENT, {"entry_id": "test_entry", "enabled": False})
     winterbetrieb_entity.async_write_ha_state.assert_called_once()
 
 
@@ -127,7 +127,7 @@ async def test_async_added_to_hass(winterbetrieb_entity, hass):
     # Mock async_write_ha_state to avoid HA integration issues
     winterbetrieb_entity.async_write_ha_state = MagicMock()
 
-    hass.data[DOMAIN][CONF_WINTER_MODE] = True
+    hass.data[DOMAIN]["test_entry"][CONF_WINTER_MODE] = True
 
     await winterbetrieb_entity.async_added_to_hass()
 
@@ -141,7 +141,7 @@ async def test_async_added_to_hass_missing_data(winterbetrieb_entity, hass):
     # Mock async_write_ha_state to avoid HA integration issues
     winterbetrieb_entity.async_write_ha_state = MagicMock()
 
-    hass.data[DOMAIN] = {}  # CONF_WINTER_MODE not present
+    hass.data[DOMAIN]["test_entry"] = {}  # CONF_WINTER_MODE not present
 
     await winterbetrieb_entity.async_added_to_hass()
 
@@ -155,7 +155,7 @@ def test_notify_dependents(winterbetrieb_entity, hass):
 
     winterbetrieb_entity._notify_dependents()
 
-    hass.bus.async_fire.assert_called_once_with(WINTER_MODE_CHANGED_EVENT, {"enabled": True})
+    hass.bus.async_fire.assert_called_once_with(WINTER_MODE_CHANGED_EVENT, {"entry_id": "test_entry", "enabled": True})
 
 
 def test_notify_dependents_false(winterbetrieb_entity, hass):
@@ -164,7 +164,7 @@ def test_notify_dependents_false(winterbetrieb_entity, hass):
 
     winterbetrieb_entity._notify_dependents()
 
-    hass.bus.async_fire.assert_called_once_with(WINTER_MODE_CHANGED_EVENT, {"enabled": False})
+    hass.bus.async_fire.assert_called_once_with(WINTER_MODE_CHANGED_EVENT, {"entry_id": "test_entry", "enabled": False})
 
 
 def test_device_info(winterbetrieb_entity, entry):
@@ -186,7 +186,7 @@ async def test_save_state(winterbetrieb_entity, hass, entry):
     await winterbetrieb_entity._save_state(True)
 
     assert winterbetrieb_entity._state is True
-    assert hass.data[DOMAIN][CONF_WINTER_MODE] is True
+    assert hass.data[DOMAIN]["test_entry"][CONF_WINTER_MODE] is True
     hass.config_entries.async_update_entry.assert_called_once_with(
         entry,
         options={
@@ -194,5 +194,5 @@ async def test_save_state(winterbetrieb_entity, hass, entry):
             CONF_WINTER_MODE: True,
         },
     )
-    hass.bus.async_fire.assert_called_once_with(WINTER_MODE_CHANGED_EVENT, {"enabled": True})
+    hass.bus.async_fire.assert_called_once_with(WINTER_MODE_CHANGED_EVENT, {"entry_id": "test_entry", "enabled": True})
     winterbetrieb_entity.async_write_ha_state.assert_called_once()

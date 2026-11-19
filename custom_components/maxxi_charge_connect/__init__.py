@@ -286,7 +286,11 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             old_unique_id = f"{config_entry.entry_id}_error_sensor"
 
             for entity_id, entry in registry.entities.items():
-                if entry.config_entry_id == config_entry.entry_id and entry.unique_id == old_unique_id:
+                if (
+                    entry.config_entry_id == config_entry.entry_id
+                    and entry.platform == DOMAIN
+                    and entry.unique_id == old_unique_id
+                ):
                     registry.async_remove(entity_id)
                     _LOGGER.info(
                         "Alte Error-Sensor Entity entfernt:  %s | %s",
@@ -313,7 +317,11 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             old_unique_id = f"{config_entry.entry_id}_last_message_sensor"
 
             for entity_id, entry in registry.entities.items():
-                if entry.config_entry_id == config_entry.entry_id and entry.unique_id == old_unique_id:
+                if (
+                    entry.config_entry_id == config_entry.entry_id
+                    and entry.platform == DOMAIN
+                    and entry.unique_id == old_unique_id
+                ):
                     registry.async_remove(entity_id)
                     _LOGGER.info(
                         "Alte Last-Message-Sensor Entity entfernt:  %s | %s",

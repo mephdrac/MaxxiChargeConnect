@@ -23,12 +23,8 @@ from ..const import (
     DEFAULT_WINTER_MIN_CHARGE,
     DEFAULT_WINTER_MODE,
     DOMAIN,
-    NEIN,
-    # NOTIFY_MIGRATION,
-    OPTIONAL,
-    REQUIRED,
 )
-from ..http_scan.maxxi_data_update_coordinator import MaxxiDataUpdateCoordinator
+from ..http_scan.maxxi_data_update_coordinator import CCU_V1_HTTP_SCAN_FIELDS, MaxxiDataUpdateCoordinator
 from ..reverse_proxy.proxy_server import MaxxiProxyServer
 from ..webhook import async_register_webhook, async_unregister_webhook
 from .ccu_base_connection import CcuBaseConnection
@@ -52,25 +48,7 @@ class CCCv1Connection(CcuBaseConnection):
     async def async_setup_entry(self) -> bool:
         """Initialisiert eine neue Instanz der Integration beim Hinzufügen über die UI."""
         self.hass.data.setdefault(DOMAIN, {})
-        self.hass.data[DOMAIN][self.entry.entry_id] = {}
-
-        sensor_list = [
-            ("PowerMeterIp", "Messgerät IP:", REQUIRED),
-            ("PowerMeterType", "Messgerät Typ:", REQUIRED),
-            ("MaximumPower", "Maximale Leistung:", REQUIRED),
-            ("OfflineOutputPower", "Offline-Ausgangsleistung:", REQUIRED),
-            ("NumberOfBatteries", "Batterien im System:", REQUIRED),
-            ("OutputOffset", "Ausgabe korrigieren:", REQUIRED),
-            ("CcuSpeed", "CCU-Geschwindigkeit:", REQUIRED),
-            ("Microinverter", "Mikro-Wechselrichter-Typ:", REQUIRED),
-            ("ResponseTolerance", "Reaktionstoleranz:", REQUIRED),
-            ("MinimumBatteryDischarge", "Minimale Entladung der Batterie:", REQUIRED),
-            ("MaximumBatteryCharge", "Maximale Akkuladung:", REQUIRED),
-            ("DC/DC-Algorithmus", "DC/DC-Algorithmus:", REQUIRED),
-            ("Cloudservice", "Cloudservice:", REQUIRED),
-            ("LocalServer", "Lokalen Server nutzen:", NEIN),
-            ("APIRoute", "API-Route:", OPTIONAL),
-        ]
+        self.hass.data[DOMAIN].setdefault(self.entry.entry_id, {})
 
         # Restore operating settings for this CCU from its configuration entry.
         entry_data = self.hass.data[DOMAIN][self.entry.entry_id]
@@ -95,7 +73,7 @@ class CCCv1Connection(CcuBaseConnection):
             DEFAULT_WINTER_MAX_CHARGE,
         )
 
-        coordinator = MaxxiDataUpdateCoordinator(self.hass, self.entry, sensor_list)
+        coordinator = MaxxiDataUpdateCoordinator(self.hass, self.entry, CCU_V1_HTTP_SCAN_FIELDS)
 
         self.hass.data[DOMAIN][self.entry.entry_id]["coordinator"] = coordinator
         await coordinator.async_config_entry_first_refresh()
@@ -111,38 +89,22 @@ class CCCv1Connection(CcuBaseConnection):
             _LOGGER.error("Fehler beim Laden der Plattformen: %s", e)
             return False
 
-        # --- GLOBALEN PROXY starten ---
-        proxy_enabled = self.entry.data.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_ENABLE_LOCAL_CLOUD_PROXY)
-        if proxy_enabled:
-            if self.hass.data[DOMAIN]["proxy"] is None:
-                _LOGGER.info("Starte globalen Proxy-Server (Port 3001)")
-                proxy = MaxxiProxyServer(self.hass, listen_port=3001)
-
-                async def _start_proxy():
+        if self.entry.data.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_ENABLE_LOCAL_CLOUD_PROXY):
+            domain_data = self.hass.data[DOMAIN]
+            async with domain_data.setdefault("proxy_lock", asyncio.Lock()):
+                proxy = domain_data["proxy"]
+                if proxy is None:
+                    proxy = MaxxiProxyServer(self.hass)
                     try:
                         await proxy.start()
-                        self.hass.data[DOMAIN]["proxy"] = proxy
-                    except Exception as e:  # pylint: disable=broad-exception-caught
-                        _LOGGER.error("Fehler beim Starten des Proxy-Servers: %s", e)
-                        self.hass.data[DOMAIN]["proxy"] = None
+                    except OSError as err:
+                        await proxy.stop()
+                        _LOGGER.error("Fehler beim Starten des Proxy-Servers: %s", err)
+                        proxy = None
+                    domain_data["proxy"] = proxy
 
-                task = self.hass.loop.create_task(_start_proxy())
-                task.add_done_callback(
-                    lambda t: _LOGGER.error("Proxy-Task beendet: %s", t.exception()) if t.exception() else None
-                )
-
-            else:
-                proxy = self.hass.data[DOMAIN]["proxy"]
-                _LOGGER.info("Proxy-Server läuft bereits – Gerät wird nur angebunden.")
-
-            # Registriere diesen Entry beim Proxy
-            try:
-                proxy.register_entry(self.entry)
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                _LOGGER.error("Fehler beim Registrieren des Proxy-Eintrags: %s", e)
-
-        else:
-            _LOGGER.info("Lokaler Cloud-Proxy für dieses Gerät deaktiviert.")
+                if proxy is not None:
+                    proxy.register_entry(self.entry)
 
         try:
             # Device-ID prüfen
@@ -157,53 +119,29 @@ class CCCv1Connection(CcuBaseConnection):
 
         await async_unregister_webhook(self.hass, self.entry)
 
-        unload_ok = all(
-            await asyncio.gather(
-                *[self.hass.config_entries.async_forward_entry_unload(self.entry, platform) for platform in (PLATFORMS)]
-            )
-        )
-
-        # Proxy-Entry deregistrieren
-        proxy = self.hass.data[DOMAIN].get("proxy")
-        if proxy:
-            try:
+        domain_data = self.hass.data[DOMAIN]
+        async with domain_data.setdefault("proxy_lock", asyncio.Lock()):
+            proxy = domain_data["proxy"]
+            if proxy is not None:
                 proxy.unregister_entry(self.entry)
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                _LOGGER.error("Fehler beim Deregistrieren des Proxy-Eintrags: %s", e)
-
-        if unload_ok:
-            self.hass.data[DOMAIN].pop(self.entry.entry_id, None)
-
-        # Prüfen, ob noch andere Einträge aktiv sind, bevor der Proxy gestoppt wird
-        if proxy and not self.hass.config_entries.async_entries(DOMAIN):
-            _LOGGER.info("Stoppe globalen Proxy-Server")
-
-            try:
-                await proxy.stop()
-            except Exception as e:  # pylint: disable=broad-exception-caught
-                _LOGGER.error("Fehler beim Stoppen des Proxy-Servers: %s", e)
-            finally:
-                self.hass.data[DOMAIN]["proxy"] = None
-
-        return unload_ok
+                if not proxy.has_entries:
+                    await proxy.stop()
+                    domain_data["proxy"] = None
 
     async def check_device_id_issue(self) -> None:
         """Prüfen, ob die Device ID gesetzt wurde."""
-        _LOGGER.debug("CHECK Device_ID.....")
-        for entry in self.hass.config_entries.async_entries(DOMAIN):
-            device_id = self.entry.data.get(CONF_DEVICE_ID)
-            if not device_id:
-                _LOGGER.error("Device-ID fehlt für Entry %s (%s)", entry.entry_id, entry.title)
-                async_create_issue(
-                    self.hass,
-                    DOMAIN,
-                    f"missing_device_id_{entry.entry_id}",
-                    is_fixable=False,
-                    severity=IssueSeverity.CRITICAL,
-                    issue_domain=DOMAIN,
-                    translation_key="missing_device_id",
-                    translation_placeholders={"entry_title": entry.title},
-                )
-            else:
-                async_delete_issue(self.hass, DOMAIN, f"missing_device_id_{entry.entry_id}")
-        _LOGGER.debug("Device_ID checked.")
+        entry_id = self.entry.entry_id
+        if not self.entry.data.get(CONF_DEVICE_ID):
+            _LOGGER.error("Device-ID fehlt für Entry %s (%s)", entry_id, self.entry.title)
+            async_create_issue(
+                self.hass,
+                DOMAIN,
+                f"missing_device_id_{entry_id}",
+                is_fixable=False,
+                severity=IssueSeverity.CRITICAL,
+                issue_domain=DOMAIN,
+                translation_key="missing_device_id",
+                translation_placeholders={"entry_title": self.entry.title},
+            )
+        else:
+            async_delete_issue(self.hass, DOMAIN, f"missing_device_id_{entry_id}")

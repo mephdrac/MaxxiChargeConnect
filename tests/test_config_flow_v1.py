@@ -112,6 +112,21 @@ async def test_v1_duplicate_error_matches_form_field(flow):
 
 
 @pytest.mark.asyncio
+async def test_v1_duplicate_webhook_is_rejected_without_logging_secret(flow, caplog):
+    """Reconfigure must keep another entry's webhook intact."""
+    flow._entry = MagicMock(entry_id="own", data={CONF_WEBHOOK_ID: "secret-original"})
+    flow._async_current_entries.return_value = [
+        flow._entry,
+        MagicMock(entry_id="other", data={CONF_WEBHOOK_ID: "secret-in-use"}),
+    ]
+    flow._get_defaults_for_user_step = MagicMock(return_value=dict(flow._entry.data))
+    with caplog.at_level("DEBUG"):
+        result = await flow.async_step_v1({CONF_NAME: "CCU", CONF_DEVICE_ID: "123", CONF_WEBHOOK_ID: "secret-in-use"})
+    assert result["errors"] == {CONF_WEBHOOK_ID: "webhook_id_in_use"}
+    assert "secret-" not in caplog.text
+
+
+@pytest.mark.asyncio
 async def test_reconfigure_v1_without_ip(flow):
     """Legacy entries with a null IP still produce a valid optional form."""
     entry = MagicMock(data={CONF_NAME: "CCU", CONF_DEVICE_ID: "123", CONF_WEBHOOK_ID: "hook"})

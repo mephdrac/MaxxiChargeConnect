@@ -32,7 +32,7 @@ async def test_http_scan_text__init():
 
     assert sensor._attr_icon == icon  # pylint: disable=protected-access
     assert sensor._attr_entity_category == EntityCategory.DIAGNOSTIC  # pylint: disable=protected-access
-    assert sensor._attr_should_poll is False  # pylint: disable=protected-access
+    assert sensor.should_poll is False
 
 
 @pytest.mark.asyncio
@@ -52,6 +52,7 @@ async def test_http_scan_text__native_value():
     )
 
     assert sensor.native_value == testvalue
+    assert sensor.available
 
 
 @pytest.mark.asyncio
@@ -71,25 +72,26 @@ async def test_http_scan_text__native_value2():
     )
 
     assert sensor.native_value is None
+    assert not sensor.available
 
 
 @pytest.mark.asyncio
-async def test_http_scan_text__set_value():
-    """Testet die set_value Methode der HttpScanText Entity."""
+async def test_http_scan_sensor_unavailable_when_scan_fails():
+    """An unsuccessful scan cannot expose a cached value as current."""
 
     testvalue = "MeinTest"
     testname = "TestName"
     keyname = "Keyname"
     translate_key = "keyname"
     coordinator = MagicMock()
+    coordinator.last_update_success = False
+    coordinator.data = {keyname: testvalue}
     icon = "mdi:flash"
 
     sensor = HttpScanText(
         coordinator=coordinator, translate_key=translate_key, keyname=keyname, name=testname, icon=icon
     )
-    sensor.set_value(testvalue)
-
-    assert sensor._attr_native_value == testvalue  # pylint: disable=protected-access
+    assert not sensor.available
 
 
 @pytest.mark.asyncio

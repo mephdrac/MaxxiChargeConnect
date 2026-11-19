@@ -72,25 +72,12 @@ class OnlineStatusSensor(BinarySensorEntity):
 
         if self._enable_cloud_data:
             _LOGGER.info("Daten kommen vom Proxy")
-            self.hass.bus.async_listen(PROXY_STATUS_EVENTNAME, self.async_update_from_event)
+            self._unsub_update = self.hass.bus.async_listen(PROXY_STATUS_EVENTNAME, self.async_update_from_event)
         else:
             # Dispatcher abonnieren
             self._unsub_update = async_dispatcher_connect(self.hass, update_signal, self._wrapper_update)
 
         self._unsub_stale = async_dispatcher_connect(self.hass, stale_signal, self._wrapper_stale)
-
-        # # letzten Zustand wiederherstellen
-        # old_state = await self.async_get_last_state()
-        # if old_state is not None and old_state.state not in (>
-        #     STATE_UNAVAILABLE,
-        #     "unknown",
-        #     None,
-        # ):
-        #     try:
-        #         self._attr_native_value = float(old_state.state)
-        #         self._attr_available = True
-        #     except Exception:
-        #         pass
 
     async def async_will_remove_from_hass(self):
         """Dispatcher-Abonnements entfernen."""
@@ -117,10 +104,8 @@ class OnlineStatusSensor(BinarySensorEntity):
         self.async_write_ha_state()
 
     async def handle_stale(self):
-        """Standardverhalten: Sensor auf 'unavailable' setzen."""
-        # self._attr_available = False
+        """Zeige an, dass keine aktuellen Daten empfangen werden."""
         self._attr_is_on = False
-        self.async_write_ha_state()
 
     async def handle_update(self, data):
         """Verarbeitet neue Daten und aktualisiert den Online-Status."""
@@ -162,7 +147,7 @@ class OnlineStatusSensor(BinarySensorEntity):
         json_data = event.data.get("payload", {})
 
         if json_data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(CONF_DEVICE_ID):
-            await self.handle_update(json_data)
+            await self._wrapper_update(json_data)
 
     @property
     def device_info(self):

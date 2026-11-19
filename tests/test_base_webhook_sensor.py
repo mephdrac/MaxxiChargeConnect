@@ -3,12 +3,13 @@
 import logging
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from custom_components.maxxi_charge_connect.const import DOMAIN, WEBHOOK_SIGNAL_STATE, WEBHOOK_SIGNAL_UPDATE
 from custom_components.maxxi_charge_connect.devices.base_webhook_sensor import BaseWebhookSensor
+from custom_components.maxxi_charge_connect.devices.send_count import SendCount
 
 sys.path.append(str(Path(__file__).resolve().parents[3]))
 
@@ -68,37 +69,15 @@ async def test_base_sensor_initialization(entry):
 
 
 @pytest.mark.asyncio
-async def test_restore_state_float(entry, hass):
-    """Testet die Wiederherstellung von Float-Werten."""
-    sensor = TestSensor(entry)
+@pytest.mark.parametrize(("sensor_type", "value"), [(TestSensor, None), (SendCount, 0)])
+async def test_startup_availability(entry, hass, sensor_type, value):
+    """Live measurements start unavailable and the packet counter starts at zero."""
+    sensor = sensor_type(entry)
     sensor.hass = hass
+    await sensor.async_added_to_hass()
 
-    # Mock alten Zustand
-    old_state = MagicMock()
-    old_state.state = "123.45"
-
-    with patch.object(sensor, "async_get_last_state", return_value=old_state):
-        await sensor.async_added_to_hass()
-
-    assert sensor._attr_native_value == 123.45
-    assert sensor._attr_available is True
-
-
-@pytest.mark.asyncio
-async def test_restore_state_invalid(entry, hass):
-    """Testet die Wiederherstellung bei ungültigen Werten."""
-    sensor = TestSensor(entry)
-    sensor.hass = hass
-
-    # Mock ungültigen Zustand
-    old_state = MagicMock()
-    old_state.state = "invalid_number"
-
-    with patch.object(sensor, "async_get_last_state", return_value=old_state):
-        await sensor.async_added_to_hass()
-
-    assert sensor._attr_native_value is None
-    assert sensor._attr_available is False
+    assert sensor.native_value == value
+    assert sensor.available is (value is not None)
 
 
 @pytest.mark.asyncio
@@ -191,16 +170,3 @@ async def test_device_info(entry):
     device_info = sensor.device_info
     assert device_info["identifiers"] == {(DOMAIN, "test_entry_id")}
     assert device_info["name"] == "Test Entry"
-
-
-def test_restore_state_value_method():
-    """Testet die _restore_state_value Methode direkt."""
-    sensor = TestSensor(MagicMock())
-
-    # Float-Konvertierung
-    assert sensor._restore_state_value("123.45") == 123.45
-    assert sensor._restore_state_value("0") == 0.0
-
-    # Ungültige Werte
-    assert sensor._restore_state_value("invalid") is None
-    assert sensor._restore_state_value("") is None

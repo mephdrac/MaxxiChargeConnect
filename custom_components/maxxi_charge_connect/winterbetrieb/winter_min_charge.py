@@ -93,7 +93,6 @@ class WinterMinCharge(NumberEntity):
     async def async_added_to_hass(self):
         """Registriert den Listener, wenn die Entität hinzugefügt wird."""
         # self.hass.data.setdefault(DOMAIN, {})
-        # self.hass.data[DOMAIN][CONF_WINTER_MIN_CHARGE] = self._attr_native_value
 
         self._remove_listener = self.hass.bus.async_listen(
             WINTER_MODE_CHANGED_EVENT,

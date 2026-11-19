@@ -34,7 +34,6 @@ DEFAULT_ENABLE_FORWARD_TO_CLOUD = False
 DEFAULT_ENABLE_LOCAL_CLOUD_PROXY = False
 
 DEVICE_INFO = {"manufacturer": "Maxxisun"}
-NOTIFY_MIGRATION = "notify_migration"
 
 # Fehler die per Reverse-Proxy reinkommen
 PROXY_STATUS_EVENTNAME = "MaxxiChargeStatusEvent"

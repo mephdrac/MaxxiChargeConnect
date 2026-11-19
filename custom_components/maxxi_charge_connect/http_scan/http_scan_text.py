@@ -6,19 +6,16 @@ bereitstellt, um aus HTML extrahierte Werte anzuzeigen. Die Werte stammen von ei
 Koordinator, der die Daten regelmäßig aktualisiert.
 """
 
-import logging
-
-from homeassistant.components.text import TextEntity
+from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import EntityCategory
 from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from ..const import CCU_V1, CONF_CCU_VERSION, DEVICE_INFO, DOMAIN  # noqa: TID252
 
-_LOGGER = logging.getLogger(__name__)
 
-
-class HttpScanText(TextEntity):
-    """Text-Entität zur Anzeige diagnostischer Daten aus einem HTML-Scanner."""
+class HttpScanText(CoordinatorEntity, SensorEntity):
+    """Read-only diagnostic sensor for a value extracted from the CCU page."""
 
     _attr_has_entity_name = True
 
@@ -34,17 +31,14 @@ class HttpScanText(TextEntity):
 
         """
 
+        super().__init__(coordinator)
         self._attr_translation_key = translate_key
-
-        self.coordinator = coordinator
         self._keyname = keyname
-        # self._attr_name = name
         self._entry = coordinator.entry
         self._attr_unique_id = f"{coordinator.entry.entry_id}_{keyname}"
 
         self._attr_icon = icon
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
-        self._attr_should_poll = False
 
     @property
     def native_value(self):
@@ -57,13 +51,10 @@ class HttpScanText(TextEntity):
         """
         return self.coordinator.data.get(self._keyname) if self.coordinator.data else None
 
-    async def async_added_to_hass(self):
-        """Registriert Callback bei Datenaktualisierung durch den Koordinator."""
-        self.async_on_remove(self.coordinator.async_add_listener(self.async_write_ha_state))
-
-    def set_value(self, value):
-        """SetValue."""
-        self._attr_native_value = value
+    @property
+    def available(self) -> bool:
+        """Return whether there is a current reading for this field."""
+        return super().available and self.native_value is not None
 
     @property
     def device_info(self) -> DeviceInfo:

@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from aiohttp import ClientConnectorError
+from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_IP_ADDRESS
 
 from custom_components.maxxi_charge_connect.const import (
@@ -23,6 +24,7 @@ def hass():
     """Mock Home Assistant instance."""
     hass = MagicMock()
     hass.config_entries.async_entries.return_value = []
+    hass.async_add_executor_job = AsyncMock(side_effect=lambda func: func())
     return hass
 
 
@@ -37,6 +39,7 @@ def sample_entry():
     """Create a configured CCU with an enabled and IP-restricted proxy."""
     entry = MagicMock()
     entry.entry_id = "test_entry"
+    entry.state = ConfigEntryState.LOADED
     entry.data = {
         CONF_DEVICE_ID: "test_device",
         CONF_IP_ADDRESS: "192.168.1.100",
@@ -103,12 +106,12 @@ async def test_fetch_cloud_config_connector_error(proxy_server):
     """Test cloud config fetch with connection error."""
     with patch("dns.resolver.Resolver") as mock_resolver:
         mock_resolver.return_value.resolve.return_value = [MagicMock(to_text=lambda: "1.2.3.4")]
-        with patch("aiohttp.ClientSession") as mock_session:
+        with patch("custom_components.maxxi_charge_connect.reverse_proxy.proxy_server.ClientSession") as mock_session:
             # Create proper OSError for ClientConnectorError
             os_error = OSError("Connection failed")
             os_error.errno = 111  # Connection refused
-            mock_session.return_value.__aenter__.return_value.get.side_effect = ClientConnectorError(
-                MagicMock(), os_error
+            mock_session.return_value.__aenter__.return_value.get = MagicMock(
+                side_effect=ClientConnectorError(MagicMock(), os_error)
             )
 
             result = await proxy_server.fetch_cloud_config("test_device")
@@ -120,8 +123,8 @@ async def test_fetch_cloud_config_timeout(proxy_server):
     """Test cloud config fetch with timeout."""
     with patch("dns.resolver.Resolver") as mock_resolver:
         mock_resolver.return_value.resolve.return_value = [MagicMock(to_text=lambda: "1.2.3.4")]
-        with patch("aiohttp.ClientSession") as mock_session:
-            mock_session.return_value.__aenter__.return_value.get.side_effect = TimeoutError("Timeout")
+        with patch("custom_components.maxxi_charge_connect.reverse_proxy.proxy_server.ClientSession") as mock_session:
+            mock_session.return_value.__aenter__.return_value.get = MagicMock(side_effect=TimeoutError("Timeout"))
             result = await proxy_server.fetch_cloud_config("test_device")
 
             assert result is None
@@ -197,7 +200,7 @@ async def test_handle_text_known_device(proxy_server, sample_entry):
     """Test _handle_text with known device ID."""
     proxy_server.hass.config_entries.async_entries.return_value = [sample_entry]
 
-    data = {CONF_DEVICE_ID: "test_device"}
+    data = {PROXY_ERROR_DEVICE_ID: "test_device"}
     request = MagicMock()
     request.json = AsyncMock(return_value=data)
     request.transport.get_extra_info.return_value = ("192.168.1.100", 54321)
@@ -270,76 +273,15 @@ async def test_forward_to_cloud_disabled(proxy_server):
 #             mock_runner.cleanup.assert_called_once()
 
 
-# def test_register_entry(proxy_server, sample_entry):
-#     """Test entry registration."""
-#     from homeassistant.const import CONF_WEBHOOK_ID
-
-#     sample_entry.data = {CONF_WEBHOOK_ID: "test_webhook"}
-
-#     with patch('homeassistant.helpers.dispatcher.async_dispatcher_connect') as mock_connect:
-#         proxy_server.register_entry(sample_entry)
-
-#         mock_connect.assert_called_once()
-#         assert "test_webhook" in proxy_server._dispatcher_unsub
-#         assert proxy_server._webhook_to_entry_id["test_webhook"] == "test_entry"
-
-
 def test_unregister_entry(proxy_server, sample_entry):
-    """Test entry unregistration."""
-    from homeassistant.const import CONF_WEBHOOK_ID
-
-    sample_entry.data = {CONF_WEBHOOK_ID: "test_webhook"}
+    """Remove the entry's subscription independently of webhook ID changes."""
     mock_unsub = MagicMock()
-    proxy_server._dispatcher_unsub["test_webhook"] = mock_unsub
-    proxy_server._webhook_to_entry_id["test_webhook"] = "test_entry"
+    proxy_server._dispatcher_unsub[sample_entry.entry_id] = mock_unsub
 
     proxy_server.unregister_entry(sample_entry)
 
     mock_unsub.assert_called_once()
-    assert "test_webhook" not in proxy_server._dispatcher_unsub
-    assert "test_webhook" not in proxy_server._webhook_to_entry_id
-
-
-@pytest.mark.asyncio
-async def test_handle_webhook_signal_unknown_device(proxy_server):
-    """Test webhook signal with unknown device."""
-    data = {PROXY_ERROR_DEVICE_ID: "unknown_device"}
-
-    with patch("homeassistant.helpers.issue_registry.async_create_issue") as mock_issue:
-        await proxy_server._handle_webhook_signal(data, None)
-        mock_issue.assert_called_once()
-
-
-@pytest.mark.asyncio
-async def test_handle_webhook_signal_device_mismatch(proxy_server, sample_entry):
-    """Test webhook signal with device mismatch."""
-    sample_entry.data = {CONF_DEVICE_ID: "config_device"}
-    proxy_server.hass.config_entries.async_entries.return_value = [sample_entry]
-    proxy_server._webhook_to_entry_id["test_webhook"] = "test_entry"
-
-    data = {PROXY_ERROR_DEVICE_ID: "payload_device"}
-
-    with patch("homeassistant.helpers.issue_registry.async_create_issue") as mock_issue:
-        await proxy_server._handle_webhook_signal(data, "test_webhook")
-        mock_issue.assert_called_once()
-
-
-# @pytest.mark.asyncio
-# async def test_handle_webhook_signal_success(proxy_server, sample_entry):
-#     """Test successful webhook signal handling."""
-#     sample_entry.data = {CONF_DEVICE_ID: "test_device"}
-#     proxy_server.hass.config_entries.async_entries.return_value = [sample_entry]
-#     proxy_server._webhook_to_entry_id["test_webhook"] = "test_entry"
-
-#     data = {PROXY_ERROR_DEVICE_ID: "test_device"}
-
-#     with patch.object(proxy_server, '_forward_to_cloud') as mock_forward:
-#         mock_forward.return_value = True
-#         with patch.object(proxy_server, '_on_reverse_proxy_message') as mock_handler:
-#             await proxy_server._handle_webhook_signal(data, "test_webhook")
-
-#             mock_forward.assert_called_once()
-#             mock_handler.assert_called_once()
+    assert not proxy_server.has_entries
 
 
 @pytest.mark.asyncio

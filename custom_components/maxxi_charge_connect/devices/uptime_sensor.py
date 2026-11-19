@@ -87,7 +87,3 @@ class UptimeSensor(BaseWebhookSensor):
             "uptime": f"{days}d {hours}h {minutes}m {seconds}s",
             "raw_ms": uptime_ms,
         }
-
-    async def handle_stale(self):
-        """Bei stale verfügbar bleiben und letzten Wert behalten."""
-        self._attr_available = True

@@ -1,6 +1,6 @@
 """Konfigurationsfluss für MaxxiChargeConnect mit Duplicate-Prüfung"""
 
-import logging
+from ipaddress import ip_address
 
 import voluptuous as vol
 from homeassistant import config_entries
@@ -25,11 +25,8 @@ from .const import (
     DEFAULT_ENABLE_LOCAL_CLOUD_PROXY,
     DEFAULT_TIMEOUT_RECEIVE,
     DOMAIN,
-    NOTIFY_MIGRATION,
     ONLY_ONE_IP,
 )
-
-_LOGGER = logging.getLogger(__name__)
 
 
 class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -48,7 +45,6 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     _device_id: str | None = None
     _host_ip: str | None = None
     _only_ip: bool = False
-    _notify_migration: bool = False
     _enable_local_cloud_proxy: bool = False
     _enable_forward_to_cloud: bool = DEFAULT_ENABLE_FORWARD_TO_CLOUD
     _enable_cloud_data: bool = False
@@ -200,14 +196,13 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             if not self._webhook_id:
                 errors["webhook_id"] = "required"
 
-            # Duplicate-Prüfung nur beim Neuanlegen
-            if self._entry is None:
-                for entry in self._async_current_entries():
-                    if entry.data.get(CONF_DEVICE_ID) == self._device_id:
-                        errors[CONF_DEVICE_ID] = "device_exists"
-                        break
-
-            _LOGGER.debug("Defaults in user step: %s", defaults)
+            for entry in self._async_current_entries():
+                if self._entry is not None and entry.entry_id == self._entry.entry_id:
+                    continue
+                if self._device_id and entry.data.get(CONF_DEVICE_ID) == self._device_id:
+                    errors[CONF_DEVICE_ID] = "device_exists"
+                if self._webhook_id and entry.data.get(CONF_WEBHOOK_ID) == self._webhook_id:
+                    errors[CONF_WEBHOOK_ID] = "webhook_id_in_use"
 
             if errors:
                 return self.async_show_form(
@@ -234,15 +229,20 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             self._host_ip = user_input.get(CONF_IP_ADDRESS)
             self._only_ip = user_input.get(ONLY_ONE_IP, False)
             self._timeout_receive = user_input.get(CONF_TIMEOUT_RECEIVE, DEFAULT_TIMEOUT_RECEIVE)
-            self._notify_migration = user_input.get(NOTIFY_MIGRATION, False)
             self._enable_local_cloud_proxy = user_input.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, False)
 
             # Pflichtfeldprüfung
             if self._timeout_receive is None or self._timeout_receive < 2:
                 errors[CONF_TIMEOUT_RECEIVE] = "required"
 
-            if self._enable_local_cloud_proxy and not self._host_ip:
-                errors[CONF_IP_ADDRESS] = "required"
+            if self._enable_local_cloud_proxy or self._only_ip:
+                if not self._host_ip:
+                    errors[CONF_IP_ADDRESS] = "required"
+                else:
+                    try:
+                        ip_address(self._host_ip)
+                    except ValueError:
+                        errors[CONF_IP_ADDRESS] = "invalid_ip_address"
             # Ende Pflichtfeldprüfung
 
             if errors:
@@ -286,7 +286,6 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_TIMEOUT_RECEIVE: self._timeout_receive or DEFAULT_TIMEOUT_RECEIVE,
             CONF_IP_ADDRESS: self._host_ip or None,
             ONLY_ONE_IP: self._only_ip,
-            NOTIFY_MIGRATION: self._notify_migration,
             CONF_ENABLE_LOCAL_CLOUD_PROXY: self._enable_local_cloud_proxy,
             CONF_ENABLE_FORWARD_TO_CLOUD: self._enable_forward_to_cloud,
             CONF_ENABLE_CLOUD_DATA: self._enable_cloud_data,
@@ -325,7 +324,6 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     CONF_TIMEOUT_RECEIVE,
                     default=defaults.get(CONF_TIMEOUT_RECEIVE) or DEFAULT_TIMEOUT_RECEIVE,
                 ): int,
-                vol.Optional(NOTIFY_MIGRATION, default=defaults.get(NOTIFY_MIGRATION, False)): BooleanSelector(),
                 vol.Optional(
                     CONF_ENABLE_LOCAL_CLOUD_PROXY,
                     default=defaults.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, DEFAULT_ENABLE_LOCAL_CLOUD_PROXY),
@@ -364,7 +362,6 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             CONF_IP_ADDRESS: self._host_ip,
             ONLY_ONE_IP: self._only_ip,
             CONF_TIMEOUT_RECEIVE: self._timeout_receive,
-            NOTIFY_MIGRATION: self._notify_migration,
             CONF_ENABLE_LOCAL_CLOUD_PROXY: self._enable_local_cloud_proxy,
         }
 
@@ -401,7 +398,6 @@ class MaxxiChargeConnectConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         self._timeout_receive = entry.data.get(CONF_TIMEOUT_RECEIVE)
         self._host_ip = entry.data.get(CONF_IP_ADDRESS)
         self._only_ip = entry.data.get(ONLY_ONE_IP, False)
-        self._notify_migration = entry.data.get(NOTIFY_MIGRATION, False)
         self._enable_local_cloud_proxy = entry.data.get(CONF_ENABLE_LOCAL_CLOUD_PROXY, False)
         self._enable_forward_to_cloud = entry.data.get(CONF_ENABLE_FORWARD_TO_CLOUD, DEFAULT_ENABLE_FORWARD_TO_CLOUD)
         self._enable_cloud_data = entry.data.get(CONF_ENABLE_CLOUD_DATA, False)

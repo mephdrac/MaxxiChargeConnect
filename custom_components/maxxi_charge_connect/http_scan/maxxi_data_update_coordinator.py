@@ -8,6 +8,7 @@ um sie als Sensordaten in Home Assistant bereitzustellen.
 import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlsplit
 
 import aiohttp
 from bs4 import BeautifulSoup
@@ -15,12 +16,30 @@ from homeassistant.const import CONF_IP_ADDRESS
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from ..const import CONF_DEVICE_ID, HTTP_SCAN_EVENTNAME, NEIN, REQUIRED
+from ..const import CONF_DEVICE_ID, HTTP_SCAN_EVENTNAME, NEIN, OPTIONAL, REQUIRED
 from ..tools import fire_status_event
 
 _LOGGER = logging.getLogger(__name__)
 
 SCAN_INTERVAL = timedelta(seconds=30)  # z.B. alle 30 Sekunden aktualisieren
+
+CCU_V1_HTTP_SCAN_FIELDS = (
+    ("PowerMeterIp", "Messgerät IP:", REQUIRED),
+    ("PowerMeterType", "Messgerät Typ:", REQUIRED),
+    ("MaximumPower", "Maximale Leistung:", REQUIRED),
+    ("OfflineOutputPower", "Offline-Ausgangsleistung:", REQUIRED),
+    ("NumberOfBatteries", "Batterien im System:", REQUIRED),
+    ("OutputOffset", "Ausgabe korrigieren:", REQUIRED),
+    ("CcuSpeed", "CCU-Geschwindigkeit:", REQUIRED),
+    ("Microinverter", "Mikro-Wechselrichter-Typ:", REQUIRED),
+    ("ResponseTolerance", "Reaktionstoleranz:", REQUIRED),
+    ("MinimumBatteryDischarge", "Minimale Entladung der Batterie:", REQUIRED),
+    ("MaximumBatteryCharge", "Maximale Akkuladung:", REQUIRED),
+    ("DC/DC-Algorithmus", "DC/DC-Algorithmus:", REQUIRED),
+    ("Cloudservice", "Cloudservice:", REQUIRED),
+    ("LocalServer", "Lokalen Server nutzen:", NEIN),
+    ("APIRoute", "API-Route:", OPTIONAL),
+)
 
 
 class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
@@ -48,7 +67,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
         self._sensor_list = sensor_list
         self.entry = entry
         self._device_id = entry.data[CONF_DEVICE_ID].strip()
-        self._resource = entry.data[CONF_IP_ADDRESS].strip()
+        self._resource = (entry.data.get(CONF_IP_ADDRESS) or "").strip()
 
         if self._resource:
             if not self._resource.startswith(("http://", "https://")):
@@ -56,6 +75,13 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
         else:
             _LOGGER.warning("Keine IP Adresse vorhanden")
 
+        try:
+            # The target is visible on the Status sensor. Exclude credentials, paths and queries.
+            self.scan_target = urlsplit(self._resource).netloc.rpartition("@")[2]
+        except ValueError:
+            self.scan_target = ""
+
+        self.scan_result = "Noch nicht abgefragt"
         _LOGGER.debug("HOST:%s", self._resource)
 
     def exract_data(self, soup: BeautifulSoup, label: str):
@@ -106,27 +132,22 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                             soup = BeautifulSoup(html, "html.parser")
 
                             data = {}
-
-                            for sensor in self._sensor_list:
-                                key = sensor[0]  # z. B. "PowerMeterIp"
-                                label = sensor[1]  # z. B. "Messgerät IP:"
-                                cmd = sensor[2]  # z. B. "Messgerät IP:"
-
-                                if cmd == REQUIRED:
-                                    value = self.exract_data(soup, label)
-                                elif cmd == NEIN:
-                                    try:
-                                        value = self.exract_data(soup, label)
-                                    except Exception:  # pylint: disable=broad-exception-caught
-                                        value = "Nein"
+                            found_fields = 0
+                            for key, label, mode in self._sensor_list:
+                                try:
+                                    data[key] = self.exract_data(soup, label)
+                                except UpdateFailed:
+                                    if mode == REQUIRED:
+                                        _LOGGER.debug("HTTP-Scan %s: Feld %s fehlt", self._resource, label)
+                                    else:
+                                        data[key] = "Nein" if mode == NEIN else "nicht gesetzt"
                                 else:
-                                    try:
-                                        value = self.exract_data(soup, label)
-                                    except Exception:  # pylint: disable=broad-exception-caught
-                                        value = "nicht gesetzt"
+                                    found_fields += 1
 
-                                data[key] = value
+                            if found_fields == 0:
+                                raise UpdateFailed("Keine CCU-Felder in der HTTP-Antwort gefunden")
 
+                            self.scan_result = f"{found_fields}/{len(self._sensor_list)} Felder gelesen"
                             json_data = {
                                 "deviceId": str(self._device_id),
                                 "ccu": str(self._device_id),
@@ -140,7 +161,8 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                             return data
 
             except aiohttp.ClientError as e:
-                _LOGGER.error("Netzwerkfehler beim Abruf: %s", e)
+                self.scan_result = f"Netzwerkfehler ({type(e).__name__})"
+                _LOGGER.error("HTTP-Scan %s: Netzwerkfehler beim Abruf: %s", self._resource, e)
 
                 json_data = {
                     "deviceId": "Errors",
@@ -155,6 +177,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                 return {}
 
             except TimeoutError as e:
+                self.scan_result = "Zeitüberschreitung"
                 _LOGGER.error(
                     "%s: Zeitüberschreitung beim Abrufen von maxxi.local bzw. der IP (%s)",
                     e,
@@ -173,7 +196,8 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                 return {}
 
             except Exception as e:  # pylint: disable=broad-exception-caught
-                _LOGGER.error("%s: Unerwarteter Fehler bei der Datenabfrage", e)
+                self.scan_result = str(e) if isinstance(e, UpdateFailed) else "Unerwarteter Fehler beim HTTP-Scan"
+                _LOGGER.error("HTTP-Scan %s: %s", self._resource, e)
 
                 json_data = {
                     "deviceId": "Errors",
@@ -187,6 +211,7 @@ class MaxxiDataUpdateCoordinator(DataUpdateCoordinator):
                 await fire_status_event(self.hass, json_data, False, HTTP_SCAN_EVENTNAME)
                 return {}
         else:
+            self.scan_result = "Keine CCU-Adresse konfiguriert"
             json_data = {
                 "deviceId": str(self._device_id),
                 "ccu": str(self._device_id),

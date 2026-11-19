@@ -145,6 +145,8 @@ Wenn weitere PV-Anlagen, zusätzliche Speicher oder mehrere CCUs vorhanden sind,
 - Bei Nutzung eines externen Brokers muss die MQTT-Integration beziehungsweise Brokerverbindung in Home Assistant entsprechend eingerichtet sein.
 - Verwende sichere Zugangsdaten für MQTT und schütze den Webhook vor unberechtigtem Zugriff.
 - Stelle den integrierten MQTT-Broker oder lokale Webhook-Endpunkte nicht ungeschützt ins Internet.
+- Ersetze eine Webhook-ID, die früher in einer Entität sichtbar war oder in Logs, Screenshots oder Foren geteilt wurde. Hinterlege die neue ID in Home Assistant und in der Webhook-URL auf der CCU.
+- Der optionale lokale Cloud-Proxy auf TCP-Port 3001 prüft die konfigurierte Geräte-ID und die Quell-IP der CCU. Der Port gehört ins lokale Netz.
 - Cloud-Optionen und Weiterleitungen sollten bewusst aktiviert werden; für eine rein lokale Nutzung sind sie nicht nötig.
 
 ## Was ist neu in Version 2.9.0?

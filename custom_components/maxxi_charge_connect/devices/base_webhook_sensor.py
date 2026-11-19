@@ -4,7 +4,6 @@ Diese Klasse:
 - kümmert sich um Timeout/Stale-Handling
 - empfängt automatische Dispatcher-Signale (UPDATE + STALE)
 - stellt ein einheitliches Vererbungsmodell bereit
-- nutzt RestoreEntity, um Werte nach Neustart zu behalten
 """
 
 from __future__ import annotations
@@ -13,10 +12,9 @@ import logging
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN
+from homeassistant.const import STATE_UNKNOWN
 from homeassistant.core import Event
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.restore_state import RestoreEntity
 
 from ..const import (
     CCU_V1,
@@ -37,7 +35,7 @@ from ..const import (
 _LOGGER = logging.getLogger(__name__)
 
 
-class BaseWebhookSensor(RestoreEntity, SensorEntity):
+class BaseWebhookSensor(SensorEntity):
     """Abstrakte Basisklasse für MaxxiCharge-Webhook-Sensoren.
 
     Abgeleitete Klassen müssen implementieren:
@@ -86,35 +84,18 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
 
         if self._enable_cloud_data:
             _LOGGER.info("Daten kommen vom Proxy")
-            self.hass.bus.async_listen(PROXY_STATUS_EVENTNAME, self.async_update_from_event)
+            self._unsub_update = self.hass.bus.async_listen(PROXY_STATUS_EVENTNAME, self.async_update_from_event)
         else:
             # Dispatcher abonnieren
             self._unsub_update = async_dispatcher_connect(self.hass, update_signal, self._wrapper_update)
 
         self._unsub_stale = async_dispatcher_connect(self.hass, stale_signal, self._wrapper_stale)
 
-        # letzten Zustand wiederherstellen
-        old_state = await self.async_get_last_state()
-        if old_state is not None and old_state.state not in (
-            STATE_UNAVAILABLE,
-            "unknown",
-            None,
-        ):
-            try:
-                # Versuch, den Wert basierend auf dem Sensortyp wiederherzustellen
-                restored_value = self._restore_state_value(old_state.state)
-                if restored_value is not None:
-                    self._attr_native_value = restored_value
-                    self._attr_available = True
-                    _LOGGER.debug("Sensor %s: Zustand wiederhergestellt: %s", self.__class__.__name__, restored_value)
-            except Exception as err:  # pylint: disable=broad-except
-                _LOGGER.warning("Sensor %s: Konnte Zustand nicht wiederherstellen: %s", self.__class__.__name__, err)
-
     async def async_will_remove_from_hass(self):
         """Abmelden beim Dispatcher."""
-        if hasattr(self, "_unsub_update"):
+        if self._unsub_update is not None:
             self._unsub_update()
-        if hasattr(self, "_unsub_stale"):
+        if self._unsub_stale is not None:
             self._unsub_stale()
 
     #
@@ -222,22 +203,6 @@ class BaseWebhookSensor(RestoreEntity, SensorEntity):
         self._attr_available = False
         self._attr_state = STATE_UNKNOWN
         self.async_write_ha_state()
-
-    def _restore_state_value(self, state_str: str):
-        """Stellt den Zustand basierend auf dem Sensortyp wieder her.
-        Args:
-            state_str: Der gespeicherte Zustand als String
-        Returns:
-            Der wiederhergestellte Wert im korrekten Typ oder None bei Fehler
-        """
-        # Standard: Versuch float-Konvertierung (für die meisten Sensoren)
-        try:
-            return float(state_str)
-        except (ValueError, TypeError):
-            pass
-
-        # Wenn nichts passt, None zurückgeben
-        return None
 
     @property
     def device_info(self):

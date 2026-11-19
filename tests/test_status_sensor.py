@@ -10,7 +10,9 @@ from custom_components.maxxi_charge_connect.const import (
     DOMAIN,
     ERROR,
     ERRORS,
+    HTTP_SCAN_EVENTNAME,
     PROXY_ERROR_DEVICE_ID,
+    PROXY_STATUS_EVENTNAME,
 )
 from custom_components.maxxi_charge_connect.devices.status_sensor import StatusSensor
 
@@ -65,12 +67,37 @@ async def test_status_sensor_handle_update_error(sensor):
 
 
 @pytest.mark.asyncio
-async def test_status_sensor_handle_stale_keeps_available(sensor):
-    """Stale soll StatusSensor verfügbar lassen und letzten Wert behalten."""
-    sensor._attr_available = True  # pylint: disable=protected-access
-    sensor._attr_native_value = "OK"  # pylint: disable=protected-access
-
-    await sensor.handle_stale()
+async def test_status_sensor_startup_telemetry_and_timeout(sensor):
+    """Remain offline until telemetry arrives and return offline on timeout."""
+    sensor.async_write_ha_state = MagicMock()
+    payload = {PROXY_ERROR_DEVICE_ID: "device-123", "integration_state": "OK"}
 
     assert sensor.available is True
+    assert sensor.native_value == "Offline"
+    await sensor.async_update_from_event(MagicMock(event_type=HTTP_SCAN_EVENTNAME, data={"payload": payload}))
+    assert sensor.native_value == "Offline"
+
+    await sensor.async_update_from_event(MagicMock(event_type=PROXY_STATUS_EVENTNAME, data={"payload": payload}))
     assert sensor.native_value == "OK"
+    sensor.async_write_ha_state.assert_called_once()
+
+    await sensor._wrapper_stale(None)
+    assert sensor.available is True
+    assert sensor.native_value == "Offline"
+    assert sensor.extra_state_attributes == {}
+
+
+@pytest.mark.asyncio
+async def test_http_scan_diagnosis_survives_webhook(sensor):
+    """A healthy Webhook must not hide a failed HTTP scan."""
+    sensor._http_scan_coordinator = MagicMock(
+        scan_target="192.168.60.27:5000",
+        scan_result="Zeitüberschreitung",
+    )
+    sensor.async_write_ha_state = MagicMock()
+    payload = {PROXY_ERROR_DEVICE_ID: "device-123", "integration_state": "OK"}
+    await sensor.async_update_from_event(MagicMock(event_type=PROXY_STATUS_EVENTNAME, data={"payload": payload}))
+
+    assert sensor.native_value == "OK"
+    assert sensor.extra_state_attributes["http_scan_target"] == "192.168.60.27:5000"
+    assert sensor.extra_state_attributes["http_scan_result"] == "Zeitüberschreitung"

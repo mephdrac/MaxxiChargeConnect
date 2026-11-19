@@ -14,7 +14,6 @@
           "only_accept_one_ip": "Allow access from this IP only?",
           "ip_address": "IP address of the MaxxiCharge",
           "CONF_TIMEOUT_RECEIVE": "Timeout for receiving data (seconds >=2)",
-          "notify_migration": "Detect migration sensors?",
           "enable_local_cloud_proxy": "Home Assistant handles the Cloud function?"
         }
       },
@@ -56,6 +55,8 @@
       }
     },
     "error": {
+      "webhook_id_in_use": "This webhook ID is already in use.",
+      "invalid_ip_address": "Enter a valid IP address for the CCU.",
       "required": "Fill in the required field.",
       "device_exists": "This device ID is already configured.",
       "invalid_device_id": "Enter a valid device ID without MQTT wildcards (+ or #).",
@@ -73,7 +74,7 @@
     },
     "device_mismatch": {
       "title": "Device ID Does Not Match Webhook",
-      "description": "The webhook \"{webhook_id}\" belongs to a different device. Payload ID: {payload_device_id}, configured ID: {config_device_id}."
+      "description": "The webhook for {entry_title} received data for a different device. Received ID: {payload_device_id}, configured ID: {config_device_id}."
     }
   },
   "entity": {

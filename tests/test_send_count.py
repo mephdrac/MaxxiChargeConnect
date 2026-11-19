@@ -39,7 +39,7 @@ async def test_send_count_initialization(sensor):
     """Testet die Initialisierung des SendCount-Sensors."""
     assert sensor._attr_unique_id == "test_entry_id_send_count"  # pylint: disable=protected-access
     assert sensor._attr_icon == "mdi:counter"  # pylint: disable=protected-access
-    assert sensor._attr_native_value is None  # pylint: disable=protected-access
+    assert sensor._attr_native_value == 0  # pylint: disable=protected-access
     assert sensor._attr_state_class == SensorStateClass.TOTAL_INCREASING  # pylint: disable=protected-access
     assert sensor._last_sendcount is None  # pylint: disable=protected-access
     assert sensor._missing_packets == 0  # pylint: disable=protected-access
@@ -51,7 +51,8 @@ async def test_send_count_first_value(sensor):
     """Testet das erste empfangene sendCount."""
     await sensor.handle_update({"sendCount": 100})
 
-    assert sensor.native_value == 100
+    assert sensor.native_value == 1
+    assert sensor.extra_state_attributes["ccu_send_count"] == 100
     assert sensor._last_sendcount == 100  # pylint: disable=protected-access
     assert sensor._missing_packets == 0  # pylint: disable=protected-access
     assert sensor._resets == 0  # pylint: disable=protected-access
@@ -66,7 +67,7 @@ async def test_send_count_normal_increment(sensor):
     # Normaler Zähler
     await sensor.handle_update({"sendCount": 101})
 
-    assert sensor.native_value == 101
+    assert sensor.native_value == 2
     assert sensor._missing_packets == 0  # pylint: disable=protected-access
     assert sensor._resets == 0  # pylint: disable=protected-access
     assert sensor._last_delta == 1  # pylint: disable=protected-access
@@ -81,7 +82,7 @@ async def test_send_count_gap_detection(sensor):
     # Lücke von 3 Telegrammen
     await sensor.handle_update({"sendCount": 104})
 
-    assert sensor.native_value == 104
+    assert sensor.native_value == 2
     assert sensor._missing_packets == 3  # pylint: disable=protected-access (104 - 100 - 1)
     assert sensor._resets == 0  # pylint: disable=protected-access
     assert sensor._last_delta == 4  # pylint: disable=protected-access
@@ -96,7 +97,7 @@ async def test_send_count_reset_detection(sensor):
     # Reset (Zähler beginnt von vorne)
     await sensor.handle_update({"sendCount": 5})
 
-    assert sensor.native_value == 5
+    assert sensor.native_value == 2
     assert sensor._missing_packets == 0  # pylint: disable=protected-access
     assert sensor._resets == 1  # pylint: disable=protected-access
     assert sensor._last_delta == -95  # pylint: disable=protected-access
@@ -129,7 +130,7 @@ async def test_send_count_missing_field(sensor):
     await sensor.handle_update({})
 
     # Sollte nichts ändern
-    assert sensor.native_value is None
+    assert sensor.native_value == 0
     assert sensor._last_sendcount is None  # pylint: disable=protected-access
 
 
@@ -139,7 +140,7 @@ async def test_send_count_none_value(sensor):
     await sensor.handle_update({"sendCount": None})
 
     # Sollte nichts ändern
-    assert sensor.native_value is None
+    assert sensor.native_value == 0
     assert sensor._last_sendcount is None  # pylint: disable=protected-access
 
 
@@ -149,7 +150,7 @@ async def test_send_count_string_value(sensor):
     await sensor.handle_update({"sendCount": "100"})
     await sensor.handle_update({"sendCount": "102"})
 
-    assert sensor.native_value == 102
+    assert sensor.native_value == 2
     assert sensor._missing_packets == 1  # pylint: disable=protected-access
 
 

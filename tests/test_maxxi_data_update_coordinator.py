@@ -1,14 +1,16 @@
 """Tests für MaxxiDataUpdateCoordinator."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from bs4 import BeautifulSoup
 
 from custom_components.maxxi_charge_connect.const import NEIN, REQUIRED
 from custom_components.maxxi_charge_connect.http_scan.maxxi_data_update_coordinator import (
+    CCU_V1_HTTP_SCAN_FIELDS,
     MaxxiDataUpdateCoordinator,
 )
+from testCCU.CCUv1.server import TestCCU as SimulatedCCU
 
 
 @pytest.fixture
@@ -85,6 +87,56 @@ def test_extract_data_not_found(coordinator):
 
     with pytest.raises(Exception):  # Should raise UpdateFailed
         coordinator.exract_data(soup, "Messgerät IP:")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("html", "expected"),
+    [
+        (
+            "<div><b>Maximale Leistung:</b>800 W</div>",
+            {"MaximumPower": "800 W", "SomeValue": "nicht gesetzt"},
+        ),
+        ("<div>Not a CCU page</div>", {}),
+    ],
+)
+async def test_scan_preserves_recognized_fields(coordinator, html, expected):
+    """A missing required label affects its field only."""
+    response = MagicMock(status=200, text=AsyncMock(return_value=html))
+    with patch("aiohttp.ClientSession.get") as get:
+        get.return_value.__aenter__.return_value = response
+        assert await coordinator._async_update_data() == expected
+
+
+@pytest.mark.asyncio
+async def test_simulator_html_matches_v1_scan(coordinator):
+    """Parse every simulator label using the same field list as a V1 entry."""
+    simulator = SimulatedCCU("Maxxi-Test-V1", "127.0.0.1")
+    coordinator._sensor_list = CCU_V1_HTTP_SCAN_FIELDS
+    response = MagicMock(status=200, text=AsyncMock(return_value=simulator.html()))
+    with patch("aiohttp.ClientSession.get") as get:
+        get.return_value.__aenter__.return_value = response
+        result = await coordinator._async_update_data()
+    assert coordinator.scan_result == "15/15 Felder gelesen"
+    assert result["APIRoute"] == "/config"
+    assert result["MaximumPower"] == "800 W"
+
+
+@pytest.mark.asyncio
+async def test_scan_reports_timeout(coordinator):
+    """A timed-out scan records the target and a separate failure reason."""
+    with patch("aiohttp.ClientSession.get", side_effect=TimeoutError):
+        assert await coordinator._async_update_data() == {}
+    assert coordinator.scan_target == "192.168.1.100"
+    assert coordinator.scan_result == "Zeitüberschreitung"
+
+
+def test_initialization_without_ip(hass, entry, sensor_list):
+    """An empty optional CCU address is stored as None by the config flow."""
+    entry.data["ip_address"] = None
+    with patch("homeassistant.helpers.frame.report_usage"):
+        coordinator = MaxxiDataUpdateCoordinator(hass, entry, sensor_list)
+    assert coordinator._resource == ""
 
 
 # @pytest.mark.asyncio

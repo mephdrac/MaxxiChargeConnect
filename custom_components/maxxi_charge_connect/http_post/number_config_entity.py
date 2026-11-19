@@ -84,7 +84,7 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
         self._entry = entry
         self._hass = hass
         self._depends_on_winter_mode = depends_on_winter_mode
-        self._ip = entry.data[CONF_IP_ADDRESS].strip()
+        self._ip = (entry.data.get(CONF_IP_ADDRESS) or "").strip()
         self._coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
         self._rest_key = rest_key
         self._value_key = value_key
@@ -158,11 +158,6 @@ class NumberConfigEntity(NumberEntity):  # pylint: disable=abstract-method, too-
 
         _LOGGER.info("Setze neuen Wert für %s: %s", self._rest_key, value)
 
-        # if self._depends_on_winter_mode:
-        #     if self.hass.data[DOMAIN].get(CONF_WINTER_MODE, False):
-        #         raise ServiceValidationError(
-        #             "Wert kann im Winterbetrieb nicht geändert werden"
-        #         )
         self._show_current_value_immediately = True
         result = False
         self._attr_native_value = value

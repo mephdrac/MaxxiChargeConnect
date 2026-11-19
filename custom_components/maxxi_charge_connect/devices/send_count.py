@@ -1,12 +1,4 @@
-"""Sensor zur Überwachung des SendCount-Zählers für MaxxiCharge-Geräte.
-
-Dieser Sensor überwacht den sendCount-Wert, der die Anzahl der gesendeten Telegramme
-vom Gerät repräsentiert. Er erkennt Lücken in der Kommunikation und Resets des Zählers,
-um die Zuverlässigkeit der Datenübertragung zu überwachen.
-
-Der Sensor ist als diagnostische Entität kategorisiert und liefert zusätzliche Attribute
-wie fehlende Pakete, letzte Differenz und Anzahl der Resets.
-"""
+"""Zählt empfangene Telegramme und prüft die Sequenznummern der CCU."""
 
 import logging
 
@@ -21,7 +13,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class SendCount(BaseWebhookSensor):
-    """Sensor-Entität zur Anzeige der (`sendCount`)"""
+    """Zählt empfangene Telegramme seit dem Laden der Integration."""
 
     _attr_has_entity_name = True
 
@@ -36,7 +28,7 @@ class SendCount(BaseWebhookSensor):
         self._attr_suggested_display_precision = 0
         self._attr_unique_id = f"{entry.entry_id}_send_count"
         self._attr_icon = "mdi:counter"
-        self._attr_native_value = None
+        self._attr_native_value = 0
         self._attr_device_class = None
         # self._attr_native_unit_of_measurement = "telegrams"
         self._attr_state_class = SensorStateClass.TOTAL_INCREASING
@@ -67,12 +59,14 @@ class SendCount(BaseWebhookSensor):
             _LOGGER.error("Ungültiger sendCount Wert: %s", new_value)
             return
 
+        self._attr_native_value += 1
         self._process_sendcount(new_value)
 
     @property
     def extra_state_attributes(self):
         """Zusätzliche Attribute für Lücken und Reboots."""
         return {
+            "ccu_send_count": self._last_sendcount,
             "missing_packets": self._missing_packets,
             "last_delta": self._last_delta,
             "resets": self._resets,
@@ -83,10 +77,7 @@ class SendCount(BaseWebhookSensor):
 
         if self._last_sendcount is None:
             self._last_sendcount = new_value
-            self._attr_native_value = new_value
             return
-
-        self._attr_native_value = new_value
 
         delta = new_value - self._last_sendcount
         self._last_delta = delta

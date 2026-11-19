@@ -3,8 +3,7 @@
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_UNAVAILABLE, STATE_UNKNOWN, EntityCategory
-from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.const import EntityCategory
 
 # pylint: disable=line-too-long
 from ..const import (
@@ -15,13 +14,11 @@ from ..const import (
     ERRORS,
     HTTP_SCAN_EVENTNAME,
     PROXY_ERROR_DEVICE_ID,
-    PROXY_STATUS_EVENTNAME,
-    WEBHOOK_SIGNAL_STATE,
-    WEBHOOK_SIGNAL_UPDATE,
 )  # noqa: TID252
 from .base_webhook_sensor import BaseWebhookSensor
 
 _LOGGER = logging.getLogger(__name__)
+_OFFLINE = "Offline"
 
 
 class StatusSensor(BaseWebhookSensor):
@@ -34,13 +31,13 @@ class StatusSensor(BaseWebhookSensor):
         super().__init__(entry)
         self._attr_unique_id = f"{entry.entry_id}_status_sensor"
 
-        self._unsub_dispatcher = None
-        self._state = str(None)
-        self._attr_native_value = None
+        self._attr_native_value = _OFFLINE
+        self._attr_available = True
         self._attr_device_class = None
         self._attr_icon = "mdi:alert-circle"
 
         self._attr_extra_state_attributes = {}
+        self._http_scan_coordinator = None
 
         self._attr_entity_category = EntityCategory.DIAGNOSTIC
 
@@ -48,31 +45,8 @@ class StatusSensor(BaseWebhookSensor):
         """HA informiert uns, dass der Sensor hinzugefügt wurde."""
         await super().async_added_to_hass()
 
-        # StatusSensor hört IMMER auf HTTP-Scan-Events
-        self.hass.bus.async_listen(HTTP_SCAN_EVENTNAME, self.async_update_from_event)
-
-        # Zusätzlich je nach Konfiguration auf Webhook/Cloud-Events hören
-        if self._enable_cloud_data:
-            # Cloud-Modus: Auf PROXY_STATUS_EVENTNAME hören
-            self.hass.bus.async_listen(PROXY_STATUS_EVENTNAME, self.async_update_from_event)
-        else:
-            # Webhook-Modus: Auf WEBHOOK_SIGNAL_UPDATE hören (Dispatcher)
-            entry_data = self.hass.data[DOMAIN][self._entry.entry_id]
-            update_signal = entry_data[WEBHOOK_SIGNAL_UPDATE]
-            self._unsub_update = async_dispatcher_connect(self.hass, update_signal, self._wrapper_update)
-
-        # Stale-Signal abonnieren
-        entry_data = self.hass.data[DOMAIN][self._entry.entry_id]
-        stale_signal = entry_data[WEBHOOK_SIGNAL_STATE]
-        self._unsub_stale = async_dispatcher_connect(self.hass, stale_signal, self._wrapper_stale)
-
-        # letzten Zustand wiederherstellen
-        old_state = await self.async_get_last_state()
-        if old_state is not None and old_state.state not in (
-            STATE_UNAVAILABLE,
-            STATE_UNKNOWN,
-        ):
-            self._attr_native_value = old_state.state
+        self._http_scan_coordinator = self.hass.data[DOMAIN][self._entry.entry_id]["coordinator"]
+        self.async_on_remove(self._http_scan_coordinator.async_add_listener(self.async_write_ha_state))
 
     def format_uptime(self, seconds: int):
         """Berechnet die Update aus einem integer."""
@@ -84,23 +58,29 @@ class StatusSensor(BaseWebhookSensor):
 
     @property
     def extra_state_attributes(self):
-        """Weitere Attribute die visualisiert werden."""
-
-        return self._attr_extra_state_attributes
+        """Show the result of the last HTTP scan alongside the telemetry state."""
+        attributes = self._attr_extra_state_attributes
+        if self._http_scan_coordinator is None:
+            return attributes
+        return {
+            **attributes,
+            "http_scan_target": self._http_scan_coordinator.scan_target,
+            "http_scan_result": self._http_scan_coordinator.scan_result,
+        }
 
     async def async_update_from_event(self, event):
-        """Empfängt sowohl Webhook- als auch HTTP-Scan-Events."""
+        """Empfängt Statusdaten aus dem lokalen Proxy."""
+        if event.event_type == HTTP_SCAN_EVENTNAME:
+            return
+
         json_data = event.data.get("payload", {})
 
-        # Bei HTTP-Scan Events deviceId prüfen, bei Webhook Events PROXY_ERROR_DEVICE_ID
-        device_id_match = False
-        if event.event_type == HTTP_SCAN_EVENTNAME:
-            device_id_match = json_data.get("deviceId") == self._entry.data.get(CONF_DEVICE_ID)
-        else:
-            device_id_match = json_data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(CONF_DEVICE_ID)
-
-        if device_id_match:
+        device_id = json_data.get(PROXY_ERROR_DEVICE_ID)
+        if device_id == ERRORS:
+            device_id = json_data.get(CCU)
+        if device_id and device_id == self._entry.data.get(CONF_DEVICE_ID):
             await self.handle_update(json_data)
+            self.async_write_ha_state()
 
     async def handle_update(self, data):
         """Wird aufgerufen, beim Empfang neuer Daten vom Dispatcher."""
@@ -110,17 +90,15 @@ class StatusSensor(BaseWebhookSensor):
         if data.get(CCU) == self._entry.data.get(CONF_DEVICE_ID) and data.get(PROXY_ERROR_DEVICE_ID) == ERRORS:
             _LOGGER.warning("Status - Error - Event erhalten: %s", data)
 
-            self._state = f"Fehler ({data.get(ERROR, 'Unbekannt')})"
-            self._attr_native_value = self._state
+            self._attr_native_value = f"Fehler ({data.get(ERROR, 'Unbekannt')})"
             self._attr_extra_state_attributes = data
 
         elif data.get(PROXY_ERROR_DEVICE_ID) == self._entry.data.get(CONF_DEVICE_ID):
             _LOGGER.info("Status - OK - Event erhalten: %s", data)
-            self._state = data.get("integration_state", "OK")
-            self._attr_native_value = self._state
+            self._attr_native_value = data.get("integration_state", "OK")
             self._attr_extra_state_attributes = data
 
     async def handle_stale(self):
-        """Bei stale verfügbar bleiben und letzten Status beibehalten."""
-        self._attr_available = True
-        self._state = "Off"
+        """Zeige nach Ablauf des Empfangstimeouts Offline an."""
+        self._attr_native_value = _OFFLINE
+        self._attr_extra_state_attributes = {}
